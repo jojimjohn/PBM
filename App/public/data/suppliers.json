@@ -1,0 +1,326 @@
+{
+  "suppliers": {
+    "pridemuscat": [
+      {
+        "id": "supp_001",
+        "code": "PM-SUP-001",
+        "name": "Al Noor Scrap Collectors",
+        "type": "business",
+        "businessRegistration": "CR-12345678",
+        "contactPerson": "Mohammed Al Balushi",
+        "nationalId": "12345678",
+        "contact": {
+          "phone": "+968 9123 4567",
+          "email": "info@alnoorscrap.com",
+          "address": {
+            "street": "Industrial Area, Building 45",
+            "city": "Muscat",
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "specialization": ["copper", "aluminum", "steel"],
+        "collectionAreas": ["Muscat", "Bawshar"],
+        "paymentTerms": 7,
+        "taxNumber": "TAX-12345678",
+        "bankDetails": {
+          "bankName": "Bank Muscat",
+          "accountNumber": "1234567890",
+          "iban": "OM81BMAG0001234567890"
+        },
+        "contractDetails": {
+          "contractId": "SUP-CON-2025-001",
+          "startDate": "2025-01-01",
+          "endDate": "2025-12-31",
+          "status": "active",
+          "specialTerms": "Volume-based pricing with minimum guaranteed rates for consistent supply.",
+          "rates": {
+            "mat_101": {
+              "type": "minimum_price_guarantee",
+              "contractRate": 0.115,
+              "description": "Minimum OMR 0.115/KG for copper scrap - supplier gets higher of market or contract rate"
+            },
+            "mat_102": {
+              "type": "fixed_rate",
+              "contractRate": 0.720,
+              "description": "Fixed purchase rate for aluminum scrap"
+            },
+            "mat_103": {
+              "type": "discount_percentage",
+              "discountPercentage": 5.0,
+              "description": "5% below market rate for steel scrap"
+            }
+          }
+        },
+        "performance": {
+          "monthlyVolume": 1200,
+          "averageRate": 2.15,
+          "reliability": 95,
+          "qualityScore": 88,
+          "lastDelivery": "2025-07-23T14:30:00Z"
+        },
+        "purchaseHistory": {
+          "totalTransactions": 45,
+          "totalValue": 15420.50,
+          "totalWeight": 5650.5,
+          "lastPurchaseDate": "2025-07-23T14:30:00Z"
+        },
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2025-01-15T10:00:00Z",
+        "lastTransaction": "2025-07-23T14:30:00Z"
+      },
+      {
+        "id": "supp_002",
+        "code": "PM-SUP-002",
+        "name": "Muscat Metal Works",
+        "type": "industrial",
+        "businessRegistration": "CR-87654321",
+        "contactPerson": "Ahmad Al Rashid",
+        "contact": {
+          "phone": "+968 2245 6789",
+          "email": "procurement@mmw.om",
+          "address": {
+            "street": "Sohar Industrial Port, Warehouse 23",
+            "city": "Sohar",
+            "region": "Al Batinah North Governorate",
+            "country": "Oman"
+          }
+        },
+        "specialization": ["steel", "iron", "brass"],
+        "businessType": "manufacturing_waste",
+        "paymentTerms": 15,
+        "taxNumber": "TAX-87654321",
+        "bankDetails": {
+          "bankName": "National Bank of Oman",
+          "accountNumber": "9876543210",
+          "iban": "OM17NBOB0009876543210"
+        },
+        "contractDetails": {
+          "contractId": "SUP-CON-2025-002",
+          "startDate": "2025-03-01",
+          "endDate": "2026-02-29",
+          "status": "active",
+          "specialTerms": "Annual contract with monthly volume commitments and premium rates for industrial-grade materials.",
+          "rates": {
+            "mat_103": {
+              "type": "fixed_rate",
+              "contractRate": 0.085,
+              "description": "Premium fixed rate for clean steel scrap"
+            },
+            "mat_104": {
+              "type": "minimum_price_guarantee",
+              "contractRate": 0.095,
+              "description": "Minimum guaranteed rate for iron scrap"
+            },
+            "mat_105": {
+              "type": "fixed_rate",
+              "contractRate": 3.250,
+              "description": "Fixed rate for brass fittings and components"
+            }
+          }
+        },
+        "performance": {
+          "monthlyVolume": 3500,
+          "averageRate": 1.85,
+          "reliability": 98,
+          "qualityScore": 95,
+          "lastDelivery": "2025-07-22T09:15:00Z"
+        },
+        "purchaseHistory": {
+          "totalTransactions": 28,
+          "totalValue": 28950.75,
+          "totalWeight": 12450.0,
+          "lastPurchaseDate": "2025-07-22T09:15:00Z"
+        },
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2025-03-01T08:00:00Z",
+        "lastTransaction": "2025-07-22T09:15:00Z"
+      },
+      {
+        "id": "supp_003",
+        "code": "PM-SUP-003",
+        "name": "Khalid Al Hinai",
+        "type": "individual",
+        "nationalId": "12345678",
+        "contact": {
+          "phone": "+968 9987 6543",
+          "email": null,
+          "address": {
+            "street": "Al Khuwair",
+            "city": "Muscat",
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "specialization": ["copper", "electronics"],
+        "collectionAreas": ["Ruwi", "Mutrah"],
+        "paymentTerms": 0,
+        "bankDetails": {
+          "bankName": "Oman Arab Bank",
+          "accountNumber": "5555666677",
+          "iban": "OM23ORAB0005555666677"
+        },
+        "performance": {
+          "monthlyVolume": 85,
+          "averageRate": 2.45,
+          "reliability": 82,
+          "qualityScore": 78,
+          "lastDelivery": "2025-07-20T16:45:00Z"
+        },
+        "purchaseHistory": {
+          "totalTransactions": 15,
+          "totalValue": 1245.30,
+          "totalWeight": 425.5,
+          "lastPurchaseDate": "2025-07-20T16:45:00Z"
+        },
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2025-05-15T14:30:00Z",
+        "lastTransaction": "2025-07-20T16:45:00Z"
+      },
+      {
+        "id": "supp_004",
+        "code": "PM-SUP-004",
+        "name": "Gulf Electronics Recycling",
+        "type": "business",
+        "businessRegistration": "CR-11223344",
+        "contactPerson": "Fatima Al Zahra",
+        "contact": {
+          "phone": "+968 2456 7890",
+          "email": "operations@gulfelectronics.com",
+          "address": {
+            "street": "Wadi Kabir Industrial Area, Plot 12",
+            "city": "Muscat",
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "specialization": ["electronics", "precious_metals", "cables"],
+        "businessType": "electronics_recycling",
+        "paymentTerms": 10,
+        "taxNumber": "TAX-11223344",
+        "bankDetails": {
+          "bankName": "HSBC Bank Oman",
+          "accountNumber": "7788990011",
+          "iban": "OM44HSBC0007788990011"
+        },
+        "performance": {
+          "monthlyVolume": 450,
+          "averageRate": 12.50,
+          "reliability": 90,
+          "qualityScore": 92,
+          "lastDelivery": "2025-07-21T11:30:00Z"
+        },
+        "purchaseHistory": {
+          "totalTransactions": 22,
+          "totalValue": 8750.25,
+          "totalWeight": 890.5,
+          "lastPurchaseDate": "2025-07-21T11:30:00Z"
+        },
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2025-02-20T09:00:00Z",
+        "lastTransaction": "2025-07-21T11:30:00Z"
+      },
+      {
+        "id": "supp_005",
+        "code": "PM-SUP-005",
+        "name": "Sohar Steel Recovery",
+        "type": "industrial",
+        "businessRegistration": "CR-55667788",
+        "contactPerson": "Salem Al Kindi",
+        "contact": {
+          "phone": "+968 2655 4433",
+          "email": "sales@soharsteel.om",
+          "address": {
+            "street": "Sohar Free Zone, Block C-15",
+            "city": "Sohar",
+            "region": "Al Batinah North Governorate",
+            "country": "Oman"
+          }
+        },
+        "specialization": ["steel", "iron", "heavy_machinery"],
+        "businessType": "demolition_contractor",
+        "paymentTerms": 30,
+        "taxNumber": "TAX-55667788",
+        "bankDetails": {
+          "bankName": "Bank Dhofar",
+          "accountNumber": "3344556677",
+          "iban": "OM66BDHO0003344556677"
+        },
+        "contractDetails": {
+          "contractId": "SUP-CON-2024-003",
+          "startDate": "2024-06-01",
+          "endDate": "2024-12-31",
+          "status": "expired",
+          "specialTerms": "Contract expired - renewal under negotiation. Standard market rates apply.",
+          "rates": {
+            "mat_103": {
+              "type": "fixed_rate",
+              "contractRate": 0.095,
+              "description": "Expired fixed rate - was OMR 0.095/KG"
+            }
+          }
+        },
+        "performance": {
+          "monthlyVolume": 2800,
+          "averageRate": 0.92,
+          "reliability": 85,
+          "qualityScore": 88,
+          "lastDelivery": "2025-07-19T08:00:00Z"
+        },
+        "purchaseHistory": {
+          "totalTransactions": 35,
+          "totalValue": 22340.80,
+          "totalWeight": 18500.0,
+          "lastPurchaseDate": "2025-07-19T08:00:00Z"
+        },
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2024-06-01T10:00:00Z",
+        "lastTransaction": "2025-07-19T08:00:00Z"
+      }
+    ]
+  },
+  "supplierTypes": {
+    "individual": {
+      "name": "Individual Supplier",
+      "description": "Individual scrap collectors and sellers",
+      "color": "#10b981"
+    },
+    "business": {
+      "name": "Business Supplier",
+      "description": "Small to medium businesses regularly supplying scrap materials",
+      "color": "#3b82f6"
+    },
+    "industrial": {
+      "name": "Industrial Supplier",
+      "description": "Large industrial facilities and manufacturing companies",
+      "color": "#8b5cf6"
+    }
+  },
+  "supplierStatuses": {
+    "active": {
+      "name": "Active",
+      "description": "Currently accepting materials from this supplier",
+      "color": "#10b981"
+    },
+    "inactive": {
+      "name": "Inactive",
+      "description": "Temporarily not accepting materials",
+      "color": "#6b7280"
+    },
+    "suspended": {
+      "name": "Suspended",
+      "description": "Supplier suspended due to quality or compliance issues",
+      "color": "#ef4444"
+    },
+    "pending_approval": {
+      "name": "Pending Approval",
+      "description": "New supplier awaiting approval",
+      "color": "#f59e0b"
+    }
+  }
+}

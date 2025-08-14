@@ -1,0 +1,62 @@
+/* Badge Styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Badge Variants */
+.badge-default {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.badge-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.badge-success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-outline {
+  background-color: transparent;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Company-specific badges */
+.badge-alramrami {
+  background-color: var(--alramrami-light);
+  color: var(--alramrami-primary);
+  border-color: var(--alramrami-primary);
+}
+
+.badge-pridemuscat {
+  background-color: var(--pridemuscat-light);
+  color: var(--pridemuscat-primary);
+  border-color: var(--pridemuscat-primary);
+}
+
+/* Hover effects */
+.badge:hover {
+  opacity: 0.8;
+}

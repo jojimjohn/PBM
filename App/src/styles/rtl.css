@@ -1,0 +1,359 @@
+/* RTL Support Styles */
+
+/* Base RTL styles */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl * {
+  text-align: inherit;
+}
+
+/* Header RTL adjustments */
+.rtl .header {
+  direction: rtl;
+}
+
+.rtl .header-content {
+  flex-direction: row-reverse;
+}
+
+.rtl .header-left {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rtl .header-right {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.rtl .company-info h1 {
+  text-align: right;
+}
+
+.rtl .company-info p {
+  text-align: right;
+}
+
+/* Navigation RTL adjustments */
+.rtl .nav-menu {
+  direction: rtl;
+}
+
+.rtl .nav-item {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+.rtl .nav-item:last-child {
+  margin-right: 0;
+}
+
+.rtl .nav-link {
+  text-align: right;
+}
+
+.rtl .nav-link svg {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+/* Profile dropdown RTL */
+.rtl .profile-dropdown {
+  right: auto;
+  left: 0;
+}
+
+.rtl .dropdown-item {
+  text-align: right;
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+.rtl .dropdown-item svg {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+/* Main content RTL */
+.rtl .main-content {
+  direction: rtl;
+}
+
+.rtl .page-title {
+  text-align: right;
+}
+
+/* Form RTL adjustments */
+.rtl .form-group label {
+  text-align: right;
+}
+
+.rtl .form-group input,
+.rtl .form-group select,
+.rtl .form-group textarea {
+  text-align: right;
+}
+
+.rtl .form-group input[type="number"] {
+  text-align: left; /* Keep numbers LTR */
+}
+
+.rtl .form-actions {
+  flex-direction: row-reverse;
+}
+
+/* Button RTL adjustments */
+.rtl .btn svg {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+.rtl .btn-group {
+  flex-direction: row-reverse;
+}
+
+/* Table RTL adjustments */
+.rtl table {
+  direction: rtl;
+}
+
+.rtl th,
+.rtl td {
+  text-align: right;
+}
+
+.rtl th:first-child,
+.rtl td:first-child {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.rtl th:last-child,
+.rtl td:last-child {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* Card RTL adjustments */
+.rtl .card-header {
+  text-align: right;
+}
+
+.rtl .card-actions {
+  flex-direction: row-reverse;
+}
+
+.rtl .card-actions .btn {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.rtl .card-actions .btn:last-child {
+  margin-right: 0;
+}
+
+/* Modal RTL adjustments */
+.rtl .modal-header {
+  text-align: right;
+}
+
+.rtl .modal-header .close-button {
+  left: 1rem;
+  right: auto;
+}
+
+.rtl .modal-footer {
+  flex-direction: row-reverse;
+}
+
+/* Search RTL adjustments */
+.rtl .search-input {
+  text-align: right;
+  padding-left: 1rem;
+  padding-right: 2.5rem;
+}
+
+.rtl .search-icon {
+  left: auto;
+  right: 0.75rem;
+}
+
+/* Grid RTL adjustments */
+.rtl .grid-row {
+  direction: rtl;
+}
+
+.rtl .grid-cell {
+  text-align: right;
+}
+
+.rtl .grid-cell:first-child {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.rtl .grid-cell:last-child {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* Dashboard RTL adjustments */
+.rtl .dashboard-stats {
+  direction: rtl;
+}
+
+.rtl .stat-card {
+  text-align: right;
+}
+
+.rtl .stat-icon {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+/* Contract RTL adjustments */
+.rtl .contract-terms {
+  text-align: right;
+}
+
+.rtl .contract-rate-info {
+  text-align: right;
+}
+
+/* Sales order RTL adjustments */
+.rtl .order-summary {
+  text-align: right;
+}
+
+.rtl .order-items-table {
+  direction: rtl;
+}
+
+.rtl .items-header,
+.rtl .item-row {
+  direction: rtl;
+}
+
+/* Settings RTL adjustments */
+.rtl .settings-section {
+  text-align: right;
+}
+
+.rtl .settings-group {
+  direction: rtl;
+}
+
+.rtl .settings-label {
+  text-align: right;
+}
+
+/* Responsive RTL adjustments */
+@media (max-width: 768px) {
+  .rtl .mobile-nav {
+    direction: rtl;
+  }
+  
+  .rtl .mobile-nav-item {
+    text-align: right;
+  }
+  
+  .rtl .mobile-menu-button {
+    left: 1rem;
+    right: auto;
+  }
+}
+
+/* Arabic font optimization */
+.rtl {
+  font-family: 'Segoe UI', 'Tahoma', 'Arial', 'Helvetica Neue', sans-serif;
+}
+
+/* Numbers should remain LTR in RTL context */
+.rtl .number,
+.rtl .amount,
+.rtl .quantity,
+.rtl .price,
+.rtl input[type="number"],
+.rtl .currency {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+
+/* Preserve LTR for specific content */
+.rtl .email,
+.rtl .url,
+.rtl .code {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+
+/* Fix icon positioning in RTL */
+.rtl .icon-left {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.rtl .icon-right {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+/* Loading spinner RTL */
+.rtl .loading-spinner {
+  direction: ltr; /* Keep spinner rotation consistent */
+}
+
+/* Notification positioning RTL */
+.rtl .notification {
+  right: auto;
+  left: 1rem;
+}
+
+.rtl .notification.top-right {
+  top: 1rem;
+  right: auto;
+  left: 1rem;
+}
+
+/* Tooltip RTL positioning */
+.rtl .tooltip {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl .tooltip-arrow {
+  transform: scaleX(-1);
+}
+
+/* Date picker RTL */
+.rtl .date-picker {
+  direction: ltr; /* Keep calendar layout LTR */
+}
+
+.rtl .date-input {
+  text-align: right;
+}
+
+/* Breadcrumb RTL */
+.rtl .breadcrumb {
+  direction: rtl;
+}
+
+.rtl .breadcrumb-separator {
+  transform: scaleX(-1);
+}
+
+/* Tab navigation RTL */
+.rtl .tab-nav {
+  direction: rtl;
+}
+
+.rtl .tab-item {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+.rtl .tab-item:last-child {
+  margin-right: 0;
+}

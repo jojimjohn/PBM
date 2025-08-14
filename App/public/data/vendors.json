@@ -1,0 +1,269 @@
+{
+  "vendors": {
+    "alramrami": [
+      {
+        "id": "vend_001",
+        "code": "AL-V001",
+        "name": "Gulf Oil Supplies LLC",
+        "type": "fuel_supplier",
+        "contactPerson": "Ahmed Al-Balushi",
+        "contact": {
+          "phone": "+968 2445 6789",
+          "email": "procurement@gulfoil.com",
+          "address": {
+            "street": "Industrial Estate, Plot 45",
+            "city": "Muscat",
+            "region": "Muscat Governorate", 
+            "country": "Oman"
+          }
+        },
+        "paymentTerms": 30,
+        "creditLimit": 25000,
+        "status": "active",
+        "materials": ["mat_001", "mat_002", "mat_003"],
+        "contractDetails": {
+          "contractId": "VEN-2025-001",
+          "startDate": "2025-01-01",
+          "endDate": "2025-12-31",
+          "status": "active",
+          "rates": {
+            "mat_001": {
+              "type": "fixed_rate",
+              "contractRate": 22.500,
+              "description": "Premium engine oil supply rate"
+            },
+            "mat_002": {
+              "type": "discount_percentage",
+              "discountPercentage": 5.0,
+              "description": "5% bulk discount on transformer oil"
+            }
+          }
+        },
+        "performance": {
+          "totalOrders": 24,
+          "totalValue": 156780.50,
+          "onTimeDeliveryRate": 0.92,
+          "qualityRating": 4.5,
+          "lastOrderDate": "2025-07-20T09:30:00Z"
+        },
+        "isActive": true,
+        "createdAt": "2024-12-01T08:00:00Z"
+      },
+      {
+        "id": "vend_002",
+        "code": "AL-V002", 
+        "name": "Oman Petroleum Trading",
+        "type": "fuel_supplier",
+        "contactPerson": "Khalid Al-Rashid",
+        "contact": {
+          "phone": "+968 2556 7890",
+          "email": "sales@omanpetro.com",
+          "address": {
+            "street": "Port Sultan Qaboos, Building 12",
+            "city": "Muscat",
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "paymentTerms": 15,
+        "creditLimit": 40000,
+        "status": "active",
+        "materials": ["mat_001", "mat_004", "mat_005"],
+        "contractDetails": {
+          "contractId": "VEN-2025-002",
+          "startDate": "2025-02-01",
+          "endDate": "2026-01-31",
+          "status": "active",
+          "rates": {
+            "mat_001": {
+              "type": "minimum_price_guarantee",
+              "contractRate": 23.000,
+              "description": "Maximum rate guarantee for engine oil"
+            },
+            "mat_004": {
+              "type": "fixed_rate",
+              "contractRate": 2.350,
+              "description": "Fixed rate for hydraulic oil"
+            }
+          }
+        },
+        "performance": {
+          "totalOrders": 18,
+          "totalValue": 98450.25,
+          "onTimeDeliveryRate": 0.89,
+          "qualityRating": 4.2,
+          "lastOrderDate": "2025-07-18T14:15:00Z"
+        },
+        "isActive": true,
+        "createdAt": "2025-01-15T10:00:00Z"
+      },
+      {
+        "id": "vend_003",
+        "code": "AL-V003",
+        "name": "Local Fuel Depot",
+        "type": "spot_supplier",
+        "contactPerson": "Fatima Al-Kindi",
+        "contact": {
+          "phone": "+968 9876 5432",
+          "email": "orders@localfuel.om",
+          "address": {
+            "street": "Industrial Road, Warehouse 23",
+            "city": "Sohar",
+            "region": "North Al Batinah Governorate",
+            "country": "Oman"
+          }
+        },
+        "paymentTerms": 7,
+        "creditLimit": 10000,
+        "status": "active",
+        "materials": ["mat_001", "mat_002", "mat_006"],
+        "performance": {
+          "totalOrders": 12,
+          "totalValue": 34560.75,
+          "onTimeDeliveryRate": 0.83,
+          "qualityRating": 3.8,
+          "lastOrderDate": "2025-07-15T11:20:00Z"
+        },
+        "isActive": true,
+        "createdAt": "2025-03-10T12:00:00Z"
+      }
+    ],
+    "pridemuscat": [
+      {
+        "id": "vend_101",
+        "code": "PM-V001",
+        "name": "Metal Recovery Industries",
+        "type": "scrap_supplier",
+        "contactPerson": "Omar Al-Hinai",
+        "contact": {
+          "phone": "+968 2667 8901",
+          "email": "collection@metalrecovery.om", 
+          "address": {
+            "street": "Industrial Zone, Block C",
+            "city": "Nizwa",
+            "region": "Ad Dakhiliyah Governorate",
+            "country": "Oman"
+          }
+        },
+        "paymentTerms": 15,
+        "creditLimit": 15000,
+        "status": "active",
+        "materials": ["mat_101", "mat_102", "mat_103"],
+        "contractDetails": {
+          "contractId": "VEN-PM-2025-001",
+          "startDate": "2025-01-01",
+          "endDate": "2025-12-31",
+          "status": "active",
+          "rates": {
+            "mat_101": {
+              "type": "fixed_rate",
+              "contractRate": 0.115,
+              "description": "Iron scrap collection rate per KG"
+            },
+            "mat_102": {
+              "type": "discount_percentage",
+              "discountPercentage": 3.0,
+              "description": "3% premium above market rate for aluminum"
+            }
+          }
+        },
+        "performance": {
+          "totalOrders": 36,
+          "totalValue": 87650.30,
+          "onTimeDeliveryRate": 0.94,
+          "qualityRating": 4.6,
+          "lastOrderDate": "2025-07-22T08:45:00Z"
+        },
+        "isActive": true,
+        "createdAt": "2024-11-15T09:00:00Z"
+      },
+      {
+        "id": "vend_102",
+        "code": "PM-V002",
+        "name": "Scrap Collection Services",
+        "type": "collection_service",
+        "contactPerson": "Saeed Al-Maskari",
+        "contact": {
+          "phone": "+968 9988 7766",
+          "email": "logistics@scrapcollect.om",
+          "address": {
+            "street": "Transport Hub, Gate 7",
+            "city": "Seeb",
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "paymentTerms": 30,
+        "creditLimit": 8000,
+        "status": "active",
+        "materials": ["mat_101", "mat_103", "mat_104"],
+        "performance": {
+          "totalOrders": 28,
+          "totalValue": 45320.80,
+          "onTimeDeliveryRate": 0.86,
+          "qualityRating": 4.1,
+          "lastOrderDate": "2025-07-19T16:30:00Z"
+        },
+        "isActive": true,
+        "createdAt": "2025-02-20T14:00:00Z"
+      }
+    ]
+  },
+  "vendorTypes": {
+    "fuel_supplier": {
+      "name": "Fuel Supplier",
+      "description": "Primary suppliers of petroleum products and oils",
+      "defaultPaymentTerms": 30,
+      "requiresContract": true
+    },
+    "spot_supplier": {
+      "name": "Spot Supplier", 
+      "description": "Suppliers for immediate/spot purchases",
+      "defaultPaymentTerms": 7,
+      "requiresContract": false
+    },
+    "scrap_supplier": {
+      "name": "Scrap Supplier",
+      "description": "Suppliers of metal scrap and recyclable materials",
+      "defaultPaymentTerms": 15,
+      "requiresContract": true
+    },
+    "collection_service": {
+      "name": "Collection Service",
+      "description": "Services that collect scrap materials from locations",
+      "defaultPaymentTerms": 30,
+      "requiresContract": false
+    }
+  },
+  "paymentTerms": {
+    "7": "7 Days",
+    "15": "15 Days",
+    "30": "30 Days",
+    "45": "45 Days",
+    "60": "60 Days",
+    "cash_on_delivery": "Cash on Delivery",
+    "advance_payment": "Advance Payment"
+  },
+  "vendorStatuses": {
+    "active": {
+      "name": "Active",
+      "color": "#10b981",
+      "description": "Vendor is currently active and available for orders"
+    },
+    "inactive": {
+      "name": "Inactive", 
+      "color": "#6b7280",
+      "description": "Vendor is temporarily inactive"
+    },
+    "suspended": {
+      "name": "Suspended",
+      "color": "#f59e0b",
+      "description": "Vendor is suspended due to performance issues"
+    },
+    "blacklisted": {
+      "name": "Blacklisted",
+      "color": "#ef4444",
+      "description": "Vendor is blacklisted and cannot be used"
+    }
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "customers": {
+    "alramrami": [
+      {
+        "id": "cust_001",
+        "code": "AL-001",
+        "name": "ABC Manufacturing LLC",
+        "type": "contract",
+        "contactPerson": "Ahmed Al-Balushi",
+        "contact": {
+          "phone": "+968 1234 5678",
+          "email": "procurement@abc-manufacturing.com",
+          "address": {
+            "street": "Industrial Area, Plot 23",
+            "city": "Muscat", 
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "contractDetails": {
+          "contractId": "CON-2025-001",
+          "startDate": "2025-01-01",
+          "endDate": "2025-12-31",
+          "status": "active",
+          "specialTerms": "Negotiated rates locked until contract expiry. Fixed rates for engine oils, discount percentage for lubricants.",
+          "rates": {
+            "mat_001": {
+              "type": "fixed_rate",
+              "contractRate": 24.000,
+              "startDate": "2025-01-01",
+              "endDate": "2025-12-31",
+              "status": "active",
+              "description": "Fixed negotiated rate - active until Dec 2025"
+            },
+            "mat_002": {
+              "type": "discount_percentage",
+              "discountPercentage": 8.5,
+              "startDate": "2024-06-01",
+              "endDate": "2024-12-31",
+              "status": "expired",
+              "description": "8.5% discount - EXPIRED, pending renewal"
+            },
+            "mat_004": {
+              "type": "minimum_price_guarantee",
+              "contractRate": 2.500,
+              "startDate": "2025-03-01",
+              "endDate": "2025-09-30",
+              "status": "active",
+              "description": "Price guarantee - active until Sep 2025"
+            }
+          }
+        },
+        "creditLimit": 15000,
+        "paymentTerms": 30,
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2025-01-15T10:00:00Z",
+        "lastTransaction": "2025-07-20T14:30:00Z",
+        "salesHistory": {
+          "totalOrders": 18,
+          "totalValue": 34567.80,
+          "lastOrderDate": "2025-07-20T14:30:00Z"
+        }
+      },
+      {
+        "id": "cust_002", 
+        "code": "AL-002",
+        "name": "XYZ Power Plant",
+        "type": "project",
+        "contact": {
+          "phone": "+968 2234 5678",
+          "email": "maintenance@xyz-power.com",
+          "address": "Sohar Industrial Port, Sohar, Oman"
+        },
+        "contractDetails": {
+          "contractId": "CON-2025-002",
+          "startDate": "2025-02-01",
+          "endDate": "2026-01-31",
+          "status": "active",
+          "specialTerms": "Project-based contract with volume discounts and fixed rates for critical materials.",
+          "rates": {
+            "mat_004": {
+              "type": "fixed_rate",
+              "contractRate": 2.400,
+              "startDate": "2025-02-01",
+              "endDate": "2026-01-31",
+              "status": "active",
+              "description": "Fixed rate for hydraulic oil - active until Jan 2026"
+            },
+            "mat_005": {
+              "type": "discount_percentage",
+              "discountPercentage": 12.0,
+              "startDate": "2024-02-01",
+              "endDate": "2024-07-31",
+              "status": "expired",
+              "description": "12% bulk discount - EXPIRED, renewal in progress"
+            }
+          }
+        },
+        "isActive": true,
+        "createdAt": "2025-02-10T09:00:00Z",
+        "lastTransaction": "2025-07-18T11:15:00Z"
+      },
+      {
+        "id": "cust_003",
+        "code": "AL-003", 
+        "name": "Walk-in Customer #1",
+        "type": "walk_in",
+        "contact": {
+          "phone": "+968 9876 5432",
+          "email": null,
+          "address": "Muscat"
+        },
+        "isActive": true,
+        "createdAt": "2025-07-22T16:45:00Z",
+        "lastTransaction": "2025-07-22T16:45:00Z"
+      },
+      {
+        "id": "cust_004",
+        "code": "AL-004",
+        "name": "Gulf Logistics Ltd",
+        "type": "contract",
+        "contactPerson": "Fatima Al-Kindi",
+        "contact": {
+          "phone": "+968 3344 5566",
+          "email": "procurement@gulf-logistics.com",
+          "address": {
+            "street": "Port Sultan Qaboos, Building 15",
+            "city": "Muscat",
+            "region": "Muscat Governorate",
+            "country": "Oman"
+          }
+        },
+        "contractDetails": {
+          "contractId": "CON-2024-003",
+          "startDate": "2024-01-01",
+          "endDate": "2024-12-31",
+          "status": "expired",
+          "specialTerms": "Contract expired - standard rates apply. Renewal pending.",
+          "rates": {
+            "mat_001": {
+              "type": "fixed_rate",
+              "contractRate": 23.500,
+              "description": "Expired fixed rate - was OMR 23.500"
+            },
+            "mat_003": {
+              "type": "discount_percentage",
+              "discountPercentage": 15.0,
+              "description": "Expired 15% discount rate"
+            }
+          }
+        },
+        "creditLimit": 8000,
+        "paymentTerms": 15,
+        "status": "active",
+        "isActive": true,
+        "createdAt": "2024-01-01T08:00:00Z",
+        "lastTransaction": "2025-07-15T09:30:00Z",
+        "salesHistory": {
+          "totalOrders": 24,
+          "totalValue": 45672.30,
+          "lastOrderDate": "2025-07-15T09:30:00Z"
+        }
+      }
+    ],
+    "pridemuscat": [
+      {
+        "id": "cust_101",
+        "code": "PM-001", 
+        "name": "Metal Recycling Co",
+        "type": "contract",
+        "contact": {
+          "phone": "+968 3334 5678",
+          "email": "purchase@metalrecycling.com",
+          "address": "Ruwi Industrial Area, Muscat, Oman"
+        },
+        "contractDetails": {
+          "contractId": "CON-2025-PM-001",
+          "startDate": "2025-03-01",
+          "endDate": "2026-02-28", 
+          "status": "active",
+          "specialTerms": "Long-term scrap material supply contract with guaranteed minimum prices and volume discounts.",
+          "rates": {
+            "mat_101": {
+              "type": "minimum_price_guarantee",
+              "contractRate": 0.120,
+              "description": "Minimum price guarantee - customer gets higher of market or OMR 0.120"
+            },
+            "mat_102": {
+              "type": "fixed_rate",
+              "contractRate": 0.750,
+              "description": "Fixed rate for aluminum scrap"
+            },
+            "mat_103": {
+              "type": "discount_percentage",
+              "discountPercentage": 5.0,
+              "description": "5% premium discount on copper scrap"
+            }
+          }
+        },
+        "isActive": true,
+        "createdAt": "2025-03-01T10:00:00Z",
+        "lastTransaction": "2025-07-21T13:20:00Z"
+      },
+      {
+        "id": "cust_102",
+        "code": "PM-002",
+        "name": "Local Scrap Dealer",
+        "type": "walk_in",
+        "contact": {
+          "phone": "+968 7777 8888", 
+          "email": null,
+          "address": "Seeb"
+        },
+        "isActive": true,
+        "createdAt": "2025-06-15T14:30:00Z",
+        "lastTransaction": "2025-07-19T10:00:00Z"
+      }
+    ]
+  }
+}

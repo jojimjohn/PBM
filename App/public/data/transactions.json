@@ -1,0 +1,309 @@
+{
+  "purchases": {
+    "alramrami": [
+      {
+        "id": "PO-2025-001",
+        "orderNumber": "PO-2025-001",
+        "customerId": "cust_001",
+        "customerName": "ABC Manufacturing LLC",
+        "date": "2025-07-20T10:00:00Z",
+        "receivedBy": "user_002",
+        "status": "completed",
+        "items": [
+          {
+            "materialId": "mat_001",
+            "materialCode": "ENG_OIL_WITH_DRUM",
+            "quantity": 200,
+            "unit": "drums",
+            "costPerUnit": 22.000,
+            "totalCost": 4400.000
+          }
+        ],
+        "expenses": [
+          {
+            "type": "transportation",
+            "amount": 150.000,
+            "description": "Truck transport from supplier"
+          },
+          {
+            "type": "loading",
+            "amount": 50.000,
+            "description": "Loading charges"
+          }
+        ],
+        "totalMaterialCost": 4400.000,
+        "totalExpenses": 200.000,
+        "grandTotal": 4600.000,
+        "createdAt": "2025-07-20T10:00:00Z",
+        "updatedAt": "2025-07-20T15:30:00Z"
+      }
+    ],
+    "pridemuscat": [
+      {
+        "id": "PO-2025-PM-001", 
+        "orderNumber": "PO-2025-PM-001",
+        "customerId": "cust_101",
+        "customerName": "Metal Recycling Co",
+        "date": "2025-07-21T09:00:00Z",
+        "receivedBy": "user_003",
+        "status": "completed",
+        "items": [
+          {
+            "materialId": "mat_101",
+            "materialCode": "METAL_SCRAP_GENERAL",
+            "quantity": 5000,
+            "unit": "kilograms",
+            "costPerUnit": 0.100,
+            "totalCost": 500.000
+          }
+        ],
+        "expenses": [
+          {
+            "type": "transportation",
+            "amount": 25.000,
+            "description": "Collection truck"
+          }
+        ],
+        "totalMaterialCost": 500.000,
+        "totalExpenses": 25.000,
+        "grandTotal": 525.000,
+        "createdAt": "2025-07-21T09:00:00Z",
+        "updatedAt": "2025-07-21T10:00:00Z"
+      }
+    ]
+  },
+  "sales": {
+    "alramrami": [
+      {
+        "id": "SO-2025-001",
+        "orderNumber": "SO-2025-001", 
+        "customerId": "cust_001",
+        "customerName": "ABC Manufacturing LLC",
+        "customerType": "contract",
+        "date": "2025-07-22T14:00:00Z",
+        "salesPerson": "user_002",
+        "status": "completed",
+        "items": [
+          {
+            "materialId": "mat_001",
+            "materialCode": "ENG_OIL_WITH_DRUM",
+            "quantity": 50,
+            "unit": "drums",
+            "pricePerUnit": 24.000,
+            "totalPrice": 1200.000,
+            "costPerUnit": 22.500,
+            "profit": 75.000
+          }
+        ],
+        "expenses": [
+          {
+            "type": "delivery",
+            "amount": 30.000,
+            "description": "Delivery to customer site"
+          }
+        ],
+        "totalRevenue": 1200.000,
+        "totalCost": 1125.000,
+        "totalExpenses": 30.000,
+        "grossProfit": 75.000,
+        "netProfit": 45.000,
+        "invoiceNumber": "INV-2025-001",
+        "createdAt": "2025-07-22T14:00:00Z",
+        "updatedAt": "2025-07-22T16:00:00Z"
+      }
+    ],
+    "pridemuscat": []
+  },
+  "expenses": {
+    "alramrami": [
+      {
+        "id": "EXP-2025-001",
+        "type": "daily",
+        "category": "operational",
+        "amount": 45.000,
+        "description": "Office electricity bill",
+        "date": "2025-07-22T00:00:00Z",
+        "approvedBy": "user_002",
+        "status": "approved",
+        "createdAt": "2025-07-22T08:00:00Z"
+      },
+      {
+        "id": "EXP-2025-002",
+        "type": "daily",
+        "category": "staff",
+        "amount": 15.000,
+        "description": "Staff lunch allowance", 
+        "date": "2025-07-22T00:00:00Z",
+        "approvedBy": "user_002",
+        "status": "approved",
+        "createdAt": "2025-07-22T12:00:00Z"
+      }
+    ],
+    "pridemuscat": [
+      {
+        "id": "EXP-2025-PM-001",
+        "type": "daily",
+        "category": "operational",
+        "amount": 25.000, 
+        "description": "Warehouse rent",
+        "date": "2025-07-21T00:00:00Z",
+        "approvedBy": "user_003",
+        "status": "approved",
+        "createdAt": "2025-07-21T09:00:00Z"
+      }
+    ]
+  },
+  "pettyCash": {
+    "alramrami": [
+      {
+        "id": "PC-2025-001",
+        "type": "receipt",
+        "amount": 500.000,
+        "description": "Cash deposit to petty cash",
+        "date": "2025-07-20T09:00:00Z",
+        "handledBy": "user_002",
+        "voucherNumber": "PCR-001"
+      },
+      {
+        "id": "PC-2025-002",
+        "type": "payment",
+        "amount": 25.000,
+        "description": "Office supplies purchase",
+        "date": "2025-07-21T14:00:00Z",
+        "handledBy": "user_002",
+        "voucherNumber": "PCP-001",
+        "approvedBy": "user_002"
+      }
+    ],
+    "pridemuscat": []
+  },
+  "transactions": [
+    {
+      "id": "TXN_1753431600000_abc12",
+      "type": "sales",
+      "companyId": "alramrami",
+      "referenceId": "SO-2025-001",
+      "referenceType": "sales_order",
+      "date": "2025-07-24T14:30:00Z",
+      "description": "Sales to Al Maha Petroleum",
+      "grossAmount": 450.00,
+      "discountAmount": 0,
+      "netAmount": 450.00,
+      "customerId": "cust_001",
+      "customerName": "Al Maha Petroleum",
+      "customerType": "contract",
+      "items": [
+        {
+          "materialId": "mat_006",
+          "materialName": "Diesel",
+          "quantity": 1000,
+          "unit": "L",
+          "rate": 0.450,
+          "amount": 450.00
+        }
+      ],
+      "status": "recorded",
+      "createdAt": "2025-07-24T14:30:00Z",
+      "createdBy": "system"
+    },
+    {
+      "id": "TXN_1753431500000_def34",
+      "type": "purchase",
+      "companyId": "alramrami",
+      "referenceId": "PO-2025-155",
+      "referenceType": "purchase_order",
+      "date": "2025-07-23T10:15:00Z",
+      "description": "Purchase from Oman Oil Company",
+      "grossAmount": 760.00,
+      "discountAmount": 0,
+      "netAmount": 760.00,
+      "supplierId": "supp_002",
+      "supplierName": "Oman Oil Company",
+      "items": [
+        {
+          "materialId": "mat_006",
+          "materialName": "Diesel",
+          "quantity": 2000,
+          "unit": "L",
+          "cost": 0.380,
+          "amount": 760.00
+        }
+      ],
+      "status": "recorded",
+      "createdAt": "2025-07-23T10:15:00Z",
+      "createdBy": "system"
+    },
+    {
+      "id": "TXN_1753431400000_ghi56",
+      "type": "expense",
+      "companyId": "alramrami",
+      "referenceId": "EXP-2025-045",
+      "referenceType": "expense",
+      "date": "2025-07-22T16:45:00Z",
+      "description": "Fuel delivery transportation cost",
+      "grossAmount": 25.00,
+      "discountAmount": 0,
+      "netAmount": 25.00,
+      "category": "Transportation",
+      "expenseType": "operational",
+      "status": "recorded",
+      "createdAt": "2025-07-22T16:45:00Z",
+      "createdBy": "system"
+    },
+    {
+      "id": "TXN_1753431300000_jkl78",
+      "type": "sales",
+      "companyId": "pridemuscat",
+      "referenceId": "SO-2025-002",
+      "referenceType": "sales_order",
+      "date": "2025-07-21T11:20:00Z",
+      "description": "Sales to Gulf Recycling LLC",
+      "grossAmount": 850.00,
+      "discountAmount": 50.00,
+      "netAmount": 800.00,
+      "customerId": "cust_003",
+      "customerName": "Gulf Recycling LLC",
+      "customerType": "walk-in",
+      "items": [
+        {
+          "materialId": "scrap_001",
+          "materialName": "Steel Scrap",
+          "quantity": 500,
+          "unit": "kg",
+          "rate": 1.70,
+          "amount": 850.00
+        }
+      ],
+      "status": "recorded",
+      "createdAt": "2025-07-21T11:20:00Z",
+      "createdBy": "system"
+    },
+    {
+      "id": "TXN_1753431200000_mno90",
+      "type": "purchase",
+      "companyId": "pridemuscat",
+      "referenceId": "PO-2025-156",
+      "referenceType": "purchase_order",
+      "date": "2025-07-20T09:30:00Z",
+      "description": "Purchase from Local Scrap Collector",
+      "grossAmount": 400.00,
+      "discountAmount": 0,
+      "netAmount": 400.00,
+      "supplierId": "supp_003",
+      "supplierName": "Local Scrap Collector",
+      "items": [
+        {
+          "materialId": "scrap_001",
+          "materialName": "Steel Scrap",
+          "quantity": 500,
+          "unit": "kg",
+          "cost": 0.80,
+          "amount": 400.00
+        }
+      ],
+      "status": "recorded",
+      "createdAt": "2025-07-20T09:30:00Z",
+      "createdBy": "system"
+    }
+  ]
+}

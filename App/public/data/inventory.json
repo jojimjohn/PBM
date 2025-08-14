@@ -1,0 +1,94 @@
+{
+  "inventory": {
+    "alramrami": [
+      {
+        "materialId": "mat_001",
+        "materialCode": "ENG_OIL_WITH_DRUM",
+        "currentStock": 150,
+        "unit": "drums",
+        "reorderLevel": 50,
+        "maxStock": 500,
+        "averageCost": 22.500,
+        "totalValue": 3375.000,
+        "lastUpdated": "2025-07-22T15:30:00Z",
+        "movements": [
+          {
+            "id": "mov_001",
+            "type": "in",
+            "quantity": 200,
+            "reference": "PO-2025-001", 
+            "date": "2025-07-20T10:00:00Z",
+            "cost": 22.000
+          },
+          {
+            "id": "mov_002",
+            "type": "out",
+            "quantity": 50,
+            "reference": "SO-2025-001",
+            "date": "2025-07-22T14:00:00Z",
+            "cost": 22.500
+          }
+        ]
+      },
+      {
+        "materialId": "mat_002",
+        "materialCode": "ENG_OIL_NO_DRUM", 
+        "currentStock": 2500,
+        "unit": "liters",
+        "reorderLevel": 500,
+        "maxStock": 5000,
+        "averageCost": 1.100,
+        "totalValue": 2750.000,
+        "lastUpdated": "2025-07-21T11:15:00Z",
+        "movements": []
+      },
+      {
+        "materialId": "mat_003",
+        "materialCode": "EMPTY_DRUMS",
+        "currentStock": 85,
+        "unit": "pieces",
+        "reorderLevel": 20,
+        "maxStock": 200,
+        "averageCost": 4.500,
+        "totalValue": 382.500,
+        "lastUpdated": "2025-07-19T16:45:00Z",
+        "movements": []
+      }
+    ],
+    "pridemuscat": [
+      {
+        "materialId": "mat_101", 
+        "materialCode": "METAL_SCRAP_GENERAL",
+        "currentStock": 15500,
+        "unit": "kilograms",
+        "reorderLevel": 1000,
+        "maxStock": 50000,
+        "averageCost": 0.105,
+        "totalValue": 1627.500,
+        "lastUpdated": "2025-07-21T09:30:00Z",
+        "movements": [
+          {
+            "id": "mov_101",
+            "type": "in",
+            "quantity": 5000,
+            "reference": "PO-2025-PM-001",
+            "date": "2025-07-21T09:00:00Z",
+            "cost": 0.100
+          }
+        ]
+      },
+      {
+        "materialId": "mat_102",
+        "materialCode": "ALUMINUM_SCRAP",
+        "currentStock": 850,
+        "unit": "kilograms", 
+        "reorderLevel": 100,
+        "maxStock": 2000,
+        "averageCost": 0.720,
+        "totalValue": 612.000,
+        "lastUpdated": "2025-07-20T14:20:00Z",
+        "movements": []
+      }
+    ]
+  }
+}
