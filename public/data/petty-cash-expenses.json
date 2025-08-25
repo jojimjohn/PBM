@@ -1,0 +1,198 @@
+{
+  "expenses": {
+    "al_ramrami": [
+      {
+        "id": "exp_001",
+        "cardId": "pcc_001",
+        "expenseType": "fuel",
+        "amount": 85.500,
+        "description": "Fuel for delivery truck - Route to Sohar",
+        "merchant": "Shell Petrol Station",
+        "location": "Muscat, Al Khuwair",
+        "transactionDate": "2025-08-23T09:15:00Z",
+        "receiptPhoto": "/uploads/receipts/fuel_receipt_001.jpg",
+        "hasReceipt": true,
+        "status": "approved",
+        "approvedBy": "manager_001",
+        "approvedDate": "2025-08-23T10:30:00Z",
+        "staffMember": {
+          "id": "staff_001",
+          "name": "Ahmed Al Kindi"
+        },
+        "tags": ["fuel", "delivery", "sohar"],
+        "notes": "Regular delivery route fuel expense"
+      },
+      {
+        "id": "exp_002",
+        "cardId": "pcc_002",
+        "expenseType": "meals",
+        "amount": 45.000,
+        "description": "Client lunch meeting",
+        "merchant": "Al Bustan Restaurant",
+        "location": "Muscat, Qurum",
+        "transactionDate": "2025-08-23T13:30:00Z",
+        "receiptPhoto": "/uploads/receipts/meal_receipt_002.jpg",
+        "hasReceipt": true,
+        "status": "approved",
+        "approvedBy": "manager_001",
+        "approvedDate": "2025-08-23T15:45:00Z",
+        "staffMember": {
+          "id": "staff_002",
+          "name": "Fatima Al Zahra"
+        },
+        "tags": ["client", "lunch", "meeting"],
+        "notes": "Meeting with Al Maha Oil Trading representatives"
+      },
+      {
+        "id": "exp_003",
+        "cardId": "pcc_003",
+        "expenseType": "spare_parts",
+        "amount": 125.750,
+        "description": "Oil filter replacement for pump #3",
+        "merchant": "Auto Parts Center",
+        "location": "Muscat, Industrial Area",
+        "transactionDate": "2025-08-22T14:20:00Z",
+        "receiptPhoto": "/uploads/receipts/parts_receipt_003.jpg",
+        "hasReceipt": true,
+        "status": "approved",
+        "approvedBy": "manager_001",
+        "approvedDate": "2025-08-22T16:10:00Z",
+        "staffMember": {
+          "id": "staff_003",
+          "name": "Mohammed Al Busaidi"
+        },
+        "tags": ["maintenance", "pump", "filter"],
+        "notes": "Emergency replacement - pump performance improved"
+      },
+      {
+        "id": "exp_004",
+        "cardId": "pcc_001",
+        "expenseType": "office_supplies",
+        "amount": 35.250,
+        "description": "Printing supplies and stationery",
+        "merchant": "Office Plus",
+        "location": "Muscat, Bawshar",
+        "transactionDate": "2025-08-21T11:45:00Z",
+        "receiptPhoto": "/uploads/receipts/office_receipt_004.jpg",
+        "hasReceipt": true,
+        "status": "pending",
+        "approvedBy": null,
+        "approvedDate": null,
+        "staffMember": {
+          "id": "staff_001",
+          "name": "Ahmed Al Kindi"
+        },
+        "tags": ["office", "printing", "supplies"],
+        "notes": "Monthly office supply replenishment"
+      }
+    ],
+    "pride_muscat": [
+      {
+        "id": "exp_101",
+        "cardId": "pcc_101",
+        "expenseType": "fuel",
+        "amount": 95.000,
+        "description": "Collection truck fuel - Scrap collection route",
+        "merchant": "ADNOC Petrol Station",
+        "location": "Muscat, Seeb",
+        "transactionDate": "2025-08-23T08:30:00Z",
+        "receiptPhoto": "/uploads/receipts/fuel_receipt_101.jpg",
+        "hasReceipt": true,
+        "status": "approved",
+        "approvedBy": "manager_101",
+        "approvedDate": "2025-08-23T09:45:00Z",
+        "staffMember": {
+          "id": "staff_101",
+          "name": "Omar Al Rashid"
+        },
+        "tags": ["fuel", "collection", "truck"],
+        "notes": "Daily collection route covering Seeb and Bawshar areas"
+      },
+      {
+        "id": "exp_102",
+        "cardId": "pcc_102",
+        "expenseType": "tools",
+        "amount": 78.500,
+        "description": "Sorting tools and safety equipment",
+        "merchant": "Industrial Tools LLC",
+        "location": "Muscat, Ruwi",
+        "transactionDate": "2025-08-22T16:15:00Z",
+        "receiptPhoto": "/uploads/receipts/tools_receipt_102.jpg",
+        "hasReceipt": true,
+        "status": "approved",
+        "approvedBy": "manager_101",
+        "approvedDate": "2025-08-22T17:30:00Z",
+        "staffMember": {
+          "id": "staff_102",
+          "name": "Aisha Al Mamari"
+        },
+        "tags": ["tools", "safety", "sorting"],
+        "notes": "New sorting tools for improved efficiency"
+      },
+      {
+        "id": "exp_103",
+        "cardId": "pcc_101",
+        "expenseType": "collection_fees",
+        "amount": 25.000,
+        "description": "Small collection fee - Residential area",
+        "merchant": "Cash Payment",
+        "location": "Muscat, Al Khuwair",
+        "transactionDate": "2025-08-23T11:20:00Z",
+        "receiptPhoto": null,
+        "hasReceipt": false,
+        "status": "approved",
+        "approvedBy": "manager_101",
+        "approvedDate": "2025-08-23T12:00:00Z",
+        "staffMember": {
+          "id": "staff_101",
+          "name": "Omar Al Rashid"
+        },
+        "tags": ["collection", "residential", "fee"],
+        "notes": "Collection fee for small quantities from residential area"
+      }
+    ]
+  },
+  "expenseStats": {
+    "al_ramrami": {
+      "totalExpenses": 291.500,
+      "totalTransactions": 4,
+      "avgTransactionAmount": 72.875,
+      "expensesByType": {
+        "fuel": 85.500,
+        "meals": 45.000,
+        "spare_parts": 125.750,
+        "office_supplies": 35.250
+      },
+      "expensesByStatus": {
+        "approved": 256.250,
+        "pending": 35.250,
+        "rejected": 0
+      },
+      "monthlyTrend": [
+        { "month": "2025-06", "total": 1250.500 },
+        { "month": "2025-07", "total": 1435.750 },
+        { "month": "2025-08", "total": 1568.250 }
+      ]
+    },
+    "pride_muscat": {
+      "totalExpenses": 198.500,
+      "totalTransactions": 3,
+      "avgTransactionAmount": 66.167,
+      "expensesByType": {
+        "fuel": 95.000,
+        "tools": 78.500,
+        "collection_fees": 25.000
+      },
+      "expensesByStatus": {
+        "approved": 198.500,
+        "pending": 0,
+        "rejected": 0
+      },
+      "monthlyTrend": [
+        { "month": "2025-06", "total": 945.250 },
+        { "month": "2025-07", "total": 1123.500 },
+        { "month": "2025-08", "total": 1287.750 }
+      ]
+    }
+  }
+}

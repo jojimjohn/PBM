@@ -1,0 +1,225 @@
+{
+  "pettyCashCards": {
+    "al_ramrami": [
+      {
+        "id": "pcc_001",
+        "cardNumber": "PCC-ARM-001",
+        "cardName": "Operations Manager Card",
+        "assignedStaff": {
+          "id": "staff_001",
+          "name": "Ahmed Al Kindi",
+          "role": "Operations Manager",
+          "department": "Operations",
+          "phone": "+968 9123 4567",
+          "email": "ahmed.alkindi@alramrami.com"
+        },
+        "currentBalance": 5000.000,
+        "initialBalance": 5000.000,
+        "totalLoaded": 15000.000,
+        "totalSpent": 10000.000,
+        "status": "active",
+        "cardType": "monthly",
+        "monthlyLimit": 5000.000,
+        "dailyLimit": 500.000,
+        "allowedExpenseTypes": ["fuel", "maintenance", "office_supplies", "meals", "transportation"],
+        "createdDate": "2025-01-01T08:00:00Z",
+        "lastReloadDate": "2025-08-20T10:30:00Z",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "isBlocked": false,
+        "notes": "Primary operations card for daily expenses"
+      },
+      {
+        "id": "pcc_002",
+        "cardNumber": "PCC-ARM-002",
+        "cardName": "Sales Team Card",
+        "assignedStaff": {
+          "id": "staff_002",
+          "name": "Fatima Al Zahra",
+          "role": "Sales Executive",
+          "department": "Sales",
+          "phone": "+968 9876 5432",
+          "email": "fatima.alzahra@alramrami.com"
+        },
+        "currentBalance": 2500.000,
+        "initialBalance": 3000.000,
+        "totalLoaded": 9000.000,
+        "totalSpent": 6500.000,
+        "status": "active",
+        "cardType": "weekly",
+        "monthlyLimit": 3000.000,
+        "dailyLimit": 300.000,
+        "allowedExpenseTypes": ["fuel", "meals", "transportation", "client_entertainment"],
+        "createdDate": "2025-02-15T09:00:00Z",
+        "lastReloadDate": "2025-08-22T14:15:00Z",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "isBlocked": false,
+        "notes": "Sales team expenses and client meetings"
+      },
+      {
+        "id": "pcc_003",
+        "cardNumber": "PCC-ARM-003",
+        "cardName": "Maintenance Team Card",
+        "assignedStaff": {
+          "id": "staff_003",
+          "name": "Mohammed Al Busaidi",
+          "role": "Maintenance Supervisor",
+          "department": "Operations",
+          "phone": "+968 9555 7777",
+          "email": "mohammed.busaidi@alramrami.com"
+        },
+        "currentBalance": 1200.000,
+        "initialBalance": 2000.000,
+        "totalLoaded": 8000.000,
+        "totalSpent": 6800.000,
+        "status": "active",
+        "cardType": "monthly",
+        "monthlyLimit": 2000.000,
+        "dailyLimit": 200.000,
+        "allowedExpenseTypes": ["maintenance", "spare_parts", "tools", "fuel"],
+        "createdDate": "2025-03-01T07:30:00Z",
+        "lastReloadDate": "2025-08-18T16:45:00Z",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "isBlocked": false,
+        "notes": "Equipment maintenance and repairs"
+      }
+    ],
+    "pride_muscat": [
+      {
+        "id": "pcc_101",
+        "cardNumber": "PCC-PMI-001",
+        "cardName": "Collection Manager Card",
+        "assignedStaff": {
+          "id": "staff_101",
+          "name": "Omar Al Rashid",
+          "role": "Collection Manager",
+          "department": "Operations",
+          "phone": "+968 9333 2222",
+          "email": "omar.rashid@pridemuscat.com"
+        },
+        "currentBalance": 3500.000,
+        "initialBalance": 4000.000,
+        "totalLoaded": 12000.000,
+        "totalSpent": 8500.000,
+        "status": "active",
+        "cardType": "monthly",
+        "monthlyLimit": 4000.000,
+        "dailyLimit": 400.000,
+        "allowedExpenseTypes": ["fuel", "transportation", "collection_fees", "meals"],
+        "createdDate": "2025-01-15T08:30:00Z",
+        "lastReloadDate": "2025-08-21T11:20:00Z",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "isBlocked": false,
+        "notes": "Material collection operations"
+      },
+      {
+        "id": "pcc_102",
+        "cardNumber": "PCC-PMI-002",
+        "cardName": "Sorting Team Card",
+        "assignedStaff": {
+          "id": "staff_102",
+          "name": "Aisha Al Mamari",
+          "role": "Sorting Supervisor",
+          "department": "Processing",
+          "phone": "+968 9444 6666",
+          "email": "aisha.mamari@pridemuscat.com"
+        },
+        "currentBalance": 1800.000,
+        "initialBalance": 2500.000,
+        "totalLoaded": 7500.000,
+        "totalSpent": 5700.000,
+        "status": "active",
+        "cardType": "bi_weekly",
+        "monthlyLimit": 2500.000,
+        "dailyLimit": 250.000,
+        "allowedExpenseTypes": ["tools", "supplies", "maintenance", "meals"],
+        "createdDate": "2025-02-01T09:15:00Z",
+        "lastReloadDate": "2025-08-19T13:30:00Z",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "isBlocked": false,
+        "notes": "Material sorting and processing"
+      }
+    ]
+  },
+  "expenseTypes": [
+    {
+      "id": "fuel",
+      "name": "Fuel & Transportation",
+      "category": "transportation",
+      "requiresReceipt": true,
+      "maxAmount": 200.000,
+      "description": "Vehicle fuel, parking, tolls"
+    },
+    {
+      "id": "meals",
+      "name": "Meals & Refreshments",
+      "category": "food",
+      "requiresReceipt": true,
+      "maxAmount": 100.000,
+      "description": "Staff meals, refreshments, snacks"
+    },
+    {
+      "id": "maintenance",
+      "name": "Equipment Maintenance",
+      "category": "maintenance",
+      "requiresReceipt": true,
+      "maxAmount": 500.000,
+      "description": "Equipment repairs, maintenance"
+    },
+    {
+      "id": "office_supplies",
+      "name": "Office Supplies",
+      "category": "supplies",
+      "requiresReceipt": true,
+      "maxAmount": 150.000,
+      "description": "Stationery, printing, office items"
+    },
+    {
+      "id": "transportation",
+      "name": "Transportation",
+      "category": "transportation",
+      "requiresReceipt": true,
+      "maxAmount": 100.000,
+      "description": "Taxi, bus, ride-sharing"
+    },
+    {
+      "id": "client_entertainment",
+      "name": "Client Entertainment",
+      "category": "entertainment",
+      "requiresReceipt": true,
+      "maxAmount": 300.000,
+      "description": "Client meetings, entertainment"
+    },
+    {
+      "id": "tools",
+      "name": "Tools & Equipment",
+      "category": "equipment",
+      "requiresReceipt": true,
+      "maxAmount": 200.000,
+      "description": "Small tools, equipment"
+    },
+    {
+      "id": "spare_parts",
+      "name": "Spare Parts",
+      "category": "maintenance",
+      "requiresReceipt": true,
+      "maxAmount": 400.000,
+      "description": "Vehicle/equipment spare parts"
+    },
+    {
+      "id": "collection_fees",
+      "name": "Collection Fees",
+      "category": "operational",
+      "requiresReceipt": false,
+      "maxAmount": 50.000,
+      "description": "Small collection fees, tips"
+    },
+    {
+      "id": "supplies",
+      "name": "General Supplies",
+      "category": "supplies",
+      "requiresReceipt": true,
+      "maxAmount": 100.000,
+      "description": "General operational supplies"
+    }
+  ]
+}

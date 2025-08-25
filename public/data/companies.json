@@ -18,7 +18,7 @@
         "website": ""
       },
       "modules": {
-        "enabled": ["dashboard", "customers", "inventory", "sales", "purchase", "contracts", "wastage", "reports", "settings"],
+        "enabled": ["dashboard", "customers", "inventory", "sales", "purchase", "contracts", "wastage", "petty-cash", "reports", "settings"],
         "labels": {
           "customers": "Customers",
           "inventory": "Inventory", 
@@ -50,7 +50,7 @@
         "website": ""
       },
       "modules": {
-        "enabled": ["dashboard", "suppliers", "inventory", "sales", "purchase", "wastage", "reports", "settings"],
+        "enabled": ["dashboard", "suppliers", "inventory", "sales", "purchase", "wastage", "petty-cash", "reports", "settings"],
         "labels": {
           "suppliers": "Suppliers",
           "inventory": "Inventory"

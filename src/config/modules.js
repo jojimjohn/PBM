@@ -86,6 +86,15 @@ export const MODULE_PERMISSIONS = {
     delete: ['DELETE_WASTAGE'],
     approve: ['APPROVE_WASTAGE'],
     requiredPermissions: ['VIEW_WASTAGE']
+  },
+  'petty-cash': {
+    view: ['VIEW_PETTY_CASH'],
+    manage: ['MANAGE_PETTY_CASH'],
+    create: ['CREATE_EXPENSE'],
+    approve: ['APPROVE_EXPENSE'],
+    reload: ['RELOAD_CARD'],
+    reports: ['VIEW_EXPENSE_REPORTS'],
+    requiredPermissions: ['VIEW_PETTY_CASH']
   }
 }
 

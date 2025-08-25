@@ -19,6 +19,7 @@ import Sales from '../pages/Sales'
 import Purchase from '../pages/Purchase'
 import Settings from '../pages/Settings'
 import Wastage from '../pages/Wastage'
+import PettyCash from '../pages/PettyCash'
 
 const BusinessRouter = () => {
   const { selectedCompany } = useAuth()
@@ -36,6 +37,7 @@ const BusinessRouter = () => {
         <Route path="/sales" element={<Sales />} />
         <Route path="/purchase" element={<OilTradingPurchase />} />
         <Route path="/wastage" element={<Wastage />} />
+        <Route path="/petty-cash" element={<PettyCash />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
@@ -51,6 +53,7 @@ const BusinessRouter = () => {
         <Route path="/sales" element={<Sales />} />
         <Route path="/purchase" element={<Purchase />} />
         <Route path="/wastage" element={<Wastage />} />
+        <Route path="/petty-cash" element={<PettyCash />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
