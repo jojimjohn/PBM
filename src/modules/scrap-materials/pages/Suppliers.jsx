@@ -39,6 +39,8 @@ const ScrapMaterialsSuppliers = () => {
   const [supplierTypes, setSupplierTypes] = useState({})
   const [supplierStatuses, setSupplierStatuses] = useState({})
   const [materials, setMaterials] = useState([])
+  const [specializations, setSpecializations] = useState([])
+  const [collectionAreas, setCollectionAreas] = useState([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
@@ -51,6 +53,8 @@ const ScrapMaterialsSuppliers = () => {
   useEffect(() => {
     loadSuppliers()
     loadMaterials()
+    loadSpecializations()
+    loadCollectionAreas()
   }, [selectedCompany])
 
   const loadSuppliers = async () => {
@@ -78,6 +82,27 @@ const ScrapMaterialsSuppliers = () => {
       setMaterials(companyMaterials)
     } catch (error) {
       console.error('Error loading materials:', error)
+    }
+  }
+
+  const loadSpecializations = async () => {
+    try {
+      const response = await fetch('/data/scrap-specializations.json')
+      const data = await response.json()
+      console.log('Loaded specializations:', data.specializations)
+      setSpecializations(data.specializations)
+    } catch (error) {
+      console.error('Error loading specializations:', error)
+    }
+  }
+
+  const loadCollectionAreas = async () => {
+    try {
+      const response = await fetch('/data/collection-areas.json')
+      const data = await response.json()
+      setCollectionAreas(data.collectionAreas.filter(area => area.isActive))
+    } catch (error) {
+      console.error('Error loading collection areas:', error)
     }
   }
 
@@ -387,7 +412,10 @@ const ScrapMaterialsSuppliers = () => {
           <PermissionGate permission={PERMISSIONS.VIEW_SUPPLIERS}>
             <button 
               className="btn btn-outline btn-sm" 
-              onClick={() => handleViewSupplier(row)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleViewSupplier(row)
+              }}
               title={t('viewDetails')}
             >
               <Eye size={14} />
@@ -397,7 +425,10 @@ const ScrapMaterialsSuppliers = () => {
           <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
             <button 
               className="btn btn-outline btn-sm" 
-              onClick={() => handleEditSupplier(row)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEditSupplier(row)
+              }}
               title={t('edit')}
             >
               <Edit size={14} />
@@ -407,7 +438,10 @@ const ScrapMaterialsSuppliers = () => {
           <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
             <button 
               className="btn btn-outline btn-sm btn-danger" 
-              onClick={() => handleDeleteSupplier(row.id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeleteSupplier(row.id)
+              }}
               title={t('delete')}
             >
               <Trash2 size={14} />
@@ -520,8 +554,11 @@ const ScrapMaterialsSuppliers = () => {
           setFormData={setFormData}
           supplierTypes={supplierTypes}
           materials={materials}
+          specializations={specializations}
+          collectionAreas={collectionAreas}
           isEdit={false}
           loading={loading}
+          t={t}
         />
       )}
 
@@ -539,8 +576,11 @@ const ScrapMaterialsSuppliers = () => {
           setFormData={setFormData}
           supplierTypes={supplierTypes}
           materials={materials}
+          specializations={specializations}
+          collectionAreas={collectionAreas}
           isEdit={true}
           loading={loading}
+          t={t}
         />
       )}
 
@@ -552,11 +592,17 @@ const ScrapMaterialsSuppliers = () => {
             setShowViewModal(false)
             setSelectedSupplier(null)
           }}
+          onEdit={() => {
+            setShowEditForm(true)
+            setShowViewModal(false)
+            setFormData(initializeForm(selectedSupplier))
+          }}
           supplier={selectedSupplier}
           supplierTypes={supplierTypes}
           supplierStatuses={supplierStatuses}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
+          t={t}
         />
       )}
     </div>
@@ -572,9 +618,12 @@ const SupplierFormModal = ({
   formData, 
   setFormData, 
   supplierTypes, 
-  materials, 
+  materials,
+  specializations,
+  collectionAreas, 
   isEdit, 
-  loading 
+  loading,
+  t 
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -613,6 +662,7 @@ const SupplierFormModal = ({
 
   return (
     <Modal 
+      isOpen={isOpen}
       title={title} 
       onClose={onClose}
       className="modal-xl"
@@ -777,32 +827,38 @@ const SupplierFormModal = ({
           
           <div className="form-grid">
             <div className="form-group">
-              <label>Specialization</label>
-              <div className="checkbox-group">
-                {['copper', 'aluminum', 'steel', 'iron', 'brass', 'electronics', 'precious_metals', 'cables'].map(spec => (
-                  <label key={spec} className="checkbox-item">
+              <label>{t('specialization', 'Specialization')}</label>
+              <div className="checkbox-grid">
+                {specializations.map(spec => (
+                  <label key={spec.id} className="checkbox-card">
                     <input
                       type="checkbox"
-                      checked={(formData.specialization || []).includes(spec)}
-                      onChange={() => handleSpecializationChange(spec)}
+                      checked={(formData.specialization || []).includes(spec.id)}
+                      onChange={() => handleSpecializationChange(spec.id)}
                     />
-                    <span>{spec.replace('_', ' ').toUpperCase()}</span>
+                    <div className="checkbox-content">
+                      <span className="checkbox-title">{spec.name}</span>
+                      <span className="checkbox-description">{spec.description}</span>
+                    </div>
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="form-group">
-              <label>Collection Areas</label>
-              <div className="checkbox-group">
-                {['Muscat', 'Bawshar', 'Ruwi', 'Mutrah', 'Seeb', 'Al Khuwair', 'Sohar'].map(area => (
-                  <label key={area} className="checkbox-item">
+              <label>{t('collectionAreas', 'Collection Areas')}</label>
+              <div className="checkbox-grid">
+                {collectionAreas.map(area => (
+                  <label key={area.id} className="checkbox-card">
                     <input
                       type="checkbox"
-                      checked={(formData.collectionAreas || []).includes(area)}
-                      onChange={() => handleCollectionAreaChange(area)}
+                      checked={(formData.collectionAreas || []).includes(area.id)}
+                      onChange={() => handleCollectionAreaChange(area.id)}
                     />
-                    <span>{area}</span>
+                    <div className="checkbox-content">
+                      <span className="checkbox-title">{area.name}</span>
+                      <span className="checkbox-description">{area.governorate}</span>
+                    </div>
                   </label>
                 ))}
               </div>
@@ -919,15 +975,18 @@ const SupplierFormModal = ({
 // Supplier View Modal Component
 const SupplierViewModal = ({ 
   isOpen, 
-  onClose, 
+  onClose,
+  onEdit, 
   supplier, 
   supplierTypes, 
   supplierStatuses, 
   formatCurrency, 
-  formatDate 
+  formatDate,
+  t 
 }) => {
   return (
     <Modal 
+      isOpen={isOpen}
       title={`${supplier.name} - Supplier Details`}
       onClose={onClose}
       className="modal-xl supplier-details-modal"
@@ -1198,7 +1257,7 @@ const SupplierViewModal = ({
             <button className="btn btn-outline" onClick={onClose}>
               Close
             </button>
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" onClick={onEdit}>
               <Edit size={16} />
               Edit Supplier
             </button>

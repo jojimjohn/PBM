@@ -42,6 +42,17 @@
   margin-bottom: 16px;
 }
 
+/* Loading Suppliers */
+.loading-suppliers {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

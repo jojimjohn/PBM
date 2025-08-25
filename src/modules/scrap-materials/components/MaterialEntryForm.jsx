@@ -31,7 +31,6 @@ const MaterialEntryForm = ({
     materialId: '',
     materialCode: '',
     materialCategory: '',
-    transactionType: 'collected',
     sourceDetails: {
       type: 'walk_in',
       name: '',
@@ -51,21 +50,15 @@ const MaterialEntryForm = ({
   const [errors, setErrors] = useState({})
   const [selectedMaterial, setSelectedMaterial] = useState(null)
   const [serialNumberInput, setSerialNumberInput] = useState('')
+  const [suppliers, setSuppliers] = useState([])
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false)
 
-  // Transaction types
-  const transactionTypes = [
-    { value: 'collected', label: t('collected', 'Collected'), icon: Package },
-    { value: 'purchased', label: t('purchased', 'Purchased'), icon: Truck },
-    { value: 'supplied', label: t('supplied', 'Supplied'), icon: Users },
-    { value: 'walk_in', label: t('walkIn', 'Walk-in'), icon: MapPin }
-  ]
-
-  // Source types
+  // Source types (also used as transaction types)
   const sourceTypes = [
-    { value: 'walk_in', label: t('walkInCustomer', 'Walk-in Customer') },
-    { value: 'customer', label: t('registeredCustomer', 'Registered Customer') },
+    { value: 'walk_in', label: t('walkIn', 'Walk-in') },
+    { value: 'customer', label: t('customer', 'Customer') },
     { value: 'supplier', label: t('supplier', 'Supplier') },
-    { value: 'collection_point', label: t('collectionPoint', 'Collection Point') }
+    { value: 'collected', label: t('collected', 'Collected') }
   ]
 
   // Condition options for tyres
@@ -74,17 +67,64 @@ const MaterialEntryForm = ({
     { value: 'bad', label: t('badCondition', 'Bad (Scrap Only)'), class: 'danger' }
   ]
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        ...initialData,
-        dateOfEntry: initialData.dateOfEntry?.split('T')[0] || new Date().toISOString().split('T')[0]
-      })
-      
-      const material = availableMaterials.find(m => m.id === initialData.materialId)
-      setSelectedMaterial(material)
+  // Load suppliers when modal opens or source type changes to 'supplier'
+  const loadSuppliers = async () => {
+    try {
+      setLoadingSuppliers(true)
+      const response = await fetch('/data/suppliers.json')
+      const data = await response.json()
+      const companySuppliers = data.suppliers[selectedCompany?.id] || []
+      setSuppliers(companySuppliers)
+    } catch (error) {
+      console.error('Error loading suppliers:', error)
+    } finally {
+      setLoadingSuppliers(false)
     }
-  }, [initialData, availableMaterials])
+  }
+
+  useEffect(() => {
+    if (isOpen && formData.sourceDetails.type === 'supplier') {
+      loadSuppliers()
+    }
+  }, [isOpen, formData.sourceDetails.type, selectedCompany?.id])
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          ...initialData,
+          dateOfEntry: initialData.dateOfEntry?.split('T')[0] || new Date().toISOString().split('T')[0]
+        })
+        
+        const material = availableMaterials.find(m => m.id === initialData.materialId)
+        setSelectedMaterial(material)
+      } else {
+        // Reset form when opening for new entry
+        setFormData({
+          materialId: '',
+          materialCode: '',
+          materialCategory: '',
+          sourceDetails: {
+            type: 'walk_in',
+            name: '',
+            id: '',
+            contact: ''
+          },
+          quantity: '',
+          unit: '',
+          costPerUnit: '',
+          dateOfEntry: new Date().toISOString().split('T')[0],
+          photos: [],
+          condition: '',
+          serialNumbers: [],
+          notes: ''
+        })
+        setSelectedMaterial(null)
+        setErrors({})
+        setSerialNumberInput('')
+      }
+    }
+  }, [initialData, availableMaterials, isOpen])
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -106,6 +146,40 @@ const MaterialEntryForm = ({
         [field]: value
       }
     }))
+    
+    // Load suppliers when type changes to 'supplier'
+    if (field === 'type' && value === 'supplier') {
+      loadSuppliers()
+    }
+  }
+
+  const handleSupplierSelection = (supplierId) => {
+    const supplier = suppliers.find(s => s.id === supplierId)
+    if (supplier) {
+      setFormData(prev => ({
+        ...prev,
+        sourceDetails: {
+          type: 'supplier',
+          name: supplier.name,
+          id: supplier.id,
+          contact: supplier.contact?.phone || supplier.contact?.email || ''
+        }
+      }))
+      // Clear any existing source name errors
+      if (errors.sourceName) {
+        setErrors(prev => ({ ...prev, sourceName: '' }))
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        sourceDetails: {
+          ...prev.sourceDetails,
+          name: '',
+          id: '',
+          contact: ''
+        }
+      }))
+    }
   }
 
   const handleMaterialChange = (materialId) => {
@@ -148,7 +222,7 @@ const MaterialEntryForm = ({
     const newErrors = {}
 
     if (!formData.materialId) newErrors.materialId = t('materialRequired', 'Material selection is required')
-    if (!formData.transactionType) newErrors.transactionType = t('transactionTypeRequired', 'Transaction type is required')
+    if (!formData.sourceDetails.type) newErrors.sourceType = t('sourceTypeRequired', 'Source type is required')
     if (!formData.sourceDetails.name.trim()) newErrors.sourceName = t('sourceNameRequired', 'Source name is required')
     if (!formData.quantity || formData.quantity <= 0) newErrors.quantity = t('quantityRequired', 'Valid quantity is required')
     if (!formData.costPerUnit || formData.costPerUnit < 0) newErrors.costPerUnit = t('costRequired', 'Valid cost is required')
@@ -173,6 +247,7 @@ const MaterialEntryForm = ({
     const materialData = {
       id: initialData?.id || `mat_entry_${Date.now()}`,
       ...formData,
+      transactionType: formData.sourceDetails.type, // Use source type as transaction type
       quantity: parseFloat(formData.quantity),
       costPerUnit: parseFloat(formData.costPerUnit),
       totalValue: parseFloat(formData.quantity) * parseFloat(formData.costPerUnit),
@@ -255,35 +330,6 @@ const MaterialEntryForm = ({
           )}
         </div>
 
-        {/* Transaction Details */}
-        <div className="form-section">
-          <h3 className="section-title">
-            <Truck size={20} />
-            {t('transactionDetails', 'Transaction Details')}
-          </h3>
-          
-          <div className="transaction-type-grid">
-            {transactionTypes.map(type => {
-              const Icon = type.icon
-              return (
-                <label key={type.value} className={`transaction-type-option ${formData.transactionType === type.value ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="transactionType"
-                    value={type.value}
-                    checked={formData.transactionType === type.value}
-                    onChange={(e) => handleInputChange('transactionType', e.target.value)}
-                  />
-                  <div className="transaction-content">
-                    <Icon size={20} />
-                    <span>{type.label}</span>
-                  </div>
-                </label>
-              )
-            })}
-          </div>
-          {errors.transactionType && <span className="error-text">{errors.transactionType}</span>}
-        </div>
 
         {/* Source Details */}
         <div className="form-section">
@@ -307,17 +353,43 @@ const MaterialEntryForm = ({
               </select>
             </div>
             
-            <div className="form-group">
-              <label>{t('sourceName', 'Source Name')} *</label>
-              <input
-                type="text"
-                value={formData.sourceDetails.name}
-                onChange={(e) => handleSourceDetailsChange('name', e.target.value)}
-                placeholder={t('enterSourceName', 'Enter source name')}
-                className={errors.sourceName ? 'error' : ''}
-              />
-              {errors.sourceName && <span className="error-text">{errors.sourceName}</span>}
-            </div>
+            {/* Show supplier dropdown if source type is 'supplier' */}
+            {formData.sourceDetails.type === 'supplier' ? (
+              <div className="form-group">
+                <label>{t('selectSupplier', 'Select Supplier')} *</label>
+                {loadingSuppliers ? (
+                  <div className="loading-suppliers">
+                    <span>{t('loadingSuppliers', 'Loading suppliers...')}</span>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.sourceDetails.id}
+                    onChange={(e) => handleSupplierSelection(e.target.value)}
+                    className={errors.sourceName ? 'error' : ''}
+                  >
+                    <option value="">{t('selectSupplier', 'Select Supplier')}</option>
+                    {suppliers.map(supplier => (
+                      <option key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {errors.sourceName && <span className="error-text">{errors.sourceName}</span>}
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>{t('sourceName', 'Source Name')} *</label>
+                <input
+                  type="text"
+                  value={formData.sourceDetails.name}
+                  onChange={(e) => handleSourceDetailsChange('name', e.target.value)}
+                  placeholder={t('enterSourceName', 'Enter source name')}
+                  className={errors.sourceName ? 'error' : ''}
+                />
+                {errors.sourceName && <span className="error-text">{errors.sourceName}</span>}
+              </div>
+            )}
           </div>
           
           <div className="form-row">

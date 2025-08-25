@@ -77,8 +77,8 @@ const ScrapMaterialsInventory = () => {
   const getTransactionTypeInfo = (type) => {
     const types = {
       collected: { label: t('collected', 'Collected'), icon: Package, color: '#059669' },
-      purchased: { label: t('purchased', 'Purchased'), icon: Truck, color: '#3b82f6' },
-      supplied: { label: t('supplied', 'Supplied'), icon: User, color: '#8b5cf6' },
+      customer: { label: t('customer', 'Customer'), icon: User, color: '#3b82f6' },
+      supplier: { label: t('supplier', 'Supplier'), icon: Truck, color: '#8b5cf6' },
       walk_in: { label: t('walkIn', 'Walk-in'), icon: MapPin, color: '#f59e0b' }
     }
     return types[type] || { label: type, icon: Package, color: '#6b7280' }
@@ -351,7 +351,7 @@ const ScrapMaterialsInventory = () => {
         <div className="header-actions">
           {hasPermission('MANAGE_INVENTORY') && (
             <button
-              className="btn-primary add-material-btn"
+              className="btn btn-primary add-material-btn"
               onClick={() => {
                 setEditingEntry(null)
                 setShowMaterialForm(true)
@@ -438,8 +438,8 @@ const ScrapMaterialsInventory = () => {
           >
             <option value="all">{t('allTypes', 'All Types')}</option>
             <option value="collected">{t('collected', 'Collected')}</option>
-            <option value="purchased">{t('purchased', 'Purchased')}</option>
-            <option value="supplied">{t('supplied', 'Supplied')}</option>
+            <option value="customer">{t('customer', 'Customer')}</option>
+            <option value="supplier">{t('supplier', 'Supplier')}</option>
             <option value="walk_in">{t('walkIn', 'Walk-in')}</option>
           </select>
         </div>

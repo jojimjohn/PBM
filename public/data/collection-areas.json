@@ -1,0 +1,104 @@
+{
+  "collectionAreas": [
+    {
+      "id": "muscat",
+      "name": "Muscat",
+      "governorate": "Muscat",
+      "isActive": true,
+      "coordinates": {
+        "lat": 23.5880,
+        "lng": 58.3829
+      }
+    },
+    {
+      "id": "bawshar",
+      "name": "Bawshar",
+      "governorate": "Muscat",
+      "isActive": true,
+      "coordinates": {
+        "lat": 23.5777,
+        "lng": 58.3915
+      }
+    },
+    {
+      "id": "ruwi",
+      "name": "Ruwi",
+      "governorate": "Muscat",
+      "isActive": true,
+      "coordinates": {
+        "lat": 23.5966,
+        "lng": 58.5926
+      }
+    },
+    {
+      "id": "mutrah",
+      "name": "Mutrah",
+      "governorate": "Muscat",
+      "isActive": true,
+      "coordinates": {
+        "lat": 23.6142,
+        "lng": 58.5734
+      }
+    },
+    {
+      "id": "seeb",
+      "name": "Seeb",
+      "governorate": "Muscat",
+      "isActive": true,
+      "coordinates": {
+        "lat": 23.6700,
+        "lng": 58.1893
+      }
+    },
+    {
+      "id": "al_khuwair",
+      "name": "Al Khuwair",
+      "governorate": "Muscat",
+      "isActive": true,
+      "coordinates": {
+        "lat": 23.5937,
+        "lng": 58.4630
+      }
+    },
+    {
+      "id": "sohar",
+      "name": "Sohar",
+      "governorate": "Al Batinah North",
+      "isActive": true,
+      "coordinates": {
+        "lat": 24.3477,
+        "lng": 56.7531
+      }
+    },
+    {
+      "id": "nizwa",
+      "name": "Nizwa", 
+      "governorate": "Ad Dakhiliyah",
+      "isActive": true,
+      "coordinates": {
+        "lat": 22.9333,
+        "lng": 57.5333
+      }
+    },
+    {
+      "id": "sur",
+      "name": "Sur",
+      "governorate": "Ash Sharqiyah South",
+      "isActive": true,
+      "coordinates": {
+        "lat": 22.5667,
+        "lng": 59.5289
+      }
+    },
+    {
+      "id": "salalah",
+      "name": "Salalah",
+      "governorate": "Dhofar",
+      "isActive": true,
+      "coordinates": {
+        "lat": 17.0151,
+        "lng": 54.0924
+      }
+    }
+  ]
+}
