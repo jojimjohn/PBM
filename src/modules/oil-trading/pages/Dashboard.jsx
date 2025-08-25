@@ -263,7 +263,7 @@ const OilTradingDashboard = () => {
                   <p className="price-unit">per barrel</p>
                 </div>
                 <div className="price-value">
-                  <span className="current-price">$82.45</span>
+                  <span className="current-price">OMR 31.75</span>
                   <span className="price-change positive">+1.2%</span>
                 </div>
               </div>

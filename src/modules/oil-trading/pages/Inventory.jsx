@@ -5,7 +5,8 @@ import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import Modal from '../../../components/ui/Modal'
-import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, DollarSign } from 'lucide-react'
+import StockChart from '../../../components/StockChart'
+import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, DollarSign, BarChart3, Calendar } from 'lucide-react'
 import '../../../styles/theme.css'
 import './Inventory.css'
 
@@ -14,7 +15,7 @@ const Inventory = () => {
   const { t } = useLocalization()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
-  const [inventory, setInventory] = useState({})
+  const [inventory, setInventory] = useState([])
   const [materials, setMaterials] = useState([])
   const [vendors, setVendors] = useState([])
   const [stockMovements, setStockMovements] = useState([])
@@ -22,6 +23,8 @@ const Inventory = () => {
   const [showPurchaseForm, setShowPurchaseForm] = useState(false)
   const [showStockHistory, setShowStockHistory] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
+  const [showOpeningStockModal, setShowOpeningStockModal] = useState(false)
+  const [showCharts, setShowCharts] = useState(false)
 
   // Material categories based on PRD
   const materialCategories = {
@@ -86,8 +89,19 @@ const Inventory = () => {
 
   const loadInventoryData = async () => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      setLoading(true)
+      
+      // Load inventory data
+      const inventoryResponse = await fetch('/data/inventory.json')
+      const inventoryData = await inventoryResponse.json()
+      const companyInventory = inventoryData.inventory[selectedCompany?.id] || []
+      setInventory(companyInventory)
+      
+      // Load materials data
+      const materialsResponse = await fetch('/data/materials.json')
+      const materialsData = await materialsResponse.json()
+      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
+      setMaterials(companyMaterials)
       
       // Load vendor data
       try {
@@ -100,30 +114,18 @@ const Inventory = () => {
         setVendors([])
       }
       
-      setMaterials(sampleMaterials)
-      setInventory(sampleInventoryData)
-      setStockMovements(sampleMovements)
+      // Create alerts for low stock items
+      const lowStockItems = companyInventory.filter(item => 
+        item.currentStock <= item.reorderLevel
+      )
+      setAlerts(lowStockItems.map(item => ({
+        type: 'warning',
+        message: `Low stock alert: ${item.materialCode} (${item.currentStock} ${item.unit})`
+      })))
       
-      // Generate alerts for low stock items
-      const lowStockAlerts = Object.entries(sampleInventoryData)
-        .filter(([materialId, data]) => data.currentStock <= data.reorderLevel)
-        .map(([materialId, data]) => {
-          const material = sampleMaterials.find(m => m.id === materialId)
-          return {
-            id: materialId,
-            type: 'low_stock',
-            material: material.name,
-            currentStock: data.currentStock,
-            reorderLevel: data.reorderLevel,
-            unit: data.unit,
-            severity: data.currentStock < (data.reorderLevel * 0.5) ? 'critical' : 'warning'
-          }
-        })
-      
-      setAlerts(lowStockAlerts)
-      setLoading(false)
     } catch (error) {
       console.error('Error loading inventory data:', error)
+    } finally {
       setLoading(false)
     }
   }
@@ -214,13 +216,27 @@ const Inventory = () => {
           <p>Track stock levels, movements, and material status</p>
         </div>
         <div className="header-actions">
+          <button 
+            className="btn btn-outline"
+            onClick={() => setShowOpeningStockModal(true)}
+          >
+            <Calendar size={16} />
+            {t('setOpeningStock')}
+          </button>
+          <button 
+            className="btn btn-outline"
+            onClick={() => setShowCharts(!showCharts)}
+          >
+            <BarChart3 size={16} />
+            {showCharts ? t('hideCharts') : t('showCharts', 'Show Charts')}
+          </button>
           <button className="btn btn-outline">
             <TrendingUp size={16} />
-            Stock Report
+            {t('stockReport', 'Stock Report')}
           </button>
           <button className="btn btn-primary">
             <Plus size={16} />
-            Stock Adjustment
+            {t('stockAdjustment', 'Stock Adjustment')}
           </button>
         </div>
       </div>
@@ -258,6 +274,17 @@ const Inventory = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Charts Section */}
+      {showCharts && (
+        <div className="charts-section">
+          <StockChart 
+            inventoryData={inventory}
+            title={t('inventoryOverview', 'Inventory Overview')}
+            height={400}
+          />
         </div>
       )}
 
@@ -360,6 +387,9 @@ const Inventory = () => {
                 sortable: true,
                 filterable: true,
                 render: (value, row) => {
+                  if (!row.categoryInfo?.icon) {
+                    return <span>{value || 'N/A'}</span>
+                  }
                   const CategoryIcon = row.categoryInfo.icon
                   return (
                     <div className="category-badge">
@@ -490,6 +520,9 @@ const Inventory = () => {
                 sortable: true,
                 filterable: true,
                 render: (value, row) => {
+                  if (!row.categoryInfo?.icon) {
+                    return <span>{value || 'N/A'}</span>
+                  }
                   const CategoryIcon = row.categoryInfo.icon
                   return (
                     <div className="category-badge">
@@ -777,7 +810,172 @@ const Inventory = () => {
           </div>
         </Modal>
       )}
+
+      {/* Opening Stock Modal */}
+      {showOpeningStockModal && (
+        <OpeningStockModal
+          isOpen={showOpeningStockModal}
+          onClose={() => setShowOpeningStockModal(false)}
+          inventory={inventory}
+          setInventory={setInventory}
+          materials={materials}
+        />
+      )}
     </div>
+  )
+}
+
+// Opening Stock Modal Component
+const OpeningStockModal = ({ isOpen, onClose, inventory, setInventory, materials }) => {
+  const { t } = useLocalization()
+  const [selectedMaterial, setSelectedMaterial] = useState('')
+  const [openingStockData, setOpeningStockData] = useState({
+    quantity: '',
+    value: '',
+    date: new Date().toISOString().split('T')[0]
+  })
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    
+    if (!selectedMaterial) {
+      alert(t('pleaseSelect', 'Please select') + ' ' + t('material'))
+      return
+    }
+
+    // Update inventory with opening stock
+    const updatedInventory = inventory.map(item => {
+      if (item.materialId === selectedMaterial) {
+        return {
+          ...item,
+          openingStock: parseFloat(openingStockData.quantity),
+          openingStockValue: parseFloat(openingStockData.value),
+          openingStockDate: openingStockData.date + 'T00:00:00Z'
+        }
+      }
+      return item
+    })
+
+    setInventory(updatedInventory)
+    
+    // Reset form
+    setSelectedMaterial('')
+    setOpeningStockData({
+      quantity: '',
+      value: '',
+      date: new Date().toISOString().split('T')[0]
+    })
+
+    onClose()
+    alert(t('openingStockUpdated', 'Opening stock updated successfully'))
+  }
+
+  const selectedInventoryItem = inventory.find(item => item.materialId === selectedMaterial)
+  const selectedMaterialInfo = materials.find(mat => mat.id === selectedMaterial)
+
+  return (
+    <Modal
+      title={t('setOpeningStock')}
+      onClose={onClose}
+      className="modal-md"
+    >
+      <form onSubmit={handleSubmit} className="opening-stock-form">
+        <div className="form-section">
+          <div className="form-group">
+            <label>{t('material')} *</label>
+            <select
+              value={selectedMaterial}
+              onChange={(e) => setSelectedMaterial(e.target.value)}
+              required
+            >
+              <option value="">{t('selectMaterial', 'Select Material')}</option>
+              {materials.map(material => (
+                <option key={material.id} value={material.id}>
+                  {material.name} ({material.code})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedMaterial && selectedInventoryItem && (
+            <div className="current-stock-info">
+              <div className="info-grid">
+                <div className="info-item">
+                  <label>{t('currentStock')}</label>
+                  <span>{selectedInventoryItem.currentStock} {selectedInventoryItem.unit}</span>
+                </div>
+                <div className="info-item">
+                  <label>{t('currentOpeningStock', 'Current Opening Stock')}</label>
+                  <span>
+                    {selectedInventoryItem.openingStock || 0} {selectedInventoryItem.unit}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>{t('openingStock')} *</label>
+            <div className="input-with-unit">
+              <input
+                type="number"
+                step="0.01"
+                value={openingStockData.quantity}
+                onChange={(e) => setOpeningStockData({
+                  ...openingStockData,
+                  quantity: e.target.value
+                })}
+                placeholder="0.00"
+                required
+              />
+              {selectedInventoryItem && (
+                <span className="unit-label">{selectedInventoryItem.unit}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>{t('openingStockValue')} *</label>
+            <div className="input-with-unit">
+              <input
+                type="number"
+                step="0.001"
+                value={openingStockData.value}
+                onChange={(e) => setOpeningStockData({
+                  ...openingStockData,
+                  value: e.target.value
+                })}
+                placeholder="0.000"
+                required
+              />
+              <span className="unit-label">OMR</span>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>{t('openingStockDate')} *</label>
+            <input
+              type="date"
+              value={openingStockData.date}
+              onChange={(e) => setOpeningStockData({
+                ...openingStockData,
+                date: e.target.value
+              })}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button type="button" className="btn btn-outline" onClick={onClose}>
+            {t('cancel')}
+          </button>
+          <button type="submit" className="btn btn-primary">
+            {t('updateOpeningStock', 'Update Opening Stock')}
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 

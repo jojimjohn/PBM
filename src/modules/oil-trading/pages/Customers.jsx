@@ -308,6 +308,7 @@ const OilTradingCustomers = () => {
           customer={null}
           onSave={handleAddCustomer}
           onCancel={() => setShowAddForm(false)}
+          t={t}
         />
       )}
 
@@ -317,6 +318,7 @@ const OilTradingCustomers = () => {
           customer={editingCustomer}
           onSave={(data) => handleEditCustomer(editingCustomer.id, data)}
           onCancel={() => setEditingCustomer(null)}
+          t={t}
         />
       )}
 
@@ -330,6 +332,7 @@ const OilTradingCustomers = () => {
             setViewingCustomer(null)
           }}
           onCreateOrder={() => handleCreateOrder(viewingCustomer)}
+          t={t}
         />
       )}
 
@@ -369,13 +372,14 @@ const OilTradingCustomers = () => {
 }
 
 // Customer Form Modal Component
-const CustomerFormModal = ({ customer, onSave, onCancel }) => {
+const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
   const [formData, setFormData] = useState({
     name: customer?.name || '',
     type: customer?.type || 'walk_in',
     contactPerson: customer?.contactPerson || '',
     phone: customer?.contact?.phone || '',
     email: customer?.contact?.email || '',
+    vatRegistrationNumber: customer?.contact?.vatRegistrationNumber || '',
     street: customer?.contact?.address?.street || '',
     city: customer?.contact?.address?.city || '',
     region: customer?.contact?.address?.region || '',
@@ -395,6 +399,7 @@ const CustomerFormModal = ({ customer, onSave, onCancel }) => {
       contact: {
         phone: formData.phone,
         email: formData.email,
+        vatRegistrationNumber: formData.vatRegistrationNumber,
         address: {
           street: formData.street,
           city: formData.city,
@@ -510,6 +515,25 @@ const CustomerFormModal = ({ customer, onSave, onCancel }) => {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="customer@example.com"
+                />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label>{t('vatRegistrationNumber')}</label>
+              <div className="input-with-icon">
+                <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14,2 14,8 20,8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10,9 9,9 8,9" />
+                </svg>
+                <input
+                  type="text"
+                  value={formData.vatRegistrationNumber}
+                  onChange={(e) => setFormData({...formData, vatRegistrationNumber: e.target.value})}
+                  placeholder="OM12345678901"
                 />
               </div>
             </div>
@@ -644,7 +668,7 @@ const CustomerFormModal = ({ customer, onSave, onCancel }) => {
 }
 
 // Customer Details Modal Component
-const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder }) => {
+const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) => {
   return (
     <Modal 
       title={`Customer Details - ${customer.name}`}
@@ -689,6 +713,10 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder }) => {
             <div className="detail-item full-width">
               <label>Email</label>
               <span>{customer.contact?.email || 'N/A'}</span>
+            </div>
+            <div className="detail-item full-width">
+              <label>{t('vatRegistrationNumber')}</label>
+              <span>{customer.contact?.vatRegistrationNumber || 'N/A'}</span>
             </div>
             <div className="detail-item full-width">
               <label>Address</label>

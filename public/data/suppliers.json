@@ -12,6 +12,7 @@
         "contact": {
           "phone": "+968 9123 4567",
           "email": "info@alnoorscrap.com",
+          "vatRegistrationNumber": "OM33445566778",
           "address": {
             "street": "Industrial Area, Building 45",
             "city": "Muscat",
@@ -80,6 +81,7 @@
         "contact": {
           "phone": "+968 2245 6789",
           "email": "procurement@mmw.om",
+          "vatRegistrationNumber": "OM66778899001",
           "address": {
             "street": "Sohar Industrial Port, Warehouse 23",
             "city": "Sohar",
@@ -147,6 +149,7 @@
         "contact": {
           "phone": "+968 9987 6543",
           "email": null,
+          "vatRegistrationNumber": null,
           "address": {
             "street": "Al Khuwair",
             "city": "Muscat",
@@ -190,6 +193,7 @@
         "contact": {
           "phone": "+968 2456 7890",
           "email": "operations@gulfelectronics.com",
+          "vatRegistrationNumber": "OM99887766554",
           "address": {
             "street": "Wadi Kabir Industrial Area, Plot 12",
             "city": "Muscat",
@@ -234,6 +238,7 @@
         "contact": {
           "phone": "+968 2655 4433",
           "email": "sales@soharsteel.om",
+          "vatRegistrationNumber": "OM44556677889",
           "address": {
             "street": "Sohar Free Zone, Block C-15",
             "city": "Sohar",

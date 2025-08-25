@@ -93,6 +93,7 @@ const ScrapMaterialsSuppliers = () => {
         nationalId: supplier.nationalId || '',
         phone: supplier.contact?.phone || '',
         email: supplier.contact?.email || '',
+        vatRegistrationNumber: supplier.contact?.vatRegistrationNumber || '',
         street: supplier.contact?.address?.street || '',
         city: supplier.contact?.address?.city || '',
         region: supplier.contact?.address?.region || '',
@@ -183,6 +184,7 @@ const ScrapMaterialsSuppliers = () => {
         contact: {
           phone: formData.phone,
           email: formData.email,
+          vatRegistrationNumber: formData.vatRegistrationNumber,
           address: {
             street: formData.street,
             city: formData.city,
@@ -725,6 +727,16 @@ const SupplierFormModal = ({
             </div>
 
             <div className="form-group">
+              <label>{t('vatRegistrationNumber')}</label>
+              <input
+                type="text"
+                value={formData.vatRegistrationNumber || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, vatRegistrationNumber: e.target.value }))}
+                placeholder="OM12345678901"
+              />
+            </div>
+
+            <div className="form-group">
               <label>Street Address</label>
               <input
                 type="text"
@@ -994,6 +1006,10 @@ const SupplierViewModal = ({
               <div className="info-row">
                 <span className="info-label">Email Address</span>
                 <span className="info-value">{supplier.contact?.email || 'Not provided'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">{t('vatRegistrationNumber')}</span>
+                <span className="info-value">{supplier.contact?.vatRegistrationNumber || 'Not provided'}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Physical Address</span>

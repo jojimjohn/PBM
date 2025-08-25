@@ -19,7 +19,9 @@
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-dropzone": "^14.3.8",
     "react-router-dom": "^7.7.0",
+    "recharts": "^3.1.2",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
