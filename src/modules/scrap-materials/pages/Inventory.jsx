@@ -1,514 +1,580 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
-import { Eye, Edit, Package, Truck, DollarSign } from 'lucide-react'
+import MaterialEntryForm from '../components/MaterialEntryForm'
+import { 
+  Eye, 
+  Edit, 
+  Package, 
+  Truck, 
+  DollarSign, 
+  Plus, 
+  Camera,
+  Filter,
+  Download,
+  Grid3X3,
+  List,
+  CheckCircle,
+  AlertTriangle,
+  Calendar,
+  User,
+  MapPin
+} from 'lucide-react'
 import '../styles/Inventory.css'
 
 const ScrapMaterialsInventory = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { hasPermission } = usePermissions()
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState('table') // 'grid' or 'table' - default to table view
+  const [inventory, setInventory] = useState([])
+  const [materials, setMaterials] = useState([])
+  const [showMaterialForm, setShowMaterialForm] = useState(false)
+  const [editingEntry, setEditingEntry] = useState(null)
+  const [viewMode, setViewMode] = useState('table') // 'grid' or 'table'
   const [activeTab, setActiveTab] = useState('materials') // 'materials' or 'storage'
+  const [filters, setFilters] = useState({
+    materialCategory: 'all',
+    transactionType: 'all',
+    condition: 'all',
+    search: ''
+  })
 
-  const materialInventory = [
-    {
-      id: 1,
-      name: 'Copper Wire',
-      grade: 'Grade A',
-      currentStock: 1250,
-      unit: 'KG',
-      purchaseRate: 3.00,
-      marketRate: 3.25,
-      totalValue: 4062.5,
-      status: 'ready-to-sell',
-      lastPurchase: '2024-01-15',
-      storageLocation: 'Warehouse A - Section 1',
-      purity: '99.5%'
-    },
-    {
-      id: 2,
-      name: 'Aluminum Cans',
-      grade: 'Recycled',
-      currentStock: 2800,
-      unit: 'KG',
-      purchaseRate: 1.35,
-      marketRate: 1.50,
-      totalValue: 4200,
-      status: 'processing',
-      lastPurchase: '2024-01-14',
-      storageLocation: 'Warehouse B - Section 2',
-      purity: '95%'
-    },
-    {
-      id: 3,
-      name: 'Steel Scrap',
-      grade: 'Mixed Grade',
-      currentStock: 4200,
-      unit: 'KG',
-      purchaseRate: 0.75,
-      marketRate: 0.85,
-      totalValue: 3570,
-      status: 'sorting-required',
-      lastPurchase: '2024-01-13',
-      storageLocation: 'Warehouse A - Section 3',
-      purity: '80%'
-    },
-    {
-      id: 4,
-      name: 'Brass Fittings',
-      grade: 'Clean',
-      currentStock: 890,
-      unit: 'KG',
-      purchaseRate: 2.60,
-      marketRate: 2.80,
-      totalValue: 2492,
-      status: 'ready-to-sell',
-      lastPurchase: '2024-01-12',
-      storageLocation: 'Warehouse A - Section 1',
-      purity: '98%'
-    },
-    {
-      id: 5,
-      name: 'Electronic Components',
-      grade: 'Mixed',
-      currentStock: 450,
-      unit: 'KG',
-      purchaseRate: 4.50,
-      marketRate: 5.20,
-      totalValue: 2340,
-      status: 'processing',
-      lastPurchase: '2024-01-10',
-      storageLocation: 'Warehouse C - Electronics',
-      purity: 'Variable'
-    }
-  ]
-
-  const storageLocations = [
-    {
-      id: 1,
-      name: 'Warehouse A',
-      capacity: 15000,
-      currentUsage: 12750,
-      sections: [
-        { name: 'Section 1', materials: ['Copper Wire', 'Brass Fittings'], usage: 3500 },
-        { name: 'Section 2', materials: ['Steel Scrap (Sorted)'], usage: 2200 },
-        { name: 'Section 3', materials: ['Steel Scrap (Unsorted)'], usage: 4200 },
-        { name: 'Section 4', materials: ['Iron'], usage: 2850 }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Warehouse B',
-      capacity: 8000,
-      currentUsage: 5600,
-      sections: [
-        { name: 'Section 1', materials: ['Aluminum Cans'], usage: 2800 },
-        { name: 'Section 2', materials: ['Aluminum Sheets'], usage: 1900 },
-        { name: 'Section 3', materials: ['Aluminum Profiles'], usage: 900 }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Warehouse C',
-      capacity: 3000,
-      currentUsage: 1200,
-      sections: [
-        { name: 'Electronics', materials: ['Electronic Components', 'Cables'], usage: 750 },
-        { name: 'Precious Metals', materials: ['Gold Parts', 'Silver'], usage: 450 }
-      ]
-    }
-  ]
-
-  const getUsagePercentage = (current, capacity) => {
-    return Math.round((current / capacity) * 100)
-  }
-
-  const getPotentialProfit = (stock, purchaseRate, marketRate) => {
-    return ((marketRate - purchaseRate) * stock).toFixed(2)
-  }
-
+  // Load data on component mount
   useEffect(() => {
-    // Simulate loading inventory data
-    const timer = setTimeout(() => {
+    loadInventoryData()
+  }, [selectedCompany])
+
+  const loadInventoryData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load inventory data
+      const inventoryResponse = await fetch('/data/inventory.json')
+      const inventoryData = await inventoryResponse.json()
+      const companyInventory = inventoryData.inventory[selectedCompany?.id] || []
+      
+      // Load materials data
+      const materialsResponse = await fetch('/data/materials.json')
+      const materialsData = await materialsResponse.json()
+      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
+      
+      setInventory(companyInventory)
+      setMaterials(companyMaterials)
+    } catch (error) {
+      console.error('Error loading inventory data:', error)
+    } finally {
       setLoading(false)
-    }, 1300)
+    }
+  }
+
+  const formatCurrency = (amount) => `OMR ${parseFloat(amount).toFixed(3)}`
+  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-GB')
+
+  const getTransactionTypeInfo = (type) => {
+    const types = {
+      collected: { label: t('collected', 'Collected'), icon: Package, color: '#059669' },
+      purchased: { label: t('purchased', 'Purchased'), icon: Truck, color: '#3b82f6' },
+      supplied: { label: t('supplied', 'Supplied'), icon: User, color: '#8b5cf6' },
+      walk_in: { label: t('walkIn', 'Walk-in'), icon: MapPin, color: '#f59e0b' }
+    }
+    return types[type] || { label: type, icon: Package, color: '#6b7280' }
+  }
+
+  const getConditionBadge = (condition, isTyre) => {
+    if (!isTyre || !condition) return null
     
-    return () => clearTimeout(timer)
-  }, [])
+    const configs = {
+      good: { label: t('good', 'Good'), class: 'success', icon: CheckCircle },
+      bad: { label: t('bad', 'Bad'), class: 'danger', icon: AlertTriangle }
+    }
+    
+    const config = configs[condition] || { label: condition, class: 'default', icon: Package }
+    return config
+  }
+
+  const getMaterialInfo = (materialId) => {
+    return materials.find(m => m.id === materialId) || {}
+  }
+
+  const getFilteredInventory = () => {
+    return inventory.filter(item => {
+      const material = getMaterialInfo(item.materialId)
+      
+      // Filter by material category
+      if (filters.materialCategory !== 'all' && item.materialCategory !== filters.materialCategory) {
+        return false
+      }
+      
+      // Filter by transaction type
+      if (filters.transactionType !== 'all' && item.transactionType !== filters.transactionType) {
+        return false
+      }
+      
+      // Filter by condition (tyres only)
+      if (filters.condition !== 'all') {
+        if (filters.condition === 'with_condition' && !item.condition) return false
+        if (filters.condition !== 'with_condition' && item.condition !== filters.condition) return false
+      }
+      
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase()
+        const searchFields = [
+          item.materialCode,
+          material.name,
+          item.sourceDetails?.name,
+          item.notes
+        ].filter(Boolean)
+        
+        return searchFields.some(field => 
+          field.toLowerCase().includes(searchLower)
+        )
+      }
+      
+      return true
+    })
+  }
+
+  const handleSaveMaterial = async (materialData) => {
+    try {
+      console.log('Saving material entry:', materialData)
+      
+      // In a real app, this would be an API call
+      if (editingEntry) {
+        // Update existing entry
+        setInventory(prev => prev.map(item => 
+          item.materialId === editingEntry.materialId ? materialData : item
+        ))
+      } else {
+        // Add new entry
+        setInventory(prev => [...prev, materialData])
+      }
+      
+      setShowMaterialForm(false)
+      setEditingEntry(null)
+    } catch (error) {
+      console.error('Error saving material entry:', error)
+    }
+  }
+
+  const handleEditEntry = (entry) => {
+    setEditingEntry(entry)
+    setShowMaterialForm(true)
+  }
+
+  // Define columns for DataTable
+  const getTableColumns = () => {
+    const columns = [
+      {
+        key: 'materialInfo',
+        header: t('material', 'Material'),
+        sortable: true,
+        render: (value, row) => {
+          const material = getMaterialInfo(row.materialId)
+          const isTyre = row.materialCategory === 'tyres'
+          
+          return (
+            <div className="material-info-cell">
+              <div className="material-primary">
+                <strong>{material.name || row.materialCode}</strong>
+                {isTyre && (
+                  <div className="tyre-indicator">
+                    <Camera size={12} />
+                    <span>{t('tyre', 'Tyre')}</span>
+                  </div>
+                )}
+              </div>
+              <div className="material-secondary">
+                <span className="material-code">{row.materialCode}</span>
+                {row.condition && (
+                  <span className={`condition-badge ${getConditionBadge(row.condition, isTyre)?.class}`}>
+                    {getConditionBadge(row.condition, isTyre)?.label}
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        }
+      },
+      {
+        key: 'transactionType',
+        header: t('transactionType', 'Transaction Type'),
+        filterable: true,
+        render: (value, row) => {
+          const typeInfo = getTransactionTypeInfo(value)
+          const TypeIcon = typeInfo.icon
+          
+          return (
+            <div className="transaction-type-cell">
+              <TypeIcon size={14} style={{ color: typeInfo.color }} />
+              <span>{typeInfo.label}</span>
+            </div>
+          )
+        }
+      },
+      {
+        key: 'sourceDetails',
+        header: t('source', 'Source'),
+        render: (value, row) => (
+          <div className="source-info">
+            <div className="source-name">{value?.name || 'N/A'}</div>
+            <div className="source-type">{value?.type || ''}</div>
+          </div>
+        )
+      },
+      {
+        key: 'currentStock',
+        header: t('quantity', 'Quantity'),
+        sortable: true,
+        type: 'number',
+        render: (value, row) => (
+          <div className="quantity-cell">
+            <span className="quantity">{value?.toLocaleString()}</span>
+            <span className="unit">{row.unit}</span>
+          </div>
+        )
+      },
+      {
+        key: 'averageCost',
+        header: t('avgCost', 'Avg Cost'),
+        sortable: true,
+        type: 'currency',
+        render: (value) => formatCurrency(value || 0)
+      },
+      {
+        key: 'totalValue',
+        header: t('totalValue', 'Total Value'),
+        sortable: true,
+        type: 'currency',
+        render: (value) => formatCurrency(value || 0)
+      },
+      {
+        key: 'dateOfEntry',
+        header: t('dateOfEntry', 'Date of Entry'),
+        sortable: true,
+        render: (value) => value ? formatDate(value) : 'N/A'
+      }
+    ]
+
+    // Add photos column if user can view images
+    if (hasPermission('VIEW_INVENTORY')) {
+      columns.push({
+        key: 'photos',
+        header: t('photos', 'Photos'),
+        render: (value, row) => {
+          if (!value || value.length === 0) return <span className="no-photos">—</span>
+          
+          return (
+            <div className="photos-preview">
+              <Camera size={16} />
+              <span>{value.length} {t('photos', 'photos')}</span>
+            </div>
+          )
+        }
+      })
+    }
+
+    // Add actions column if user has permissions
+    if (hasPermission('MANAGE_INVENTORY')) {
+      columns.push({
+        key: 'actions',
+        header: t('actions', 'Actions'),
+        render: (value, row) => (
+          <div className="action-buttons">
+            <button
+              onClick={() => console.log('View details:', row)}
+              className="action-btn view"
+              title={t('viewDetails', 'View Details')}
+            >
+              <Eye size={14} />
+            </button>
+            <button
+              onClick={() => handleEditEntry(row)}
+              className="action-btn edit"
+              title={t('edit', 'Edit')}
+            >
+              <Edit size={14} />
+            </button>
+          </div>
+        )
+      })
+    }
+
+    return columns
+  }
+
+  // Calculate summary statistics
+  const getSummaryStats = () => {
+    const filtered = getFilteredInventory()
+    
+    const totalEntries = filtered.length
+    const totalValue = filtered.reduce((sum, item) => sum + (item.totalValue || 0), 0)
+    const tyreEntries = filtered.filter(item => item.materialCategory === 'tyres').length
+    const goodTyres = filtered.filter(item => item.condition === 'good').length
+    const badTyres = filtered.filter(item => item.condition === 'bad').length
+    
+    return {
+      totalEntries,
+      totalValue,
+      tyreEntries,
+      goodTyres,
+      badTyres
+    }
+  }
+
+  const stats = getSummaryStats()
 
   if (loading) {
     return (
-      <div className="page-loading">
-        <LoadingSpinner message="Loading inventory..." size="large" />
+      <div className="inventory-loading">
+        <LoadingSpinner size="large" />
+        <p>{t('loadingInventory', 'Loading inventory...')}</p>
       </div>
     )
   }
 
   return (
     <div className="scrap-inventory-page">
+      {/* Page Header */}
       <div className="page-header">
-        <div className="header-left">
-          <h1>Material Inventory Management</h1>
-          <p>Track scrap materials, storage, and processing status</p>
+        <div className="page-title-section">
+          <h1>{t('materialInventory', 'Material Inventory')}</h1>
+          <p className="page-subtitle">
+            {t('trackMaterialsAndTyres', 'Track materials, tyres, and collection sources')}
+          </p>
         </div>
+        
         <div className="header-actions">
-          <div className="view-toggle">
-            <button 
-              className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setViewMode('grid')}
+          {hasPermission('MANAGE_INVENTORY') && (
+            <button
+              className="btn-primary add-material-btn"
+              onClick={() => {
+                setEditingEntry(null)
+                setShowMaterialForm(true)
+              }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
-              </svg>
+              <Plus size={20} />
+              {t('addMaterial', 'Add Material')}
             </button>
-            <button 
-              className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
-              onClick={() => setViewMode('table')}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M3 6h18M3 12h18M3 18h18" />
-              </svg>
-            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Summary Stats Cards */}
+      <div className="summary-stats">
+        <div className="stat-card">
+          <div className="stat-icon">
+            <Package />
           </div>
-          <button className="btn btn-primary">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2" />
-              <path d="M2 11h20" />
-              <path d="M2 16h20" />
-              <path d="M6 19h12" />
-            </svg>
-           {t('processMaterialsBtn')}
+          <div className="stat-content">
+            <div className="stat-value">{stats.totalEntries}</div>
+            <div className="stat-label">{t('totalMaterials', 'Total Materials')}</div>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">
+            <DollarSign />
+          </div>
+          <div className="stat-content">
+            <div className="stat-value">{formatCurrency(stats.totalValue)}</div>
+            <div className="stat-label">{t('totalValue', 'Total Value')}</div>
+          </div>
+        </div>
+        
+        <div className="stat-card tyre-card">
+          <div className="stat-icon">
+            <Camera />
+          </div>
+          <div className="stat-content">
+            <div className="stat-value">{stats.tyreEntries}</div>
+            <div className="stat-label">{t('tyres', 'Tyres')}</div>
+            {stats.tyreEntries > 0 && (
+              <div className="tyre-breakdown">
+                <span className="good-tyres">{stats.goodTyres} {t('good', 'Good')}</span>
+                <span className="separator">•</span>
+                <span className="bad-tyres">{stats.badTyres} {t('bad', 'Bad')}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="inventory-filters">
+        <div className="filter-group">
+          <label>{t('search', 'Search')}</label>
+          <input
+            type="text"
+            placeholder={t('searchMaterials', 'Search materials, sources...')}
+            value={filters.search}
+            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+          />
+        </div>
+        
+        <div className="filter-group">
+          <label>{t('category', 'Category')}</label>
+          <select
+            value={filters.materialCategory}
+            onChange={(e) => setFilters(prev => ({ ...prev, materialCategory: e.target.value }))}
+          >
+            <option value="all">{t('allCategories', 'All Categories')}</option>
+            <option value="tyres">{t('tyres', 'Tyres')}</option>
+            <option value="metal_scrap">{t('metalScrap', 'Metal Scrap')}</option>
+            <option value="plastic_scrap">{t('plasticScrap', 'Plastic Scrap')}</option>
+            <option value="electronic_waste">{t('electronicWaste', 'Electronic Waste')}</option>
+          </select>
+        </div>
+        
+        <div className="filter-group">
+          <label>{t('transactionType', 'Transaction Type')}</label>
+          <select
+            value={filters.transactionType}
+            onChange={(e) => setFilters(prev => ({ ...prev, transactionType: e.target.value }))}
+          >
+            <option value="all">{t('allTypes', 'All Types')}</option>
+            <option value="collected">{t('collected', 'Collected')}</option>
+            <option value="purchased">{t('purchased', 'Purchased')}</option>
+            <option value="supplied">{t('supplied', 'Supplied')}</option>
+            <option value="walk_in">{t('walkIn', 'Walk-in')}</option>
+          </select>
+        </div>
+        
+        <div className="filter-group">
+          <label>{t('condition', 'Condition')}</label>
+          <select
+            value={filters.condition}
+            onChange={(e) => setFilters(prev => ({ ...prev, condition: e.target.value }))}
+          >
+            <option value="all">{t('allConditions', 'All Conditions')}</option>
+            <option value="good">{t('good', 'Good')}</option>
+            <option value="bad">{t('bad', 'Bad')}</option>
+            <option value="with_condition">{t('withCondition', 'Items with Condition')}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* View Mode Toggle */}
+      <div className="view-controls">
+        <div className="view-toggle">
+          <button
+            className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+            onClick={() => setViewMode('table')}
+          >
+            <List size={16} />
+            {t('table', 'Table')}
+          </button>
+          <button
+            className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => setViewMode('grid')}
+          >
+            <Grid3X3 size={16} />
+            {t('grid', 'Grid')}
           </button>
         </div>
       </div>
 
+      {/* Inventory Data Display */}
       <div className="inventory-content">
-        <div className="tab-navigation">
-          <button 
-            className={`tab-btn ${activeTab === 'materials' ? 'active' : ''}`}
-            onClick={() => setActiveTab('materials')}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-            </svg>
-             {t('materialsInventoryTab')}
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'storage' ? 'active' : ''}`}
-            onClick={() => setActiveTab('storage')}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9,22 9,12 15,12 15,22" />
-            </svg>
-             {t('storageManagementTab')}
-          </button>
-        </div>
-
-        {activeTab === 'materials' && (
-          <>
-            <div className="inventory-stats">
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2" />
-                    <path d="M2 11h20" />
-                    <path d="M2 16h20" />
-                    <path d="M6 19h12" />
-                  </svg>
-                </div>
-                <div className="stat-info">
-                  <p className="stat-value">9,590 KG</p>
-                  <p className="stat-label">{t('totalMaterialWeight')}</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon success">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                  </svg>
-                </div>
-                <div className="stat-info">
-                  <p className="stat-value">OMR 16,665</p>
-                  <p className="stat-label">{t('totalInventoryValue')}</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon profit">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
-                  </svg>
-                </div>
-                <div className="stat-info">
-                  <p className="stat-value">OMR 1,895</p>
-                  <p className="stat-label">{t('potentialProfit')}</p>
-                </div>
-              </div>
-            </div>
-
-            {viewMode === 'grid' ? (
-              <div className="material-grid">
-                {materialInventory.map(material => (
-                  <div key={material.id} className={`material-card ${material.status}`}>
-                    <div className="material-header">
-                      <div className="material-info">
-                        <h3>{material.name}</h3>
-                        <p className="material-grade">{material.grade}</p>
-                      </div>
-                      <div className={`status-badge ${material.status}`}>
-                        {material.status === 'ready-to-sell' && '✓ Ready to Sell'}
-                        {material.status === 'processing' && '⚡ Processing'}
-                        {material.status === 'sorting-required' && '⚠ Sorting Required'}
-                      </div>
+        {viewMode === 'table' ? (
+          <DataTable
+            data={getFilteredInventory()}
+            columns={getTableColumns()}
+            searchable={false} // We have custom search
+            exportable={true}
+            title={t('materialInventory', 'Material Inventory')}
+            emptyMessage={t('noMaterialsFound', 'No materials found')}
+          />
+        ) : (
+          <div className="inventory-grid">
+            {getFilteredInventory().map(item => {
+              const material = getMaterialInfo(item.materialId)
+              const typeInfo = getTransactionTypeInfo(item.transactionType)
+              const TypeIcon = typeInfo.icon
+              const isTyre = item.materialCategory === 'tyres'
+              
+              return (
+                <div key={item.materialId} className="material-card">
+                  <div className="card-header">
+                    <div className="material-name">
+                      {material.name || item.materialCode}
                     </div>
-                    
-                    <div className="material-weight">
-                      <div className="weight-display">
-                        <span className="current-weight">{material.currentStock.toLocaleString()}</span>
-                        <span className="unit">{material.unit}</span>
-                      </div>
-                      <div className="purity">Purity: {material.purity}</div>
+                    <div className="transaction-type">
+                      <TypeIcon size={14} style={{ color: typeInfo.color }} />
+                      {typeInfo.label}
                     </div>
-                    
+                  </div>
+                  
+                  <div className="card-content">
                     <div className="material-details">
                       <div className="detail-row">
-                        <div className="detail-item">
-                          <span className="label">Purchase Rate:</span>
-                          <span className="value">OMR {material.purchaseRate.toFixed(3)}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="label">Market Rate:</span>
-                          <span className="value">OMR {material.marketRate.toFixed(3)}</span>
-                        </div>
+                        <span className="label">{t('quantity', 'Quantity')}:</span>
+                        <span className="value">{item.currentStock} {item.unit}</span>
                       </div>
                       <div className="detail-row">
-                        <div className="detail-item">
-                          <span className="label">Current Value:</span>
-                          <span className="value highlight">OMR {material.totalValue.toLocaleString()}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="label">Potential Profit:</span>
-                          <span className="value profit">OMR {getPotentialProfit(material.currentStock, material.purchaseRate, material.marketRate)}</span>
-                        </div>
+                        <span className="label">{t('totalValue', 'Value')}:</span>
+                        <span className="value">{formatCurrency(item.totalValue)}</span>
                       </div>
+                      {item.condition && (
+                        <div className="detail-row">
+                          <span className="label">{t('condition', 'Condition')}:</span>
+                          <span className={`condition-badge ${getConditionBadge(item.condition, isTyre)?.class}`}>
+                            {getConditionBadge(item.condition, isTyre)?.label}
+                          </span>
+                        </div>
+                      )}
                       <div className="detail-row">
-                        <div className="detail-item">
-                          <span className="label">Location:</span>
-                          <span className="value">{material.storageLocation}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="label">Last Purchase:</span>
-                          <span className="value">{material.lastPurchase}</span>
-                        </div>
+                        <span className="label">{t('source', 'Source')}:</span>
+                        <span className="value">{item.sourceDetails?.name || 'N/A'}</span>
                       </div>
                     </div>
                     
-                    <div className="material-actions">
-                      <button className="btn btn-outline btn-sm">View Details</button>
-                      {material.status === 'ready-to-sell' && (
-                        <button className="btn btn-success btn-sm">Sell Now</button>
-                      )}
-                      {material.status === 'processing' && (
-                        <button className="btn btn-primary btn-sm">Check Progress</button>
-                      )}
-                      {material.status === 'sorting-required' && (
-                        <button className="btn btn-warning btn-sm">Start Sorting</button>
-                      )}
-                    </div>
+                    {item.photos && item.photos.length > 0 && (
+                      <div className="card-photos">
+                        <Camera size={16} />
+                        <span>{item.photos.length} {t('photos', 'photos')}</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <DataTable
-                data={materialInventory}
-                columns={[
-                  {
-                    key: 'name',
-                    header: t('material'),
-                    sortable: true,
-                    filterable: true,
-                    render: (value, row) => (
-                      <div className="material-cell">
-                        <strong>{value}</strong>
-                        <small>{row.storageLocation}</small>
-                      </div>
-                    )
-                  },
-                  {
-                    key: 'currentStock',
-                    header: t('weight'),
-                    type: 'number',
-                    sortable: true,
-                    render: (value, row) => `${value.toLocaleString()} ${row.unit}`
-                  },
-                  {
-                    key: 'grade',
-                    header: t('gradePurity'),
-                    sortable: true,
-                    filterable: true,
-                    render: (value, row) => (
-                      <div className="grade-cell">
-                        <span>{value}</span>
-                        <small>{row.purity}</small>
-                      </div>
-                    )
-                  },
-                  {
-                    key: 'purchaseRate',
-                    header: t('purchaseRate'),
-                    type: 'currency',
-                    align: 'right',
-                    sortable: true,
-                    render: (value) => `OMR ${value.toFixed(3)}`
-                  },
-                  {
-                    key: 'marketRate',
-                    header: t('marketRate'),
-                    type: 'currency',
-                    align: 'right',
-                    sortable: true,
-                    render: (value) => `OMR ${value.toFixed(3)}`
-                  },
-                  {
-                    key: 'totalValue',
-                    header: t('currentValue'),
-                    type: 'currency',
-                    align: 'right',
-                    sortable: true,
-                    render: (value) => `OMR ${value.toLocaleString()}`
-                  },
-                  {
-                    key: 'potentialProfit',
-                    header: t('potentialProfit'),
-                    type: 'currency',
-                    align: 'right',
-                    sortable: true,
-                    render: (value, row) => (
-                      <span className="profit-cell">
-                        OMR {getPotentialProfit(row.currentStock, row.purchaseRate, row.marketRate)}
-                      </span>
-                    )
-                  },
-                  {
-                    key: 'status',
-                    header: t('status'),
-                    sortable: true,
-                    filterable: true,
-                    render: (value) => (
-                      <span className={`status-badge ${value}`}>
-                        {value === 'ready-to-sell' && t('readyToSell')}
-                        {value === 'processing' && t('processing')}
-                        {value === 'sorting-required' && t('sortingRequired')}
-                      </span>
-                    )
-                  },
-                  {
-                    key: 'actions',
-                    header: t('actions'),
-                    sortable: false,
-                    render: (value, row) => (
-                      <div className="table-actions">
-                        <button className="btn btn-outline btn-sm">
-                          <Eye size={14} />
-                          {t('details')}
-                        </button>
-                        {row.status === 'ready-to-sell' && (
-                          <button className="btn btn-success btn-sm">
-                            <DollarSign size={14} />
-                            {t('sellNow')}
-                          </button>
-                        )}
-                        {row.status === 'processing' && (
-                          <button className="btn btn-primary btn-sm">
-                            <Package size={14} />
-                            {t('checkProgress')}
-                          </button>
-                        )}
-                        {row.status === 'sorting-required' && (
-                          <button className="btn btn-warning btn-sm">
-                            <Truck size={14} />
-                            {t('startSorting', 'Start Sorting')}
-                          </button>
-                        )}
-                      </div>
-                    )
-                  }
-                ]}
-                title={t('materialInventory', 'Material Inventory')}
-                subtitle={t('scrapMaterialsSubtitle', 'Manage scrap material inventory and processing')}
-                loading={loading}
-                searchable={true}
-                filterable={true}
-                sortable={true}
-                paginated={true}
-                exportable={true}
-                selectable={false}
-                emptyMessage={t('noMaterialsFound', 'No materials found')}
-                className="scrap-inventory-table"
-                initialPageSize={10}
-                stickyHeader={true}
-                enableColumnToggle={true}
-              />
-            )}
-          </>
-        )}
-
-        {activeTab === 'storage' && (
-          <div className="storage-management">
-            <div className="storage-overview">
-              <h2>Storage Locations Overview</h2>
-              <div className="storage-grid">
-                {storageLocations.map(location => (
-                  <div key={location.id} className="storage-card">
-                    <div className="storage-header">
-                      <h3>{location.name}</h3>
-                      <div className="usage-percentage">
-                        {getUsagePercentage(location.currentUsage, location.capacity)}% Full
-                      </div>
+                  
+                  {hasPermission('MANAGE_INVENTORY') && (
+                    <div className="card-actions">
+                      <button
+                        onClick={() => console.log('View details:', item)}
+                        className="action-btn view"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleEditEntry(item)}
+                        className="action-btn edit"
+                      >
+                        <Edit size={14} />
+                      </button>
                     </div>
-                    
-                    <div className="storage-capacity">
-                      <div className="capacity-bar">
-                        <div 
-                          className="capacity-fill"
-                          style={{width: `${getUsagePercentage(location.currentUsage, location.capacity)}%`}}
-                        ></div>
-                      </div>
-                      <div className="capacity-text">
-                        {location.currentUsage.toLocaleString()} / {location.capacity.toLocaleString()} KG
-                      </div>
-                    </div>
-                    
-                    <div className="storage-sections">
-                      <h4>Sections:</h4>
-                      {location.sections.map((section, index) => (
-                        <div key={index} className="section-item">
-                          <div className="section-info">
-                            <span className="section-name">{section.name}:</span>
-                            <span className="section-materials">{section.materials.join(', ')}</span>
-                          </div>
-                          <span className="section-usage">{section.usage} KG</span>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="storage-actions">
-                      <button className="btn btn-outline btn-sm">Manage Sections</button>
-                      <button className="btn btn-primary btn-sm">Optimize Layout</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
+
+      {/* Material Entry Form Modal */}
+      <MaterialEntryForm
+        isOpen={showMaterialForm}
+        onClose={() => {
+          setShowMaterialForm(false)
+          setEditingEntry(null)
+        }}
+        onSave={handleSaveMaterial}
+        initialData={editingEntry}
+        availableMaterials={materials}
+      />
     </div>
   )
 }

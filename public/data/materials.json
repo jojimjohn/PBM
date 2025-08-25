@@ -145,6 +145,71 @@
         "isActive": true,
         "standardPrice": 0.050,
         "description": "Various recyclable materials"
+      },
+      {
+        "id": "mat_106",
+        "code": "TYRES_PASSENGER_CAR",
+        "name": "Passenger Car Tyres",
+        "category": "tyres",
+        "unit": "pieces",
+        "status": ["good", "bad"],
+        "isActive": true,
+        "standardPrice": 8.000,
+        "description": "Used passenger car tyres for recycling",
+        "requiresPhotos": true,
+        "requiresCondition": true
+      },
+      {
+        "id": "mat_107",
+        "code": "TYRES_TRUCK_HEAVY",
+        "name": "Truck/Heavy Vehicle Tyres",
+        "category": "tyres",
+        "unit": "pieces",
+        "status": ["good", "bad"],
+        "isActive": true,
+        "standardPrice": 15.000,
+        "description": "Used truck and heavy vehicle tyres",
+        "requiresPhotos": true,
+        "requiresCondition": true
+      },
+      {
+        "id": "mat_108",
+        "code": "TYRES_MOTORCYCLE",
+        "name": "Motorcycle Tyres",
+        "category": "tyres",
+        "unit": "pieces",
+        "status": ["good", "bad"],
+        "isActive": true,
+        "standardPrice": 3.500,
+        "description": "Used motorcycle tyres",
+        "requiresPhotos": true,
+        "requiresCondition": true
+      },
+      {
+        "id": "mat_109",
+        "code": "PLASTIC_BOTTLES",
+        "name": "Plastic Bottles",
+        "category": "plastic_scrap",
+        "unit": "kilograms",
+        "status": ["clean", "dirty"],
+        "isActive": true,
+        "standardPrice": 0.400,
+        "description": "Plastic bottles for recycling",
+        "requiresPhotos": false,
+        "requiresCondition": false
+      },
+      {
+        "id": "mat_110",
+        "code": "ELECTRONIC_WASTE",
+        "name": "Electronic Waste",
+        "category": "electronic_waste",
+        "unit": "pieces",
+        "status": ["working", "broken"],
+        "isActive": true,
+        "standardPrice": 5.000,
+        "description": "Electronic equipment and components",
+        "requiresPhotos": false,
+        "requiresCondition": false
       }
     ]
   }

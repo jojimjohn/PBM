@@ -68,6 +68,7 @@
       {
         "materialId": "mat_101", 
         "materialCode": "METAL_SCRAP_GENERAL",
+        "materialCategory": "metal_scrap",
         "currentStock": 15500,
         "unit": "kilograms",
         "reorderLevel": 1000,
@@ -75,6 +76,17 @@
         "averageCost": 0.105,
         "totalValue": 1627.500,
         "lastUpdated": "2025-07-21T09:30:00Z",
+        "transactionType": "purchased",
+        "sourceDetails": {
+          "type": "supplier",
+          "name": "Al Wadi Metal Trading",
+          "id": "supp_001",
+          "contact": "+968 2455 1234"
+        },
+        "dateOfEntry": "2025-07-21T09:00:00Z",
+        "photos": [],
+        "condition": null,
+        "serialNumbers": [],
         "movements": [
           {
             "id": "mov_101",
@@ -89,6 +101,7 @@
       {
         "materialId": "mat_102",
         "materialCode": "ALUMINUM_SCRAP",
+        "materialCategory": "aluminum_scrap",
         "currentStock": 850,
         "unit": "kilograms", 
         "reorderLevel": 100,
@@ -96,7 +109,124 @@
         "averageCost": 0.720,
         "totalValue": 612.000,
         "lastUpdated": "2025-07-20T14:20:00Z",
+        "transactionType": "collected",
+        "sourceDetails": {
+          "type": "walk_in",
+          "name": "Ahmed Al-Balushi",
+          "id": "walk_001",
+          "contact": "+968 9123 4567"
+        },
+        "dateOfEntry": "2025-07-20T14:20:00Z",
+        "photos": [],
+        "condition": null,
+        "serialNumbers": [],
         "movements": []
+      },
+      {
+        "materialId": "mat_103",
+        "materialCode": "TYRES_PASSENGER_CAR",
+        "materialCategory": "tyres",
+        "currentStock": 45,
+        "unit": "pieces",
+        "reorderLevel": 10,
+        "maxStock": 200,
+        "averageCost": 8.500,
+        "totalValue": 382.500,
+        "lastUpdated": "2025-08-24T10:15:00Z",
+        "transactionType": "collected",
+        "sourceDetails": {
+          "type": "customer",
+          "name": "Muscat Auto Service",
+          "id": "cust_001",
+          "contact": "+968 2234 5678"
+        },
+        "dateOfEntry": "2025-08-24T10:15:00Z",
+        "photos": [
+          "/uploads/tyres/tyre_batch_001_photo1.jpg",
+          "/uploads/tyres/tyre_batch_001_photo2.jpg"
+        ],
+        "condition": "good",
+        "serialNumbers": ["DOT2023H1234", "DOT2023H1235", "DOT2023H1236"],
+        "movements": [
+          {
+            "id": "mov_103",
+            "type": "in",
+            "quantity": 45,
+            "reference": "COL-2025-001",
+            "date": "2025-08-24T10:15:00Z",
+            "cost": 8.500
+          }
+        ]
+      },
+      {
+        "materialId": "mat_104",
+        "materialCode": "TYRES_TRUCK_SCRAP",
+        "materialCategory": "tyres",
+        "currentStock": 28,
+        "unit": "pieces",
+        "reorderLevel": 5,
+        "maxStock": 100,
+        "averageCost": 12.000,
+        "totalValue": 336.000,
+        "lastUpdated": "2025-08-23T14:30:00Z",
+        "transactionType": "walk_in",
+        "sourceDetails": {
+          "type": "walk_in",
+          "name": "Mohammed Transport Co.",
+          "id": "walk_002",
+          "contact": "+968 9876 5432"
+        },
+        "dateOfEntry": "2025-08-23T14:30:00Z",
+        "photos": [
+          "/uploads/tyres/tyre_batch_002_photo1.jpg"
+        ],
+        "condition": "bad",
+        "serialNumbers": ["TRK2022B8901", "TRK2022B8902"],
+        "movements": [
+          {
+            "id": "mov_104",
+            "type": "in",
+            "quantity": 28,
+            "reference": "WLK-2025-002",
+            "date": "2025-08-23T14:30:00Z",
+            "cost": 12.000
+          }
+        ]
+      },
+      {
+        "materialId": "mat_105",
+        "materialCode": "PLASTIC_BOTTLES",
+        "materialCategory": "plastic_scrap",
+        "currentStock": 1200,
+        "unit": "kilograms",
+        "reorderLevel": 200,
+        "maxStock": 3000,
+        "averageCost": 0.350,
+        "totalValue": 420.000,
+        "lastUpdated": "2025-08-22T16:45:00Z",
+        "transactionType": "supplied",
+        "sourceDetails": {
+          "type": "supplier",
+          "name": "Green Recycling LLC",
+          "id": "supp_002",
+          "contact": "+968 2345 6789"
+        },
+        "dateOfEntry": "2025-08-22T16:45:00Z",
+        "photos": [
+          "/uploads/plastic/plastic_batch_001.jpg"
+        ],
+        "condition": null,
+        "serialNumbers": [],
+        "movements": [
+          {
+            "id": "mov_105",
+            "type": "in",
+            "quantity": 1200,
+            "reference": "SUP-2025-001",
+            "date": "2025-08-22T16:45:00Z",
+            "cost": 0.350
+          }
+        ]
       }
     ]
   }
