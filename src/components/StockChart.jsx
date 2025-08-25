@@ -4,9 +4,20 @@ import { BarChart3, TrendingUp, PieChart as PieChartIcon, Activity } from 'lucid
 import { useLocalization } from '../context/LocalizationContext'
 import './StockChart.css'
 
-const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400 }) => {
+const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400, fieldLabels }) => {
   const { t } = useLocalization()
   const [chartType, setChartType] = useState('bar') // 'bar', 'line', 'pie'
+  
+  // Default field labels for inventory context
+  const defaultLabels = {
+    currentStock: t('currentStock', 'Current Stock'),
+    openingStock: t('openingStock', 'Opening Stock'),
+    reorderLevel: t('reorderLevel', 'Reorder Level'),
+    totalValue: t('totalValue', 'Total Value')
+  }
+  
+  // Use provided labels or fall back to defaults
+  const labels = fieldLabels || defaultLabels
 
   if (!inventoryData || inventoryData.length === 0) {
     return (
@@ -60,9 +71,9 @@ const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400 
         <YAxis />
         <Tooltip content={<CustomTooltip />} />
         <Legend />
-        <Bar dataKey="currentStock" fill="#0088FE" name={t('currentStock', 'Current Stock')} />
-        <Bar dataKey="openingStock" fill="#00C49F" name={t('openingStock', 'Opening Stock')} />
-        <Bar dataKey="reorderLevel" fill="#FF8042" name={t('reorderLevel', 'Reorder Level')} />
+        <Bar dataKey="currentStock" fill="#0088FE" name={labels.currentStock} />
+        <Bar dataKey="openingStock" fill="#00C49F" name={labels.openingStock} />
+        <Bar dataKey="reorderLevel" fill="#FF8042" name={labels.reorderLevel} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -75,9 +86,9 @@ const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400 
         <YAxis />
         <Tooltip content={<CustomTooltip />} />
         <Legend />
-        <Line type="monotone" dataKey="currentStock" stroke="#0088FE" name={t('currentStock', 'Current Stock')} strokeWidth={2} />
-        <Line type="monotone" dataKey="openingStock" stroke="#00C49F" name={t('openingStock', 'Opening Stock')} strokeWidth={2} />
-        <Line type="monotone" dataKey="reorderLevel" stroke="#FF8042" name={t('reorderLevel', 'Reorder Level')} strokeWidth={2} strokeDasharray="5 5" />
+        <Line type="monotone" dataKey="currentStock" stroke="#0088FE" name={labels.currentStock} strokeWidth={2} />
+        <Line type="monotone" dataKey="openingStock" stroke="#00C49F" name={labels.openingStock} strokeWidth={2} />
+        <Line type="monotone" dataKey="reorderLevel" stroke="#FF8042" name={labels.reorderLevel} strokeWidth={2} strokeDasharray="5 5" />
       </LineChart>
     </ResponsiveContainer>
   )

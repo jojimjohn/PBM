@@ -114,8 +114,11 @@ const Wastage = () => {
     
     return Object.entries(monthlyData).map(([month, data]) => ({
       name: month,
-      quantity: data.quantity,
-      cost: data.cost,
+      materialCode: month,
+      currentStock: data.quantity,  // Use quantity as currentStock for display
+      totalValue: data.cost,        // Use cost as totalValue
+      openingStock: 0,              // Not applicable for monthly data
+      reorderLevel: data.count,     // Use count as reorderLevel
       count: data.count
     }))
   }
@@ -154,8 +157,11 @@ const Wastage = () => {
     
     return {
       name: type.name,
-      totalCost,
-      totalQuantity,
+      materialCode: type.name,
+      currentStock: totalQuantity, // Use totalQuantity as currentStock for display
+      totalValue: totalCost,       // Use totalCost as totalValue
+      openingStock: 0,             // Not applicable for wastage
+      reorderLevel: typeWastages.length, // Use count as reorderLevel
       count: typeWastages.length
     }
   }).filter(item => item.count > 0)
@@ -385,6 +391,12 @@ const Wastage = () => {
               inventoryData={wasteChartData}
               title={t('wastageByType', 'Wastage by Type')}
               height={350}
+              fieldLabels={{
+                currentStock: t('totalQuantity', 'Total Quantity'),
+                openingStock: t('baselineQuantity', 'Baseline'),
+                reorderLevel: t('wasteCount', 'Waste Count'),
+                totalValue: t('totalCost', 'Total Cost')
+              }}
             />
             
             <div className="monthly-chart">
@@ -392,6 +404,12 @@ const Wastage = () => {
                 inventoryData={getWastagesByMonth()}
                 title={t('monthlyWastageTrends', 'Monthly Wastage Trends')}
                 height={350}
+                fieldLabels={{
+                  currentStock: t('monthlyQuantity', 'Monthly Quantity'),
+                  openingStock: t('baselineQuantity', 'Baseline'),
+                  reorderLevel: t('incidentCount', 'Incident Count'),
+                  totalValue: t('monthlyCost', 'Monthly Cost')
+                }}
               />
             </div>
           </div>

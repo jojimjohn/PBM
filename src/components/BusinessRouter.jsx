@@ -18,6 +18,7 @@ import ScrapMaterialsInventory from '../modules/scrap-materials/pages/Inventory'
 import Sales from '../pages/Sales'
 import Purchase from '../pages/Purchase'
 import Settings from '../pages/Settings'
+import Wastage from '../pages/Wastage'
 
 const BusinessRouter = () => {
   const { selectedCompany } = useAuth()
@@ -34,6 +35,7 @@ const BusinessRouter = () => {
         <Route path="/contracts" element={<OilTradingContracts />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/purchase" element={<OilTradingPurchase />} />
+        <Route path="/wastage" element={<Wastage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
@@ -48,6 +50,7 @@ const BusinessRouter = () => {
         <Route path="/inventory" element={<ScrapMaterialsInventory />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/purchase" element={<Purchase />} />
+        <Route path="/wastage" element={<Wastage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

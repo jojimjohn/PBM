@@ -70,6 +70,7 @@ const MainLayout = () => {
         'sales': '/sales',
         'purchase': '/purchase',
         'contracts': '/contracts',
+        'wastage': '/wastage',
         'reports': '/reports',
         'expenses': '/expenses',
         'petty-cash': '/petty-cash',
