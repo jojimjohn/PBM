@@ -1,6 +1,6 @@
 {
   "pettyCashCards": {
-    "al_ramrami": [
+    "alramrami": [
       {
         "id": "pcc_001",
         "cardNumber": "PCC-ARM-001",
@@ -83,7 +83,7 @@
         "notes": "Equipment maintenance and repairs"
       }
     ],
-    "pride_muscat": [
+    "pridemuscat": [
       {
         "id": "pcc_101",
         "cardNumber": "PCC-PMI-001",

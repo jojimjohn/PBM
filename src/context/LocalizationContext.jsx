@@ -527,6 +527,10 @@ const translations = {
     contractUpdated: 'Contract updated successfully',
     passwordChanged: 'Password changed successfully',
     profileUpdated: 'Profile updated successfully',
+    expenseApproved: 'Expense approved successfully',
+    expenseRejected: 'Expense rejected successfully',
+    approveExpense: 'Approve Expense',
+    rejectExpense: 'Reject Expense',
     
     // Error Messages
     somethingWentWrong: 'Something went wrong. Please try again.',
@@ -1608,6 +1612,10 @@ const translations = {
     settingsSaved: 'تم حفظ الإعدادات بنجاح',
     passwordChanged: 'تم تغيير كلمة المرور بنجاح',
     profileUpdated: 'تم تحديث الملف الشخصي بنجاح',
+    expenseApproved: 'تم اعتماد المصروف بنجاح',
+    expenseRejected: 'تم رفض المصروف بنجاح',
+    approveExpense: 'اعتماد المصروف',
+    rejectExpense: 'رفض المصروف',
     
     // Error Messages
     somethingWentWrong: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',

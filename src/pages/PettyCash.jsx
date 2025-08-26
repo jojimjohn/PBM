@@ -173,6 +173,33 @@ const PettyCash = () => {
     setShowExpenseModal(true)
   }
 
+  const handleApproveExpense = async (expenseId, newStatus) => {
+    try {
+      // Update the local state immediately for better UX
+      setExpenses(prevExpenses => 
+        prevExpenses.map(expense => 
+          expense.id === expenseId 
+            ? { 
+                ...expense, 
+                status: newStatus,
+                approvedBy: newStatus === 'approved' ? 'current_user' : null,
+                approvedDate: newStatus === 'approved' ? new Date().toISOString() : null
+              }
+            : expense
+        )
+      )
+      
+      // In a real app, this would make an API call to update the backend
+      // For now, we'll just show a success message
+      console.log(`Expense ${expenseId} ${newStatus}`)
+      
+    } catch (error) {
+      console.error('Error updating expense status:', error)
+      // Revert the optimistic update if needed
+      loadPettyCashData()
+    }
+  }
+
   // Card table columns
   const cardColumns = [
     {
@@ -367,6 +394,24 @@ const PettyCash = () => {
           >
             <Receipt size={14} />
           </button>
+          {row.status === 'pending' && hasPermission('APPROVE_EXPENSE') && (
+            <>
+              <button
+                className="action-btn approve"
+                title={t('approveExpense', 'Approve Expense')}
+                onClick={() => handleApproveExpense(row.id, 'approved')}
+              >
+                <CheckCircle size={14} />
+              </button>
+              <button
+                className="action-btn reject"
+                title={t('rejectExpense', 'Reject Expense')}
+                onClick={() => handleApproveExpense(row.id, 'rejected')}
+              >
+                <AlertCircle size={14} />
+              </button>
+            </>
+          )}
         </div>
       )
     }

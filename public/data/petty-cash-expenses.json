@@ -1,6 +1,6 @@
 {
   "expenses": {
-    "al_ramrami": [
+    "alramrami": [
       {
         "id": "exp_001",
         "cardId": "pcc_001",
@@ -86,7 +86,7 @@
         "notes": "Monthly office supply replenishment"
       }
     ],
-    "pride_muscat": [
+    "pridemuscat": [
       {
         "id": "exp_101",
         "cardId": "pcc_101",
@@ -153,7 +153,7 @@
     ]
   },
   "expenseStats": {
-    "al_ramrami": {
+    "alramrami": {
       "totalExpenses": 291.500,
       "totalTransactions": 4,
       "avgTransactionAmount": 72.875,
@@ -174,7 +174,7 @@
         { "month": "2025-08", "total": 1568.250 }
       ]
     },
-    "pride_muscat": {
+    "pridemuscat": {
       "totalExpenses": 198.500,
       "totalTransactions": 3,
       "avgTransactionAmount": 66.167,

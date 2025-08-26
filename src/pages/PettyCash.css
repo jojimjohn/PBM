@@ -321,6 +321,24 @@
   border-color: #8b5cf6;
 }
 
+.action-btn.approve {
+  color: #22c55e;
+}
+
+.action-btn.approve:hover {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+}
+
+.action-btn.reject {
+  color: #ef4444;
+}
+
+.action-btn.reject:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
 /* Expense Table Styles */
 .date-info {
   display: flex;
