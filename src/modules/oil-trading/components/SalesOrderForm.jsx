@@ -34,32 +34,68 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   const [stockInfo, setStockInfo] = useState({}) // Track current stock levels
 
   useEffect(() => {
-    // Load customers and materials data
+    // Load customers and materials data first
     loadCustomersAndMaterials()
-    
-    if (isOpen) {
-      if (editingOrder) {
-        // Pre-fill form with existing order data
+  }, [isOpen])
+
+  // Separate useEffect for populating edit data after customers and materials are loaded
+  useEffect(() => {
+    if (isOpen && editingOrder && customers.length > 0 && materials.length > 0) {
+      // Pre-fill form with existing order data
+      // Handle customer - if it's a string, find the customer object
+      let customerObj = editingOrder.customer
+      if (typeof customerObj === 'string') {
+        customerObj = customers.find(c => c.name === editingOrder.customer) || null
+      }
+        
+        // Transform items data to match form structure - handle both 'name' and 'materialId' fields
+        const transformedItems = editingOrder.items ? editingOrder.items.map(item => {
+          // Find material by name if materialId is not present
+          let materialId = item.materialId || ''
+          if (!materialId && item.name && materials.length > 0) {
+            const material = materials.find(m => m.name === item.name)
+            materialId = material ? material.id : ''
+          }
+          
+          return {
+            materialId: materialId,
+            quantity: item.quantity || '',
+            rate: item.rate || '',
+            amount: item.amount || 0
+          }
+        }) : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
+        
+        // Calculate delivery date if not provided (default to 7 days from order date)
+        let deliveryDate = editingOrder.deliveryDate || ''
+        if (!deliveryDate && editingOrder.date) {
+          const orderDate = new Date(editingOrder.date)
+          orderDate.setDate(orderDate.getDate() + 7) // Add 7 days
+          deliveryDate = orderDate.toISOString().split('T')[0]
+        }
+        
         setFormData({
-          orderNumber: editingOrder.id,
-          customer: editingOrder.customer,
+          orderNumber: editingOrder.id || '',
+          customer: customerObj,
           orderDate: editingOrder.date ? editingOrder.date.split('T')[0] : getInputDate(),
-          deliveryDate: editingOrder.deliveryDate || '',
-          items: editingOrder.items || [{ materialId: '', quantity: '', rate: '', amount: 0 }],
-          notes: editingOrder.notes || '',
+          deliveryDate: deliveryDate,
+          items: transformedItems,
+          notes: editingOrder.notes || 'Order imported from existing data',
           specialInstructions: editingOrder.specialInstructions || '',
           totalAmount: editingOrder.total || 0,
           discountPercent: 0,
           discountAmount: 0,
           netAmount: editingOrder.total || 0
         })
-      } else if (!formData.orderNumber) {
-        // Generate new order number
-        const orderNum = `SO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
-        setFormData(prev => ({ ...prev, orderNumber: orderNum }))
-      }
     }
-  }, [isOpen, editingOrder])
+  }, [isOpen, editingOrder, customers, materials])
+
+  // Generate order number for new orders
+  useEffect(() => {
+    if (isOpen && !editingOrder && !formData.orderNumber) {
+      const orderNum = `SO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
+      setFormData(prev => ({ ...prev, orderNumber: orderNum }))
+    }
+  }, [isOpen, editingOrder, formData.orderNumber])
 
   useEffect(() => {
     // Load contract rates when customer changes
@@ -444,11 +480,14 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen) {
+    return null
+  }
 
   return (
     <Modal 
-      title="Create Sales Order" 
+      isOpen={isOpen}
+      title={editingOrder ? 'Edit Sales Order' : 'Create Sales Order'} 
       onClose={onClose}
       className="modal-xxl"
     >

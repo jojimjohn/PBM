@@ -380,12 +380,12 @@ const Wastage = () => {
       </div>
 
       {/* Charts Modal */}
-      {showChartsModal && (
-        <Modal
-          title={t('wastageAnalytics', 'Wastage Analytics')}
-          onClose={() => setShowChartsModal(false)}
-          className="modal-xl"
-        >
+      <Modal
+        isOpen={showChartsModal}
+        title={t('wastageAnalytics', 'Wastage Analytics')}
+        onClose={() => setShowChartsModal(false)}
+        className="modal-xl"
+      >
           <div className="charts-container">
             <StockChart
               inventoryData={wasteChartData}
@@ -414,7 +414,72 @@ const Wastage = () => {
             </div>
           </div>
         </Modal>
-      )}
+
+      {/* Add Wastage Modal */}
+      <Modal
+        isOpen={showAddForm}
+        title={t('reportWastage', 'Report Wastage')}
+        onClose={() => setShowAddForm(false)}
+        className="modal-lg"
+      >
+          <div className="wastage-form">
+            <p>Add Wastage Form - To be implemented</p>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-outline"
+                onClick={() => setShowAddForm(false)}
+              >
+                {t('cancel', 'Cancel')}
+              </button>
+              <button className="btn btn-primary">
+                {t('save', 'Save')}
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+      {/* Edit Wastage Modal */}
+      <Modal
+        isOpen={showEditForm}
+        title={t('editWastage', 'Edit Wastage')}
+        onClose={() => setShowEditForm(false)}
+        className="modal-lg"
+      >
+          <div className="wastage-form">
+            <p>Edit Wastage Form - To be implemented</p>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-outline"
+                onClick={() => setShowEditForm(false)}
+              >
+                {t('cancel', 'Cancel')}
+              </button>
+              <button className="btn btn-primary">
+                {t('update', 'Update')}
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+      {/* View Wastage Modal */}
+      <Modal
+        isOpen={showViewModal}
+        title={t('wastageDetails', 'Wastage Details')}
+        onClose={() => setShowViewModal(false)}
+        className="modal-lg"
+      >
+          <div className="wastage-details">
+            <p>View Wastage Details - To be implemented</p>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowViewModal(false)}
+              >
+                {t('close', 'Close')}
+              </button>
+            </div>
+          </div>
+        </Modal>
     </div>
   )
 }

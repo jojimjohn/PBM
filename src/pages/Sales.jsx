@@ -23,22 +23,28 @@ const Sales = () => {
   const sampleOrders = [
     {
       id: 'SO-2024-089',
-      customer: 'Al Maha Petroleum',
+      customer: 'ABC Manufacturing LLC',
       date: '2024-01-15',
+      deliveryDate: '2024-01-22',
       items: [
         { name: 'Diesel', quantity: 500, unit: 'L', rate: 0.450, amount: 225 }
       ],
+      notes: 'Urgent delivery required for production line',
+      specialInstructions: 'Handle with care, quality inspection required',
       total: 225,
       status: 'confirmed',
       paymentStatus: 'paid'
     },
     {
       id: 'SO-2024-088',
-      customer: 'Gulf Construction LLC',
+      customer: 'XYZ Power Plant',
       date: '2024-01-14',
+      deliveryDate: '2024-01-21',
       items: [
-        { name: 'Engine Oil 20W-50', quantity: 10, unit: 'L', rate: 2.500, amount: 25 }
+        { name: 'Engine Oil without Drums', quantity: 10, unit: 'liters', rate: 2.500, amount: 25 }
       ],
+      notes: 'Regular monthly order',
+      specialInstructions: 'Standard delivery terms',
       total: 25,
       status: 'pending',
       paymentStatus: 'pending'
@@ -249,8 +255,8 @@ const Sales = () => {
       sortable: true,
       filterable: true,
       render: (value) => (
-        <span className={`payment-badge ${value}`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
+        <span className={`payment-badge ${value || 'pending'}`}>
+          {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Pending'}
         </span>
       )
     },

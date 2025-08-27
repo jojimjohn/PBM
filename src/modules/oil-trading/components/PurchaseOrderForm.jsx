@@ -200,6 +200,7 @@ const PurchaseOrderForm = ({
 
   return (
     <Modal 
+      isOpen={isOpen}
       title={title} 
       onClose={onClose}
       className="modal-xxl"
