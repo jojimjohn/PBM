@@ -6,6 +6,9 @@ import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
+import contractService from '../../../services/contractService'
+import customerService from '../../../services/customerService'
+import materialService from '../../../services/materialService'
 import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase } from 'lucide-react'
 import '../styles/Contracts.css'
 
@@ -32,10 +35,9 @@ const Contracts = () => {
 
   const loadContracts = async () => {
     try {
-      const response = await fetch('/data/contracts.json')
-      const data = await response.json()
+      const data = await contractService.getContracts()
       
-      // Filter contracts for current company
+      // Contracts are already filtered by company in the service
       const companyContracts = data.contracts.filter(
         contract => contract.companyId === selectedCompany?.id
       )
@@ -52,16 +54,14 @@ const Contracts = () => {
 
   const loadCustomersAndMaterials = async () => {
     try {
-      // Load customers
-      const customersResponse = await fetch('/data/customers.json')
-      const customersData = await customersResponse.json()
-      const companyCustomers = customersData.customers[selectedCompany?.id] || []
+      // Load customers using API service
+      const customersData = await customerService.getCustomers()
+      const companyCustomers = customersData || []
       setCustomers(companyCustomers)
 
-      // Load materials
-      const materialsResponse = await fetch('/data/materials.json')
-      const materialsData = await materialsResponse.json()
-      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
+      // Load materials using API service
+      const materialsData = await materialService.getMaterials()
+      const companyMaterials = materialsData || []
       setMaterials(companyMaterials)
     } catch (error) {
       console.error('Error loading customers and materials:', error)

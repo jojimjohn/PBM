@@ -4,8 +4,8 @@ import { useLocalization } from '../context/LocalizationContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import DataTable from '../components/ui/DataTable'
 import SalesOrderForm from '../modules/oil-trading/components/SalesOrderForm'
-import inventoryService from '../services/inventoryService'
-import financialService from '../services/financialService'
+import salesOrderService from '../services/salesOrderService'
+import customerService from '../services/customerService'
 import { Eye, Edit, FileText, DollarSign, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
 import '../styles/Sales.css'
 
@@ -19,44 +19,45 @@ const Sales = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [viewingOrder, setViewingOrder] = useState(null)
   const [editingOrder, setEditingOrder] = useState(null)
+  const [todaysSummary, setTodaysSummary] = useState({ totalSales: 0, totalOrders: 0, pendingOrders: 0 })
+  const [error, setError] = useState(null)
 
-  const sampleOrders = [
-    {
-      id: 'SO-2024-089',
-      customer: 'ABC Manufacturing LLC',
-      date: '2024-01-15',
-      deliveryDate: '2024-01-22',
-      items: [
-        { name: 'Diesel', quantity: 500, unit: 'L', rate: 0.450, amount: 225 }
-      ],
-      notes: 'Urgent delivery required for production line',
-      specialInstructions: 'Handle with care, quality inspection required',
-      total: 225,
-      status: 'confirmed',
-      paymentStatus: 'paid'
-    },
-    {
-      id: 'SO-2024-088',
-      customer: 'XYZ Power Plant',
-      date: '2024-01-14',
-      deliveryDate: '2024-01-21',
-      items: [
-        { name: 'Engine Oil without Drums', quantity: 10, unit: 'liters', rate: 2.500, amount: 25 }
-      ],
-      notes: 'Regular monthly order',
-      specialInstructions: 'Standard delivery terms',
-      total: 25,
-      status: 'pending',
-      paymentStatus: 'pending'
+  // Load sales orders and summary data from backend
+  const loadSalesData = async () => {
+    try {
+      setError(null)
+      
+      // Load sales orders
+      const ordersResult = await salesOrderService.getAll()
+      if (ordersResult.success) {
+        setSalesOrders(ordersResult.data || [])
+      } else {
+        throw new Error(ordersResult.error || 'Failed to load sales orders')
+      }
+      
+      // Load today's summary
+      const summaryResult = await salesOrderService.getTodaysSummary()
+      if (summaryResult.success && summaryResult.data) {
+        setTodaysSummary({
+          totalSales: summaryResult.data.totalSales || 0,
+          totalOrders: summaryResult.data.totalOrders || 0,
+          pendingOrders: summaryResult.data.pendingOrders || 0
+        })
+      }
+      
+    } catch (error) {
+      console.error('Error loading sales data:', error)
+      setError(error.message)
+      // Fallback to empty data on error
+      setSalesOrders([])
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
   useEffect(() => {
-    // Load sales orders
-    const timer = setTimeout(() => {
-      setSalesOrders(sampleOrders)
-      setLoading(false)
-    }, 1300)
+    // Load sales orders from backend
+    loadSalesData()
     
     // Check for pre-selected customer from customer module
     const storedCustomer = sessionStorage.getItem('selectedCustomerForOrder')
@@ -73,8 +74,6 @@ const Sales = () => {
         sessionStorage.removeItem('selectedCustomerForOrder')
       }
     }
-    
-    return () => clearTimeout(timer)
   }, [])
 
   const handleCreateOrder = (selectedCustomer = null) => {
@@ -84,87 +83,35 @@ const Sales = () => {
 
   const handleSaveOrder = async (orderData) => {
     try {
-      // Step 1: Validate inventory availability
-      const companyId = selectedCompany?.id || 'alramrami'
-      const orderItems = orderData.items.map(item => ({
-        materialId: item.materialId,
-        quantity: parseFloat(item.quantity)
-      }))
-
-      console.log('Validating inventory for sales order:', orderData.orderNumber)
+      setLoading(true)
+      console.log('Creating sales order:', orderData)
       
-      // Check stock availability before proceeding
-      const validation = inventoryService.validateStockAvailability(companyId, orderItems)
+      // Create sales order via backend API
+      const result = await salesOrderService.create(orderData)
       
-      if (!validation.isValid) {
-        // Show detailed error message about insufficient stock
-        const errorDetails = validation.insufficientItems.map(item => 
-          `• Material ${item.materialId}: Requested ${item.requested}, Available ${item.available}`
-        ).join('\n')
-        
-        throw new Error(`Insufficient stock for the following items:\n${errorDetails}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create sales order')
       }
-
-      // Step 2: Create the sales order with pending status
-      const salesOrder = {
-        ...orderData,
-        status: 'pending',
-        createdAt: new Date().toISOString(), // July 25, 2025
-        updatedAt: new Date().toISOString()
-      }
-
-      // Step 3: Reduce inventory stock
-      console.log('Reducing inventory stock for order:', salesOrder.orderNumber)
-      const stockReduction = await inventoryService.reduceStock(
-        companyId, 
-        orderItems, 
-        salesOrder.orderNumber
-      )
-
-      if (!stockReduction.success) {
-        throw new Error(`Failed to update inventory: ${stockReduction.error}`)
-      }
-
-      // Step 4: Record financial transaction
-      console.log('Recording sales transaction for order:', salesOrder.orderNumber)
-      const salesTransaction = financialService.recordSalesTransaction(salesOrder, companyId)
       
-      // Step 5: Update order status to confirmed and add inventory + financial info
-      salesOrder.status = 'confirmed'
-      salesOrder.inventoryReduction = {
-        timestamp: new Date().toISOString(),
-        items: stockReduction.updatedItems,
-        message: stockReduction.message
-      }
-      salesOrder.financialTransaction = {
-        transactionId: salesTransaction.id,
-        amount: salesTransaction.netAmount,
-        timestamp: salesTransaction.createdAt
-      }
-
-      // Add to local state
-      setSalesOrders(prev => [salesOrder, ...prev])
+      console.log('Sales order created successfully:', result.data)
+      
+      // Refresh the sales orders list
+      await loadSalesData()
       
       // Reset form state
       setSelectedCustomer(null)
       setShowOrderForm(false)
+      setEditingOrder(null)
       
-      // Show success message with inventory and financial details
-      const inventoryDetails = stockReduction.updatedItems.map(item => 
-        `${item.materialId}: ${item.quantityReduced} units reduced (${item.newStock} remaining)`
-      ).join('\n')
-      
-      alert(`✅ Sales order created successfully!\n\nInventory Updated:\n${inventoryDetails}\n\n💰 Financial Transaction: ${salesTransaction.id}\nRevenue: OMR ${salesTransaction.netAmount.toFixed(2)}`)
-      
-      console.log('Sales order saved successfully:', salesOrder)
-      console.log('Financial transaction recorded:', salesTransaction)
+      // Show success message
+      alert(`✅ Sales order created successfully!\n\nOrder Number: ${result.data.orderNumber}\nTotal: OMR ${result.data.totalAmount?.toFixed(2) || 0}`)
       
     } catch (error) {
       console.error('Error saving sales order:', error)
-      
-      // Show user-friendly error message
+      setError(error.message)
       alert(`❌ Failed to create sales order:\n\n${error.message}`)
-      throw error
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -174,11 +121,26 @@ const Sales = () => {
 
   const handleEditSalesOrder = (order) => {
     setEditingOrder(order)
+    setSelectedCustomer({ id: order.customerId, name: order.customerName })
     setShowOrderForm(true)
   }
 
-  const handleGenerateInvoice = (order) => {
-    alert(`🧾 Generating invoice for order: ${order.id}\n\nThis feature will be implemented in the next phase.`)
+  const handleGenerateInvoice = async (order) => {
+    try {
+      setLoading(true)
+      const result = await salesOrderService.generateInvoice(order.id)
+      
+      if (result.success) {
+        alert(`🧾 Invoice generated successfully for order: ${order.orderNumber}\n\nInvoice Number: ${result.data.invoiceNumber}`)
+      } else {
+        throw new Error(result.error || 'Failed to generate invoice')
+      }
+    } catch (error) {
+      console.error('Error generating invoice:', error)
+      alert(`❌ Failed to generate invoice:\n\n${error.message}`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Define table columns for sales orders
@@ -189,7 +151,7 @@ const Sales = () => {
       sortable: true,
       render: (value) => (
         <div className="order-id">
-          <strong>{value}</strong>
+          <strong>{value || row.orderNumber}</strong>
         </div>
       )
     },
@@ -201,7 +163,7 @@ const Sales = () => {
       render: (value) => (
         <div className="customer-info">
           <User size={14} />
-          <span>{value}</span>
+          <span>{value || row.customerName}</span>
         </div>
       )
     },
@@ -209,34 +171,46 @@ const Sales = () => {
       key: 'date',
       header: t('date'),
       type: 'date',
-      sortable: true
+      sortable: true,
+      render: (value) => {
+        if (!value) return '-'
+        const date = new Date(value)
+        return date.toLocaleDateString()
+      }
     },
     {
       key: 'items',
       header: t('items'),
       sortable: false,
-      render: (value) => (
-        <div className="items-summary">
-          <div className="item-count">{value.length} {t('items')}</div>
-          <div className="item-details">
-            {value.slice(0, 2).map((item, index) => (
-              <span key={index} className="item-name">
-                {item.name} ({item.quantity}{item.unit})
-              </span>
-            ))}
-            {value.length > 2 && (
-              <span className="more-items">+{value.length - 2} {t('more')}</span>
-            )}
+      render: (value, row) => {
+        const items = value || row.salesOrderItems || []
+        return (
+          <div className="items-summary">
+            <div className="item-count">{items.length} {t('items')}</div>
+            <div className="item-details">
+              {items.slice(0, 2).map((item, index) => (
+                <span key={index} className="item-name">
+                  {item.materialName || item.name} ({item.quantity}{item.unit})
+                </span>
+              ))}
+              {items.length > 2 && (
+                <span className="more-items">+{items.length - 2} {t('more')}</span>
+              )}
+            </div>
           </div>
-        </div>
-      )
+        )
+      }
     },
     {
       key: 'total',
       header: t('total'),
       type: 'currency',
       align: 'right',
-      sortable: true
+      sortable: true,
+      render: (value, row) => {
+        const total = value || row.totalAmount || 0
+        return `OMR ${total.toFixed(2)}`
+      }
     },
     {
       key: 'status',
@@ -303,6 +277,15 @@ const Sales = () => {
 
   return (
     <div className="sales-page">
+      {/* Error Display */}
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="error-close">×</button>
+        </div>
+      )}
+      
       <div className="page-header">
         <div className="header-left">
           <h1>Sales Management</h1>
@@ -439,7 +422,7 @@ const Sales = () => {
                 </svg>
               </div>
               <div className="summary-info">
-                <p className="summary-value">OMR 250.00</p>
+                <p className="summary-value">OMR {todaysSummary.totalSales.toFixed(2)}</p>
                 <p className="summary-label">Total Sales (Today)</p>
               </div>
             </div>
@@ -452,7 +435,7 @@ const Sales = () => {
                 </svg>
               </div>
               <div className="summary-info">
-                <p className="summary-value">2</p>
+                <p className="summary-value">{todaysSummary.totalOrders}</p>
                 <p className="summary-label">Orders (Today)</p>
               </div>
             </div>
@@ -465,7 +448,7 @@ const Sales = () => {
                 </svg>
               </div>
               <div className="summary-info">
-                <p className="summary-value">1</p>
+                <p className="summary-value">{todaysSummary.pendingOrders}</p>
                 <p className="summary-label">Pending Orders</p>
               </div>
             </div>
@@ -496,18 +479,19 @@ const Sales = () => {
             </div>
             <div className="modal-body">
               <div className="order-details">
-                <p><strong>Order ID:</strong> {viewingOrder.id}</p>
-                <p><strong>Customer:</strong> {viewingOrder.customer}</p>
-                <p><strong>Date:</strong> {viewingOrder.date}</p>
+                <p><strong>Order Number:</strong> {viewingOrder.orderNumber || viewingOrder.id}</p>
+                <p><strong>Customer:</strong> {viewingOrder.customerName || viewingOrder.customer}</p>
+                <p><strong>Date:</strong> {new Date(viewingOrder.orderDate || viewingOrder.date).toLocaleDateString()}</p>
                 <p><strong>Status:</strong> {viewingOrder.status}</p>
                 <p><strong>Payment Status:</strong> {viewingOrder.paymentStatus}</p>
-                <p><strong>Total:</strong> OMR {viewingOrder.total.toFixed(2)}</p>
+                <p><strong>Total:</strong> OMR {(viewingOrder.totalAmount || viewingOrder.total || 0).toFixed(2)}</p>
+                {viewingOrder.notes && <p><strong>Notes:</strong> {viewingOrder.notes}</p>}
                 
                 <h4>Items:</h4>
                 <ul>
-                  {viewingOrder.items.map((item, index) => (
+                  {(viewingOrder.salesOrderItems || viewingOrder.items || []).map((item, index) => (
                     <li key={index}>
-                      {item.name} - {item.quantity} {item.unit} @ OMR {item.rate.toFixed(3)}
+                      {item.materialName || item.name} - {item.quantity} {item.unit} @ OMR {(item.unitPrice || item.rate || 0).toFixed(3)}
                     </li>
                   ))}
                 </ul>

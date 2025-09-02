@@ -11,7 +11,7 @@ import { MODULE_PERMISSIONS } from '../config/modules'
 export const usePermissions = () => {
   const { user, selectedCompany } = useAuth()
 
-  const userRole = user?.role || USER_ROLES.SALES
+  const userRole = user?.role || USER_ROLES.SALES_STAFF
 
   const userPermissions = useMemo(() => {
     if (!userRole) return []

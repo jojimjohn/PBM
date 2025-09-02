@@ -5,7 +5,8 @@ import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
-import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign } from 'lucide-react'
+import customerService from '../../../services/customerService'
+import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle } from 'lucide-react'
 import '../styles/Customers.css'
 
 const OilTradingCustomers = () => {
@@ -19,17 +20,25 @@ const OilTradingCustomers = () => {
   const [viewingCustomer, setViewingCustomer] = useState(null)
   const [viewingContract, setViewingContract] = useState(null)
   const [editingContract, setEditingContract] = useState(null)
+  const [error, setError] = useState(null)
 
   // Load customers data
   useEffect(() => {
     const loadCustomers = async () => {
       try {
-        const response = await fetch('/data/customers.json')
-        const data = await response.json()
-        const companyCustomers = data.customers[selectedCompany?.id] || []
-        setCustomers(companyCustomers)
+        setLoading(true)
+        setError(null)
+        const result = await customerService.getAll()
+        
+        if (result.success) {
+          setCustomers(result.data || [])
+        } else {
+          throw new Error(result.error || 'Failed to load customers')
+        }
       } catch (error) {
         console.error('Error loading customers:', error)
+        setError(error.message)
+        setCustomers([])
       } finally {
         setLoading(false)
       }
@@ -77,13 +86,23 @@ const OilTradingCustomers = () => {
     }
   }
 
-  const handleToggleStatus = (customerId) => {
-    const updatedCustomers = customers.map(customer =>
-      customer.id === customerId
-        ? { ...customer, isActive: !customer.isActive, lastUpdated: new Date().toISOString() }
-        : customer
-    )
-    setCustomers(updatedCustomers)
+  const handleToggleStatus = async (customerId) => {
+    try {
+      const customer = customers.find(c => c.id === customerId)
+      const result = await customerService.updateStatus(customerId, !customer.isActive)
+      if (result.success) {
+        const updatedCustomers = customers.map(c => 
+          c.id === customerId ? result.data : c
+        )
+        setCustomers(updatedCustomers)
+      } else {
+        console.error('Error updating customer status:', result.error)
+        // Show error message to user
+      }
+    } catch (error) {
+      console.error('Error updating customer status:', error)
+      // Show error message to user
+    }
   }
 
   const handleViewDetails = (customer) => {

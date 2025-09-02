@@ -28,6 +28,7 @@ export const Icon = ({ name, size = 20, color = 'currentColor', className = '', 
 export const Icons = {
   user: LucideIcons.User,
   lock: LucideIcons.Lock,
+  mail: LucideIcons.Mail,
   building: LucideIcons.Building2,
   droplets: LucideIcons.Droplets,
   recycle: LucideIcons.Recycle,

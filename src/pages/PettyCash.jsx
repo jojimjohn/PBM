@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal'
 import DataTable from '../components/ui/DataTable'
 import StockChart from '../components/StockChart'
 import ImageUpload from '../components/ui/ImageUpload'
+import pettyCashService from '../services/pettyCashService'
 import { 
   CreditCard, 
   Plus, 
@@ -38,6 +39,7 @@ const PettyCash = () => {
   const [expenses, setExpenses] = useState([])
   const [expenseTypes, setExpenseTypes] = useState([])
   const [stats, setStats] = useState({})
+  const [error, setError] = useState(null)
   
   // Modal states
   const [showCardModal, setShowCardModal] = useState(false)
@@ -65,23 +67,45 @@ const PettyCash = () => {
   const loadPettyCashData = async () => {
     try {
       setLoading(true)
+      setError(null)
       
-      // Load petty cash cards
-      const cardsResponse = await fetch('/data/petty-cash-cards.json')
-      const cardsData = await cardsResponse.json()
-      const companyCards = cardsData.pettyCashCards[selectedCompany?.id] || []
-      setCards(companyCards)
-      setExpenseTypes(cardsData.expenseTypes)
+      // Load petty cash cards from backend
+      const cardsResult = await pettyCashService.getAllCards()
+      if (cardsResult.success) {
+        setCards(cardsResult.data || [])
+      } else {
+        throw new Error(cardsResult.error || 'Failed to load petty cash cards')
+      }
       
-      // Load expenses
-      const expensesResponse = await fetch('/data/petty-cash-expenses.json')
-      const expensesData = await expensesResponse.json()
-      const companyExpenses = expensesData.expenses[selectedCompany?.id] || []
-      setExpenses(companyExpenses)
-      setStats(expensesData.expenseStats[selectedCompany?.id] || {})
+      // Load expenses from backend
+      const expensesResult = await pettyCashService.getAllExpenses()
+      if (expensesResult.success) {
+        setExpenses(expensesResult.data || [])
+      } else {
+        console.warn('Failed to load expenses:', expensesResult.error)
+        setExpenses([])
+      }
+      
+      // Load expense types
+      const typesResult = await pettyCashService.getExpenseTypes()
+      if (typesResult.success) {
+        setExpenseTypes(typesResult.data || [])
+      } else {
+        console.warn('Failed to load expense types:', typesResult.error)
+        setExpenseTypes([])
+      }
+      
+      // Load statistics
+      const statsResult = await pettyCashService.getAnalytics()
+      if (statsResult.success) {
+        setStats(statsResult.data || {})
+      }
       
     } catch (error) {
       console.error('Error loading petty cash data:', error)
+      setError(error.message)
+      setCards([])
+      setExpenses([])
     } finally {
       setLoading(false)
     }
@@ -175,28 +199,107 @@ const PettyCash = () => {
 
   const handleApproveExpense = async (expenseId, newStatus) => {
     try {
-      // Update the local state immediately for better UX
-      setExpenses(prevExpenses => 
-        prevExpenses.map(expense => 
-          expense.id === expenseId 
-            ? { 
-                ...expense, 
-                status: newStatus,
-                approvedBy: newStatus === 'approved' ? 'current_user' : null,
-                approvedDate: newStatus === 'approved' ? new Date().toISOString() : null
-              }
-            : expense
-        )
-      )
+      setLoading(true)
       
-      // In a real app, this would make an API call to update the backend
-      // For now, we'll just show a success message
-      console.log(`Expense ${expenseId} ${newStatus}`)
+      let result
+      if (newStatus === 'approved') {
+        result = await pettyCashService.approveExpense(expenseId, {
+          approvedBy: 'current_user',
+          approvalNotes: 'Approved via UI'
+        })
+      } else if (newStatus === 'rejected') {
+        result = await pettyCashService.rejectExpense(expenseId, {
+          rejectedBy: 'current_user',
+          rejectionReason: 'Rejected via UI'
+        })
+      }
+      
+      if (result && result.success) {
+        // Reload data to reflect changes
+        await loadPettyCashData()
+        alert(`Expense ${newStatus} successfully`)
+      } else {
+        throw new Error(result?.error || `Failed to ${newStatus} expense`)
+      }
       
     } catch (error) {
       console.error('Error updating expense status:', error)
-      // Revert the optimistic update if needed
-      loadPettyCashData()
+      setError(error.message)
+      alert(`Failed to ${newStatus} expense: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveCard = async (cardData) => {
+    try {
+      setLoading(true)
+      let result
+      
+      if (editingCard) {
+        result = await pettyCashService.updateCard(editingCard.id, cardData)
+      } else {
+        result = await pettyCashService.createCard(cardData)
+      }
+      
+      if (result.success) {
+        await loadPettyCashData()
+        setShowCardModal(false)
+        setEditingCard(null)
+        alert(`Card ${editingCard ? 'updated' : 'created'} successfully`)
+      } else {
+        throw new Error(result.error || 'Failed to save card')
+      }
+    } catch (error) {
+      console.error('Error saving card:', error)
+      setError(error.message)
+      alert(`Failed to save card: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleReloadCardBalance = async (reloadData) => {
+    try {
+      setLoading(true)
+      const result = await pettyCashService.reloadCard(selectedCard.id, reloadData)
+      
+      if (result.success) {
+        await loadPettyCashData()
+        setShowReloadModal(false)
+        setSelectedCard(null)
+        alert('Card balance reloaded successfully')
+      } else {
+        throw new Error(result.error || 'Failed to reload card')
+      }
+    } catch (error) {
+      console.error('Error reloading card:', error)
+      setError(error.message)
+      alert(`Failed to reload card: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveExpense = async (expenseData) => {
+    try {
+      setLoading(true)
+      const result = await pettyCashService.createExpense(expenseData)
+      
+      if (result.success) {
+        await loadPettyCashData()
+        setShowExpenseModal(false)
+        setSelectedCard(null)
+        alert('Expense recorded successfully')
+      } else {
+        throw new Error(result.error || 'Failed to create expense')
+      }
+    } catch (error) {
+      console.error('Error saving expense:', error)
+      setError(error.message)
+      alert(`Failed to save expense: ${error.message}`)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -423,6 +526,15 @@ const PettyCash = () => {
 
   return (
     <div className="petty-cash-page">
+      {/* Error Display */}
+      {error && (
+        <div className="error-banner">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="error-close">×</button>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="page-header">
         <div className="header-left">

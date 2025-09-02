@@ -6,6 +6,9 @@ import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import Modal from '../../../components/ui/Modal'
 import StockChart from '../../../components/StockChart'
+import inventoryService from '../../../services/inventoryService'
+import materialService from '../../../services/materialService'
+import supplierService from '../../../services/supplierService'
 import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, DollarSign, BarChart3, Calendar } from 'lucide-react'
 import '../../../styles/theme.css'
 import './Inventory.css'
@@ -91,23 +94,20 @@ const Inventory = () => {
     try {
       setLoading(true)
       
-      // Load inventory data
-      const inventoryResponse = await fetch('/data/inventory.json')
-      const inventoryData = await inventoryResponse.json()
-      const companyInventory = inventoryData.inventory[selectedCompany?.id] || []
+      // Load inventory data using API service
+      const inventoryData = await inventoryService.getInventory()
+      const companyInventory = inventoryData || []
       setInventory(companyInventory)
       
-      // Load materials data
-      const materialsResponse = await fetch('/data/materials.json')
-      const materialsData = await materialsResponse.json()
-      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
+      // Load materials data using API service
+      const materialsData = await materialService.getMaterials()
+      const companyMaterials = materialsData || []
       setMaterials(companyMaterials)
       
-      // Load vendor data
+      // Load supplier/vendor data using API service
       try {
-        const vendorsResponse = await fetch('/data/vendors.json')
-        const vendorsData = await vendorsResponse.json()
-        const companyVendors = vendorsData.vendors[selectedCompany?.id] || []
+        const suppliersData = await supplierService.getSuppliers()
+        const companyVendors = suppliersData || []
         setVendors(companyVendors)
       } catch (vendorError) {
         console.error('Error loading vendors:', vendorError)

@@ -15,9 +15,23 @@ const CompanySwitcher = () => {
   useEffect(() => {
     const loadCompanies = async () => {
       try {
-        const response = await fetch('/data/companies.json')
-        const data = await response.json()
-        setCompanies(data.companies)
+        const companies = [
+          {
+            id: 'alramrami',
+            name: 'Al Ramrami Trading Enterprises',
+            arabicName: 'مؤسسة الرمرامي التجارية',
+            businessType: 'oil-trading',
+            logo: '/images/alramrami-logo.png'
+          },
+          {
+            id: 'pridemuscat',
+            name: 'Pride Muscat International LLC',
+            arabicName: 'شركة برايد مسقط العالمية ذ.م.م',
+            businessType: 'scrap-materials',
+            logo: '/images/pridemuscat-logo.png'
+          }
+        ];
+        setCompanies(companies)
       } catch (error) {
         setError('Failed to load companies')
       }

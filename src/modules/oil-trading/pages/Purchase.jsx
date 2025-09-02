@@ -6,6 +6,9 @@ import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
+import purchaseOrderService from '../../../services/purchaseOrderService'
+import supplierService from '../../../services/supplierService'
+import materialService from '../../../services/materialService'
 import { 
   Plus, Search, Filter, Eye, Edit, Truck, Package, 
   CheckCircle, Clock, AlertTriangle, FileText, Download 
@@ -34,25 +37,29 @@ const Purchase = () => {
     try {
       setLoading(true)
       
-      // Load purchase orders
-      const ordersResponse = await fetch('/data/purchase-orders.json')
-      const ordersData = await ordersResponse.json()
-      const companyOrders = ordersData.purchaseOrders.filter(
-        order => order.companyId === selectedCompany?.id
-      )
+      // Load purchase orders using API service
+      const ordersData = await purchaseOrderService.getPurchaseOrders()
+      const companyOrders = ordersData || []
       setPurchaseOrders(companyOrders)
-      setOrderStatuses(ordersData.orderStatuses)
+      
+      // Set default order statuses
+      setOrderStatuses({
+        draft: 'Draft',
+        pending: 'Pending Approval',
+        approved: 'Approved',
+        sent: 'Sent to Supplier',
+        received: 'Received',
+        cancelled: 'Cancelled'
+      })
 
-      // Load vendors
-      const vendorsResponse = await fetch('/data/vendors.json')
-      const vendorsData = await vendorsResponse.json()
-      const companyVendors = vendorsData.vendors[selectedCompany?.id] || []
+      // Load suppliers using API service
+      const suppliersData = await supplierService.getSuppliers()
+      const companyVendors = suppliersData || []
       setVendors(companyVendors)
 
-      // Load materials
-      const materialsResponse = await fetch('/data/materials.json')
-      const materialsData = await materialsResponse.json()
-      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
+      // Load materials using API service
+      const materialsData = await materialService.getMaterials()
+      const companyMaterials = materialsData || []
       setMaterials(companyMaterials)
       
     } catch (error) {

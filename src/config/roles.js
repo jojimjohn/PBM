@@ -3,18 +3,18 @@ export const USER_ROLES = {
   SUPER_ADMIN: 'SUPER_ADMIN',
   COMPANY_ADMIN: 'COMPANY_ADMIN', 
   MANAGER: 'MANAGER',
-  SALES: 'SALES',
-  PURCHASE: 'PURCHASE',
-  ACCOUNTS: 'ACCOUNTS'
+  SALES_STAFF: 'SALES_STAFF',
+  PURCHASE_STAFF: 'PURCHASE_STAFF',
+  ACCOUNTS_STAFF: 'ACCOUNTS_STAFF'
 }
 
 export const ROLE_HIERARCHY = {
   [USER_ROLES.SUPER_ADMIN]: 6,
   [USER_ROLES.COMPANY_ADMIN]: 5,
   [USER_ROLES.MANAGER]: 4,
-  [USER_ROLES.SALES]: 3,
-  [USER_ROLES.PURCHASE]: 3,
-  [USER_ROLES.ACCOUNTS]: 3
+  [USER_ROLES.SALES_STAFF]: 3,
+  [USER_ROLES.PURCHASE_STAFF]: 3,
+  [USER_ROLES.ACCOUNTS_STAFF]: 3
 }
 
 export const PERMISSIONS = {
@@ -270,7 +270,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.VIEW_EXPENSE_REPORTS
   ],
   
-  [USER_ROLES.SALES]: [
+  [USER_ROLES.SALES_STAFF]: [
     // Customer Management
     PERMISSIONS.MANAGE_CUSTOMERS,
     PERMISSIONS.VIEW_CUSTOMERS,
@@ -304,7 +304,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.VIEW_PETTY_CASH
   ],
   
-  [USER_ROLES.PURCHASE]: [
+  [USER_ROLES.PURCHASE_STAFF]: [
     // Supplier Management
     PERMISSIONS.MANAGE_SUPPLIERS,
     PERMISSIONS.VIEW_SUPPLIERS,
@@ -347,7 +347,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.CREATE_EXPENSE
   ],
   
-  [USER_ROLES.ACCOUNTS]: [
+  [USER_ROLES.ACCOUNTS_STAFF]: [
     // View customers/suppliers
     PERMISSIONS.VIEW_CUSTOMERS,
     PERMISSIONS.VIEW_SUPPLIERS,
@@ -390,9 +390,9 @@ export const getRoleDisplayName = (role) => {
     [USER_ROLES.SUPER_ADMIN]: 'Super Admin',
     [USER_ROLES.COMPANY_ADMIN]: 'Company Admin',
     [USER_ROLES.MANAGER]: 'Manager',
-    [USER_ROLES.SALES]: 'Sales',
-    [USER_ROLES.PURCHASE]: 'Purchase',
-    [USER_ROLES.ACCOUNTS]: 'Accounts'
+    [USER_ROLES.SALES_STAFF]: 'Sales Staff',
+    [USER_ROLES.PURCHASE_STAFF]: 'Purchase Staff',
+    [USER_ROLES.ACCOUNTS_STAFF]: 'Accounts Staff'
   }
   return displayNames[role] || role
 }
@@ -402,9 +402,9 @@ export const getRoleColor = (role) => {
     [USER_ROLES.SUPER_ADMIN]: '#dc2626', // red
     [USER_ROLES.COMPANY_ADMIN]: '#7c3aed', // purple
     [USER_ROLES.MANAGER]: '#059669', // green
-    [USER_ROLES.SALES]: '#3b82f6', // blue
-    [USER_ROLES.PURCHASE]: '#f59e0b', // amber
-    [USER_ROLES.ACCOUNTS]: '#6b7280' // gray
+    [USER_ROLES.SALES_STAFF]: '#3b82f6', // blue
+    [USER_ROLES.PURCHASE_STAFF]: '#f59e0b', // amber
+    [USER_ROLES.ACCOUNTS_STAFF]: '#6b7280' // gray
   }
   return colors[role] || '#6b7280'
 }

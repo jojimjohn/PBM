@@ -7,6 +7,8 @@ import PermissionGate from '../../../components/PermissionGate'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
+import supplierService from '../../../services/supplierService'
+import materialService from '../../../services/materialService'
 import { 
   Plus, 
   Search, 
@@ -59,16 +61,16 @@ const ScrapMaterialsSuppliers = () => {
 
   const loadSuppliers = async () => {
     try {
-      const response = await fetch('/data/suppliers.json')
-      const data = await response.json()
-      
-      // Filter suppliers for current company
-      const companySuppliers = data.suppliers[selectedCompany?.id] || []
-      setSuppliers(companySuppliers)
-      setSupplierTypes(data.supplierTypes)
-      setSupplierStatuses(data.supplierStatuses)
+      const result = await supplierService.getAll()
+      if (result.success) {
+        setSuppliers(result.data)
+      } else {
+        console.error('Error loading suppliers:', result.error)
+        setSuppliers([])
+      }
     } catch (error) {
       console.error('Error loading suppliers:', error)
+      setSuppliers([])
     } finally {
       setLoading(false)
     }
@@ -76,21 +78,30 @@ const ScrapMaterialsSuppliers = () => {
 
   const loadMaterials = async () => {
     try {
-      const response = await fetch('/data/materials.json')
-      const data = await response.json()
-      const companyMaterials = data.materials[selectedCompany?.id] || []
-      setMaterials(companyMaterials)
+      const result = await materialService.getAll()
+      if (result.success) {
+        setMaterials(result.data)
+      } else {
+        console.error('Error loading materials:', result.error)
+        setMaterials([])
+      }
     } catch (error) {
       console.error('Error loading materials:', error)
+      setMaterials([])
     }
   }
 
   const loadSpecializations = async () => {
     try {
-      const response = await fetch('/data/scrap-specializations.json')
-      const data = await response.json()
-      console.log('Loaded specializations:', data.specializations)
-      setSpecializations(data.specializations)
+      // Use hardcoded specializations since they're static reference data
+      const specializations = [
+        { id: 1, name: 'Aluminum Scrap', isActive: true },
+        { id: 2, name: 'Copper Materials', isActive: true },
+        { id: 3, name: 'Steel & Iron', isActive: true },
+        { id: 4, name: 'Electronic Waste', isActive: true },
+        { id: 5, name: 'Mixed Metals', isActive: true }
+      ]
+      setSpecializations(specializations)
     } catch (error) {
       console.error('Error loading specializations:', error)
     }
@@ -98,9 +109,16 @@ const ScrapMaterialsSuppliers = () => {
 
   const loadCollectionAreas = async () => {
     try {
-      const response = await fetch('/data/collection-areas.json')
-      const data = await response.json()
-      setCollectionAreas(data.collectionAreas.filter(area => area.isActive))
+      // Use hardcoded collection areas since they're static reference data
+      const collectionAreas = [
+        { id: 1, name: 'Muscat Governorate', isActive: true },
+        { id: 2, name: 'Al Batinah North', isActive: true },
+        { id: 3, name: 'Al Batinah South', isActive: true },
+        { id: 4, name: 'Ad Dakhiliyah', isActive: true },
+        { id: 5, name: 'Al Sharqiyah North', isActive: true },
+        { id: 6, name: 'Al Sharqiyah South', isActive: true }
+      ]
+      setCollectionAreas(collectionAreas)
     } catch (error) {
       console.error('Error loading collection areas:', error)
     }
@@ -178,9 +196,14 @@ const ScrapMaterialsSuppliers = () => {
     }
 
     try {
-      // In a real application, this would make an API call
-      setSuppliers(prev => prev.filter(s => s.id !== supplierId))
-      alert(t('supplierDeleted'))
+      const result = await supplierService.delete(supplierId)
+      if (result.success) {
+        setSuppliers(prev => prev.filter(s => s.id !== supplierId))
+        alert(t('supplierDeleted'))
+      } else {
+        console.error('Error deleting supplier:', result.error)
+        alert(t('errorDeleting'))
+      }
     } catch (error) {
       console.error('Error deleting supplier:', error)
       alert(t('errorDeleting'))
@@ -243,19 +266,32 @@ const ScrapMaterialsSuppliers = () => {
         }
       }
 
-      // Update local state
+      // Save via API
+      let result
       if (isEdit) {
-        setSuppliers(prev => prev.map(s => s.id === supplierData.id ? supplierData : s))
+        result = await supplierService.update(supplierData.id, supplierData)
       } else {
-        setSuppliers(prev => [...prev, supplierData])
+        result = await supplierService.create(supplierData)
       }
 
-      // Close modals
-      setShowAddForm(false)
-      setShowEditForm(false)
-      setSelectedSupplier(null)
-      
-      alert(t(isEdit ? 'supplierUpdated' : 'supplierCreated', isEdit ? 'Supplier updated successfully!' : 'Supplier created successfully!'))
+      if (result.success) {
+        // Update local state
+        if (isEdit) {
+          setSuppliers(prev => prev.map(s => s.id === result.data.id ? result.data : s))
+        } else {
+          setSuppliers(prev => [...prev, result.data])
+        }
+
+        // Close modals
+        setShowAddForm(false)
+        setShowEditForm(false)
+        setSelectedSupplier(null)
+        
+        alert(t(isEdit ? 'supplierUpdated' : 'supplierCreated', isEdit ? 'Supplier updated successfully!' : 'Supplier created successfully!'))
+      } else {
+        console.error('Error saving supplier:', result.error)
+        alert(t('errorSaving'))
+      }
     } catch (error) {
       console.error('Error saving supplier:', error)
       alert(t('errorSaving'))

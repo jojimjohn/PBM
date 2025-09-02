@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import inventoryService from '../../../services/inventoryService'
+import customerService from '../../../services/customerService'
+import materialService from '../../../services/materialService'
 import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package } from 'lucide-react'
 import './SalesOrderForm.css'
 
@@ -111,16 +113,14 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
   const loadCustomersAndMaterials = async () => {
     try {
-      // Load customers
-      const customersResponse = await fetch('/data/customers.json')
-      const customersData = await customersResponse.json()
-      const companyCustomers = customersData.customers.alramrami || []
+      // Load customers using API service
+      const customersData = await customerService.getCustomers()
+      const companyCustomers = customersData || []
       setCustomers(companyCustomers)
 
-      // Load materials
-      const materialsResponse = await fetch('/data/materials.json')
-      const materialsData = await materialsResponse.json()
-      const companyMaterials = materialsData.materials.alramrami || []
+      // Load materials using API service
+      const materialsData = await materialService.getMaterials()
+      const companyMaterials = materialsData || []
       setMaterials(companyMaterials)
 
       // Load current stock information

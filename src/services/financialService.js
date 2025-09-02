@@ -11,9 +11,10 @@ class FinancialService {
 
   async loadTransactions() {
     try {
-      const response = await fetch('/data/transactions.json')
-      const data = await response.json()
-      this.transactions = data.transactions || []
+      // Use API service to load transactions
+      const authService = await import('./authService')
+      const response = await authService.default.makeAuthenticatedRequest('/api/transactions')
+      this.transactions = response.data || []
       return this.transactions
     } catch (error) {
       console.error('Error loading transactions:', error)

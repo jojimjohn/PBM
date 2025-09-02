@@ -5,6 +5,8 @@ import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import MaterialEntryForm from '../components/MaterialEntryForm'
+import inventoryService from '../../../services/inventoryService'
+import materialService from '../../../services/materialService'
 import { 
   Eye, 
   Edit, 
@@ -52,15 +54,13 @@ const ScrapMaterialsInventory = () => {
     try {
       setLoading(true)
       
-      // Load inventory data
-      const inventoryResponse = await fetch('/data/inventory.json')
-      const inventoryData = await inventoryResponse.json()
-      const companyInventory = inventoryData.inventory[selectedCompany?.id] || []
+      // Load inventory data using API service
+      const inventoryData = await inventoryService.getInventory()
+      const companyInventory = inventoryData || []
       
-      // Load materials data
-      const materialsResponse = await fetch('/data/materials.json')
-      const materialsData = await materialsResponse.json()
-      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
+      // Load materials data using API service
+      const materialsData = await materialService.getMaterials()
+      const companyMaterials = materialsData || []
       
       setInventory(companyInventory)
       setMaterials(companyMaterials)

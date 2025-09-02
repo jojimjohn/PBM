@@ -10,39 +10,25 @@ import { Icons } from './ui/Icons'
 import './LoginForm.css'
 
 const LoginForm = () => {
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('password123')
-  const [selectedCompanyId, setSelectedCompanyId] = useState('')
-  const [companies, setCompanies] = useState([])
+  const [email, setEmail] = useState('admin@alramrami.com')
+  const [password, setPassword] = useState('pass123!')
+  const [selectedCompanyId, setSelectedCompanyId] = useState('al-ramrami')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   
   const { login } = useAuth()
-
-  // Load companies on component mount
-  useEffect(() => {
-    const loadCompanies = async () => {
-      try {
-        const response = await fetch('/data/companies.json')
-        const data = await response.json()
-        setCompanies(data.companies)
-        // Auto-select first company
-        if (data.companies.length > 0) {
-          setSelectedCompanyId(data.companies[0].id)
-        }
-      } catch (error) {
-        setError('Failed to load companies')
-      }
-    }
-    
-    loadCompanies()
-  }, [])
+  
+  // Available companies (IDs must match backend format)
+  const companies = [
+    { id: 'al-ramrami', name: 'Al Ramrami Trading Enterprises', type: 'Oil Business' },
+    { id: 'pride-muscat', name: 'Pride Muscat International LLC', type: 'Scrap Business' }
+  ]
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     
-    if (!username || !password || !selectedCompanyId) {
+    if (!email || !password || !selectedCompanyId) {
       setError('Please fill in all fields')
       return
     }
@@ -50,10 +36,16 @@ const LoginForm = () => {
     setIsLoading(true)
 
     try {
-      await login(username, password, selectedCompanyId)
-      // Navigation will be handled by App component
+      const result = await login(email, password, selectedCompanyId)
+      
+      if (result.success) {
+        // Navigation will be handled by App component
+        // Login successful, user will be redirected automatically
+      } else {
+        setError(result.error || 'Login failed')
+      }
     } catch (error) {
-      setError(error.message)
+      setError(error.message || 'Login failed')
     } finally {
       setIsLoading(false)
     }
@@ -76,10 +68,10 @@ const LoginForm = () => {
 
         {/* Company Preview */}
         {selectedCompany && (
-          <Card className={`company-preview ${selectedCompany.id === 'alramrami' ? 'gradient-alramrami' : 'gradient-pridemuscat'}`}>
+          <Card className={`company-preview ${selectedCompany.id === 'al-ramrami' ? 'gradient-alramrami' : 'gradient-pridemuscat'}`}>
             <CardContent>
               <div className="flex items-center space-x-3">
-                {selectedCompany.businessType === 'oil' ? (
+                {selectedCompany.type === 'Oil Business' ? (
                   <Icons.droplets className="company-icon" style={{ color: 'var(--alramrami-primary)' }} />
                 ) : (
                   <Icons.recycle className="company-icon" style={{ color: 'var(--pridemuscat-primary)' }} />
@@ -88,8 +80,8 @@ const LoginForm = () => {
                   <h3 className="company-name font-semibold text-lg">
                     {selectedCompany.name}
                   </h3>
-                  <Badge variant={selectedCompany.id === 'alramrami' ? 'alramrami' : 'pridemuscat'}>
-                    {selectedCompany.businessType === 'oil' ? 'Oil Business' : 'Scrap Business'}
+                  <Badge variant={selectedCompany.id === 'al-ramrami' ? 'alramrami' : 'pridemuscat'}>
+                    {selectedCompany.type}
                   </Badge>
                 </div>
               </div>
@@ -129,15 +121,15 @@ const LoginForm = () => {
               </div>
 
               <div className="form-field space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Email</Label>
                 <div className="input-with-icon">
-                  <Icons.user className="input-icon" />
+                  <Icons.mail className="input-icon" />
                   <Input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
                     className="pl-10"
                     required
                   />
@@ -169,7 +161,7 @@ const LoginForm = () => {
               <Button 
                 type="submit" 
                 className="w-full"
-                variant={selectedCompany?.id === 'alramrami' ? 'alramrami' : selectedCompany?.id === 'pridemuscat' ? 'pridemuscat' : 'default'}
+                variant={selectedCompany?.id === 'al-ramrami' ? 'alramrami' : selectedCompany?.id === 'pride-muscat' ? 'pridemuscat' : 'default'}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -188,11 +180,12 @@ const LoginForm = () => {
         {/* Demo Credentials */}
         <Card className="demo-card">
           <CardContent>
-            <h4 className="font-medium mb-4">Demo Credentials:</h4>
+            <h4 className="font-medium mb-4">Development Credentials:</h4>
             <div className="demo-list space-y-2 text-sm">
-              <div><span className="font-medium">Super Admin:</span> admin / password123</div>
-              <div><span className="font-medium">Al Ramrami Admin:</span> alramrami_admin / password123</div>
-              <div><span className="font-medium">Pride Muscat Admin:</span> pridemuscat_admin / password123</div>
+              <div><span className="font-medium">Al Ramrami Admin:</span> admin@alramrami.com</div>
+              <div><span className="font-medium">Pride Muscat Admin:</span> admin@pridemuscat.com</div>
+              <div><span className="font-medium">Password:</span> pass123!</div>
+              <div className="text-xs text-gray-500 mt-2">⚠️ Change passwords in production!</div>
             </div>
           </CardContent>
         </Card>

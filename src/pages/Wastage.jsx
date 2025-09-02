@@ -6,6 +6,8 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import DataTable from '../components/ui/DataTable'
 import Modal from '../components/ui/Modal'
 import StockChart from '../components/StockChart'
+import wastageService from '../services/wastageService'
+import materialService from '../services/materialService'
 import { 
   Plus, 
   AlertTriangle, 
@@ -26,6 +28,85 @@ import {
 } from 'lucide-react'
 import './Wastage.css'
 
+// Placeholder components for forms
+const WastageForm = ({ materials, wasteTypes, initialData, onSave, onCancel, isEditing }) => {
+  const { t } = useLocalization()
+  
+  return (
+    <div className="wastage-form">
+      <p>{isEditing ? 'Edit' : 'Add'} Wastage Form - To be fully implemented</p>
+      <div className="modal-actions">
+        <button 
+          className="btn btn-outline"
+          onClick={onCancel}
+        >
+          {t('cancel', 'Cancel')}
+        </button>
+        <button 
+          className="btn btn-primary"
+          onClick={() => onSave({})}
+        >
+          {t(isEditing ? 'update' : 'save', isEditing ? 'Update' : 'Save')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const WastageDetails = ({ wastage, materials, wasteTypes, onClose, onApprove, onReject, canApprove }) => {
+  const { t } = useLocalization()
+  
+  if (!wastage) return <div>No wastage data</div>
+  
+  return (
+    <div className="wastage-details">
+      <div className="detail-row">
+        <strong>Material Code:</strong> {wastage.materialCode}
+      </div>
+      <div className="detail-row">
+        <strong>Quantity:</strong> {wastage.quantity} {wastage.unit}
+      </div>
+      <div className="detail-row">
+        <strong>Total Cost:</strong> OMR {(wastage.totalCost || 0).toFixed(3)}
+      </div>
+      <div className="detail-row">
+        <strong>Date:</strong> {new Date(wastage.date).toLocaleDateString()}
+      </div>
+      <div className="detail-row">
+        <strong>Status:</strong> {wastage.status}
+      </div>
+      <div className="detail-row">
+        <strong>Description:</strong> {wastage.description || 'No description'}
+      </div>
+      
+      <div className="modal-actions">
+        {canApprove && wastage.status === 'pending_approval' && (
+          <>
+            <button 
+              className="btn btn-success"
+              onClick={() => onApprove(wastage.id, { approvedBy: 'current-user' })}
+            >
+              {t('approve', 'Approve')}
+            </button>
+            <button 
+              className="btn btn-danger"
+              onClick={() => onReject(wastage.id, { reason: 'Manual rejection' })}
+            >
+              {t('reject', 'Reject')}
+            </button>
+          </>
+        )}
+        <button 
+          className="btn btn-primary"
+          onClick={onClose}
+        >
+          {t('close', 'Close')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const Wastage = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
@@ -39,6 +120,7 @@ const Wastage = () => {
   const [selectedWastage, setSelectedWastage] = useState(null)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showChartsModal, setShowChartsModal] = useState(false)
+  const [error, setError] = useState(null)
   const [filters, setFilters] = useState({
     status: 'all',
     wasteType: 'all',
@@ -52,22 +134,40 @@ const Wastage = () => {
   const loadWastageData = async () => {
     try {
       setLoading(true)
+      setError(null)
       
-      // Load wastage data
-      const wastageResponse = await fetch('/data/wastages.json')
-      const wastageData = await wastageResponse.json()
-      const companyWastages = wastageData.wastages[selectedCompany?.id] || []
-      setWastages(companyWastages)
-      setWasteTypes(wastageData.wasteTypes)
+      // Load wastage data from backend
+      const wastageResult = await wastageService.getAll()
+      if (wastageResult.success) {
+        setWastages(wastageResult.data || [])
+      } else {
+        throw new Error(wastageResult.error || 'Failed to load wastages')
+      }
+      
+      // Load wastage types
+      const typesResult = await wastageService.getTypes()
+      if (typesResult.success) {
+        // Convert array to object format for compatibility
+        const typesObj = {}
+        typesResult.data.forEach(type => {
+          typesObj[type.key] = { name: type.name, color: type.color }
+        })
+        setWasteTypes(typesObj)
+      }
       
       // Load materials
-      const materialsResponse = await fetch('/data/materials.json')
-      const materialsData = await materialsResponse.json()
-      const companyMaterials = materialsData.materials[selectedCompany?.id] || []
-      setMaterials(companyMaterials)
+      const materialsResult = await materialService.getAll()
+      if (materialsResult.success) {
+        setMaterials(materialsResult.data || [])
+      } else {
+        console.warn('Failed to load materials:', materialsResult.error)
+      }
       
     } catch (error) {
       console.error('Error loading wastage data:', error)
+      setError(error.message)
+      setWastages([])
+      setMaterials([])
     } finally {
       setLoading(false)
     }
@@ -138,9 +238,111 @@ const Wastage = () => {
     setShowViewModal(true)
   }
 
-  const handleDeleteWastage = (wastageId) => {
+  const handleSaveWastage = async (wastageData) => {
+    try {
+      setLoading(true)
+      const result = await wastageService.create(wastageData)
+      
+      if (result.success) {
+        await loadWastageData()
+        setShowAddForm(false)
+        alert(t('wastageCreated', 'Wastage record created successfully'))
+      } else {
+        throw new Error(result.error || 'Failed to create wastage record')
+      }
+    } catch (error) {
+      console.error('Error creating wastage:', error)
+      setError(error.message)
+      alert(t('createError', `Failed to create wastage record: ${error.message}`))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateWastage = async (wastageData) => {
+    try {
+      setLoading(true)
+      const result = await wastageService.update(selectedWastage.id, wastageData)
+      
+      if (result.success) {
+        await loadWastageData()
+        setShowEditForm(false)
+        setSelectedWastage(null)
+        alert(t('wastageUpdated', 'Wastage record updated successfully'))
+      } else {
+        throw new Error(result.error || 'Failed to update wastage record')
+      }
+    } catch (error) {
+      console.error('Error updating wastage:', error)
+      setError(error.message)
+      alert(t('updateError', `Failed to update wastage record: ${error.message}`))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleApproveWastage = async (wastageId, approvalData) => {
+    try {
+      setLoading(true)
+      const result = await wastageService.approve(wastageId, approvalData)
+      
+      if (result.success) {
+        await loadWastageData()
+        setShowViewModal(false)
+        alert(t('wastageApproved', 'Wastage record approved successfully'))
+      } else {
+        throw new Error(result.error || 'Failed to approve wastage record')
+      }
+    } catch (error) {
+      console.error('Error approving wastage:', error)
+      setError(error.message)
+      alert(t('approveError', `Failed to approve wastage record: ${error.message}`))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRejectWastage = async (wastageId, rejectionData) => {
+    try {
+      setLoading(true)
+      const result = await wastageService.reject(wastageId, rejectionData)
+      
+      if (result.success) {
+        await loadWastageData()
+        setShowViewModal(false)
+        alert(t('wastageRejected', 'Wastage record rejected successfully'))
+      } else {
+        throw new Error(result.error || 'Failed to reject wastage record')
+      }
+    } catch (error) {
+      console.error('Error rejecting wastage:', error)
+      setError(error.message)
+      alert(t('rejectError', `Failed to reject wastage record: ${error.message}`))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteWastage = async (wastageId) => {
     if (window.confirm(t('confirmDelete', 'Are you sure you want to delete this item?'))) {
-      setWastages(prev => prev.filter(w => w.id !== wastageId))
+      try {
+        setLoading(true)
+        const result = await wastageService.delete(wastageId)
+        
+        if (result.success) {
+          // Reload data to reflect changes
+          await loadWastageData()
+          alert(t('deleteSuccess', 'Wastage record deleted successfully'))
+        } else {
+          throw new Error(result.error || 'Failed to delete wastage record')
+        }
+      } catch (error) {
+        console.error('Error deleting wastage:', error)
+        setError(error.message)
+        alert(t('deleteError', `Failed to delete wastage record: ${error.message}`))
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -176,6 +378,15 @@ const Wastage = () => {
 
   return (
     <div className="wastage-page">
+      {/* Error Display */}
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="error-close">×</button>
+        </div>
+      )}
+      
       <div className="page-header">
         <div className="header-left">
           <h1>{t('wastageManagement', 'Wastage Management')}</h1>
@@ -290,7 +501,16 @@ const Wastage = () => {
               key: 'materialCode',
               header: t('material'),
               sortable: true,
-              filterable: true
+              filterable: true,
+              render: (value, row) => {
+                const material = materials.find(m => m.code === value)
+                return (
+                  <div className="material-info">
+                    <div className="material-code">{value}</div>
+                    {material && <div className="material-name">{material.name}</div>}
+                  </div>
+                )
+              }
             },
             {
               key: 'wasteType',
@@ -422,20 +642,12 @@ const Wastage = () => {
         onClose={() => setShowAddForm(false)}
         className="modal-lg"
       >
-          <div className="wastage-form">
-            <p>Add Wastage Form - To be implemented</p>
-            <div className="modal-actions">
-              <button 
-                className="btn btn-outline"
-                onClick={() => setShowAddForm(false)}
-              >
-                {t('cancel', 'Cancel')}
-              </button>
-              <button className="btn btn-primary">
-                {t('save', 'Save')}
-              </button>
-            </div>
-          </div>
+          <WastageForm
+            materials={materials}
+            wasteTypes={wasteTypes}
+            onSave={handleSaveWastage}
+            onCancel={() => setShowAddForm(false)}
+          />
         </Modal>
 
       {/* Edit Wastage Modal */}
@@ -445,20 +657,14 @@ const Wastage = () => {
         onClose={() => setShowEditForm(false)}
         className="modal-lg"
       >
-          <div className="wastage-form">
-            <p>Edit Wastage Form - To be implemented</p>
-            <div className="modal-actions">
-              <button 
-                className="btn btn-outline"
-                onClick={() => setShowEditForm(false)}
-              >
-                {t('cancel', 'Cancel')}
-              </button>
-              <button className="btn btn-primary">
-                {t('update', 'Update')}
-              </button>
-            </div>
-          </div>
+          <WastageForm
+            materials={materials}
+            wasteTypes={wasteTypes}
+            initialData={selectedWastage}
+            onSave={handleUpdateWastage}
+            onCancel={() => setShowEditForm(false)}
+            isEditing={true}
+          />
         </Modal>
 
       {/* View Wastage Modal */}
@@ -468,17 +674,15 @@ const Wastage = () => {
         onClose={() => setShowViewModal(false)}
         className="modal-lg"
       >
-          <div className="wastage-details">
-            <p>View Wastage Details - To be implemented</p>
-            <div className="modal-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={() => setShowViewModal(false)}
-              >
-                {t('close', 'Close')}
-              </button>
-            </div>
-          </div>
+          <WastageDetails
+            wastage={selectedWastage}
+            materials={materials}
+            wasteTypes={wasteTypes}
+            onClose={() => setShowViewModal(false)}
+            onApprove={handleApproveWastage}
+            onReject={handleRejectWastage}
+            canApprove={hasPermission('APPROVE_WASTAGE')}
+          />
         </Modal>
     </div>
   )
