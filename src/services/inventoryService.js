@@ -9,6 +9,30 @@ import { API_BASE_URL } from '../config/api.js';
 
 class InventoryService {
   /**
+   * Transform backend inventory data to frontend format
+   */
+  transformInventoryItem(backendItem) {
+    return {
+      id: backendItem.id,
+      materialId: backendItem.material_id,
+      materialName: backendItem.material_name || backendItem.name,
+      currentStock: parseFloat(backendItem.current_stock || 0),
+      unit: backendItem.unit || 'liters',
+      lowStockThreshold: parseFloat(backendItem.low_stock_threshold || 0),
+      reorderQuantity: parseFloat(backendItem.reorder_quantity || 0),
+      averageCost: parseFloat(backendItem.average_cost || 0),
+      totalValue: parseFloat(backendItem.total_value || 0),
+      lastUpdated: backendItem.updated_at,
+      createdAt: backendItem.created_at,
+      isActive: backendItem.is_active === 1,
+      // Add additional fields that frontend expects
+      openingStock: parseFloat(backendItem.opening_stock || 0),
+      location: backendItem.location || 'Main Warehouse',
+      status: backendItem.current_stock <= backendItem.low_stock_threshold ? 'low-stock' : 'in-stock'
+    };
+  }
+
+  /**
    * Get all inventory items for the current company
    */
   async getAll() {
@@ -20,9 +44,14 @@ class InventoryService {
         throw new Error(data.error || 'Failed to fetch inventory');
       }
 
+      // Transform backend data to frontend format
+      const transformedInventory = (data.data || []).map(item => 
+        this.transformInventoryItem(item)
+      );
+
       return {
         success: true,
-        data: data.data || [],
+        data: transformedInventory,
         message: data.message
       };
     } catch (error) {
