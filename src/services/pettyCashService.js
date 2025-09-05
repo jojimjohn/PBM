@@ -524,6 +524,20 @@ class PettyCashService {
   }
 
   /**
+   * Get expense types (alias for getExpenseCategories)
+   */
+  async getExpenseTypes() {
+    return await this.getExpenseCategories();
+  }
+
+  /**
+   * Get analytics (alias for getExpenseAnalytics)
+   */
+  async getAnalytics(period = '30') {
+    return await this.getExpenseAnalytics(period);
+  }
+
+  /**
    * Upload expense receipt
    */
   async uploadReceipt(expenseId, receiptFile) {
