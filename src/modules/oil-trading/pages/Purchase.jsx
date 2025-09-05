@@ -6,6 +6,7 @@ import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
+import PurchaseOrderReceipt from '../../../components/PurchaseOrderReceipt'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
@@ -28,6 +29,8 @@ const Purchase = () => {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [showEditForm, setShowEditForm] = useState(false)
+  const [showReceiptForm, setShowReceiptForm] = useState(false)
+  const [receivingOrder, setReceivingOrder] = useState(false)
 
   useEffect(() => {
     loadPurchaseData()
@@ -38,8 +41,8 @@ const Purchase = () => {
       setLoading(true)
       
       // Load purchase orders using API service
-      const ordersData = await purchaseOrderService.getPurchaseOrders()
-      const companyOrders = ordersData || []
+      const ordersResult = await purchaseOrderService.getAll()
+      const companyOrders = ordersResult.success ? ordersResult.data : []
       setPurchaseOrders(companyOrders)
       
       // Set default order statuses
@@ -49,17 +52,18 @@ const Purchase = () => {
         approved: 'Approved',
         sent: 'Sent to Supplier',
         received: 'Received',
+        completed: 'Completed',
         cancelled: 'Cancelled'
       })
 
-      // Load suppliers using API service
-      const suppliersData = await supplierService.getSuppliers()
-      const companyVendors = suppliersData || []
+      // Load suppliers using API service (for Al Ramrami, this would be empty since they don't have suppliers table)
+      const suppliersResult = await supplierService.getAll()
+      const companyVendors = suppliersResult.success ? suppliersResult.data : []
       setVendors(companyVendors)
 
       // Load materials using API service
-      const materialsData = await materialService.getMaterials()
-      const companyMaterials = materialsData || []
+      const materialsResult = await materialService.getAll()
+      const companyMaterials = materialsResult.success ? materialsResult.data : []
       setMaterials(companyMaterials)
       
     } catch (error) {
@@ -78,36 +82,77 @@ const Purchase = () => {
     setShowEditForm(true)
   }
 
+  const handleReceiveOrder = (order) => {
+    setSelectedOrder(order)
+    setShowReceiptForm(true)
+  }
+
+  const handleReceiveSubmit = async (receiptData) => {
+    if (!selectedOrder) return
+
+    try {
+      setReceivingOrder(true)
+      
+      // Call the receive API endpoint which will automatically update inventory
+      const result = await purchaseOrderService.receive(selectedOrder.id, receiptData)
+      
+      if (result.success) {
+        // Update the order status locally
+        setPurchaseOrders(prev => prev.map(order => 
+          order.id === selectedOrder.id 
+            ? { ...order, status: 'received', actualDeliveryDate: new Date().toISOString() }
+            : order
+        ))
+        
+        // Close the receipt form
+        setShowReceiptForm(false)
+        setSelectedOrder(null)
+        
+        // Show success message (you can add a toast notification here)
+        alert('Purchase order received successfully! Inventory has been updated automatically.')
+        
+        // Optionally reload data to get the latest state
+        await loadPurchaseData()
+      } else {
+        alert(`Failed to receive purchase order: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error receiving purchase order:', error)
+      alert('Failed to receive purchase order. Please try again.')
+    } finally {
+      setReceivingOrder(false)
+    }
+  }
+
   const handleSaveOrder = async (orderData) => {
     try {
       setLoading(true)
       
-      // In a real application, this would make an API call
-      console.log('Saving purchase order:', orderData)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      let result
       if (selectedOrder) {
         // Update existing order
-        setPurchaseOrders(prev => prev.map(order => 
-          order.id === orderData.id ? { ...orderData, updatedAt: new Date().toISOString() } : order
-        ))
+        result = await purchaseOrderService.update(selectedOrder.id, orderData)
+        if (result.success) {
+          setPurchaseOrders(prev => prev.map(order => 
+            order.id === selectedOrder.id ? { ...result.data } : order
+          ))
+        }
       } else {
         // Create new order
-        const newOrder = {
-          ...orderData,
-          id: `PO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-          companyId: selectedCompany?.id,
-          createdAt: new Date().toISOString(),
-          createdBy: 'current_user' // Replace with actual user
+        result = await purchaseOrderService.create(orderData)
+        if (result.success) {
+          setPurchaseOrders(prev => [...prev, result.data])
         }
-        setPurchaseOrders(prev => [newOrder, ...prev])
       }
 
-      setShowCreateForm(false)
-      setShowEditForm(false)
-      setSelectedOrder(null)
+      if (result && result.success) {
+        // Close forms on success
+        setShowCreateForm(false)
+        setShowEditForm(false) 
+        setSelectedOrder(null)
+      } else {
+        alert(`Failed to save purchase order: ${result?.error || 'Unknown error'}`)
+      }
       
     } catch (error) {
       console.error('Error saving purchase order:', error)
@@ -396,6 +441,7 @@ const Purchase = () => {
                     className="btn btn-outline btn-sm"
                     onClick={() => handleEditOrder(row)}
                     title="Edit"
+                    disabled={row.status === 'received' || row.status === 'completed'}
                   >
                     <Edit size={14} />
                   </button>
@@ -502,6 +548,20 @@ const Purchase = () => {
           initialData={selectedOrder}
           title="Edit Purchase Order"
           isEdit={true}
+        />
+      )}
+
+      {/* Purchase Order Receipt Modal */}
+      {showReceiptForm && selectedOrder && (
+        <PurchaseOrderReceipt
+          purchaseOrder={selectedOrder}
+          isOpen={showReceiptForm}
+          onClose={() => {
+            setShowReceiptForm(false)
+            setSelectedOrder(null)
+          }}
+          onReceive={handleReceiveSubmit}
+          loading={receivingOrder}
         />
       )}
     </div>

@@ -8,6 +8,71 @@ import { API_BASE_URL } from '../config/api.js';
 
 class CustomerService {
   /**
+   * Transform backend customer data to frontend format
+   */
+  transformCustomer(backendCustomer) {
+    return {
+      id: backendCustomer.id,
+      code: `AL-${String(backendCustomer.id).padStart(3, '0')}`, // Generate code from ID
+      name: backendCustomer.name,
+      type: this.mapCustomerType(backendCustomer.customerType),
+      contactPerson: backendCustomer.contactPerson,
+      contact: {
+        phone: backendCustomer.phone,
+        email: backendCustomer.email,
+        vatRegistrationNumber: backendCustomer.vatRegistration,
+        address: {
+          street: backendCustomer.address || '',
+          city: this.extractCity(backendCustomer.address || ''),
+          region: this.extractRegion(backendCustomer.address || ''),
+          country: 'Oman'
+        }
+      },
+      creditLimit: parseFloat(backendCustomer.creditLimit || 0),
+      paymentTerms: backendCustomer.paymentTermDays || 0,
+      isActive: backendCustomer.isActive === 1,
+      createdAt: backendCustomer.created_at,
+      lastUpdated: backendCustomer.updated_at,
+      salesHistory: {
+        totalOrders: 0, // Will be populated from sales data later
+        totalValue: 0,
+        lastOrderDate: null
+      },
+      contractDetails: null // Will be populated if customer has contracts
+    };
+  }
+
+  /**
+   * Map backend customer types to frontend types
+   */
+  mapCustomerType(backendType) {
+    const typeMap = {
+      'contract': 'contract',
+      'project-based': 'project',
+      'walk-in': 'walk_in'
+    };
+    return typeMap[backendType] || 'walk_in';
+  }
+
+  /**
+   * Extract city from address string
+   */
+  extractCity(address) {
+    // Simple extraction - in production, this would be more sophisticated
+    const parts = address.split(',');
+    return parts.length > 1 ? parts[parts.length - 2].trim() : '';
+  }
+
+  /**
+   * Extract region from address string
+   */
+  extractRegion(address) {
+    // Simple extraction - in production, this would be more sophisticated
+    const parts = address.split(',');
+    return parts.length > 2 ? parts[parts.length - 3].trim() : '';
+  }
+
+  /**
    * Get all customers for the current company
    */
   async getAll() {
@@ -19,9 +84,14 @@ class CustomerService {
         throw new Error(data.error || 'Failed to fetch customers');
       }
 
+      // Transform backend data to frontend format
+      const transformedCustomers = (data.data || []).map(customer => 
+        this.transformCustomer(customer)
+      );
+
       return {
         success: true,
-        data: data.data || [],
+        data: transformedCustomers,
         message: data.message
       };
     } catch (error) {

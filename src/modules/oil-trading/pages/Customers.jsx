@@ -715,7 +715,7 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
             </div>
             <div className="detail-item">
               <label>Customer Type</label>
-              <span className="badge">{customer.type.replace('_', ' ').toUpperCase()}</span>
+              <span className="badge">{customer.type ? customer.type.replace('_', ' ').toUpperCase() : 'N/A'}</span>
             </div>
           </div>
         </div>

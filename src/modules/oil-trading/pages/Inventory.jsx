@@ -95,22 +95,28 @@ const Inventory = () => {
       setLoading(true)
       
       // Load inventory data using API service
-      const inventoryData = await inventoryService.getInventory()
-      const companyInventory = inventoryData || []
+      const inventoryResult = await inventoryService.getAll()
+      const companyInventory = inventoryResult.success ? inventoryResult.data : []
       setInventory(companyInventory)
       
       // Load materials data using API service
-      const materialsData = await materialService.getMaterials()
-      const companyMaterials = materialsData || []
+      const materialsResult = await materialService.getAll()
+      const companyMaterials = materialsResult.success ? materialsResult.data : []
       setMaterials(companyMaterials)
       
-      // Load supplier/vendor data using API service
-      try {
-        const suppliersData = await supplierService.getSuppliers()
-        const companyVendors = suppliersData || []
-        setVendors(companyVendors)
-      } catch (vendorError) {
-        console.error('Error loading vendors:', vendorError)
+      // Load supplier/vendor data using API service (Al Ramrami may not have suppliers)
+      // Check if company uses suppliers before attempting to load
+      if (selectedCompany?.id !== 'al_ramrami') {
+        try {
+          const suppliersResult = await supplierService.getAll()
+          const companyVendors = suppliersResult.success ? suppliersResult.data : []
+          setVendors(companyVendors)
+        } catch (vendorError) {
+          console.error('Error loading vendors:', vendorError)
+          setVendors([])
+        }
+      } else {
+        // Al Ramrami doesn't use suppliers in their business model
         setVendors([])
       }
       
@@ -159,7 +165,10 @@ const Inventory = () => {
     return 'good'
   }
 
-  const formatCurrency = (amount) => `OMR ${amount.toFixed(3)}`
+  const formatCurrency = (amount) => {
+    const numAmount = parseFloat(amount) || 0
+    return `OMR ${numAmount.toFixed(3)}`
+  }
 
   // Handler functions for button functionality
   const handleCreatePurchaseOrder = (materialId = null) => {
@@ -295,14 +304,14 @@ const Inventory = () => {
           onClick={() => setActiveTab('overview')}
         >
           <Package size={16} />
-          Overview
+          Inventory Stock
         </button>
         <button 
           className={`tab-btn ${activeTab === 'materials' ? 'active' : ''}`}
           onClick={() => setActiveTab('materials')}
         >
           <Droplets size={16} />
-          Materials
+          Materials Catalog
         </button>
         <button 
           className={`tab-btn ${activeTab === 'movements' ? 'active' : ''}`}
@@ -466,8 +475,8 @@ const Inventory = () => {
                 )
               }
             ]}
-            title={t('inventoryOverview')}
-            subtitle={t('completeInventorySummary')}
+            title="Current Inventory Stock"
+            subtitle="Physical stock levels, locations, and values"
             loading={loading}
             searchable={true}
             filterable={true}
@@ -488,17 +497,17 @@ const Inventory = () => {
         <div className="materials-view">
           <DataTable
             data={materials.map(material => {
-              const stock = inventory[material.id]
-              const status = getStockStatus(material.id)
-              const stockValue = stock ? stock.currentStock * material.standardPrice : 0
               const category = materialCategories[material.category]
               
               return {
-                ...material,
-                stock: stock || { currentStock: 0, unit: material.unit, reorderLevel: 0 },
-                status,
-                stockValue,
-                categoryInfo: category
+                id: material.id,
+                code: material.code,
+                name: material.name,
+                category: material.category,
+                categoryInfo: category,
+                unit: material.unit,
+                standardPrice: material.standardPrice,
+                description: material.description || 'Material definition'
               }
             })}
             columns={[
@@ -533,74 +542,61 @@ const Inventory = () => {
                 }
               },
               {
-                key: 'stock.currentStock',
-                header: t('currentStock'),
-                type: 'number',
-                sortable: true,
-                render: (value, row) => (
-                  <span className="stock-quantity">
-                    {value} {row.stock.unit}
-                  </span>
-                )
-              },
-              {
-                key: 'stock.reorderLevel',
-                header: t('reorderLevel'),
-                type: 'number',
-                sortable: true,
-                render: (value, row) => (
-                  <span className="reorder-level">
-                    {value > 0 ? `${value} ${row.stock.unit}` : 'Not set'}
-                  </span>
-                )
-              },
-              {
-                key: 'status',
-                header: t('status'),
+                key: 'code',
+                header: 'Material Code',
                 sortable: true,
                 filterable: true,
                 render: (value) => (
-                  <span className={`status-badge ${value}`}>
-                    {value === 'good' ? t('goodStock') : 
-                     value === 'low' ? t('lowStock') :
-                     value === 'critical' ? t('critical') : t('outOfStock')}
+                  <span className="material-code">{value}</span>
+                )
+              },
+              {
+                key: 'unit',
+                header: 'Unit',
+                sortable: true,
+                render: (value) => (
+                  <span className="unit-badge">{value}</span>
+                )
+              },
+              {
+                key: 'standardPrice',
+                header: 'Standard Price',
+                type: 'currency',
+                sortable: true,
+                render: (value, row) => (
+                  <span className="price-display">
+                    {formatCurrency(value)} / {row.unit}
                   </span>
                 )
               },
               {
-                key: 'stockValue',
-                header: t('stockValue'),
-                type: 'currency',
-                align: 'right',
-                sortable: true,
-                render: (value) => formatCurrency(value)
-              },
-              {
                 key: 'actions',
-                header: t('actions'),
+                header: 'Actions',
                 sortable: false,
                 render: (value, row) => (
                   <div className="action-buttons">
                     <button 
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleAdjustStock(row)}
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handlePurchaseOrder(row.id)}
+                      title="Create Purchase Order"
                     >
-                      <Edit size={14} />
-                      {t('adjust')}
+                      <ShoppingCart size={14} />
+                      Order
                     </button>
                     <button 
                       className="btn btn-outline btn-sm"
                       onClick={() => handleViewHistory(row)}
+                      title="View Material Details"
                     >
                       <FileText size={14} />
-                      {t('history')}
+                      Details
                     </button>
                   </div>
                 )
               }
             ]}
-            title={t('materialInventory')}
-            subtitle={t('materialInventorySubtitle')}
+            title="Materials Catalog"
+            subtitle="Available materials for purchase and trading"
             loading={loading}
             searchable={true}
             filterable={true}
