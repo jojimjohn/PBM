@@ -531,6 +531,13 @@ class PettyCashService {
   }
 
   /**
+   * Get analytics (alias for getExpenseAnalytics)
+   */
+  async getAnalytics(period = '30') {
+    return await this.getExpenseAnalytics(period);
+  }
+
+  /**
    * Upload expense receipt
    */
   async uploadReceipt(expenseId, receiptFile) {
