@@ -125,17 +125,48 @@ const Purchase = () => {
   }
 
   const handleApproveOrder = async (order) => {
-    console.log('Approving purchase order:', order)
+    const approvalNotes = prompt(`Approve Purchase Order ${order.orderNumber}?\nOptional approval notes:`, '')
+    
+    if (approvalNotes === null) return // User cancelled
+    
     try {
-      // Update order status to approved
-      const updatedOrders = purchaseOrders.map(po => 
-        po.id === order.id ? { ...po, status: 'approved' } : po
-      )
-      setPurchaseOrders(updatedOrders)
-      alert(`✅ Purchase order ${order.orderNumber} approved successfully!`)
+      const result = await purchaseOrderService.approve(order.id, { approvalNotes })
+      
+      if (result.success) {
+        // Update the order status locally
+        setPurchaseOrders(prev => prev.map(po => 
+          po.id === order.id ? { ...po, orderStatus: 'approved' } : po
+        ))
+        alert(`✅ Purchase order ${order.orderNumber} approved successfully!`)
+      } else {
+        alert(`❌ Failed to approve order: ${result.error}`)
+      }
     } catch (error) {
       console.error('Error approving order:', error)
       alert(`❌ Failed to approve order: ${error.message}`)
+    }
+  }
+
+  const handleStatusUpdate = async (order, newStatus) => {
+    const statusNotes = prompt(`Update status of Purchase Order ${order.orderNumber} to "${newStatus}"?\nOptional notes:`, '')
+    
+    if (statusNotes === null) return // User cancelled
+    
+    try {
+      const result = await purchaseOrderService.updateStatus(order.id, newStatus, { notes: statusNotes })
+      
+      if (result.success) {
+        // Update the order status locally
+        setPurchaseOrders(prev => prev.map(po => 
+          po.id === order.id ? { ...po, orderStatus: newStatus } : po
+        ))
+        alert(`✅ Purchase order ${order.orderNumber} status updated to ${newStatus}!`)
+      } else {
+        alert(`❌ Failed to update status: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      alert(`❌ Failed to update status: ${error.message}`)
     }
   }
 
@@ -369,13 +400,49 @@ const Purchase = () => {
                     <Edit size={14} />
                   </button>
                 </PermissionGate>
+
+                <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
+                  {row.orderStatus === 'confirmed' && (
+                    <button 
+                      className="btn btn-success btn-sm"
+                      onClick={() => handleReceiveOrder(row)}
+                      title="Receive Order & Update Inventory"
+                    >
+                      <Package size={14} />
+                    </button>
+                  )}
+                </PermissionGate>
                 
                 <PermissionGate permission={PERMISSIONS.APPROVE_PURCHASE_ORDER}>
-                  {row.status === 'pending' && (
+                  {row.orderStatus === 'draft' && (
                     <button 
                       className="btn btn-primary btn-sm"
                       onClick={() => handleApproveOrder(row)}
                       title="Approve"
+                    >
+                      <CheckCircle size={14} />
+                    </button>
+                  )}
+                </PermissionGate>
+
+                <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
+                  {row.orderStatus === 'approved' && (
+                    <button 
+                      className="btn btn-info btn-sm"
+                      onClick={() => handleStatusUpdate(row, 'sent')}
+                      title="Send to Supplier"
+                    >
+                      <Truck size={14} />
+                    </button>
+                  )}
+                </PermissionGate>
+
+                <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
+                  {row.orderStatus === 'sent' && (
+                    <button 
+                      className="btn btn-success btn-sm"
+                      onClick={() => handleStatusUpdate(row, 'confirmed')}
+                      title="Mark as Confirmed"
                     >
                       <CheckCircle size={14} />
                     </button>

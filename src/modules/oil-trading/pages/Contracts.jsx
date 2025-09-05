@@ -35,18 +35,25 @@ const Contracts = () => {
 
   const loadContracts = async () => {
     try {
-      const data = await contractService.getContracts()
+      const response = await contractService.getAll()
       
-      // Contracts are already filtered by company in the service
-      const companyContracts = data.contracts.filter(
-        contract => contract.companyId === selectedCompany?.id
-      )
-      
-      setContracts(companyContracts)
-      setContractTypes(data.contractTypes)
-      setContractStatuses(data.contractStatuses)
+      if (response.success) {
+        // Contracts are already filtered by company in the service
+        const companyContracts = response.data.filter(
+          contract => contract.companyId === selectedCompany?.id
+        )
+        
+        setContracts(companyContracts)
+        // Set default contract types and statuses if not provided by API
+        setContractTypes(['project-based', 'contract', 'walk-in'])
+        setContractStatuses(['active', 'expired', 'pending', 'cancelled'])
+      } else {
+        console.error('Failed to load contracts:', response.error)
+        setContracts([])
+      }
     } catch (error) {
       console.error('Error loading contracts:', error)
+      setContracts([])
     } finally {
       setLoading(false)
     }
@@ -55,16 +62,18 @@ const Contracts = () => {
   const loadCustomersAndMaterials = async () => {
     try {
       // Load customers using API service
-      const customersData = await customerService.getCustomers()
-      const companyCustomers = customersData || []
+      const customersResponse = await customerService.getAll()
+      const companyCustomers = customersResponse.success ? customersResponse.data : []
       setCustomers(companyCustomers)
 
       // Load materials using API service
-      const materialsData = await materialService.getMaterials()
-      const companyMaterials = materialsData || []
+      const materialsResponse = await materialService.getAll()
+      const companyMaterials = materialsResponse.success ? materialsResponse.data : []
       setMaterials(companyMaterials)
     } catch (error) {
       console.error('Error loading customers and materials:', error)
+      setCustomers([])
+      setMaterials([])
     }
   }
 

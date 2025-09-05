@@ -237,7 +237,7 @@ const PurchaseOrderForm = ({
                 <option value="">Select Vendor...</option>
                 {vendors.map(vendor => (
                   <option key={vendor.id} value={vendor.id}>
-                    {vendor.name} ({vendor.type.replace('_', ' ').toUpperCase()})
+                    {vendor.name} ({vendor.specialization ? vendor.specialization.replace('_', ' ').toUpperCase() : 'General'})
                   </option>
                 ))}
               </select>

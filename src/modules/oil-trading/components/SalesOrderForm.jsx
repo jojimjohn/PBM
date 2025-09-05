@@ -114,13 +114,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   const loadCustomersAndMaterials = async () => {
     try {
       // Load customers using API service
-      const customersData = await customerService.getCustomers()
-      const companyCustomers = customersData || []
+      const customersResponse = await customerService.getAll()
+      const companyCustomers = customersResponse.success ? customersResponse.data : []
       setCustomers(companyCustomers)
 
       // Load materials using API service
-      const materialsData = await materialService.getMaterials()
-      const companyMaterials = materialsData || []
+      const materialsResponse = await materialService.getAll()
+      const companyMaterials = materialsResponse.success ? materialsResponse.data : []
       setMaterials(companyMaterials)
 
       // Load current stock information
@@ -136,7 +136,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       const stockData = {}
       
       for (const material of materials) {
-        const stock = inventoryService.getCurrentStock(companyId, material.id)
+        const stock = await inventoryService.getCurrentStock(material.id)
         stockData[material.id] = {
           currentStock: stock?.currentStock || 0,
           unit: stock?.unit || material.unit,

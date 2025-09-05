@@ -18,9 +18,10 @@
         "website": ""
       },
       "modules": {
-        "enabled": ["dashboard", "customers", "inventory", "sales", "purchase", "contracts", "wastage", "petty-cash", "reports", "settings"],
+        "enabled": ["dashboard", "customers", "suppliers", "inventory", "sales", "purchase", "contracts", "wastage", "petty-cash", "reports", "settings"],
         "labels": {
           "customers": "Customers",
+          "suppliers": "Suppliers",
           "inventory": "Inventory", 
           "contracts": "Contracts"
         }
