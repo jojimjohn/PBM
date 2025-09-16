@@ -7,9 +7,10 @@ import PermissionGate from '../../../components/PermissionGate'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import contractService from '../../../services/contractService'
-import customerService from '../../../services/customerService'
+import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
-import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase } from 'lucide-react'
+import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase, Package } from 'lucide-react'
+import LoadingSpinner from '../../../components/LoadingSpinner'
 import '../styles/Contracts.css'
 
 const Contracts = () => {
@@ -23,14 +24,14 @@ const Contracts = () => {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [selectedContract, setSelectedContract] = useState(null)
-  const [customers, setCustomers] = useState([])
+  const [suppliers, setSuppliers] = useState([])
   const [materials, setMaterials] = useState([])
   const [editFormData, setEditFormData] = useState({})
   const [createFormData, setCreateFormData] = useState({})
 
   useEffect(() => {
     loadContracts()
-    loadCustomersAndMaterials()
+    loadSuppliersAndMaterials()
   }, [selectedCompany])
 
   const loadContracts = async () => {
@@ -45,10 +46,22 @@ const Contracts = () => {
         
         setContracts(companyContracts)
         // Set default contract types and statuses if not provided by API
-        setContractTypes(['project-based', 'contract', 'walk-in'])
-        setContractStatuses(['active', 'expired', 'pending', 'cancelled'])
+        setContractTypes({
+          'service': { name: 'Service Contract', color: '#3b82f6' },
+          'supply': { name: 'Supply Contract', color: '#10b981' },
+          'maintenance': { name: 'Maintenance Contract', color: '#f59e0b' },
+          'collection': { name: 'Collection Contract', color: '#8b5cf6' }
+        })
+        
+        setContractStatuses({
+          'draft': { name: 'Draft', color: '#6b7280' },
+          'active': { name: 'Active', color: '#10b981' },
+          'expired': { name: 'Expired', color: '#ef4444' },
+          'terminated': { name: 'Terminated', color: '#dc2626' },
+          'pending': { name: 'Pending Approval', color: '#f59e0b' }
+        })
       } else {
-        console.error('Failed to load contracts:', response.error)
+        console.error('Error loading contracts:', response.error)
         setContracts([])
       }
     } catch (error) {
@@ -59,203 +72,146 @@ const Contracts = () => {
     }
   }
 
-  const loadCustomersAndMaterials = async () => {
+  const loadSuppliersAndMaterials = async () => {
     try {
-      // Load customers using API service
-      const customersResponse = await customerService.getAll()
-      const companyCustomers = customersResponse.success ? customersResponse.data : []
-      setCustomers(companyCustomers)
+      const [suppliersResponse, materialsResponse] = await Promise.all([
+        supplierService.getAll(),
+        materialService.getAll()
+      ])
 
-      // Load materials using API service
-      const materialsResponse = await materialService.getAll()
-      const companyMaterials = materialsResponse.success ? materialsResponse.data : []
-      setMaterials(companyMaterials)
+      if (suppliersResponse.success) {
+        setSuppliers(suppliersResponse.data || [])
+      }
+
+      if (materialsResponse.success) {
+        setMaterials(materialsResponse.data || [])
+      }
     } catch (error) {
-      console.error('Error loading customers and materials:', error)
-      setCustomers([])
-      setMaterials([])
+      console.error('Error loading suppliers and materials:', error)
     }
   }
 
-  const handleEditContract = (contract) => {
-    setSelectedContract(contract)
-    
-    // Initialize edit form with contract data
-    const formData = {
-      contractId: contract.id,
-      customerId: contract.customerId || '',
-      customerName: contract.customerName,
-      contractType: contract.contractType,
-      startDate: contract.startDate,
-      endDate: contract.endDate,
-      status: contract.status,
-      specialTerms: contract.terms?.specialTerms || '',
-      paymentTerms: contract.terms?.paymentTerms || 'net_30',
-      fuelItems: contract.fuelItems || [],
-      rates: {}
-    }
-    
-    // Convert fuel items to rates format for editing
-    if (contract.fuelItems) {
-      contract.fuelItems.forEach(item => {
-        formData.rates[item.materialId || `fuel_${item.fuelType}`] = {
-          type: 'fixed_rate',
-          contractRate: item.contractRate,
-          startDate: contract.startDate,
-          endDate: contract.endDate,
-          status: contract.status,
-          description: `Contract rate for ${item.fuelType}`
-        }
-      })
-    }
-    
-    setEditFormData(formData)
-    setShowEditForm(true)
-  }
-
-  const handleCreateContract = () => {
-    // Initialize create form with empty data
-    const formData = {
-      contractId: `CON-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      customerId: '',
-      contractType: 'fuel_supply',
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
-      status: 'active',
+  const initializeCreateForm = () => {
+    return {
+      supplierId: '',
+      contractType: 'service',
+      title: '',
+      description: '',
+      startDate: '',
+      endDate: '',
+      totalValue: 0,
+      currency: 'OMR',
+      paymentTerms: '',
       specialTerms: '',
-      paymentTerms: 'net_30',
-      rates: {}
+      status: 'draft',
+      materials: []
     }
-    
-    setCreateFormData(formData)
-    setShowCreateForm(true)
   }
 
-  const handleSaveContract = async (formData, isEdit = false) => {
+  const handleCreateContract = async () => {
     try {
       setLoading(true)
       
-      // In a real application, this would make an API call
-      console.log(`${isEdit ? 'Updating' : 'Creating'} contract:`, formData)
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Update local state (in production, refetch from server)
-      if (isEdit) {
-        setContracts(prev => prev.map(contract => 
-          contract.id === formData.contractId 
-            ? { ...contract, ...formData, updatedAt: new Date().toISOString() }
-            : contract
-        ))
-      } else {
-        const newContract = {
-          ...formData,
-          id: formData.contractId,
-          companyId: selectedCompany?.id,
-          createdAt: new Date().toISOString(),
-          performance: {
-            totalValue: 0,
-            onTimeDeliveryRate: 1.0
-          },
-          fuelItems: Object.entries(formData.rates).map(([materialId, rateInfo]) => {
-            const material = materials.find(m => m.id === materialId)
-            return {
-              materialId,
-              fuelType: material?.name || materialId,
-              contractRate: rateInfo.contractRate,
-              unit: material?.unit || 'L',
-              deliverySchedule: 'as_required'
-            }
-          })
-        }
-        setContracts(prev => [...prev, newContract])
+      // Basic validation
+      if (!createFormData.supplierId || !createFormData.title || !createFormData.startDate || !createFormData.endDate) {
+        alert(t('fillRequiredFields'))
+        return
+      }
+
+      const contractData = {
+        ...createFormData,
+        companyId: selectedCompany.id,
+        createdAt: new Date().toISOString(),
+        createdBy: 'current_user', // This should come from auth context
+        totalValue: parseFloat(createFormData.totalValue) || 0,
       }
       
-      // Close modals
-      setShowEditForm(false)
-      setShowCreateForm(false)
-      setSelectedContract(null)
+      const response = await contractService.create(contractData)
       
-      alert(`Contract ${isEdit ? 'updated' : 'created'} successfully!`)
+      if (response.success) {
+        setContracts(prev => [response.data, ...prev])
+        setShowCreateForm(false)
+        setCreateFormData(initializeCreateForm())
+        alert(t('contractCreated', 'Contract created successfully!'))
+      } else {
+        console.error('Error creating contract:', response.error)
+        alert(t('errorCreating', 'Error creating contract'))
+      }
     } catch (error) {
-      console.error(`Error ${isEdit ? 'updating' : 'creating'} contract:`, error)
-      alert(`Failed to ${isEdit ? 'update' : 'create'} contract. Please try again.`)
+      console.error('Error creating contract:', error)
+      alert(t('errorCreating', 'Error creating contract'))
     } finally {
       setLoading(false)
     }
   }
 
-  const addRateToForm = (formData, setFormData) => {
-    const materialId = Object.keys(formData.rates || {}).length > 0 
-      ? '' : (materials[0]?.id || '')
-    
-    const newRates = {
-      ...(formData.rates || {}),
-      [materialId || `rate_${Date.now()}`]: {
-        type: 'fixed_rate',
-        contractRate: 0,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: 'active',
-        description: ''
+  const handleUpdateContract = async () => {
+    try {
+      setLoading(true)
+      
+      const response = await contractService.update(selectedContract.id, editFormData)
+      
+      if (response.success) {
+        setContracts(prev => prev.map(c => c.id === selectedContract.id ? response.data : c))
+        setShowEditForm(false)
+        setSelectedContract(null)
+        alert(t('contractUpdated', 'Contract updated successfully!'))
+      } else {
+        console.error('Error updating contract:', response.error)
+        alert(t('errorUpdating', 'Error updating contract'))
       }
+    } catch (error) {
+      console.error('Error updating contract:', error)
+      alert(t('errorUpdating', 'Error updating contract'))
+    } finally {
+      setLoading(false)
     }
-    
-    setFormData(prev => ({ ...prev, rates: newRates }))
   }
 
-  const removeRateFromForm = (materialId, formData, setFormData) => {
-    const newRates = { ...(formData.rates || {}) }
-    delete newRates[materialId]
-    setFormData(prev => ({ ...prev, rates: newRates }))
-  }
+  const handleDeleteContract = async (contractId) => {
+    if (!confirm(t('confirmDelete', 'Are you sure you want to delete this contract?'))) {
+      return
+    }
 
-  const updateRateInForm = (materialId, field, value, formData, setFormData) => {
-    const newRates = {
-      ...(formData.rates || {}),
-      [materialId]: {
-        ...(formData.rates?.[materialId] || {}),
-        [field]: value
+    try {
+      const response = await contractService.delete(contractId)
+      
+      if (response.success) {
+        setContracts(prev => prev.filter(c => c.id !== contractId))
+        alert(t('contractDeleted', 'Contract deleted successfully!'))
+      } else {
+        console.error('Error deleting contract:', response.error)
+        alert(t('errorDeleting', 'Error deleting contract'))
       }
+    } catch (error) {
+      console.error('Error deleting contract:', error)
+      alert(t('errorDeleting', 'Error deleting contract'))
     }
-    setFormData(prev => ({ ...prev, rates: newRates }))
-  }
-
-  const filteredContracts = contracts
-
-  const getStatusColor = (status) => {
-    return contractStatuses[status]?.color || '#6b7280'
-  }
-
-  const getStatusName = (status) => {
-    return contractStatuses[status]?.name || status
   }
 
   const formatCurrency = (amount) => {
-    return `OMR ${amount.toFixed(2)}`
+    return `OMR ${(amount || 0).toFixed(2)}`
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
     return new Date(dateString).toLocaleDateString('en-GB')
   }
 
-  const getDaysUntilExpiry = (endDate) => {
-    const today = new Date()
-    const expiry = new Date(endDate)
-    const diffTime = expiry - today
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+  const getContractStatusInfo = (status) => {
+    return contractStatuses[status] || { name: status, color: '#6b7280' }
   }
 
-  const getExpiryStatus = (endDate, status) => {
-    if (status === 'expired') return 'expired'
-    
-    const daysUntilExpiry = getDaysUntilExpiry(endDate)
-    if (daysUntilExpiry < 0) return 'expired'
-    if (daysUntilExpiry <= 30) return 'expiring_soon'
-    if (daysUntilExpiry <= 90) return 'renewal_due'
-    return 'active'
+  const getContractTypeInfo = (type) => {
+    return contractTypes[type] || { name: type, color: '#6b7280' }
+  }
+
+  if (loading) {
+    return (
+      <div className="page-loading">
+        <LoadingSpinner message="Loading contracts..." size="large" />
+      </div>
+    )
   }
 
   // Define table columns for contracts
@@ -271,14 +227,28 @@ const Contracts = () => {
       )
     },
     {
-      key: 'customerName',
-      header: t('customer'),
+      key: 'supplierName',
+      header: t('supplier'),
+      sortable: true,
+      filterable: true,
+      render: (value, row) => {
+        const supplier = suppliers.find(s => s.id === row.supplierId)
+        return (
+          <div className="supplier-info">
+            <User size={14} />
+            <span>{supplier?.name || 'Unknown Supplier'}</span>
+          </div>
+        )
+      }
+    },
+    {
+      key: 'title',
+      header: t('contractTitle'),
       sortable: true,
       filterable: true,
       render: (value) => (
-        <div className="customer-info">
-          <User size={14} />
-          <span>{value}</span>
+        <div className="contract-title">
+          <strong>{value}</strong>
         </div>
       )
     },
@@ -287,12 +257,17 @@ const Contracts = () => {
       header: t('type'),
       sortable: true,
       filterable: true,
-      render: (value) => (
-        <div className="contract-type">
-          <Briefcase size={14} />
-          <span>{contractTypes[value]?.name || value}</span>
-        </div>
-      )
+      render: (value) => {
+        const typeInfo = getContractTypeInfo(value)
+        return (
+          <span 
+            className="contract-type-badge"
+            style={{ backgroundColor: typeInfo.color }}
+          >
+            {typeInfo.name}
+          </span>
+        )
+      }
     },
     {
       key: 'startDate',
@@ -308,17 +283,16 @@ const Contracts = () => {
       sortable: true,
       width: '120px',
       render: (value, row) => {
-        const daysUntilExpiry = getDaysUntilExpiry(value)
-        const expiryStatus = getExpiryStatus(value, row.status)
+        const endDate = new Date(value)
+        const today = new Date()
+        const isExpiringSoon = (endDate - today) / (1000 * 60 * 60 * 24) <= 30 && endDate > today
+        const isExpired = endDate < today
+
         return (
-          <div className="expiry-info">
-            <div className="date">{formatDate(value)}</div>
-            {expiryStatus === 'expiring_soon' && (
-              <div className="expiry-warning">
-                <Clock size={12} />
-                <span>{daysUntilExpiry} days</span>
-              </div>
-            )}
+          <div className={`date-cell ${isExpired ? 'expired' : isExpiringSoon ? 'expiring' : ''}`}>
+            <span>{formatDate(value)}</span>
+            {isExpired && <span className="status-indicator expired">Expired</span>}
+            {isExpiringSoon && <span className="status-indicator expiring">Expiring Soon</span>}
           </div>
         )
       }
@@ -328,42 +302,25 @@ const Contracts = () => {
       header: t('status'),
       sortable: true,
       filterable: true,
-      render: (value) => (
-        <span 
-          className="contract-status-badge"
-          style={{ backgroundColor: getStatusColor(value) }}
-        >
-          {getStatusName(value)}
-        </span>
-      )
+      render: (value) => {
+        const statusInfo = getContractStatusInfo(value)
+        return (
+          <span 
+            className="contract-status-badge"
+            style={{ backgroundColor: statusInfo.color }}
+          >
+            {statusInfo.name}
+          </span>
+        )
+      }
     },
     {
-      key: 'fuelItems',
-      header: t('fuelItems'),
-      sortable: false,
-      render: (value) => (
-        <div className="fuel-items-summary">
-          <div className="item-count">{value.length} {t('items')}</div>
-          <div className="item-types">
-            {value.slice(0, 2).map((item, index) => (
-              <span key={index} className="fuel-type">
-                {item.fuelType.replace('_', ' ')}
-              </span>
-            ))}
-            {value.length > 2 && (
-              <span className="more-items">+{value.length - 2} {t('more')}</span>
-            )}
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'performance.totalValue',
+      key: 'totalValue',
       header: t('totalValue'),
       type: 'currency',
       align: 'right',
       sortable: true,
-      render: (value, row) => formatCurrency(row.performance?.totalValue || 0)
+      render: (value, row) => formatCurrency(row.totalValue || 0)
     },
     {
       key: 'actions',
@@ -374,127 +331,116 @@ const Contracts = () => {
         <div className="table-actions">
           <PermissionGate permission={PERMISSIONS.VIEW_CONTRACTS}>
             <button 
-              className="btn-icon" 
+              className="btn btn-outline btn-sm" 
+              onClick={() => {
+                setSelectedContract(row)
+                // Show view modal logic would go here
+              }}
               title={t('viewDetails')}
             >
-              <Eye size={16} />
+              <Eye size={14} />
             </button>
           </PermissionGate>
           
           <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
             <button 
-              className="btn-icon" 
-              onClick={() => handleEditContract(row)}
+              className="btn btn-outline btn-sm" 
+              onClick={() => {
+                setSelectedContract(row)
+                setEditFormData(row)
+                setShowEditForm(true)
+              }}
               title={t('edit')}
             >
-              <Edit size={16} />
+              <Edit size={14} />
             </button>
           </PermissionGate>
           
-          {row.status === 'pending_renewal' && (
-            <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
-              <button 
-                className="btn-icon primary" 
-                title={t('renewContract')}
-              >
-                <Settings size={16} />
-              </button>
-            </PermissionGate>
-          )}
+          <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
+            <button 
+              className="btn btn-outline btn-sm btn-danger" 
+              onClick={() => handleDeleteContract(row.id)}
+              title={t('delete')}
+            >
+              <X size={14} />
+            </button>
+          </PermissionGate>
         </div>
       )
     }
   ]
 
-  if (loading) {
-    return (
-      <div className="contracts-page">
-        <div className="loading-spinner">{t('loadingContracts')}</div>
-      </div>
-    )
-  }
-
   return (
     <div className="contracts-page">
       <div className="page-header">
         <div className="page-title-section">
-          <h1>Contract Management</h1>
-          <p>Manage fuel supply contracts and agreements</p>
+          <h1>{t('contractManagement')}</h1>
+          <p>{t('manageContracts', 'Manage oil trading contracts with suppliers')}</p>
         </div>
         
         <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
           <div className="page-actions">
             <button 
               className="btn btn-primary"
-              onClick={handleCreateContract}
+              onClick={() => {
+                setCreateFormData(initializeCreateForm())
+                setShowCreateForm(true)
+              }}
             >
               <Plus size={20} />
-              New Contract
+              {t('newContract')}
             </button>
           </div>
         </PermissionGate>
       </div>
 
-
-      {/* Contracts Summary Cards */}
+      {/* Contract Summary Cards */}
       <div className="contracts-summary">
         <div className="summary-card">
-          <div className="summary-icon active">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14,2 14,8 20,8" />
-            </svg>
+          <div className="summary-icon">
+            <FileText size={24} />
           </div>
-          <div className="summary-content">
-            <h3>Active Contracts</h3>
-            <p className="summary-number">{contracts.filter(c => c.status === 'active').length}</p>
-            <p className="summary-change">Currently running</p>
+          <div className="summary-info">
+            <p className="summary-value">{contracts.length}</p>
+            <p className="summary-label">{t('totalContracts', 'Total Contracts')}</p>
           </div>
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon expiring">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12,6 12,12 16,14" />
-            </svg>
+          <div className="summary-icon success">
+            <Check size={24} />
           </div>
-          <div className="summary-content">
-            <h3>Expiring Soon</h3>
-            <p className="summary-number">
-              {contracts.filter(c => getExpiryStatus(c.endDate, c.status) === 'expiring_soon').length}
+          <div className="summary-info">
+            <p className="summary-value">{contracts.filter(c => c.status === 'active').length}</p>
+            <p className="summary-label">{t('activeContracts', 'Active Contracts')}</p>
+          </div>
+        </div>
+
+        <div className="summary-card">
+          <div className="summary-icon warning">
+            <Clock size={24} />
+          </div>
+          <div className="summary-info">
+            <p className="summary-value">
+              {contracts.filter(c => {
+                const endDate = new Date(c.endDate)
+                const today = new Date()
+                return (endDate - today) / (1000 * 60 * 60 * 24) <= 30 && endDate > today
+              }).length}
             </p>
-            <p className="summary-change">Within 30 days</p>
+            <p className="summary-label">{t('expiringSoon', 'Expiring Soon')}</p>
           </div>
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon renewal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 4v6h6" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
+          <div className="summary-icon profit">
+            <DollarSign size={24} />
           </div>
-          <div className="summary-content">
-            <h3>Pending Renewal</h3>
-            <p className="summary-number">{contracts.filter(c => c.status === 'pending_renewal').length}</p>
-            <p className="summary-change">Action required</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon value">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23" />
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-          </div>
-          <div className="summary-content">
-            <h3>Total Value</h3>
-            <p className="summary-number">
-              {formatCurrency(contracts.reduce((sum, c) => sum + (c.performance?.totalValue || 0), 0))}
+          <div className="summary-info">
+            <p className="summary-value">
+              {formatCurrency(contracts.reduce((sum, c) => sum + (c.totalValue || 0), 0))}
             </p>
-            <p className="summary-change">Year to date</p>
+            <p className="summary-label">{t('totalValue', 'Total Value')}</p>
           </div>
         </div>
       </div>
@@ -504,8 +450,8 @@ const Contracts = () => {
         <DataTable
           data={contracts}
           columns={contractColumns}
-          title={t('contractManagement')}
-          subtitle={t('contractSubtitle')}
+          title={t('contractManagement', 'Contract Management')}
+          subtitle={t('contractSubtitle', 'Manage contracts with oil suppliers')}
           loading={loading}
           searchable={true}
           filterable={true}
@@ -513,13 +459,31 @@ const Contracts = () => {
           paginated={true}
           exportable={true}
           selectable={false}
-          emptyMessage={t('noContractsFound')}
+          emptyMessage={t('noContractsFound', 'No contracts found')}
           className="contracts-table"
           initialPageSize={10}
           stickyHeader={true}
           enableColumnToggle={true}
         />
       </div>
+
+      {/* Create Contract Modal */}
+      {showCreateForm && (
+        <ContractFormModal
+          isOpen={showCreateForm}
+          onClose={() => setShowCreateForm(false)}
+          onSave={handleCreateContract}
+          title={t('createContract', 'Create New Contract')}
+          formData={createFormData}
+          setFormData={setCreateFormData}
+          suppliers={suppliers}
+          materials={materials}
+          contractTypes={contractTypes}
+          isEdit={false}
+          loading={loading}
+          t={t}
+        />
+      )}
 
       {/* Edit Contract Modal */}
       {showEditForm && selectedContract && (
@@ -529,43 +493,23 @@ const Contracts = () => {
             setShowEditForm(false)
             setSelectedContract(null)
           }}
-          onSave={(formData) => handleSaveContract(formData, true)}
-          title={t('editContract')}
+          onSave={handleUpdateContract}
+          title={t('editContract', 'Edit Contract')}
           formData={editFormData}
           setFormData={setEditFormData}
-          customers={customers}
+          suppliers={suppliers}
           materials={materials}
+          contractTypes={contractTypes}
           isEdit={true}
           loading={loading}
-          addRateToForm={addRateToForm}
-          removeRateFromForm={removeRateFromForm}
-          updateRateInForm={updateRateInForm}
-        />
-      )}
-
-      {/* Create Contract Modal */}
-      {showCreateForm && (
-        <ContractFormModal
-          isOpen={showCreateForm}
-          onClose={() => setShowCreateForm(false)}
-          onSave={(formData) => handleSaveContract(formData, false)}
-          title={t('createNewContract')}
-          formData={createFormData}
-          setFormData={setCreateFormData}
-          customers={customers}
-          materials={materials}
-          isEdit={false}
-          loading={loading}
-          addRateToForm={addRateToForm}
-          removeRateFromForm={removeRateFromForm}
-          updateRateInForm={updateRateInForm}
+          t={t}
         />
       )}
     </div>
   )
 }
 
-// Contract Form Modal Component
+// Contract Form Modal Component (Simplified without locations)
 const ContractFormModal = ({ 
   isOpen, 
   onClose, 
@@ -573,52 +517,63 @@ const ContractFormModal = ({
   title, 
   formData, 
   setFormData, 
-  customers, 
-  materials, 
+  suppliers,
+  materials,
+  contractTypes,
   isEdit, 
-  loading, 
-  addRateToForm, 
-  removeRateFromForm, 
-  updateRateInForm 
+  loading,
+  t 
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
-    
-    // Basic validation
-    if (!formData.customerId) {
-      alert('Please select a customer')
-      return
-    }
-    
-    if (!formData.startDate || !formData.endDate) {
-      alert('Please set contract start and end dates')
-      return
-    }
-    
-    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-      alert('End date must be after start date')
-      return
-    }
-    
-    const ratesCount = Object.keys(formData.rates || {}).length
-    if (ratesCount === 0) {
-      alert('Please add at least one material rate')
-      return
-    }
-    
-    onSave(formData)
+    onSave()
   }
-  
-  const selectedCustomer = customers.find(c => c.id === formData.customerId)
-  
+
+  const addMaterial = () => {
+    const newMaterial = {
+      id: `mat_${Date.now()}`,
+      materialId: '',
+      materialName: '',
+      rate: 0,
+      currency: 'OMR',
+      minimumQuantity: 0,
+      maximumQuantity: 0,
+      unit: ''
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      materials: [...(prev.materials || []), newMaterial]
+    }))
+  }
+
+  const removeMaterial = (materialIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.filter((_, index) => index !== materialIndex)
+    }))
+  }
+
+  const updateMaterial = (materialIndex, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.map((material, index) => 
+        index === materialIndex 
+          ? { ...material, [field]: value }
+          : material
+      )
+    }))
+  }
+
   return (
     <Modal 
+      isOpen={isOpen}
       title={title} 
       onClose={onClose}
       className="modal-xl"
     >
       <form className="contract-form" onSubmit={handleSubmit}>
-        {/* Contract Basic Information */}
+        {/* Basic Information */}
         <div className="form-section">
           <div className="form-section-title">
             <FileText size={20} />
@@ -627,36 +582,27 @@ const ContractFormModal = ({
           
           <div className="form-grid">
             <div className="form-group">
-              <label>Contract ID *</label>
+              <label>Contract Title *</label>
               <input
                 type="text"
-                value={formData.contractId}
-                onChange={(e) => setFormData(prev => ({ ...prev, contractId: e.target.value }))}
+                value={formData.title || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 required
-                readOnly={isEdit}
-                className={isEdit ? 'readonly' : ''}
+                placeholder="Enter contract title"
               />
             </div>
 
             <div className="form-group">
-              <label>Customer *</label>
+              <label>Supplier *</label>
               <select
-                value={formData.customerId}
-                onChange={(e) => {
-                  const customer = customers.find(c => c.id === e.target.value)
-                  setFormData(prev => ({ 
-                    ...prev, 
-                    customerId: e.target.value,
-                    customerName: customer?.name || ''
-                  }))
-                }}
+                value={formData.supplierId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, supplierId: e.target.value }))}
                 required
-                disabled={isEdit}
               >
-                <option value="">Select Customer...</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name} ({customer.type.replace('_', ' ').toUpperCase()})
+                <option value="">Select Supplier</option>
+                {suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
                   </option>
                 ))}
               </select>
@@ -665,27 +611,14 @@ const ContractFormModal = ({
             <div className="form-group">
               <label>Contract Type</label>
               <select
-                value={formData.contractType}
+                value={formData.contractType || 'service'}
                 onChange={(e) => setFormData(prev => ({ ...prev, contractType: e.target.value }))}
               >
-                <option value="fuel_supply">Fuel Supply Contract</option>
-                <option value="bulk_supply">Bulk Supply Contract</option>
-                <option value="exclusive_supply">Exclusive Supply Contract</option>
-                <option value="project_based">Project-Based Contract</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Contract Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-              >
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="pending_renewal">Pending Renewal</option>
-                <option value="expired">Expired</option>
-                <option value="terminated">Terminated</option>
+                {Object.entries(contractTypes).map(([key, type]) => (
+                  <option key={key} value={key}>
+                    {type.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -693,7 +626,7 @@ const ContractFormModal = ({
               <label>Start Date *</label>
               <input
                 type="date"
-                value={formData.startDate}
+                value={formData.startDate || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
                 required
               />
@@ -703,215 +636,157 @@ const ContractFormModal = ({
               <label>End Date *</label>
               <input
                 type="date"
-                value={formData.endDate}
+                value={formData.endDate || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                min={formData.startDate}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>Payment Terms</label>
-              <select
-                value={formData.paymentTerms}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: e.target.value }))}
-              >
-                <option value="net_15">Net 15 Days</option>
-                <option value="net_30">Net 30 Days</option>
-                <option value="net_45">Net 45 Days</option>
-                <option value="net_60">Net 60 Days</option>
-                <option value="cash_on_delivery">Cash on Delivery</option>
-                <option value="advance_payment">Advance Payment</option>
-              </select>
+              <label>Total Value</label>
+              <input
+                type="number"
+                step="0.001"
+                min="0"
+                value={formData.totalValue || 0}
+                onChange={(e) => setFormData(prev => ({ ...prev, totalValue: parseFloat(e.target.value) || 0 }))}
+                placeholder="0.000"
+              />
             </div>
-          </div>
 
-          <div className="form-group full-width">
-            <label>Special Terms & Conditions</label>
-            <textarea
-              value={formData.specialTerms}
-              onChange={(e) => setFormData(prev => ({ ...prev, specialTerms: e.target.value }))}
-              placeholder="Enter special terms, conditions, or notes for this contract..."
-              rows="3"
-            />
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                value={formData.description || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Contract description"
+                rows={3}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Payment Terms</label>
+              <input
+                type="text"
+                value={formData.paymentTerms || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: e.target.value }))}
+                placeholder="e.g., Net 30 days"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Special Terms</label>
+              <textarea
+                value={formData.specialTerms || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, specialTerms: e.target.value }))}
+                placeholder="Any special terms or conditions"
+                rows={2}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Material Rates Section */}
+        {/* Contract Materials (Optional) */}
         <div className="form-section">
           <div className="form-section-title">
-            <div className="title-with-action">
-              <span>
-                <DollarSign size={20} />
-                Material Rates & Pricing
-              </span>
-              <button
-                type="button"
-                className="btn btn-outline btn-small"
-                onClick={() => addRateToForm(formData, setFormData)}
-              >
-                <Plus size={16} />
-                Add Material Rate
-              </button>
-            </div>
+            <Package size={20} />
+            Contract Materials
+            <span className="section-subtitle">Define materials covered by this contract</span>
           </div>
 
-          <div className="rates-table">
-            {Object.keys(formData.rates || {}).length === 0 ? (
-              <div className="empty-rates">
-                <DollarSign size={48} className="empty-icon" />
-                <h3>No Material Rates Added</h3>
-                <p>Add material rates to define pricing for this contract</p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => addRateToForm(formData, setFormData)}
-                >
-                  <Plus size={16} />
-                  Add First Rate
-                </button>
-              </div>
-            ) : (
-              <div className="rates-grid">
-                {Object.entries(formData.rates || {}).map(([materialId, rateInfo]) => {
-                  const material = materials.find(m => m.id === materialId)
-                  
-                  return (
-                    <div key={materialId} className="rate-item">
-                      <div className="rate-header">
-                        <div className="rate-material">
-                          <select
-                            value={materialId}
-                            onChange={(e) => {
-                              const oldMaterialId = materialId
-                              const newMaterialId = e.target.value
-                              
-                              if (newMaterialId && newMaterialId !== oldMaterialId) {
-                                const newRates = { ...formData.rates }
-                                newRates[newMaterialId] = { ...rateInfo }
-                                delete newRates[oldMaterialId]
-                                setFormData(prev => ({ ...prev, rates: newRates }))
-                              }
-                            }}
-                            className="material-select"
-                          >
-                            <option value="">Select Material...</option>
-                            {materials.map(mat => (
-                              <option key={mat.id} value={mat.id}>
-                                {mat.name} ({mat.unit})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        <button 
-                          type="button"
-                          className="btn btn-outline btn-small btn-danger"
-                          onClick={() => removeRateFromForm(materialId, formData, setFormData)}
-                          title="Remove this rate"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
+          <div className="materials-container">
+            {(formData.materials || []).map((material, materialIndex) => (
+              <div key={material.id} className="material-item">
+                <div className="material-header">
+                  <h4>Material {materialIndex + 1}</h4>
+                  <button 
+                    type="button"
+                    onClick={() => removeMaterial(materialIndex)}
+                    className="btn btn-danger btn-xs"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
 
-                      <div className="rate-config">
-                        <div className="form-group">
-                          <label>Rate Type</label>
-                          <select
-                            value={rateInfo.type || 'fixed_rate'}
-                            onChange={(e) => updateRateInForm(materialId, 'type', e.target.value, formData, setFormData)}
-                          >
-                            <option value="fixed_rate">Fixed Rate</option>
-                            <option value="discount_percentage">Discount Percentage</option>
-                            <option value="minimum_price_guarantee">Minimum Price Guarantee</option>
-                          </select>
-                        </div>
+                <div className="material-fields">
+                  <div className="form-group">
+                    <label>Material</label>
+                    <select
+                      value={material.materialId || ''}
+                      onChange={(e) => {
+                        const selectedMaterial = materials.find(m => m.id === e.target.value)
+                        if (selectedMaterial) {
+                          updateMaterial(materialIndex, 'materialId', selectedMaterial.id)
+                          updateMaterial(materialIndex, 'materialName', selectedMaterial.name)
+                          updateMaterial(materialIndex, 'unit', selectedMaterial.unit)
+                        }
+                      }}
+                    >
+                      <option value="">Select Material</option>
+                      {materials.map(mat => (
+                        <option key={mat.id} value={mat.id}>
+                          {mat.name} ({mat.type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                        {(rateInfo.type === 'fixed_rate' || rateInfo.type === 'minimum_price_guarantee' || !rateInfo.type) && (
-                          <div className="form-group">
-                            <label>Contract Rate (OMR)</label>
-                            <input
-                              type="number"
-                              value={rateInfo.contractRate || ''}
-                              onChange={(e) => updateRateInForm(materialId, 'contractRate', parseFloat(e.target.value) || 0, formData, setFormData)}
-                              placeholder="0.000"
-                              step="0.001"
-                              min="0"
-                            />
-                          </div>
-                        )}
-
-                        {rateInfo.type === 'discount_percentage' && (
-                          <div className="form-group">
-                            <label>Discount Percentage (%)</label>
-                            <input
-                              type="number"
-                              value={rateInfo.discountPercentage || ''}
-                              onChange={(e) => updateRateInForm(materialId, 'discountPercentage', parseFloat(e.target.value) || 0, formData, setFormData)}
-                              placeholder="0.0"
-                              step="0.1"
-                              min="0"
-                              max="100"
-                            />
-                          </div>
-                        )}
-
-                        <div className="form-group full-width">
-                          <label>Description</label>
-                          <input
-                            type="text"
-                            value={rateInfo.description || ''}
-                            onChange={(e) => updateRateInForm(materialId, 'description', e.target.value, formData, setFormData)}
-                            placeholder="Optional description for this rate..."
-                          />
-                        </div>
-                      </div>
+                  <div className="form-group">
+                    <label>Rate per Unit</label>
+                    <div className="rate-input-group">
+                      <input
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        value={material.rate || 0}
+                        onChange={(e) => updateMaterial(materialIndex, 'rate', parseFloat(e.target.value) || 0)}
+                        placeholder="0.000"
+                      />
+                      <select
+                        value={material.currency || 'OMR'}
+                        onChange={(e) => updateMaterial(materialIndex, 'currency', e.target.value)}
+                        className="currency-select"
+                      >
+                        <option value="OMR">OMR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                      </select>
                     </div>
-                  )
-                })}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Minimum Quantity</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={material.minimumQuantity || 0}
+                      onChange={(e) => updateMaterial(materialIndex, 'minimumQuantity', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Maximum Quantity</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={material.maximumQuantity || 0}
+                      onChange={(e) => updateMaterial(materialIndex, 'maximumQuantity', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+            ))}
+
+            <button 
+              type="button"
+              onClick={addMaterial}
+              className="btn btn-outline btn-sm add-material-btn"
+            >
+              <Plus size={16} />
+              Add Material
+            </button>
           </div>
         </div>
-
-        {/* Customer Information (if selected) */}
-        {selectedCustomer && (
-          <div className="form-section">
-            <div className="form-section-title">
-              <User size={20} />
-              Customer Information
-            </div>
-            
-            <div className="customer-info-grid">
-              <div className="customer-detail">
-                <label>Customer Name:</label>
-                <span>{selectedCustomer.name}</span>
-              </div>
-              <div className="customer-detail">
-                <label>Customer Type:</label>
-                <span className="customer-type-badge">
-                  {selectedCustomer.type.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-              <div className="customer-detail">
-                <label>Contact Person:</label>
-                <span>{selectedCustomer.contactPerson || 'N/A'}</span>
-              </div>
-              <div className="customer-detail">
-                <label>Phone:</label>
-                <span>{selectedCustomer.contact?.phone || 'N/A'}</span>
-              </div>
-              <div className="customer-detail">
-                <label>Email:</label>
-                <span>{selectedCustomer.contact?.email || 'N/A'}</span>
-              </div>
-              <div className="customer-detail">
-                <label>Credit Limit:</label>
-                <span>{selectedCustomer.creditLimit ? `OMR ${selectedCustomer.creditLimit.toLocaleString()}` : 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Form Actions */}
         <div className="form-actions">

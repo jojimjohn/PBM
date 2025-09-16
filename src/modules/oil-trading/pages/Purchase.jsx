@@ -7,12 +7,17 @@ import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import PurchaseOrderReceipt from '../../../components/PurchaseOrderReceipt'
+import PurchaseExpenseForm from '../../../components/PurchaseExpenseForm'
+import VendorManager from '../../../components/VendorManager'
+import StorageLocationManager from '../../../components/StorageLocationManager'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import { 
   Plus, Search, Filter, Eye, Edit, Truck, Package, 
-  CheckCircle, Clock, AlertTriangle, FileText, Download 
+  CheckCircle, Clock, AlertTriangle, FileText, Download,
+  DollarSign, MapPin, Building, Calculator, Receipt,
+  Users, Settings
 } from 'lucide-react'
 import '../styles/Purchase.css'
 
@@ -21,15 +26,25 @@ const Purchase = () => {
   const { hasPermission } = usePermissions()
   const { formatDate, formatCurrency } = useSystemSettings()
   
+  // Tab management
+  const [activeTab, setActiveTab] = useState('orders')
+  
+  // Data states
   const [purchaseOrders, setPurchaseOrders] = useState([])
+  const [purchaseExpenses, setPurchaseExpenses] = useState([])
   const [vendors, setVendors] = useState([])
   const [materials, setMaterials] = useState([])
   const [orderStatuses, setOrderStatuses] = useState({})
   const [loading, setLoading] = useState(true)
+  
+  // Modal states
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showReceiptForm, setShowReceiptForm] = useState(false)
+  const [showExpenseForm, setShowExpenseForm] = useState(false)
+  const [showVendorManager, setShowVendorManager] = useState(false)
+  const [showLocationManager, setShowLocationManager] = useState(false)
   const [receivingOrder, setReceivingOrder] = useState(false)
 
   useEffect(() => {
@@ -45,21 +60,61 @@ const Purchase = () => {
       const companyOrders = ordersResult.success ? ordersResult.data : []
       setPurchaseOrders(companyOrders)
       
+      // Load purchase expenses - Mock for now
+      setPurchaseExpenses([
+        {
+          id: 1,
+          purchaseOrderId: 1,
+          orderNumber: 'PO-2024-001',
+          category: 'transportation',
+          description: 'Transportation from Sohar to Muscat',
+          amount: 500.00,
+          vendor: 'Express Logistics',
+          expenseDate: '2024-08-20',
+          status: 'approved'
+        },
+        {
+          id: 2,
+          purchaseOrderId: 1,
+          orderNumber: 'PO-2024-001',
+          category: 'loading_unloading',
+          description: 'Loading and unloading charges',
+          amount: 150.00,
+          vendor: 'Port Services LLC',
+          expenseDate: '2024-08-20',
+          status: 'approved'
+        }
+      ])
+      
       // Set default order statuses
       setOrderStatuses({
-        draft: 'Draft',
-        pending: 'Pending Approval',
-        approved: 'Approved',
-        sent: 'Sent to Supplier',
-        received: 'Received',
-        completed: 'Completed',
-        cancelled: 'Cancelled'
+        draft: { name: 'Draft', color: '#6b7280' },
+        pending: { name: 'Pending Approval', color: '#f59e0b' },
+        approved: { name: 'Approved', color: '#10b981' },
+        sent: { name: 'Sent to Vendor', color: '#3b82f6' },
+        received: { name: 'Received', color: '#059669' },
+        completed: { name: 'Completed', color: '#059669' },
+        cancelled: { name: 'Cancelled', color: '#ef4444' }
       })
 
-      // Load suppliers using API service (for Al Ramrami, this would be empty since they don't have suppliers table)
+      // Load suppliers using API service (vendors = suppliers for oil business)
       const suppliersResult = await supplierService.getAll()
-      const companyVendors = suppliersResult.success ? suppliersResult.data : []
-      setVendors(companyVendors)
+      if (suppliersResult.success) {
+        // Map suppliers to vendor format for compatibility
+        const supplierVendors = suppliersResult.data.map(supplier => ({
+          id: supplier.id,
+          name: supplier.name,
+          vendorCode: supplier.supplierCode || `VEN-${supplier.id.toString().padStart(3, '0')}`,
+          contactPerson: supplier.contactPerson,
+          phone: supplier.phone,
+          email: supplier.email
+        }))
+        setVendors(supplierVendors)
+        console.log('Suppliers loaded as vendors:', supplierVendors.length)
+      } else {
+        console.error('Failed to load suppliers:', suppliersResult.error)
+        setVendors([]) // Set empty array on failure
+      }
 
       // Load materials using API service
       const materialsResult = await materialService.getAll()
@@ -87,6 +142,11 @@ const Purchase = () => {
     setShowReceiptForm(true)
   }
 
+  const handleAddExpense = (order) => {
+    setSelectedOrder(order)
+    setShowExpenseForm(true)
+  }
+
   const handleReceiveSubmit = async (receiptData) => {
     if (!selectedOrder) return
 
@@ -108,7 +168,6 @@ const Purchase = () => {
         setShowReceiptForm(false)
         setSelectedOrder(null)
         
-        // Show success message (you can add a toast notification here)
         alert('Purchase order received successfully! Inventory has been updated automatically.')
         
         // Optionally reload data to get the latest state
@@ -162,10 +221,36 @@ const Purchase = () => {
     }
   }
 
+  const handleSaveExpense = async (expenseData) => {
+    try {
+      // Mock expense saving - replace with actual API call
+      const newExpense = {
+        ...expenseData,
+        id: Math.max(...purchaseExpenses.map(e => e.id), 0) + 1,
+        orderNumber: selectedOrder.orderNumber,
+        status: 'pending'
+      }
+      
+      setPurchaseExpenses(prev => [...prev, ...newExpense.expenses.map((exp, index) => ({
+        ...exp,
+        id: newExpense.id + index,
+        purchaseOrderId: newExpense.purchaseOrderId,
+        orderNumber: selectedOrder.orderNumber,
+        status: 'pending'
+      }))])
+      
+      setShowExpenseForm(false)
+      setSelectedOrder(null)
+      alert('Purchase expenses added successfully!')
+    } catch (error) {
+      console.error('Error saving expense:', error)
+      alert('Failed to save expense. Please try again.')
+    }
+  }
+
   const handleViewOrder = (order) => {
     console.log('Viewing purchase order:', order)
     setSelectedOrder(order)
-    // This could open a detail modal or navigate to detail page
     alert(`✅ Viewing details for order ${order.orderNumber}`)
   }
 
@@ -178,7 +263,6 @@ const Purchase = () => {
       const result = await purchaseOrderService.approve(order.id, { approvalNotes })
       
       if (result.success) {
-        // Update the order status locally
         setPurchaseOrders(prev => prev.map(po => 
           po.id === order.id ? { ...po, orderStatus: 'approved' } : po
         ))
@@ -201,7 +285,6 @@ const Purchase = () => {
       const result = await purchaseOrderService.updateStatus(order.id, newStatus, { notes: statusNotes })
       
       if (result.success) {
-        // Update the order status locally
         setPurchaseOrders(prev => prev.map(po => 
           po.id === order.id ? { ...po, orderStatus: newStatus } : po
         ))
@@ -217,7 +300,6 @@ const Purchase = () => {
 
   const handleDownloadOrder = (order) => {
     console.log('Downloading purchase order:', order)
-    // This would generate and download a PDF or export the order
     alert(`✅ Downloading purchase order ${order.orderNumber}`)
   }
 
@@ -227,12 +309,11 @@ const Purchase = () => {
       pending: purchaseOrders.filter(o => o.status === 'pending').length,
       approved: purchaseOrders.filter(o => o.status === 'approved').length,
       delivered: purchaseOrders.filter(o => o.status === 'delivered').length,
-      totalValue: purchaseOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+      totalValue: purchaseOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
+      totalExpenses: purchaseExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0)
     }
     return summary
   }
-
-  // DataTable handles filtering internally, no need for manual filtering
 
   const getStatusColor = (status) => {
     return orderStatuses[status]?.color || '#6b7280'
@@ -254,12 +335,20 @@ const Purchase = () => {
 
   const summary = calculateOrderSummary()
 
+  const tabs = [
+    { id: 'orders', name: 'Purchase Orders', icon: FileText },
+    { id: 'expenses', name: 'Purchase Expenses', icon: DollarSign },
+    { id: 'vendors', name: 'Vendor Management', icon: Users },
+    { id: 'locations', name: 'Storage Locations', icon: MapPin },
+    { id: 'analytics', name: 'Analytics', icon: Calculator }
+  ]
+
   if (loading && purchaseOrders.length === 0) {
     return (
       <div className="purchase-page">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading purchase orders...</p>
+          <p>Loading purchase data...</p>
         </div>
       </div>
     )
@@ -270,12 +359,12 @@ const Purchase = () => {
       {/* Page Header */}
       <div className="page-header">
         <div className="page-title-section">
-          <h1>Purchase Orders</h1>
-          <p>Manage vendor orders and procurement for {selectedCompany?.name}</p>
+          <h1>Purchase Management</h1>
+          <p>Complete vendor procurement and expense tracking for {selectedCompany?.name}</p>
         </div>
         
-        <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
-          <div className="page-actions">
+        <div className="page-actions">
+          <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
             <button 
               className="btn btn-primary"
               onClick={handleCreateOrder}
@@ -283,8 +372,8 @@ const Purchase = () => {
               <Plus size={20} />
               New Purchase Order
             </button>
-          </div>
-        </PermissionGate>
+          </PermissionGate>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -316,225 +405,339 @@ const Purchase = () => {
             <CheckCircle size={24} />
           </div>
           <div className="summary-content">
-            <h3>Approved Orders</h3>
-            <p className="summary-number">{summary.approved}</p>
-            <p className="summary-change">Ready for delivery</p>
+            <h3>Order Value</h3>
+            <p className="summary-number">{formatCurrency(summary.totalValue)}</p>
+            <p className="summary-change">Total purchase value</p>
           </div>
         </div>
 
         <div className="summary-card">
           <div className="summary-icon value">
-            <Package size={24} />
+            <DollarSign size={24} />
           </div>
           <div className="summary-content">
-            <h3>Total Value</h3>
-            <p className="summary-number">{formatCurrency(summary.totalValue)}</p>
-            <p className="summary-change">This period</p>
+            <h3>Total Expenses</h3>
+            <p className="summary-number">{formatCurrency(summary.totalExpenses)}</p>
+            <p className="summary-change">Additional costs</p>
           </div>
         </div>
       </div>
 
-      {/* Purchase Orders DataTable */}
-      <DataTable
-        data={purchaseOrders.map(order => ({
-          ...order,
-          vendorInfo: vendors.find(v => v.id === order.vendorId) || { name: order.vendorName },
-          statusInfo: orderStatuses[order.status] || { name: order.status, color: '#6b7280' },
-          itemsCount: order.items?.length || 0,
-          itemsSummary: (order.items || []).slice(0, 2).map(item => item.materialName).join(', ') + 
-                        ((order.items?.length || 0) > 2 ? ` +${order.items.length - 2} more` : '')
-        }))}
-        columns={[
-          {
-            key: 'orderNumber',
-            header: 'Order Number',
-            sortable: true,
-            filterable: true,
-            render: (value, row) => (
-              <div>
-                <div style={{ fontWeight: '600', color: '#1f2937' }}>{value}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{formatDate(row.orderDate)}</div>
-              </div>
-            )
-          },
-          {
-            key: 'vendorName',
-            header: 'Vendor',
-            sortable: true,
-            filterable: true
-          },
-          {
-            key: 'status',
-            header: 'Status',
-            sortable: true,
-            filterable: true,
-            render: (value) => (
-              <span 
-                style={{ 
-                  backgroundColor: getStatusColor(value),
-                  color: 'white',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '1rem',
-                  fontSize: '0.75rem',
-                  fontWeight: '500',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
+      {/* Tab Navigation */}
+      <div className="purchase-tabs">
+        <div className="tab-buttons">
+          {tabs.map(tab => {
+            const IconComponent = tab.icon
+            return (
+              <button
+                key={tab.id}
+                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
               >
-                {getStatusIcon(value)}
-                {getStatusName(value)}
-              </span>
+                <IconComponent size={18} />
+                {tab.name}
+              </button>
             )
-          },
-          {
-            key: 'itemsCount',
-            header: 'Items',
-            type: 'number',
-            sortable: true,
-            render: (value, row) => (
-              <div>
-                <div style={{ fontWeight: '500' }}>{value} items</div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{row.itemsSummary}</div>
-              </div>
-            )
-          },
-          {
-            key: 'totalAmount',
-            header: 'Total Amount',
-            type: 'currency',
-            sortable: true,
-            align: 'right',
-            render: (value) => (
-              <span style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(value)}</span>
-            )
-          },
-          {
-            key: 'expectedDeliveryDate',
-            header: 'Expected Delivery',
-            type: 'date',
-            sortable: true,
-            render: (value) => (
-              <span style={{ color: value ? '#1f2937' : '#6b7280' }}>
-                {value ? formatDate(value) : 'TBD'}
-              </span>
-            )
-          },
-          {
-            key: 'actions',
-            header: 'Actions',
-            sortable: false,
-            render: (value, row) => (
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE_ORDER}>
+          })}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="tab-content">
+        {activeTab === 'orders' && (
+          <div className="orders-tab">
+            <div className="tab-header">
+              <h3>Purchase Orders</h3>
+            </div>
+
+            <DataTable
+              data={purchaseOrders.map(order => ({
+                ...order,
+                vendorInfo: vendors.find(v => v.id === order.vendorId) || { name: order.vendorName },
+                statusInfo: orderStatuses[order.status] || { name: order.status, color: '#6b7280' },
+                itemsCount: order.items?.length || 0,
+                itemsSummary: (order.items || []).slice(0, 2).map(item => item.materialName).join(', ') + 
+                              ((order.items?.length || 0) > 2 ? ` +${order.items.length - 2} more` : '')
+              }))}
+              columns={[
+                {
+                  key: 'orderNumber',
+                  header: 'Order Number',
+                  sortable: true,
+                  filterable: true,
+                  render: (value, row) => (
+                    <div>
+                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{value}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{formatDate(row.orderDate)}</div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'vendorName',
+                  header: 'Vendor',
+                  sortable: true,
+                  filterable: true
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  sortable: true,
+                  filterable: true,
+                  render: (value) => (
+                    <span 
+                      style={{ 
+                        backgroundColor: getStatusColor(value),
+                        color: 'white',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '1rem',
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      {getStatusIcon(value)}
+                      {getStatusName(value)}
+                    </span>
+                  )
+                },
+                {
+                  key: 'totalAmount',
+                  header: 'Order Value',
+                  type: 'currency',
+                  sortable: true,
+                  align: 'right',
+                  render: (value) => (
+                    <span style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(value)}</span>
+                  )
+                },
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  sortable: false,
+                  render: (value, row) => (
+                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                      <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE_ORDER}>
+                        <button 
+                          className="btn btn-outline btn-sm"
+                          onClick={() => handleViewOrder(row)}
+                          title="View Details"
+                        >
+                          <Eye size={14} />
+                        </button>
+                      </PermissionGate>
+                      
+                      <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
+                        <button 
+                          className="btn btn-outline btn-sm"
+                          onClick={() => handleEditOrder(row)}
+                          title="Edit"
+                          disabled={row.status === 'received' || row.status === 'completed'}
+                        >
+                          <Edit size={14} />
+                        </button>
+                      </PermissionGate>
+
+                      <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
+                        {row.status === 'approved' && (
+                          <button 
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleReceiveOrder(row)}
+                            title="Receive Order & Update Inventory"
+                          >
+                            <Package size={14} />
+                          </button>
+                        )}
+                      </PermissionGate>
+
+                      <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
+                        {(row.status === 'received' || row.status === 'completed') && (
+                          <button 
+                            className="btn btn-info btn-sm"
+                            onClick={() => handleAddExpense(row)}
+                            title="Add Purchase Expenses"
+                          >
+                            <DollarSign size={14} />
+                          </button>
+                        )}
+                      </PermissionGate>
+                    </div>
+                  )
+                }
+              ]}
+              title="Purchase Orders"
+              subtitle={`${summary.total} orders • ${summary.pending} pending • ${formatCurrency(summary.totalValue)} total value`}
+              loading={loading}
+              searchable={true}
+              filterable={true}
+              sortable={true}
+              paginated={true}
+              exportable={true}
+              selectable={false}
+              emptyMessage="No purchase orders found"
+              className="purchase-orders-table"
+            />
+          </div>
+        )}
+
+        {activeTab === 'expenses' && (
+          <div className="expenses-tab">
+            <div className="tab-header">
+              <h3>Purchase Expenses</h3>
+              <p>Track transportation, loading, and other purchase-related costs</p>
+            </div>
+
+            <DataTable
+              data={purchaseExpenses}
+              columns={[
+                {
+                  key: 'orderNumber',
+                  header: 'Order Number',
+                  sortable: true,
+                  filterable: true,
+                  render: (value) => (
+                    <span style={{ fontWeight: '600', color: '#1f2937' }}>{value}</span>
+                  )
+                },
+                {
+                  key: 'category',
+                  header: 'Category',
+                  sortable: true,
+                  filterable: true,
+                  render: (value) => (
+                    <span style={{ 
+                      backgroundColor: '#e0f2fe',
+                      color: '#0369a1',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.75rem',
+                      textTransform: 'capitalize'
+                    }}>
+                      {value.replace('_', ' ')}
+                    </span>
+                  )
+                },
+                {
+                  key: 'description',
+                  header: 'Description',
+                  sortable: true,
+                  filterable: true
+                },
+                {
+                  key: 'vendor',
+                  header: 'Service Provider',
+                  sortable: true,
+                  filterable: true
+                },
+                {
+                  key: 'amount',
+                  header: 'Amount',
+                  type: 'currency',
+                  sortable: true,
+                  render: (value) => (
+                    <span style={{ fontWeight: '600', color: '#059669' }}>{formatCurrency(value)}</span>
+                  )
+                },
+                {
+                  key: 'expenseDate',
+                  header: 'Date',
+                  type: 'date',
+                  sortable: true,
+                  render: (value) => formatDate(value)
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  sortable: true,
+                  filterable: true,
+                  render: (value) => (
+                    <span className={`status-badge ${value}`}>
+                      {value === 'approved' ? 'Approved' : value === 'pending' ? 'Pending' : 'Rejected'}
+                    </span>
+                  )
+                }
+              ]}
+              title="Purchase Expenses"
+              subtitle={`${purchaseExpenses.length} expenses • ${formatCurrency(summary.totalExpenses)} total`}
+              loading={false}
+              searchable={true}
+              filterable={true}
+              sortable={true}
+              paginated={true}
+              exportable={true}
+              emptyMessage="No purchase expenses found"
+              className="purchase-expenses-table"
+            />
+          </div>
+        )}
+
+        {activeTab === 'vendors' && (
+          <div className="vendors-tab">
+            <div className="tab-header">
+              <h3>Vendor Management</h3>
+              <p>Al Ramrami oil business uses the suppliers module for vendor management</p>
+              <div className="redirect-info">
+                <div className="redirect-message">
+                  <Users size={24} />
+                  <h4>Redirecting to Suppliers Module</h4>
+                  <p>Vendor management for Al Ramrami is handled through the Suppliers module to eliminate duplication.</p>
                   <button 
-                    className="btn btn-outline btn-sm"
-                    onClick={() => handleViewOrder(row)}
-                    title="View Details"
+                    className="btn btn-primary"
+                    onClick={() => window.location.href = '/suppliers'}
                   >
-                    <Eye size={14} />
+                    <Users size={16} />
+                    Go to Suppliers Module
                   </button>
-                </PermissionGate>
-                
-                <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
-                  <button 
-                    className="btn btn-outline btn-sm"
-                    onClick={() => handleEditOrder(row)}
-                    title="Edit"
-                    disabled={row.status === 'received' || row.status === 'completed'}
-                  >
-                    <Edit size={14} />
-                  </button>
-                </PermissionGate>
-
-                <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
-                  {row.orderStatus === 'confirmed' && (
-                    <button 
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleReceiveOrder(row)}
-                      title="Receive Order & Update Inventory"
-                    >
-                      <Package size={14} />
-                    </button>
-                  )}
-                </PermissionGate>
-                
-                <PermissionGate permission={PERMISSIONS.APPROVE_PURCHASE_ORDER}>
-                  {row.orderStatus === 'draft' && (
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      onClick={() => handleApproveOrder(row)}
-                      title="Approve"
-                    >
-                      <CheckCircle size={14} />
-                    </button>
-                  )}
-                </PermissionGate>
-
-                <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
-                  {row.orderStatus === 'approved' && (
-                    <button 
-                      className="btn btn-info btn-sm"
-                      onClick={() => handleStatusUpdate(row, 'sent')}
-                      title="Send to Supplier"
-                    >
-                      <Truck size={14} />
-                    </button>
-                  )}
-                </PermissionGate>
-
-                <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
-                  {row.orderStatus === 'sent' && (
-                    <button 
-                      className="btn btn-success btn-sm"
-                      onClick={() => handleStatusUpdate(row, 'confirmed')}
-                      title="Mark as Confirmed"
-                    >
-                      <CheckCircle size={14} />
-                    </button>
-                  )}
-                </PermissionGate>
-
-                <button 
-                  className="btn btn-outline btn-sm"
-                  onClick={() => handleDownloadOrder(row)}
-                  title="Download"
-                >
-                  <Download size={14} />
-                </button>
+                </div>
               </div>
-            )
-          }
-        ]}
-        title="Purchase Orders"
-        subtitle={`${summary.total} orders • ${summary.pending} pending • ${summary.approved} approved`}
-        loading={loading}
-        searchable={true}
-        filterable={true}
-        sortable={true}
-        paginated={true}
-        exportable={true}
-        selectable={false}
-        emptyMessage="No purchase orders found"
-        className="purchase-orders-table"
-        initialPageSize={15}
-        stickyHeader={true}
-        enableColumnToggle={true}
-      />
+            </div>
+          </div>
+        )}
 
-      {/* Create Purchase Order Modal */}
+        {activeTab === 'locations' && (
+          <div className="locations-tab">
+            <div className="tab-header">
+              <h3>Storage Locations</h3>
+              <p>Manage tank farms, warehouses, and storage facilities</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowLocationManager(true)}
+              >
+                <MapPin size={16} />
+                Open Location Manager
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="analytics-tab">
+            <div className="tab-header">
+              <h3>Purchase Analytics</h3>
+              <p>View purchase performance and cost analysis</p>
+            </div>
+            <div className="analytics-placeholder">
+              <Calculator size={48} />
+              <h4>Analytics Dashboard</h4>
+              <p>Purchase analytics and cost breakdown will be displayed here.</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
       {showCreateForm && (
         <PurchaseOrderForm
           isOpen={showCreateForm}
           onClose={() => setShowCreateForm(false)}
           onSave={handleSaveOrder}
-          vendors={vendors}
+          suppliers={vendors}
           materials={materials}
           title="Create Purchase Order"
         />
       )}
 
-      {/* Edit Purchase Order Modal */}
       {showEditForm && selectedOrder && (
         <PurchaseOrderForm
           isOpen={showEditForm}
@@ -543,7 +746,7 @@ const Purchase = () => {
             setSelectedOrder(null)
           }}
           onSave={handleSaveOrder}
-          vendors={vendors}
+          suppliers={vendors}
           materials={materials}
           initialData={selectedOrder}
           title="Edit Purchase Order"
@@ -551,7 +754,6 @@ const Purchase = () => {
         />
       )}
 
-      {/* Purchase Order Receipt Modal */}
       {showReceiptForm && selectedOrder && (
         <PurchaseOrderReceipt
           purchaseOrder={selectedOrder}
@@ -562,6 +764,33 @@ const Purchase = () => {
           }}
           onReceive={handleReceiveSubmit}
           loading={receivingOrder}
+        />
+      )}
+
+      {showExpenseForm && selectedOrder && (
+        <PurchaseExpenseForm
+          isOpen={showExpenseForm}
+          onClose={() => {
+            setShowExpenseForm(false)
+            setSelectedOrder(null)
+          }}
+          onSave={handleSaveExpense}
+          purchaseOrder={selectedOrder}
+          title="Add Purchase Expenses"
+        />
+      )}
+
+      {showVendorManager && (
+        <VendorManager
+          isOpen={showVendorManager}
+          onClose={() => setShowVendorManager(false)}
+        />
+      )}
+
+      {showLocationManager && (
+        <StorageLocationManager
+          isOpen={showLocationManager}
+          onClose={() => setShowLocationManager(false)}
         />
       )}
     </div>

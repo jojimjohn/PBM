@@ -118,6 +118,7 @@ export const usePermissions = () => {
 
   const canDelete = (permission) => {
     const deletePermissions = {
+      'customers': PERMISSIONS.MANAGE_CUSTOMERS,
       'sales': PERMISSIONS.DELETE_SALES,
       'purchase': PERMISSIONS.DELETE_PURCHASE
     }

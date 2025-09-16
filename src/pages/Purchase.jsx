@@ -5,6 +5,9 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import DataTable from '../components/ui/DataTable'
 import inventoryService from '../services/inventoryService'
 import financialService from '../services/financialService'
+import supplierService from '../services/supplierService'
+import purchaseOrderService from '../services/purchaseOrderService'
+import expenseService from '../services/expenseService'
 import PurchaseOrderForm from '../modules/oil-trading/components/PurchaseOrderForm'
 import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, Download, DollarSign } from 'lucide-react'
 import '../styles/Purchase.css'
@@ -13,79 +16,62 @@ const Purchase = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('orders') // 'orders' or 'expenses'
+  const [activeTab, setActiveTab] = useState('orders') // 'orders', 'expenses', or 'vendors'
   const [purchaseOrders, setPurchaseOrders] = useState([])
+  const [suppliers, setSuppliers] = useState([])
+  const [expenses, setExpenses] = useState([])
   const [processingOrder, setProcessingOrder] = useState(null)
   const [showOrderForm, setShowOrderForm] = useState(false)
   const [editingOrder, setEditingOrder] = useState(null)
   const [viewingOrder, setViewingOrder] = useState(null)
 
-  const samplePurchaseOrders = [
-    {
-      id: 'PO-2025-156',
-      supplier: 'Shell Oman Marketing',
-      date: '2025-07-24',
-      items: [
-        { materialId: 'mat_002', name: 'Engine Oil 20W-50', quantity: 200, unit: 'L', rate: 2.200, amount: 440 }
-      ],
-      total: 440,
-      status: 'received',
-      paymentStatus: 'paid',
-      receivedDate: '2025-07-24T10:30:00Z'
-    },
-    {
-      id: 'PO-2025-155',
-      supplier: 'Oman Oil Company',
-      date: '2025-07-23',
-      items: [
-        { materialId: 'mat_006', name: 'Diesel', quantity: 2000, unit: 'L', rate: 0.380, amount: 760 }
-      ],
-      total: 760,
-      status: 'pending',
-      paymentStatus: 'pending'
-    },
-    {
-      id: 'PO-2025-154',
-      supplier: 'Gulf Trading LLC',
-      date: '2025-07-22',
-      items: [
-        { materialId: 'mat_001', name: 'Engine Oil with Drums', quantity: 50, unit: 'drums', rate: 24.000, amount: 1200 },
-        { materialId: 'mat_003', name: 'Empty Drums', quantity: 100, unit: 'pieces', rate: 5.000, amount: 500 }
-      ],
-      total: 1700,
-      status: 'pending',
-      paymentStatus: 'pending'
-    }
-  ]
-
-  const expenses = [
-    {
-      id: 'EXP-2024-045',
-      category: 'Transportation',
-      description: 'Fuel delivery to Al Maha Petroleum',
-      amount: 25,
-      date: '2024-01-15',
-      status: 'approved'
-    },
-    {
-      id: 'EXP-2024-044',
-      category: 'Maintenance',
-      description: 'Truck servicing and repairs',
-      amount: 150,
-      date: '2024-01-14',
-      status: 'pending'
-    }
-  ]
-
   useEffect(() => {
-    // Load purchase orders
-    const timer = setTimeout(() => {
-      setPurchaseOrders(samplePurchaseOrders)
+    if (selectedCompany) {
+      loadPurchaseData()
+    }
+  }, [selectedCompany])
+
+  const loadPurchaseData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load suppliers from API instead of vendors from JSON
+      const suppliersResult = await supplierService.getAll()
+      if (suppliersResult.success) {
+        setSuppliers(suppliersResult.data)
+        console.log('Suppliers loaded:', suppliersResult.data.length)
+      } else {
+        console.error('Failed to load suppliers:', suppliersResult.error)
+        alert(`Failed to load suppliers: ${suppliersResult.error}`)
+      }
+      
+      // Load purchase orders from API
+      const ordersResult = await purchaseOrderService.getAll()
+      if (ordersResult.success) {
+        setPurchaseOrders(ordersResult.data)
+        console.log('Purchase orders loaded:', ordersResult.data.length)
+      } else {
+        console.error('Failed to load purchase orders:', ordersResult.error)
+        alert(`Failed to load purchase orders: ${ordersResult.error}`)
+      }
+      
+      // Load purchase expenses from unified expense API
+      const expensesResult = await expenseService.getPurchaseExpenses()
+      if (expensesResult.success) {
+        setExpenses(expensesResult.data)
+        console.log('Purchase expenses loaded:', expensesResult.data.length)
+      } else {
+        console.error('Failed to load purchase expenses:', expensesResult.error)
+        // Don't show alert for expenses as it's not critical
+      }
+      
+    } catch (error) {
+      console.error('Error loading purchase data:', error)
+      alert('Failed to load purchase data')
+    } finally {
       setLoading(false)
-    }, 1250)
-    
-    return () => clearTimeout(timer)
-  }, [])
+    }
+  }
 
   const handleMarkAsReceived = async (order) => {
     if (!order || processingOrder === order.id) return
@@ -258,6 +244,20 @@ const Purchase = () => {
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
             Expenses
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => {
+              // Redirect to suppliers module instead of showing vendors tab
+              window.location.href = '/suppliers';
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="8.5" cy="7" r="4" />
+              <path d="m22 2-5 10-5-5 10-5z" />
+            </svg>
+            Vendor Management
           </button>
         </div>
 
@@ -562,6 +562,8 @@ const Purchase = () => {
             setEditingOrder(null)
           }}
           onSave={handleSavePurchaseOrder}
+          suppliers={suppliers}
+          materials={[]} // TODO: Add materials loading
           editingOrder={editingOrder}
         />
       )}

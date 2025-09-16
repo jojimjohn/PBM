@@ -275,6 +275,9 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.MANAGE_CUSTOMERS,
     PERMISSIONS.VIEW_CUSTOMERS,
     
+    // Supplier Management (view only)
+    PERMISSIONS.VIEW_SUPPLIERS,
+    
     // Inventory (view only)
     PERMISSIONS.VIEW_INVENTORY,
     

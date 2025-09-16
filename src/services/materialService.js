@@ -391,6 +391,62 @@ class MaterialService {
       };
     }
   }
+
+  /**
+   * Get material categories for specializations
+   */
+  async getCategories(params = {}) {
+    try {
+      const queryParams = new URLSearchParams(params);
+      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/material-categories?${queryParams}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch material categories');
+      }
+
+      return {
+        success: true,
+        data: data.data || [],
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching material categories:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch material categories',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Get regions for collection areas
+   */
+  async getRegions(params = {}) {
+    try {
+      const queryParams = new URLSearchParams(params);
+      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/regions?${queryParams}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch regions');
+      }
+
+      return {
+        success: true,
+        data: data.data || [],
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching regions:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch regions',
+        data: []
+      };
+    }
+  }
 }
 
 const materialService = new MaterialService();

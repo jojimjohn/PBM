@@ -5,7 +5,7 @@ import { useSystemSettings } from '../context/SystemSettingsContext';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { Input } from './ui/Input';
-import { Plus, Package, AlertTriangle, CheckCircle, Truck, Warehouse } from 'lucide-react';
+import { Plus, Package, AlertTriangle, CheckCircle, Truck, Warehouse, ClipboardCheck, X, Star, FileText, Camera, Shield } from 'lucide-react';
 import './PurchaseOrderReceipt.css';
 
 const PurchaseOrderReceipt = ({ 
@@ -21,6 +21,10 @@ const PurchaseOrderReceipt = ({
   const [receivedItems, setReceivedItems] = useState([]);
   const [receiptNotes, setReceiptNotes] = useState('');
   const [errors, setErrors] = useState({});
+  const [qualityChecks, setQualityChecks] = useState({});
+  const [overallQualityRating, setOverallQualityRating] = useState(5);
+  const [qualityNotes, setQualityNotes] = useState('');
+  const [activeQualityItem, setActiveQualityItem] = useState(null);
 
   useEffect(() => {
     if (purchaseOrder && isOpen) {
@@ -36,12 +40,41 @@ const PurchaseOrderReceipt = ({
         expiryDate: item.expiryDate || '',
         location: 'Main Warehouse',
         condition: 'used', // Default for oil business
-        notes: ''
-      })) || [];
+        notes: '',
+        qualityGrade: 'A', // A, B, C, Reject
+        qualityIssues: [],
+        qualityPhotos: [],
+        certificateNumber: '',
+        testResults: {}
+      }));
+      
+      // Initialize quality checks for each item
+      const qualityChecks = {};
+      initialItems.forEach(item => {
+        const qualityCheckId = `quality_${item.id}`;
+        qualityChecks[qualityCheckId] = {
+        visualInspection: { passed: true, notes: '' },
+        packaging: { passed: true, notes: '' },
+        labeling: { passed: true, notes: '' },
+        documentation: { passed: true, notes: '' },
+        quantity: { passed: true, notes: '' },
+        contamination: { passed: true, notes: '' },
+        color: { passed: true, notes: '' },
+        viscosity: { passed: true, notes: '' },
+        overallGrade: 'A',
+        inspector: '',
+        inspectionDate: new Date().toISOString().split('T')[0],
+        passed: true
+        };
+      });
       
       setReceivedItems(initialItems);
       setReceiptNotes('');
       setErrors({});
+      setQualityChecks(qualityChecks);
+      setOverallQualityRating(5);
+      setQualityNotes('');
+      setActiveQualityItem(null);
     }
   }, [purchaseOrder, isOpen]);
 
@@ -85,6 +118,54 @@ const PurchaseOrderReceipt = ({
     ));
   };
 
+  const handleQualityCheck = (itemId, checkType, passed, notes = '') => {
+    const qualityId = `quality_${itemId}`;
+    setQualityChecks(prev => ({
+      ...prev,
+      [qualityId]: {
+        ...prev[qualityId],
+        [checkType]: { passed, notes }
+      }
+    }));
+  };
+
+  const handleQualityGrade = (itemId, grade) => {
+    const qualityId = `quality_${itemId}`;
+    setQualityChecks(prev => ({
+      ...prev,
+      [qualityId]: {
+        ...prev[qualityId],
+        overallGrade: grade,
+        passed: grade !== 'Reject'
+      }
+    }));
+    
+    setReceivedItems(prev => prev.map(item => 
+      item.itemId === itemId 
+        ? { ...item, qualityGrade: grade }
+        : item
+    ));
+  };
+
+  const openQualityModal = (itemId) => {
+    setActiveQualityItem(itemId);
+  };
+
+  const closeQualityModal = () => {
+    setActiveQualityItem(null);
+  };
+
+  const getQualityChecksPassed = (itemId) => {
+    const qualityId = `quality_${itemId}`;
+    const checks = qualityChecks[qualityId];
+    if (!checks) return 0;
+    
+    const checkTypes = ['visualInspection', 'packaging', 'labeling', 'documentation', 'quantity', 'contamination', 'color', 'viscosity'];
+    return checkTypes.filter(type => checks[type]?.passed).length;
+  };
+
+  const getTotalQualityChecks = () => 8; // Total number of quality checks per item
+
   const validateReceipt = () => {
     const newErrors = {};
     
@@ -104,6 +185,13 @@ const PurchaseOrderReceipt = ({
       if (!item.location.trim()) {
         newErrors[`location_${item.itemId}`] = 'Storage location is required';
       }
+      
+      // Quality check validation
+      const qualityId = `quality_${item.itemId}`;
+      const qualityCheck = qualityChecks[qualityId];
+      if (qualityCheck && !qualityCheck.passed) {
+        newErrors[`quality_${item.itemId}`] = 'Quality inspection must pass before receiving';
+      }
     });
     
     setErrors(newErrors);
@@ -116,8 +204,22 @@ const PurchaseOrderReceipt = ({
     }
 
     const receiptData = {
-      receivedItems: receivedItems.filter(item => item.receivedQuantity > 0),
-      notes: receiptNotes
+      receivedItems: receivedItems.filter(item => item.receivedQuantity > 0).map(item => ({
+        ...item,
+        qualityCheck: qualityChecks[`quality_${item.itemId}`]
+      })),
+      notes: receiptNotes,
+      qualityInspection: {
+        overallRating: overallQualityRating,
+        notes: qualityNotes,
+        inspector: 'Current User', // Should come from auth context
+        inspectionDate: new Date().toISOString(),
+        totalItemsInspected: receivedItems.filter(item => item.receivedQuantity > 0).length,
+        itemsPassed: receivedItems.filter(item => {
+          const qualityId = `quality_${item.itemId}`;
+          return item.receivedQuantity > 0 && qualityChecks[qualityId]?.passed;
+        }).length
+      }
     };
 
     await onReceive(receiptData);
@@ -178,6 +280,7 @@ const PurchaseOrderReceipt = ({
               <div className="col-expiry">Expiry</div>
               <div className="col-location">Location</div>
               <div className="col-condition">Condition</div>
+              <div className="col-quality">Quality</div>
             </div>
             
             {receivedItems.map((item) => (
@@ -253,8 +356,85 @@ const PurchaseOrderReceipt = ({
                     <option value="damaged">Damaged</option>
                   </select>
                 </div>
+                
+                <div className="col-quality">
+                  <div className="quality-controls">
+                    <div className="quality-grade">
+                      <select 
+                        value={item.qualityGrade || 'A'}
+                        onChange={(e) => handleQualityGrade(item.itemId, e.target.value)}
+                        className={`grade-select grade-${(item.qualityGrade || 'A').toLowerCase()}`}
+                      >
+                        <option value="A">Grade A</option>
+                        <option value="B">Grade B</option>
+                        <option value="C">Grade C</option>
+                        <option value="Reject">Reject</option>
+                      </select>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => openQualityModal(item.itemId)}
+                      className="quality-check-btn"
+                      title="Quality Inspection"
+                    >
+                      <ClipboardCheck size={16} />
+                      <span className="quality-status">
+                        {getQualityChecksPassed(item.itemId)}/{getTotalQualityChecks()}
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Quality Inspection Summary */}
+        <div className="quality-summary">
+          <h3>
+            <Shield className="section-icon" />
+            Quality Inspection Summary
+          </h3>
+          <div className="quality-metrics">
+            <div className="metric-card">
+              <div className="metric-value">{receivedItems.filter(item => {
+                const qualityId = `quality_${item.itemId}`;
+                return item.receivedQuantity > 0 && qualityChecks[qualityId]?.passed;
+              }).length}</div>
+              <div className="metric-label">Items Passed</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-value">{receivedItems.filter(item => {
+                const qualityId = `quality_${item.itemId}`;
+                return item.receivedQuantity > 0 && !qualityChecks[qualityId]?.passed;
+              }).length}</div>
+              <div className="metric-label">Items Failed</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-value rating-display">
+                <div className="rating-stars">
+                  {[1,2,3,4,5].map(star => (
+                    <Star 
+                      key={star}
+                      size={16} 
+                      className={star <= overallQualityRating ? 'star-filled' : 'star-empty'}
+                      onClick={() => setOverallQualityRating(star)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="metric-label">Overall Rating</div>
+            </div>
+          </div>
+          
+          <div className="quality-notes-section">
+            <label>Quality Inspection Notes</label>
+            <textarea
+              value={qualityNotes}
+              onChange={(e) => setQualityNotes(e.target.value)}
+              placeholder="Overall quality assessment, issues found, recommendations..."
+              rows={3}
+            />
           </div>
         </div>
 
@@ -296,6 +476,17 @@ const PurchaseOrderReceipt = ({
           </Button>
         </div>
       </div>
+      
+      {/* Quality Inspection Modal */}
+      {activeQualityItem && (
+        <QualityInspectionModal
+          itemId={activeQualityItem}
+          item={receivedItems.find(item => item.itemId === activeQualityItem)}
+          qualityCheck={qualityChecks[`quality_${activeQualityItem}`]}
+          onUpdate={(checkType, passed, notes) => handleQualityCheck(activeQualityItem, checkType, passed, notes)}
+          onClose={closeQualityModal}
+        />
+      )}
     </Modal>
   );
 };

@@ -9,6 +9,7 @@ import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
+import SupplierLocationManager from '../../../components/suppliers/SupplierLocationManager'
 import { 
   Plus, 
   Search, 
@@ -28,22 +29,20 @@ import {
   Package,
   TrendingUp,
   Save,
-  X
+  X,
+  Settings,
+  Users
 } from 'lucide-react'
 import '../styles/Suppliers.css'
 
-const ScrapMaterialsSuppliers = () => {
+const OilTradingSuppliers = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
   const [loading, setLoading] = useState(true)
   const [suppliers, setSuppliers] = useState([])
-  const [supplierTypes, setSupplierTypes] = useState({})
-  const [supplierStatuses, setSupplierStatuses] = useState({})
-  const [materials, setMaterials] = useState([])
-  const [specializations, setSpecializations] = useState([])
   const [regions, setRegions] = useState([])
-  const [collectionAreas, setCollectionAreas] = useState([])
+  const [specializations, setSpecializations] = useState([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
@@ -52,13 +51,27 @@ const ScrapMaterialsSuppliers = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [activeTab, setActiveTab] = useState('suppliers')
+
+  // Oil trading specific supplier types and statuses
+  const supplierTypes = {
+    'individual': { name: 'Individual', color: '#3b82f6' },
+    'business': { name: 'Business', color: '#10b981' },
+    'government': { name: 'Government Entity', color: '#8b5cf6' },
+    'contractor': { name: 'Contractor', color: '#f59e0b' }
+  }
+
+  const supplierStatuses = {
+    'active': { name: 'Active', color: '#10b981' },
+    'inactive': { name: 'Inactive', color: '#6b7280' },
+    'suspended': { name: 'Suspended', color: '#ef4444' },
+    'pending_approval': { name: 'Pending Approval', color: '#f59e0b' }
+  }
 
   useEffect(() => {
     loadSuppliers()
-    loadMaterials()
-    loadSpecializations()
     loadRegions()
-    loadCollectionAreas()
+    loadSpecializations()
   }, [selectedCompany])
 
   const loadSuppliers = async () => {
@@ -78,37 +91,6 @@ const ScrapMaterialsSuppliers = () => {
     }
   }
 
-  const loadMaterials = async () => {
-    try {
-      const result = await materialService.getAll()
-      if (result.success) {
-        setMaterials(result.data)
-      } else {
-        console.error('Error loading materials:', result.error)
-        setMaterials([])
-      }
-    } catch (error) {
-      console.error('Error loading materials:', error)
-      setMaterials([])
-    }
-  }
-
-  const loadSpecializations = async () => {
-    try {
-      // Load specializations from material categories API
-      const result = await materialService.getCategories({ business_type: 'scrap' })
-      if (result.success) {
-        setSpecializations(result.data || [])
-      } else {
-        console.error('Error loading specializations:', result.error)
-        setSpecializations([])
-      }
-    } catch (error) {
-      console.error('Error loading specializations:', error)
-      setSpecializations([])
-    }
-  }
-
   const loadRegions = async () => {
     try {
       // Load regions for dropdown selection
@@ -125,19 +107,22 @@ const ScrapMaterialsSuppliers = () => {
     }
   }
 
-  const loadCollectionAreas = async () => {
+  const loadSpecializations = async () => {
     try {
-      // Load collection areas from regions API
-      const result = await materialService.getRegions()
+      console.log('Loading specializations for oil business...')
+      // Load specializations from material categories API for oil business
+      const result = await materialService.getCategories({ business_type: 'oil' })
+      console.log('Specializations API result:', result)
       if (result.success) {
-        setCollectionAreas(result.data || [])
+        console.log('Specializations data:', result.data)
+        setSpecializations(result.data || [])
       } else {
-        console.error('Error loading collection areas:', result.error)
-        setCollectionAreas([])
+        console.error('Error loading specializations:', result.error)
+        setSpecializations([])
       }
     } catch (error) {
-      console.error('Error loading collection areas:', error)
-      setCollectionAreas([])
+      console.error('Error loading specializations:', error)
+      setSpecializations([])
     }
   }
 
@@ -147,7 +132,7 @@ const ScrapMaterialsSuppliers = () => {
         id: supplier.id,
         code: supplier.code || '',
         name: supplier.name || '',
-        type: supplier.type || 'business', // Keep for UI logic only
+        type: supplier.type || 'business',
         businessRegistration: supplier.businessRegistration || '',
         contactPerson: supplier.contactPerson || '',
         nationalId: supplier.nationalId || '',
@@ -158,8 +143,8 @@ const ScrapMaterialsSuppliers = () => {
         address: supplier.address || '',
         city: supplier.city || '',
         region_id: supplier.region_id || null,
-        specialization: supplier.specialization ? supplier.specialization.split(',').map(s => parseInt(s.trim()) || s.trim()) : [],
         paymentTerms: supplier.paymentTermDays || 0,
+        specialization: supplier.specialization ? supplier.specialization.split(',').map(s => parseInt(s.trim()) || s.trim()) : [],
         taxNumber: supplier.taxNumber || '',
         // Bank fields now supported by database
         bankName: supplier.bankName || '',
@@ -170,9 +155,9 @@ const ScrapMaterialsSuppliers = () => {
       }
     } else {
       return {
-        code: `PM-SUP-${String(suppliers.length + 1).padStart(3, '0')}`,
+        code: `AR-SUP-${String(suppliers.length + 1).padStart(3, '0')}`,
         name: '',
-        type: 'individual',
+        type: 'business',
         businessRegistration: '',
         contactPerson: '',
         nationalId: '',
@@ -180,10 +165,10 @@ const ScrapMaterialsSuppliers = () => {
         email: '',
         vatRegistrationNumber: '',
         address: '',
-        city: '',
+        city: 'Muscat',
         region_id: null,
+        paymentTerms: 30,
         specialization: [],
-        paymentTerms: 0,
         taxNumber: '',
         bankName: '',
         accountNumber: '',
@@ -191,6 +176,21 @@ const ScrapMaterialsSuppliers = () => {
         notes: '',
         isActive: true
       }
+    }
+  }
+
+  const handleSpecializationChange = (spec) => {
+    const currentSpecs = formData.specialization || []
+    if (currentSpecs.includes(spec)) {
+      setFormData(prev => ({
+        ...prev,
+        specialization: currentSpecs.filter(s => s !== spec)
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        specialization: [...currentSpecs, spec]
+      }))
     }
   }
 
@@ -262,7 +262,20 @@ const ScrapMaterialsSuppliers = () => {
         accountNumber: formData.accountNumber,
         iban: formData.iban,
         notes: formData.notes,
-        isActive: formData.isActive !== false
+        isActive: formData.isActive !== false,
+        createdAt: isEdit ? selectedSupplier.createdAt : new Date().toISOString(),
+        lastTransaction: isEdit ? selectedSupplier.lastTransaction : null,
+        performance: isEdit ? selectedSupplier.performance : {
+          monthlyVolume: 0,
+          averageRate: 0,
+          reliability: 0,
+          qualityScore: 0
+        },
+        purchaseHistory: isEdit ? selectedSupplier.purchaseHistory : {
+          totalTransactions: 0,
+          totalValue: 0,
+          totalWeight: 0
+        }
       }
 
       // Save via API
@@ -302,20 +315,14 @@ const ScrapMaterialsSuppliers = () => {
   const filteredSuppliers = suppliers.filter(supplier => {
     const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          supplier.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.phone?.includes(searchTerm)
-    const matchesStatus = statusFilter === 'all' || (supplier.isActive ? 'active' : 'inactive') === statusFilter
+                         supplier.contact?.phone?.includes(searchTerm)
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'active' && supplier.isActive) ||
+                         (statusFilter === 'inactive' && !supplier.isActive)
     const matchesType = typeFilter === 'all' || supplier.type === typeFilter
     
     return matchesSearch && matchesStatus && matchesType
   })
-
-  const getTypeColor = (type) => {
-    return supplierTypes[type]?.color || '#6b7280'
-  }
-
-  const getStatusColor = (status) => {
-    return supplierStatuses[status]?.color || '#6b7280'
-  }
 
   const formatCurrency = (amount) => {
     return `OMR ${amount.toFixed(2)}`
@@ -326,7 +333,7 @@ const ScrapMaterialsSuppliers = () => {
     return new Date(dateString).toLocaleDateString('en-GB')
   }
 
-  if (loading) {
+  if (loading && activeTab === 'suppliers') {
     return (
       <div className="page-loading">
         <LoadingSpinner message="Loading suppliers..." size="large" />
@@ -334,7 +341,7 @@ const ScrapMaterialsSuppliers = () => {
     )
   }
 
-  // Define table columns for suppliers - consistent with other modules
+  // Define table columns for oil trading suppliers
   const supplierColumns = [
     {
       key: 'code',
@@ -354,7 +361,7 @@ const ScrapMaterialsSuppliers = () => {
       filterable: true,
       render: (value, row) => (
         <div className="supplier-info">
-          <div className="supplier-avatar" style={{ backgroundColor: getTypeColor(row.type) }}>
+          <div className="supplier-avatar" style={{ backgroundColor: supplierTypes[row.type]?.color }}>
             {value.substring(0, 2).toUpperCase()}
           </div>
           <div className="supplier-details">
@@ -376,78 +383,43 @@ const ScrapMaterialsSuppliers = () => {
       )
     },
     {
-      key: 'phone',
+      key: 'contact.phone',
       header: t('phone'),
       sortable: false,
       render: (value, row) => (
         <div className="phone-info">
           <Phone size={14} />
-          <span>{row.phone || row.contactPhone || row.contact_phone || 'N/A'}</span>
+          <span>{row.phone || row.contactPhone || row.contact?.phone || 'N/A'}</span>
         </div>
       )
     },
     {
-      key: 'city',
+      key: 'contact.address.city',
       header: t('city'),
       sortable: true,
       render: (value, row) => (
         <div className="location-info">
           <MapPin size={14} />
-          <span>{row.city || 'N/A'}</span>
+          <span>{row.city || row.contact?.address?.city || 'N/A'}</span>
         </div>
       )
-    },
-    {
-      key: 'specialization',
-      header: t('specialization'),
-      sortable: false,
-      render: (value) => (
-        <div className="specialization-tags">
-          {value?.slice(0, 2).map((spec, index) => (
-            <span key={index} className="spec-tag">
-              {spec.replace('_', ' ')}
-            </span>
-          ))}
-          {value?.length > 2 && (
-            <span className="more-specs">+{value.length - 2}</span>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'performance.monthlyVolume',
-      header: t('monthlyVolume'),
-      type: 'number',
-      align: 'right',
-      sortable: true,
-      render: (value, row) => (
-        <div className="volume-info">
-          <Package size={14} />
-          <span>{row.performance?.monthlyVolume || 0} KG</span>
-        </div>
-      )
-    },
-    {
-      key: 'purchaseHistory.totalValue',
-      header: t('totalPurchases'),
-      type: 'currency',
-      align: 'right',
-      sortable: true,
-      render: (value, row) => formatCurrency(row.purchaseHistory?.totalValue || 0)
     },
     {
       key: 'isActive',
       header: t('status'),
       sortable: true,
       filterable: true,
-      render: (value, row) => (
-        <span 
-          className="supplier-status-badge"
-          style={{ backgroundColor: value ? '#10b981' : '#ef4444' }}
-        >
-          {value ? 'Active' : 'Inactive'}
-        </span>
-      )
+      render: (value, row) => {
+        const isActive = value === true || value === 1 || value === '1';
+        return (
+          <span 
+            className="supplier-status-badge"
+            style={{ backgroundColor: isActive ? '#10b981' : '#ef4444' }}
+          >
+            {isActive ? 'Active' : 'Inactive'}
+          </span>
+        );
+      }
     },
     {
       key: 'actions',
@@ -499,95 +471,127 @@ const ScrapMaterialsSuppliers = () => {
   ]
 
   return (
-    <div className="scrap-suppliers-page">
+    <div className="oil-suppliers-page">
       <div className="page-header">
         <div className="page-title-section">
           <h1>{t('supplierManagement')}</h1>
-          <p>{t('manageScrapSuppliers')}</p>
+          <p>{t('manageOilSuppliers', 'Manage oil trading suppliers and collection locations')}</p>
         </div>
         
         <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
           <div className="page-actions">
-            <button 
-              className="btn btn-primary"
-              onClick={handleAddSupplier}
-            >
-              <Plus size={20} />
-              {t('addSupplier')}
-            </button>
+            {activeTab === 'suppliers' && (
+              <button 
+                className="btn btn-primary"
+                onClick={handleAddSupplier}
+              >
+                <Plus size={20} />
+                {t('addSupplier')}
+              </button>
+            )}
           </div>
         </PermissionGate>
       </div>
 
-      {/* Suppliers Summary Cards */}
-      <div className="suppliers-summary">
-        <div className="summary-card">
-          <div className="summary-icon">
-            <User size={24} />
-          </div>
-          <div className="summary-info">
-            <p className="summary-value">{suppliers.length}</p>
-            <p className="summary-label">{t('totalSuppliers', 'Total Suppliers')}</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon business">
-            <Building size={24} />
-          </div>
-          <div className="summary-info">
-            <p className="summary-value">{suppliers.filter(s => s.type === 'business').length}</p>
-            <p className="summary-label">{t('businessSuppliers', 'Business Suppliers')}</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon success">
-            <Package size={24} />
-          </div>
-          <div className="summary-info">
-            <p className="summary-value">
-              {suppliers.reduce((sum, s) => sum + (s.performance?.monthlyVolume || 0), 0).toLocaleString()} KG
-            </p>
-            <p className="summary-label">{t('monthlyVolume', 'Monthly Volume')}</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon profit">
-            <DollarSign size={24} />
-          </div>
-          <div className="summary-info">
-            <p className="summary-value">
-              {formatCurrency(suppliers.reduce((sum, s) => sum + (s.purchaseHistory?.totalValue || 0), 0))}
-            </p>
-            <p className="summary-label">{t('totalValue', 'Total Value')}</p>
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          className={`tab-button ${activeTab === 'suppliers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('suppliers')}
+        >
+          <Users size={18} />
+          {t('suppliers', 'Suppliers')}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'locations' ? 'active' : ''}`}
+          onClick={() => setActiveTab('locations')}
+        >
+          <MapPin size={18} />
+          {t('supplierLocations', 'Supplier Locations')}
+        </button>
       </div>
 
-      {/* Suppliers Table */}
-      <div className="suppliers-table-container">
-        <DataTable
-          data={filteredSuppliers}
-          columns={supplierColumns}
-          title={t('supplierManagement', 'Supplier Management')}
-          subtitle={t('supplierSubtitle', 'Manage scrap material suppliers and collection partners')}
-          loading={loading}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
-          selectable={false}
-          onRowClick={handleViewSupplier}
-          emptyMessage={t('noSuppliersFound', 'No suppliers found')}
-          className="suppliers-table"
-          initialPageSize={10}
-          stickyHeader={true}
-          enableColumnToggle={true}
-        />
-      </div>
+      {/* Suppliers Tab */}
+      {activeTab === 'suppliers' && (
+        <>
+          {/* Suppliers Summary Cards */}
+          <div className="suppliers-summary">
+            <div className="summary-card">
+              <div className="summary-icon">
+                <User size={24} />
+              </div>
+              <div className="summary-info">
+                <p className="summary-value">{suppliers.length}</p>
+                <p className="summary-label">{t('totalSuppliers', 'Total Suppliers')}</p>
+              </div>
+            </div>
+
+            <div className="summary-card">
+              <div className="summary-icon business">
+                <Building size={24} />
+              </div>
+              <div className="summary-info">
+                <p className="summary-value">{suppliers.filter(s => s.type === 'business').length}</p>
+                <p className="summary-label">{t('businessSuppliers', 'Business Suppliers')}</p>
+              </div>
+            </div>
+
+            <div className="summary-card">
+              <div className="summary-icon success">
+                <Package size={24} />
+              </div>
+              <div className="summary-info">
+                <p className="summary-value">
+                  {suppliers.reduce((sum, s) => sum + (s.performance?.monthlyVolume || 0), 0).toLocaleString()} L
+                </p>
+                <p className="summary-label">{t('monthlyVolume', 'Monthly Volume')}</p>
+              </div>
+            </div>
+
+            <div className="summary-card">
+              <div className="summary-icon profit">
+                <DollarSign size={24} />
+              </div>
+              <div className="summary-info">
+                <p className="summary-value">
+                  {formatCurrency(suppliers.reduce((sum, s) => sum + (s.purchaseHistory?.totalValue || 0), 0))}
+                </p>
+                <p className="summary-label">{t('totalValue', 'Total Value')}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Suppliers Table */}
+          <div className="suppliers-table-container">
+            <DataTable
+              data={filteredSuppliers}
+              columns={supplierColumns}
+              title={t('supplierManagement', 'Supplier Management')}
+              subtitle={t('supplierSubtitle', 'Manage oil trading suppliers and collection partners')}
+              loading={loading}
+              searchable={true}
+              filterable={true}
+              sortable={true}
+              paginated={true}
+              exportable={true}
+              selectable={false}
+              onRowClick={handleViewSupplier}
+              emptyMessage={t('noSuppliersFound', 'No suppliers found')}
+              className="suppliers-table"
+              initialPageSize={10}
+              stickyHeader={true}
+              enableColumnToggle={true}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Supplier Locations Tab */}
+      {activeTab === 'locations' && (
+        <div className="supplier-locations-container">
+          <SupplierLocationManager />
+        </div>
+      )}
 
       {/* Add Supplier Modal */}
       {showAddForm && (
@@ -599,9 +603,9 @@ const ScrapMaterialsSuppliers = () => {
           formData={formData}
           setFormData={setFormData}
           supplierTypes={supplierTypes}
-          materials={materials}
+          regions={regions}
           specializations={specializations}
-          collectionAreas={collectionAreas}
+          handleSpecializationChange={handleSpecializationChange}
           isEdit={false}
           loading={loading}
           t={t}
@@ -621,9 +625,9 @@ const ScrapMaterialsSuppliers = () => {
           formData={formData}
           setFormData={setFormData}
           supplierTypes={supplierTypes}
-          materials={materials}
+          regions={regions}
           specializations={specializations}
-          collectionAreas={collectionAreas}
+          handleSpecializationChange={handleSpecializationChange}
           isEdit={true}
           loading={loading}
           t={t}
@@ -663,10 +667,10 @@ const SupplierFormModal = ({
   title, 
   formData, 
   setFormData, 
-  supplierTypes, 
-  materials,
+  supplierTypes,
+  regions,
   specializations,
-  collectionAreas, 
+  handleSpecializationChange,
   isEdit, 
   loading,
   t 
@@ -674,21 +678,6 @@ const SupplierFormModal = ({
   const handleSubmit = (e) => {
     e.preventDefault()
     onSave()
-  }
-
-  const handleSpecializationChange = (spec) => {
-    const currentSpecs = formData.specialization || []
-    if (currentSpecs.includes(spec)) {
-      setFormData(prev => ({
-        ...prev,
-        specialization: currentSpecs.filter(s => s !== spec)
-      }))
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        specialization: [...currentSpecs, spec]
-      }))
-    }
   }
 
   return (
@@ -714,8 +703,7 @@ const SupplierFormModal = ({
                 value={formData.code || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
                 required
-                readOnly={isEdit}
-                className={isEdit ? 'readonly' : ''}
+                placeholder="Enter supplier code"
               />
             </div>
 
@@ -733,7 +721,7 @@ const SupplierFormModal = ({
             <div className="form-group">
               <label>Supplier Type</label>
               <select
-                value={formData.type || 'individual'}
+                value={formData.type || 'business'}
                 onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
               >
                 {Object.entries(supplierTypes).map(([key, type]) => (
@@ -862,7 +850,7 @@ const SupplierFormModal = ({
           </div>
           
           <div className="form-grid">
-            <div className="form-group">
+            <div className="form-group full-width">
               <label>{t('specialization', 'Specialization')}</label>
               <div className="checkbox-grid">
                 {specializations.map(spec => (
@@ -881,13 +869,12 @@ const SupplierFormModal = ({
               </div>
             </div>
 
-
             <div className="form-group">
               <label>Payment Terms (Days)</label>
               <input
                 type="number"
-                value={formData.paymentTerms || 0}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: parseInt(e.target.value) || 0 }))}
+                value={formData.paymentTerms || 30}
+                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: parseInt(e.target.value) || 30 }))}
                 min="0"
                 max="365"
               />
@@ -905,17 +892,15 @@ const SupplierFormModal = ({
             </div>
 
             {formData.type !== 'individual' && (
-              <>
-                <div className="form-group">
-                  <label>Tax Number</label>
-                  <input
-                    type="text"
-                    value={formData.taxNumber || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, taxNumber: e.target.value }))}
-                    placeholder="TAX-12345678"
-                  />
-                </div>
-              </>
+              <div className="form-group">
+                <label>Tax Number</label>
+                <input
+                  type="text"
+                  value={formData.taxNumber || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, taxNumber: e.target.value }))}
+                  placeholder="TAX-12345678"
+                />
+              </div>
             )}
           </div>
         </div>
@@ -1026,51 +1011,20 @@ const SupplierViewModal = ({
         {/* Professional Header Section */}
         <div className="supplier-header-section">
           <div className="supplier-main-info">
-            <div className="supplier-avatar-large" style={{ backgroundColor: '#6366f1' }}>
+            <div className="supplier-avatar-large" style={{ backgroundColor: supplierTypes[supplier.type]?.color }}>
               {supplier.name.substring(0, 2).toUpperCase()}
             </div>
             <div className="supplier-identity">
               <h2 className="supplier-name-large">{supplier.name}</h2>
               <div className="supplier-meta">
-                <span className="supplier-code-badge">{supplier.code || 'N/A'}</span>
-                <span className="supplier-type-badge">{supplier.businessRegistration ? 'Business' : 'Individual'}</span>
+                <span className="supplier-code-badge">{supplier.code}</span>
+                <span className="supplier-type-badge">{supplierTypes[supplier.type]?.name || supplier.type}</span>
                 <span 
                   className="supplier-status-professional"
                   style={{ backgroundColor: supplier.isActive ? '#10b981' : '#ef4444' }}
                 >
                   {supplier.isActive ? 'Active' : 'Inactive'}
                 </span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Key Performance Metrics */}
-          <div className="supplier-kpi-cards">
-            <div className="kpi-card primary">
-              <div className="kpi-icon">
-                <Package size={20} />
-              </div>
-              <div className="kpi-content">
-                <span className="kpi-value">0</span>
-                <span className="kpi-label">KG/Month</span>
-              </div>
-            </div>
-            <div className="kpi-card success">
-              <div className="kpi-icon">
-                <DollarSign size={20} />
-              </div>
-              <div className="kpi-content">
-                <span className="kpi-value">{formatCurrency(0)}</span>
-                <span className="kpi-label">Total Value</span>
-              </div>
-            </div>
-            <div className="kpi-card info">
-              <div className="kpi-icon">
-                <TrendingUp size={20} />
-              </div>
-              <div className="kpi-content">
-                <span className="kpi-value">0%</span>
-                <span className="kpi-label">Reliability</span>
               </div>
             </div>
           </div>
@@ -1091,34 +1045,25 @@ const SupplierViewModal = ({
               </div>
               <div className="info-row">
                 <span className="info-label">Phone Number</span>
-                <span className="info-value">
-                  {supplier.phone || supplier.contactPhone || supplier.contact_phone || 'Not provided'}
-                </span>
+                <span className="info-value">{supplier.phone || supplier.contactPhone || supplier.contact?.phone || 'Not provided'}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Email Address</span>
-                <span className="info-value">
-                  {supplier.email || supplier.contactEmail || supplier.contact_email || 'Not provided'}
-                </span>
+                <span className="info-value">{supplier.email || supplier.contactEmail || supplier.contact?.email || 'Not provided'}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">{t('vatRegistrationNumber')}</span>
-                <span className="info-value">
-                  {supplier.vatRegistration || supplier.vatRegistrationNumber || supplier.vat_registration || 'Not provided'}
-                </span>
+                <span className="info-value">{supplier.vatRegistration || supplier.vatRegistrationNumber || supplier.contact?.vatRegistrationNumber || 'Not provided'}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Physical Address</span>
                 <span className="info-value">
-                  {supplier.address || supplier.physical_address || 'Not provided'}
+                  {supplier.address || (supplier.contact?.address ? 
+                    `${supplier.contact.address.street}, ${supplier.contact.address.city}, ${supplier.contact.address.region}` 
+                    : 'Not provided')
+                  }
                 </span>
               </div>
-              {supplier.city && (
-                <div className="info-row">
-                  <span className="info-label">City</span>
-                  <span className="info-value">{supplier.city}</span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -1131,7 +1076,7 @@ const SupplierViewModal = ({
             <div className="info-card-content">
               <div className="info-row">
                 <span className="info-label">Supplier Type</span>
-                <span className="info-value">{supplier.businessRegistration ? 'Business' : 'Individual'}</span>
+                <span className="info-value">{supplierTypes[supplier.type]?.name || supplier.type}</span>
               </div>
               {supplier.businessRegistration && (
                 <div className="info-row">
@@ -1141,7 +1086,7 @@ const SupplierViewModal = ({
               )}
               <div className="info-row">
                 <span className="info-label">Payment Terms</span>
-                <span className="info-value">{supplier.paymentTermDays || 0} days</span>
+                <span className="info-value">{supplier.paymentTerms} days</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Tax Number</span>
@@ -1149,152 +1094,13 @@ const SupplierViewModal = ({
               </div>
             </div>
           </div>
-
-          {/* Specialization & Areas Card */}
-          <div className="info-card full-width">
-            <div className="info-card-header">
-              <Package size={18} />
-              <h3>Specialization & Service Areas</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="info-row">
-                <span className="info-label">Material Specialization</span>
-                <div className="specialization-professional">
-                  {supplier.specialization ? (
-                    supplier.specialization.split(',').map((spec, index) => (
-                      <span key={index} className="spec-badge-professional">
-                        {spec.trim().replace('_', ' ').toUpperCase()}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="info-value">Not specified</span>
-                  )}
-                </div>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Collection Areas</span>
-                <span className="info-value">{'Managed via supplier locations'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Performance Metrics Card */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <TrendingUp size={18} />
-              <h3>Performance Metrics</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="metrics-grid">
-                <div className="metric-item">
-                  <span className="metric-value">0%</span>
-                  <span className="metric-label">Reliability Score</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-value">0%</span>
-                  <span className="metric-label">Quality Rating</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-value">{formatCurrency(0)}</span>
-                  <span className="metric-label">Average Rate</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Purchase History Card */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <Calendar size={18} />
-              <h3>Purchase History</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="info-row">
-                <span className="info-label">Total Transactions</span>
-                <span className="info-value">0</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Total Purchase Value</span>
-                <span className="info-value">{formatCurrency(0)}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Total Material Weight</span>
-                <span className="info-value">0 KG</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Last Purchase Date</span>
-                <span className="info-value">Not available</span>
-              </div>
-            </div>
-          </div>
         </div>
-
-        {/* Additional Information - Only show if available */}
-        {(supplier.bankName || supplier.accountNumber || supplier.iban) && (
-          <div className="additional-info-section">
-            {false && (
-              <div className="info-card">
-                <div className="info-card-header">
-                  <Award size={18} />
-                  <h3>Contract Information</h3>
-                </div>
-                <div className="info-card-content">
-                  <div className="info-row">
-                    <span className="info-label">Contract ID</span>
-                    <span className="info-value">{supplier.contractDetails.contractId}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Contract Period</span>
-                    <span className="info-value">
-                      {formatDate(supplier.contractDetails.startDate)} - {formatDate(supplier.contractDetails.endDate)}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Contract Status</span>
-                    <span className={`contract-status-badge ${supplier.contractDetails.status}`}>
-                      {supplier.contractDetails.status.toUpperCase()}
-                    </span>
-                  </div>
-                  {supplier.contractDetails.specialTerms && (
-                    <div className="info-row">
-                      <span className="info-label">Special Terms</span>
-                      <span className="info-value">{supplier.contractDetails.specialTerms}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {(supplier.bankName || supplier.accountNumber || supplier.iban) && (
-              <div className="info-card">
-                <div className="info-card-header">
-                  <DollarSign size={18} />
-                  <h3>Banking Information</h3>
-                </div>
-                <div className="info-card-content">
-                  <div className="info-row">
-                    <span className="info-label">Bank Name</span>
-                    <span className="info-value">{supplier.bankName || 'Not provided'}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Account Number</span>
-                    <span className="info-value">{supplier.accountNumber || 'Not provided'}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">IBAN</span>
-                    <span className="info-value">{supplier.iban || 'Not provided'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Professional Action Footer */}
         <div className="supplier-actions-footer">
           <div className="actions-left">
             <span className="last-updated">
-              Last updated: {formatDate(supplier.updated_at || supplier.created_at)}
+              Last updated: {formatDate(supplier.updated_at || supplier.created_at || supplier.createdAt)}
             </span>
           </div>
           <div className="actions-right">
@@ -1316,4 +1122,4 @@ const SupplierViewModal = ({
   )
 }
 
-export default ScrapMaterialsSuppliers
+export default OilTradingSuppliers

@@ -6,7 +6,7 @@ import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import customerService from '../../../services/customerService'
-import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle } from 'lucide-react'
+import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle, Trash } from 'lucide-react'
 import '../styles/Customers.css'
 
 const OilTradingCustomers = () => {
@@ -49,40 +49,76 @@ const OilTradingCustomers = () => {
     }
   }, [selectedCompany])
 
-  const handleAddCustomer = (customerData) => {
-    const newCustomer = {
-      id: `cust_${Date.now()}`,
-      code: `${selectedCompany?.id.toUpperCase().slice(0,2)}-${String(customers.length + 1).padStart(3, '0')}`,
-      ...customerData,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastTransaction: null,
-      salesHistory: {
-        totalOrders: 0,
-        totalValue: 0,
-        lastOrderDate: null
+  const handleAddCustomer = async (customerData) => {
+    try {
+      setLoading(true)
+      const result = await customerService.create(customerData)
+      
+      if (result.success) {
+        // Refresh customer list
+        const listResult = await customerService.getAll()
+        if (listResult.success) {
+          setCustomers(listResult.data || [])
+        }
+        setShowAddForm(false)
+      } else {
+        console.error('Error creating customer:', result.error)
+        alert('Error creating customer: ' + result.error)
       }
+    } catch (error) {
+      console.error('Error creating customer:', error)
+      alert('Error creating customer: ' + error.message)
+    } finally {
+      setLoading(false)
     }
-    
-    const updatedCustomers = [...customers, newCustomer]
-    setCustomers(updatedCustomers)
-    setShowAddForm(false)
   }
 
-  const handleEditCustomer = (customerId, customerData) => {
-    const updatedCustomers = customers.map(customer => 
-      customer.id === customerId 
-        ? { ...customer, ...customerData, lastUpdated: new Date().toISOString() }
-        : customer
-    )
-    setCustomers(updatedCustomers)
-    setEditingCustomer(null)
+  const handleEditCustomer = async (customerId, customerData) => {
+    try {
+      setLoading(true)
+      const result = await customerService.update(customerId, customerData)
+      
+      if (result.success) {
+        // Refresh customer list
+        const listResult = await customerService.getAll()
+        if (listResult.success) {
+          setCustomers(listResult.data || [])
+        }
+        setEditingCustomer(null)
+      } else {
+        console.error('Error updating customer:', result.error)
+        alert('Error updating customer: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error updating customer:', error)
+      alert('Error updating customer: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDeleteCustomer = (customerId) => {
+  const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
-      const updatedCustomers = customers.filter(customer => customer.id !== customerId)
-      setCustomers(updatedCustomers)
+      try {
+        setLoading(true)
+        const result = await customerService.delete(customerId)
+        
+        if (result.success) {
+          // Refresh customer list
+          const listResult = await customerService.getAll()
+          if (listResult.success) {
+            setCustomers(listResult.data || [])
+          }
+        } else {
+          console.error('Error deleting customer:', result.error)
+          alert('Error deleting customer: ' + result.error)
+        }
+      } catch (error) {
+        console.error('Error deleting customer:', error)
+        alert('Error deleting customer: ' + error.message)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -113,15 +149,8 @@ const OilTradingCustomers = () => {
     // Store customer for cross-module integration
     sessionStorage.setItem('selectedCustomerForOrder', JSON.stringify(customer))
     
-    // Navigate to sales module with customer pre-selected
-    console.log('Creating order for customer:', customer.name)
-    
-    // In a real application, this would use React Router
-    // For now, we'll show a confirmation
-    alert(`Redirecting to Sales Order creation for ${customer.name}. Customer details will be pre-filled.`)
-    
-    // You could also emit an event or use a global state manager
-    // to communicate between modules
+    // Navigate to sales module page
+    window.location.href = '/sales'
   }
 
   const handleViewContract = (customer) => {
@@ -227,7 +256,10 @@ const OilTradingCustomers = () => {
         <div className="table-actions">
           <button 
             className="btn-icon" 
-            onClick={() => handleViewDetails(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetails(row);
+            }}
             title={t('viewDetails')}
           >
             <Eye size={16} />
@@ -235,7 +267,10 @@ const OilTradingCustomers = () => {
           
           <button 
             className="btn-icon primary" 
-            onClick={() => handleCreateOrder(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCreateOrder(row);
+            }}
             disabled={!row.isActive}
             title={t('createOrder')}
           >
@@ -245,7 +280,10 @@ const OilTradingCustomers = () => {
           {row.type === 'contract' && row.contractDetails && (
             <button 
               className="btn-icon secondary" 
-              onClick={() => handleViewContract(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewContract(row);
+              }}
               title={t('viewContract')}
             >
               <FileText size={16} />
@@ -255,10 +293,26 @@ const OilTradingCustomers = () => {
           {canEdit('customers') && (
             <button 
               className="btn-icon" 
-              onClick={() => setEditingCustomer(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingCustomer(row);
+              }}
               title={t('edit')}
             >
               <Edit size={16} />
+            </button>
+          )}
+
+          {canDelete('customers') && (
+            <button 
+              className="btn-icon danger" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteCustomer(row.id);
+              }}
+              title={t('delete')}
+            >
+              <Trash size={16} />
             </button>
           )}
         </div>
@@ -396,38 +450,34 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
     name: customer?.name || '',
     type: customer?.type || 'walk_in',
     contactPerson: customer?.contactPerson || '',
-    phone: customer?.contact?.phone || '',
-    email: customer?.contact?.email || '',
-    vatRegistrationNumber: customer?.contact?.vatRegistrationNumber || '',
+    phone: customer?.contact?.phone || customer?.phone || '',
+    email: customer?.contact?.email || customer?.email || '',
+    vatRegistrationNumber: customer?.contact?.vatRegistrationNumber || customer?.vatRegistration || '',
     street: customer?.contact?.address?.street || '',
     city: customer?.contact?.address?.city || '',
     region: customer?.contact?.address?.region || '',
     country: customer?.contact?.address?.country || 'Oman',
     creditLimit: customer?.creditLimit || 0,
-    paymentTerms: customer?.paymentTerms || 0,
+    paymentTerms: customer?.paymentTerms || customer?.paymentTermDays || 0,
     specialTerms: customer?.contractDetails?.specialTerms || ''
   })
 
   const handleSubmit = (e) => {
     e.preventDefault()
     
+    // Map frontend form data to backend API format
     const customerData = {
       name: formData.name,
-      type: formData.type,
+      customerType: formData.type === 'walk_in' ? 'walk-in' : formData.type === 'project' ? 'project-based' : 'contract',
       contactPerson: formData.contactPerson,
-      contact: {
-        phone: formData.phone,
-        email: formData.email,
-        vatRegistrationNumber: formData.vatRegistrationNumber,
-        address: {
-          street: formData.street,
-          city: formData.city,
-          region: formData.region,
-          country: formData.country
-        }
-      },
-      creditLimit: parseFloat(formData.creditLimit),
-      paymentTerms: parseInt(formData.paymentTerms)
+      phone: formData.phone,
+      email: formData.email,
+      vatRegistration: formData.vatRegistrationNumber,
+      address: `${formData.street}, ${formData.city}, ${formData.region}`.replace(/^, |, $/g, '').replace(/, ,/g, ','),
+      creditLimit: parseFloat(formData.creditLimit) || 0,
+      paymentTermDays: parseInt(formData.paymentTerms) || 0,
+      notes: formData.specialTerms || '',
+      isActive: true
     }
 
     if (formData.type === 'contract' && formData.specialTerms) {

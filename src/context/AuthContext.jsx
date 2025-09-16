@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'oil',
           logo: '/images/alramrami-logo.png',
           modules: {
-            enabled: ['dashboard', 'customers', 'inventory', 'sales', 'purchase', 'contracts', 'wastage', 'petty-cash', 'reports', 'settings']
+            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'petty-cash', 'reports', 'settings']
           }
         },
         {
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'scrap',
           logo: '/images/pridemuscat-logo.png',
           modules: {
-            enabled: ['dashboard', 'suppliers', 'inventory', 'sales', 'purchase', 'wastage', 'petty-cash', 'reports', 'settings']
+            enabled: ['dashboard', 'suppliers', 'inventory', 'sales', 'purchase', 'collections', 'wastage', 'petty-cash', 'reports', 'settings']
           }
         }
       ];

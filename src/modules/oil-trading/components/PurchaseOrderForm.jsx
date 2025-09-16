@@ -8,7 +8,7 @@ const PurchaseOrderForm = ({
   isOpen, 
   onClose, 
   onSave, 
-  vendors = [], 
+  suppliers = [], 
   materials = [], 
   initialData = null, 
   title = "Create Purchase Order",
@@ -18,7 +18,7 @@ const PurchaseOrderForm = ({
   
   const [formData, setFormData] = useState({
     orderNumber: '',
-    vendorId: '',
+    supplierId: '',
     orderDate: getInputDate(),
     expectedDeliveryDate: '',
     paymentTerms: 30,
@@ -68,12 +68,12 @@ const PurchaseOrderForm = ({
     }))
   }
 
-  const handleVendorChange = (vendorId) => {
-    const vendor = vendors.find(v => v.id === vendorId)
+  const handleSupplierChange = (supplierId) => {
+    const supplier = suppliers.find(s => s.id === supplierId)
     setFormData(prev => ({
       ...prev,
-      vendorId,
-      paymentTerms: vendor?.paymentTerms || 30
+      supplierId,
+      paymentTerms: supplier?.paymentTermDays || 30
     }))
   }
 
@@ -88,11 +88,11 @@ const PurchaseOrderForm = ({
       newItems[index].amount = quantity * rate
     }
 
-    // Auto-populate rate from vendor contract if available
+    // Auto-populate rate from supplier contract if available
     if (field === 'materialId') {
-      const vendor = vendors.find(v => v.id === formData.vendorId)
-      if (vendor?.contractDetails?.rates?.[value]) {
-        const contractRate = vendor.contractDetails.rates[value]
+      const supplier = suppliers.find(s => s.id === formData.supplierId)
+      if (supplier?.contractDetails?.rates?.[value]) {
+        const contractRate = supplier.contractDetails.rates[value]
         if (contractRate.type === 'fixed_rate') {
           newItems[index].rate = contractRate.contractRate
         } else {
@@ -133,8 +133,8 @@ const PurchaseOrderForm = ({
   const validateForm = () => {
     const newErrors = {}
 
-    if (!formData.vendorId) {
-      newErrors.vendorId = 'Please select a vendor'
+    if (!formData.supplierId) {
+      newErrors.supplierId = 'Please select a supplier'
     }
 
     if (!formData.orderDate) {
@@ -178,11 +178,11 @@ const PurchaseOrderForm = ({
     setLoading(true)
     
     try {
-      // Add vendor name for display purposes
-      const vendor = vendors.find(v => v.id === formData.vendorId)
+      // Add supplier name for display purposes
+      const supplier = suppliers.find(s => s.id === formData.supplierId)
       const orderData = {
         ...formData,
-        vendorName: vendor?.name || '',
+        supplierName: supplier?.name || '',
         // Filter out empty items
         items: formData.items.filter(item => item.materialId && item.quantity && item.rate)
       }
@@ -196,7 +196,7 @@ const PurchaseOrderForm = ({
     }
   }
 
-  const selectedVendor = vendors.find(v => v.id === formData.vendorId)
+  const selectedSupplier = suppliers.find(s => s.id === formData.supplierId)
 
   return (
     <Modal 
@@ -227,21 +227,21 @@ const PurchaseOrderForm = ({
             </div>
 
             <div className="form-group">
-              <label>Vendor *</label>
+              <label>Supplier *</label>
               <select
-                value={formData.vendorId}
-                onChange={(e) => handleVendorChange(e.target.value)}
+                value={formData.supplierId}
+                onChange={(e) => handleSupplierChange(e.target.value)}
                 required
-                className={errors.vendorId ? 'error' : ''}
+                className={errors.supplierId ? 'error' : ''}
               >
-                <option value="">Select Vendor...</option>
-                {vendors.map(vendor => (
-                  <option key={vendor.id} value={vendor.id}>
-                    {vendor.name} ({vendor.specialization ? vendor.specialization.replace('_', ' ').toUpperCase() : 'General'})
+                <option value="">Select Supplier...</option>
+                {suppliers.map(supplier => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name} ({supplier.specialization ? supplier.specialization.replace('_', ' ').toUpperCase() : 'General'})
                   </option>
                 ))}
               </select>
-              {errors.vendorId && <span className="error-message">{errors.vendorId}</span>}
+              {errors.supplierId && <span className="error-message">{errors.supplierId}</span>}
             </div>
 
             <div className="form-group">
@@ -297,38 +297,38 @@ const PurchaseOrderForm = ({
           </div>
         </div>
 
-        {/* Vendor Information */}
-        {selectedVendor && (
+        {/* Supplier Information */}
+        {selectedSupplier && (
           <div className="form-section">
             <div className="form-section-title">
               <Truck size={20} />
-              Vendor Information
+              Supplier Information
             </div>
             
             <div className="vendor-info-grid">
               <div className="vendor-detail">
-                <label>Vendor Name:</label>
-                <span>{selectedVendor.name}</span>
+                <label>Supplier Name:</label>
+                <span>{selectedSupplier.name}</span>
               </div>
               <div className="vendor-detail">
                 <label>Contact Person:</label>
-                <span>{selectedVendor.contactPerson}</span>
+                <span>{selectedSupplier.contactPerson}</span>
               </div>
               <div className="vendor-detail">
                 <label>Phone:</label>
-                <span>{selectedVendor.contact?.phone}</span>
+                <span>{selectedSupplier.phone}</span>
               </div>
               <div className="vendor-detail">
                 <label>Email:</label>
-                <span>{selectedVendor.contact?.email}</span>
+                <span>{selectedSupplier.email}</span>
               </div>
               <div className="vendor-detail">
                 <label>Payment Terms:</label>
-                <span>{selectedVendor.paymentTerms} days</span>
+                <span>{selectedSupplier.paymentTermDays || 30} days</span>
               </div>
               <div className="vendor-detail">
-                <label>Credit Limit:</label>
-                <span>{formatCurrency(selectedVendor.creditLimit)}</span>
+                <label>Status:</label>
+                <span>{selectedSupplier.isActive ? 'Active' : 'Inactive'}</span>
               </div>
             </div>
           </div>
@@ -372,7 +372,7 @@ const PurchaseOrderForm = ({
             
             {formData.items.map((item, index) => {
               const selectedMaterial = materials.find(m => m.id === item.materialId)
-              const hasContractRate = selectedVendor?.contractDetails?.rates?.[item.materialId]
+              const hasContractRate = selectedSupplier?.contractDetails?.rates?.[item.materialId]
               
               return (
                 <div key={index} className={`item-row ${errors[`item_${index}`] ? 'error' : ''}`}>

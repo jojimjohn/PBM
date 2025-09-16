@@ -87,6 +87,13 @@ export const MODULE_PERMISSIONS = {
     approve: ['APPROVE_WASTAGE'],
     requiredPermissions: ['VIEW_WASTAGE']
   },
+  'collections': {
+    view: ['VIEW_CONTRACTS', 'VIEW_PURCHASE'],
+    create: ['CREATE_PURCHASE'],
+    manage: ['MANAGE_CONTRACTS'],
+    approve: ['APPROVE_PURCHASE'],
+    requiredPermissions: ['VIEW_CONTRACTS', 'VIEW_PURCHASE']
+  },
   'petty-cash': {
     view: ['VIEW_PETTY_CASH'],
     manage: ['MANAGE_PETTY_CASH'],
@@ -114,7 +121,8 @@ export const DEFAULT_MODULE_LABELS = {
   'petty-cash': 'Petty Cash',
   'invoices': 'Invoices',
   'settings': 'Settings',
-  'wastage': 'Wastage'
+  'wastage': 'Wastage',
+  'collections': 'Collections'
 }
 
 // Icon SVG paths for modules (to be used in JSX components)
@@ -220,6 +228,14 @@ export const MODULE_ICON_PATHS = {
     paths: [
       "M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
       "M10 11v6M14 11v6"
+    ]
+  },
+  'collections': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2",
+      "M15 2v4H9V2",
+      "M9 14l2 2 4-4"
     ]
   }
 }

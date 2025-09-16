@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 // Oil Trading Module Components
 import OilTradingDashboard from '../modules/oil-trading/pages/Dashboard'
 import OilTradingCustomers from '../modules/oil-trading/pages/Customers'
+import OilTradingSuppliers from '../modules/oil-trading/pages/Suppliers'
 import OilTradingInventory from '../modules/oil-trading/pages/Inventory'
 import OilTradingContracts from '../modules/oil-trading/pages/Contracts'
 import OilTradingPurchase from '../modules/oil-trading/pages/Purchase'
@@ -17,6 +18,7 @@ import ScrapMaterialsInventory from '../modules/scrap-materials/pages/Inventory'
 // Generic components for common features
 import Sales from '../pages/Sales'
 import Purchase from '../pages/Purchase'
+import Collections from '../pages/Collections'
 import Settings from '../pages/Settings'
 import Wastage from '../pages/Wastage'
 import PettyCash from '../pages/PettyCash'
@@ -32,10 +34,12 @@ const BusinessRouter = () => {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<OilTradingDashboard />} />
         <Route path="/customers" element={<OilTradingCustomers />} />
+        <Route path="/suppliers" element={<OilTradingSuppliers />} />
         <Route path="/inventory" element={<OilTradingInventory />} />
         <Route path="/contracts" element={<OilTradingContracts />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/purchase" element={<OilTradingPurchase />} />
+        <Route path="/collections" element={<Collections />} />
         <Route path="/wastage" element={<Wastage />} />
         <Route path="/petty-cash" element={<PettyCash />} />
         <Route path="/settings" element={<Settings />} />
@@ -52,6 +56,7 @@ const BusinessRouter = () => {
         <Route path="/inventory" element={<ScrapMaterialsInventory />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/purchase" element={<Purchase />} />
+        <Route path="/collections" element={<Collections />} />
         <Route path="/wastage" element={<Wastage />} />
         <Route path="/petty-cash" element={<PettyCash />} />
         <Route path="/settings" element={<Settings />} />
