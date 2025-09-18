@@ -5,6 +5,7 @@ import { calloutService, collectionOrderService, collectionUtils } from '../serv
 import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/ui/Modal';
 import CollectionDashboard from '../components/collections/CollectionDashboard';
+import CalloutManager from '../components/collections/CalloutManager';
 import CollectionOrderManager from '../components/collections/CollectionOrderManager';
 import './Collections.css';
 
@@ -35,6 +36,12 @@ const Collections = () => {
       component: CollectionDashboard
     },
     {
+      id: 'notifications',
+      name: t('supplierNotifications'),
+      icon: <AlertCircle className="w-4 h-4" />,
+      component: CalloutManager
+    },
+    {
       id: 'orders',
       name: t('collectionOrders'),
       icon: <Truck className="w-4 h-4" />,
@@ -54,17 +61,27 @@ const Collections = () => {
       setError('');
 
       // Load collection orders for dashboard
+      console.log('Loading collection orders...'); // Debug log
+      
       const [allOrdersResponse, recentOrdersResponse] = await Promise.all([
         collectionOrderService.getCollectionOrders({ 
           page: 1, 
           limit: 50 // Get more data for statistics
+        }).catch(err => {
+          console.error('Error loading all orders:', err);
+          return { success: false, error: err.message };
         }),
         collectionOrderService.getCollectionOrders({ 
           page: 1, 
-          limit: 10, 
-          status: 'scheduled,in_transit,collecting' 
+          limit: 10
+        }).catch(err => {
+          console.error('Error loading recent orders:', err);
+          return { success: false, error: err.message };
         })
       ]);
+
+      console.log('All orders response:', allOrdersResponse); // Debug log
+      console.log('Recent orders response:', recentOrdersResponse); // Debug log
 
       // Handle both successful and failed API responses gracefully
       const allOrders = (allOrdersResponse?.success ? allOrdersResponse.data : []) || [];

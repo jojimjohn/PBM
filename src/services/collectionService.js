@@ -2,33 +2,65 @@ import authService from './authService';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Collection Callouts Service
+// Collection Callouts Service (now using collection-orders endpoints)
 export const calloutService = {
   // Get all callouts with filtering
   getCallouts: async (params = {}) => {
-    const queryParams = new URLSearchParams(params);
-    return await authService.makeAuthenticatedRequest(`${BASE_URL}/callouts?${queryParams}`);
+    try {
+      // Filter out undefined values before creating URLSearchParams
+      const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+      
+      const queryParams = new URLSearchParams(filteredParams);
+      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts?${queryParams}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data: data.data || [], pagination: data.pagination };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Failed to load callouts', data: [] };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error', data: [] };
+    }
   },
 
   // Get specific callout with items
   getCallout: async (id) => {
-    return await authService.makeAuthenticatedRequest(`${BASE_URL}/callouts/${id}`);
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`);
   },
 
   // Create new callout
   createCallout: async (calloutData) => {
-    return await authService.makeAuthenticatedRequest(`${BASE_URL}/callouts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(calloutData),
-    });
+    try {
+      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(calloutData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data: data.data, message: data.message };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Failed to create callout' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
   },
 
-  // Add item to callout
+  // Add item to callout (now adds to collection_items)
   addCalloutItem: async (calloutId, itemData) => {
-    return await authService.makeAuthenticatedRequest(`${BASE_URL}/callouts/${calloutId}/items`, {
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${calloutId}/items`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,10 +69,52 @@ export const calloutService = {
     });
   },
 
+  // Update callout
+  updateCallout: async (id, calloutData) => {
+    try {
+      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(calloutData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data: data.data, message: data.message };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Failed to update callout' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  // Delete callout
+  deleteCallout: async (id) => {
+    try {
+      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data: data.data, message: data.message };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Failed to delete callout' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
   // Update callout status
   updateCalloutStatus: async (id, statusData) => {
-    return await authService.makeAuthenticatedRequest(`${BASE_URL}/callouts/${id}/status`, {
-      method: 'PATCH',
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}/status`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -50,7 +124,7 @@ export const calloutService = {
 
   // Get active callouts summary
   getActiveCalloutsSummary: async () => {
-    return await authService.makeAuthenticatedRequest(`${BASE_URL}/callouts/active/summary`);
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts/summary`);
   }
 };
 
@@ -108,6 +182,40 @@ export const collectionOrderService = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(completionData),
+    });
+  },
+
+  // Get collection order expenses
+  getCollectionOrderExpenses: async (orderId) => {
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${orderId}/expenses`);
+  },
+
+  // Update collection order status
+  updateCollectionOrderStatus: async (orderId, status) => {
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  // Delete collection order
+  deleteCollectionOrder: async (orderId) => {
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${orderId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Update collection order
+  updateCollectionOrder: async (orderId, orderData) => {
+    return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
     });
   }
 };

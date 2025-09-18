@@ -2,11 +2,17 @@
 import React from 'react';
 import './Modal.css';
 
-const Modal = ({ isOpen, children, onClose, title, className = '' }) => {
+const Modal = ({ isOpen, children, onClose, title, className = '', closeOnOverlayClick = true }) => {
   if (!isOpen) return null;
 
+  const handleOverlayClick = (e) => {
+    if (closeOnOverlayClick) {
+      onClose(e);
+    }
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className={`modal-container ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>

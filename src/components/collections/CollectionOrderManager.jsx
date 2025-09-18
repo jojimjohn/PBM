@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, DollarSign, FileText } from 'lucide-react';
+import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, DollarSign, FileText, ArrowRight } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
-import { collectionOrderService } from '../../services/collectionService';
+import { collectionOrderService, calloutService } from '../../services/collectionService';
 import contractService from '../../services/contractService';
+import inventoryService from '../../services/inventoryService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
@@ -18,7 +19,9 @@ const CollectionOrderManager = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showExpensesModal, setShowExpensesModal] = useState(false);
+  const [showCalloutModal, setShowCalloutModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedCallout, setSelectedCallout] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -59,7 +62,13 @@ const CollectionOrderManager = () => {
 
   const handleCreateOrder = () => {
     setSelectedOrder(null);
+    setSelectedCallout(null);
     setShowCreateModal(true);
+  };
+
+  const handleCreateFromCallout = () => {
+    setSelectedOrder(null);
+    setShowCalloutModal(true);
   };
 
   const handleViewOrder = (order) => {
@@ -135,10 +144,10 @@ const CollectionOrderManager = () => {
     },
     {
       key: 'calloutNumber',
-      title: t('calloutNumber'),
+      title: t('supplierNotification'),
       render: (value, row) => (
         <div className="text-sm">
-          <div className="font-medium">{value}</div>
+          <div className="font-medium">{value || '-'}</div>
           <div className="text-gray-500">{row.contractName}</div>
         </div>
       )
@@ -258,6 +267,13 @@ const CollectionOrderManager = () => {
           >
             <Filter className="w-4 h-4" />
             {t('filter')}
+          </button>
+          <button 
+            className="filter-btn"
+            onClick={handleCreateFromCallout}
+          >
+            <ArrowRight className="w-4 h-4" />
+            {t('createFromSupplierNotification')}
           </button>
           <button 
             className="add-btn"
@@ -417,15 +433,33 @@ const CollectionOrderManager = () => {
       {showCreateModal && (
         <OrderFormModal
           order={selectedOrder}
+          callout={selectedCallout}
           isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
             setSelectedOrder(null);
+            setSelectedCallout(null);
           }}
           onSubmit={() => {
             loadOrders();
             setShowCreateModal(false);
             setSelectedOrder(null);
+            setSelectedCallout(null);
+          }}
+        />
+      )}
+
+      {/* Callout Selection Modal */}
+      {showCalloutModal && (
+        <SupplierNotificationModal
+          isOpen={showCalloutModal}
+          onClose={() => {
+            setShowCalloutModal(false);
+          }}
+          onSelectNotification={(callout) => {
+            setSelectedCallout(callout);
+            setShowCalloutModal(false);
+            setShowCreateModal(true);
           }}
         />
       )}
@@ -459,21 +493,23 @@ const CollectionOrderManager = () => {
 };
 
 // Collection Order Form Modal
-const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
+const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
   const { t } = useLocalization();
   const [formData, setFormData] = useState({
-    contractId: order?.contractId || '',
-    locationId: order?.locationId || '',
+    contractId: order?.contractId || callout?.contractId || '',
+    locationId: order?.locationId || callout?.locationId || '',
+    calloutId: callout?.id || '',
+    calloutNumber: callout?.calloutNumber || '',
     scheduledDate: order?.scheduledDate || '',
-    contactPerson: order?.contactPerson || '',
-    contactPhone: order?.contactPhone || '',
+    contactPerson: order?.contactPerson || callout?.contactPerson || '',
+    contactPhone: order?.contactPhone || callout?.contactPhone || '',
     driverName: order?.driverName || '',
     vehiclePlate: order?.vehiclePlate || '',
     vehicleType: order?.vehicleType || '',
-    specialInstructions: order?.specialInstructions || '',
+    specialInstructions: order?.specialInstructions || callout?.instructions || '',
     materials: order?.materials || [],
     expenses: order?.expenses || [],
-    priority: order?.priority || 'normal'
+    priority: order?.priority || callout?.priority || 'normal'
   });
   
   const [contracts, setContracts] = useState([]);
@@ -486,8 +522,12 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
   useEffect(() => {
     if (isOpen) {
       loadContracts();
+      // If creating from callout, load callout materials
+      if (callout) {
+        loadCalloutMaterials();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, callout]);
 
   useEffect(() => {
     if (formData.contractId) {
@@ -516,6 +556,30 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
     ]);
   };
 
+  const loadCalloutMaterials = async () => {
+    try {
+      if (callout) {
+        // Get callout details with materials
+        const response = await calloutService.getCallout(callout.id);
+        if (response.success && response.data) {
+          const calloutData = response.data;
+          
+          // Load callout materials with pre-filled quantities
+          const materials = calloutData.materials || [];
+          setContractMaterials(materials.map(material => ({
+            ...material,
+            selectedQuantity: material.availableQuantity || material.quantity || 0,
+            unit: material.unit || 'kg',
+            contractRate: material.contractRate || material.rate || 0,
+            estimatedValue: (material.availableQuantity || material.quantity || 0) * (material.contractRate || material.rate || 0)
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading callout materials:', error);
+    }
+  };
+
   const loadContractDetails = async () => {
     try {
       if (formData.contractId) {
@@ -523,15 +587,17 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
         if (response.success && response.data) {
           setSelectedContract(response.data);
           
-          // Load contract materials with rates
-          const materials = response.data.materials || [];
-          setContractMaterials(materials.map(material => ({
-            ...material,
-            selectedQuantity: 0,
-            unit: material.unit || 'kg',
-            contractRate: material.rate || 0,
-            estimatedValue: 0
-          })));
+          // Load contract materials with rates (only if not from callout)
+          if (!callout) {
+            const materials = response.data.materials || [];
+            setContractMaterials(materials.map(material => ({
+              ...material,
+              selectedQuantity: 0,
+              unit: material.unit || 'kg',
+              contractRate: material.rate || 0,
+              estimatedValue: 0
+            })));
+          }
         }
       }
     } catch (error) {
@@ -645,6 +711,46 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">{t('contractAndLocation')}</h3>
             
+            {/* Supplier Notification Information (when creating from notification) */}
+            {callout && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Package className="w-5 h-5 text-blue-600" />
+                  <h4 className="font-medium text-blue-900">{t('creatingFromSupplierNotification')}</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">{t('calloutNumber')}:</span>
+                    <span className="ml-1 text-gray-900">{callout.calloutNumber}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">{t('status')}:</span>
+                    <span className={`ml-1 px-2 py-0.5 rounded text-xs font-medium ${
+                      callout.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                      callout.status === 'pending' ? 'bg-orange-100 text-orange-800' : 
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {t(callout.status)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">{t('contract')}:</span>
+                    <span className="ml-1 text-gray-900">{callout.contractName}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">{t('location')}:</span>
+                    <span className="ml-1 text-gray-900">{callout.locationName}</span>
+                  </div>
+                </div>
+                {callout.instructions && (
+                  <div className="mt-2 text-sm">
+                    <span className="font-medium text-gray-700">{t('instructions')}:</span>
+                    <p className="ml-1 text-gray-900">{callout.instructions}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {/* Contract Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -656,6 +762,7 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
                   onChange={(e) => handleInputChange('contractId', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
+                  disabled={!!callout}
                 >
                   <option value="">{t('selectContract')}</option>
                   {contracts.map(contract => (
@@ -675,7 +782,7 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
                   onChange={(e) => handleInputChange('locationId', e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
-                  disabled={!formData.contractId}
+                  disabled={!formData.contractId || !!callout}
                 >
                   <option value="">{t('selectLocation')}</option>
                   {locations.map(location => (
@@ -993,10 +1100,94 @@ const OrderFormModal = ({ order, isOpen, onClose, onSubmit }) => {
 
 const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
   const { t } = useLocalization();
+  const [loading, setLoading] = useState(false);
+  const [actualQuantities, setActualQuantities] = useState({});
+  const [showInventoryUpdate, setShowInventoryUpdate] = useState(false);
   
-  const handleStatusUpdate = (newStatus) => {
-    onUpdateStatus(order.id, newStatus);
-    onClose();
+  useEffect(() => {
+    if (isOpen && order) {
+      // Initialize actual quantities with estimated quantities
+      const initialQuantities = {};
+      if (order.materials) {
+        order.materials.forEach(material => {
+          initialQuantities[material.materialId] = material.expectedQuantity || 0;
+        });
+      }
+      setActualQuantities(initialQuantities);
+    }
+  }, [isOpen, order]);
+
+  const handleStatusUpdate = async (newStatus) => {
+    if (newStatus === 'completed') {
+      setShowInventoryUpdate(true);
+    } else {
+      onUpdateStatus(order.id, newStatus);
+      onClose();
+    }
+  };
+
+  const handleCompleteWithInventoryUpdate = async () => {
+    try {
+      setLoading(true);
+      
+      // First update the collection order status to completed
+      const statusResponse = await collectionOrderService.updateCollectionOrderStatus(order.id, 'completed');
+      if (!statusResponse.success) {
+        throw new Error('Failed to update order status');
+      }
+
+      // Then update inventory for each material
+      const inventoryUpdates = [];
+      for (const material of order.materials || []) {
+        const actualQty = actualQuantities[material.materialId] || 0;
+        if (actualQty > 0) {
+          const inventoryUpdate = {
+            materialId: material.materialId,
+            quantity: actualQty,
+            type: 'collection_receipt',
+            referenceType: 'collection_order',
+            referenceId: order.id,
+            notes: `Collection from ${order.locationName} - Order ${order.orderNumber}`,
+            unitCost: material.contractRate || 0,
+            totalValue: actualQty * (material.contractRate || 0)
+          };
+          inventoryUpdates.push(inventoryUpdate);
+        }
+      }
+
+      // Process inventory updates
+      for (const update of inventoryUpdates) {
+        try {
+          await inventoryService.addStock(update);
+        } catch (inventoryError) {
+          console.error('Error updating inventory:', inventoryError);
+          // Continue with other updates even if one fails
+        }
+      }
+
+      // Update the collection order with actual quantities
+      const orderUpdateData = {
+        actualQuantities: actualQuantities,
+        completedAt: new Date().toISOString(),
+        status: 'completed'
+      };
+      
+      await collectionOrderService.updateCollectionOrder(order.id, orderUpdateData);
+
+      onUpdateStatus(order.id, 'completed');
+      onClose();
+    } catch (error) {
+      console.error('Error completing collection order:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuantityChange = (materialId, quantity) => {
+    setActualQuantities(prev => ({
+      ...prev,
+      [materialId]: parseFloat(quantity) || 0
+    }));
   };
   
   return (
@@ -1070,8 +1261,89 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
             </div>
           )}
 
+          {/* Inventory Update Section (when completing) */}
+          {showInventoryUpdate && (
+            <div className="pt-4 border-t bg-green-50 -m-4 p-4 rounded-b-lg">
+              <h4 className="font-medium text-green-900 mb-3 flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                {t('updateInventoryQuantities')}
+              </h4>
+              <p className="text-sm text-green-800 mb-4">
+                {t('enterActualQuantitiesCollected')}
+              </p>
+              
+              {order.materials && order.materials.length > 0 ? (
+                <div className="space-y-3">
+                  {order.materials.map((material) => (
+                    <div key={material.materialId} className="bg-white p-3 rounded-lg border">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">{t('material')}</label>
+                          <p className="text-sm text-gray-900">{material.materialName}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">{t('expected')}</label>
+                          <p className="text-sm text-gray-600">{material.expectedQuantity} {material.unit}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">{t('actualQuantity')} *</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={actualQuantities[material.materialId] || ''}
+                            onChange={(e) => handleQuantityChange(material.materialId, e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">{t('value')}</label>
+                          <p className="text-sm font-semibold text-green-600">
+                            {((actualQuantities[material.materialId] || 0) * (material.contractRate || 0)).toFixed(2)} OMR
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">{t('noMaterialsToUpdate')}</p>
+              )}
+
+              <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">{t('totalCollectionValue')}:</span>
+                  <span className="ml-1 text-lg font-semibold text-green-600">
+                    {Object.entries(actualQuantities).reduce((total, [materialId, qty]) => {
+                      const material = order.materials?.find(m => m.materialId.toString() === materialId);
+                      return total + (qty * (material?.contractRate || 0));
+                    }, 0).toFixed(2)} OMR
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowInventoryUpdate(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    disabled={loading}
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    onClick={handleCompleteWithInventoryUpdate}
+                    disabled={loading || Object.values(actualQuantities).every(qty => qty === 0)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {loading ? <LoadingSpinner size="small" /> : <CheckCircle className="w-4 h-4" />}
+                    {t('completeAndUpdateInventory')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Status Update Buttons */}
-          {order.status !== 'completed' && order.status !== 'cancelled' && (
+          {!showInventoryUpdate && order.status !== 'completed' && order.status !== 'cancelled' && (
             <div className="pt-4 border-t">
               <label className="font-medium">{t('updateStatus')}</label>
               <div className="flex space-x-2 mt-2">
@@ -1116,21 +1388,430 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
 
 const OrderExpensesModal = ({ order, isOpen, onClose }) => {
   const { t } = useLocalization();
+  const [loading, setLoading] = useState(false);
+  const [expenses, setExpenses] = useState([]);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    category: '',
+    description: '',
+    amount: '',
+    notes: '',
+    receiptFile: null
+  });
+
+  useEffect(() => {
+    if (isOpen && order) {
+      loadExpenses();
+    }
+  }, [isOpen, order]);
+
+  const loadExpenses = async () => {
+    try {
+      setLoading(true);
+      // Load expenses for this collection order
+      const response = await collectionOrderService.getCollectionOrderExpenses(order.id);
+      if (response.success) {
+        setExpenses(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading expenses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddExpense = async () => {
+    try {
+      setLoading(true);
+      const expenseData = {
+        ...newExpense,
+        amount: parseFloat(newExpense.amount) || 0,
+        orderId: order.id,
+        status: 'pending_approval'
+      };
+
+      const response = await collectionOrderService.addCollectionExpense(order.id, expenseData);
+      if (response.success) {
+        loadExpenses(); // Refresh expenses list
+        setShowAddExpense(false);
+        setNewExpense({
+          category: '',
+          description: '',
+          amount: '',
+          notes: '',
+          receiptFile: null
+        });
+      }
+    } catch (error) {
+      console.error('Error adding expense:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getExpenseCategoryIcon = (category) => {
+    switch (category) {
+      case 'fuel': return '⛽';
+      case 'transportation': return '🚛';
+      case 'loading_unloading': return '📦';
+      case 'permits_fees': return '📄';
+      case 'equipment_rental': return '🔧';
+      case 'meals_accommodation': return '🍽️';
+      case 'maintenance': return '🔨';
+      default: return '💰';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending_approval': return 'text-orange-600 bg-orange-100';
+      case 'approved': return 'text-green-600 bg-green-100';
+      case 'rejected': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
   
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('collectionExpenses')}>
-      <div className="p-4">
-        <div className="space-y-4">
-          <div className="text-center">
-            <DollarSign className="w-12 h-12 text-gray-400 mx-auto" />
-            <h3 className="text-lg font-medium">{t('expenseTrackingComingSoon')}</h3>
-            <p className="text-gray-600">{t('expenseFeatureDescription')}</p>
+    <Modal isOpen={isOpen} onClose={onClose} title={t('collectionExpenses')} size="large">
+      <div className="p-6 space-y-4">
+        {/* Order Summary */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-700">{t('orderNumber')}:</span>
+              <span className="ml-1 text-gray-900">{order.orderNumber}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">{t('status')}:</span>
+              <span className="ml-1 text-gray-900">{t(order.status)}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">{t('totalValue')}:</span>
+              <span className="ml-1 text-gray-900">{order.totalValue || 0} OMR</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">{t('totalExpenses')}:</span>
+              <span className="ml-1 font-semibold text-red-600">{totalExpenses.toFixed(2)} OMR</span>
+            </div>
           </div>
-          
-          <div className="text-sm text-gray-500">
-            <p><strong>{t('orderNumber')}:</strong> {order.orderNumber}</p>
-            <p><strong>{t('totalExpenses')}:</strong> {order.totalExpenses || 0} {order.currency}</p>
+        </div>
+
+        {/* Add Expense Button */}
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">{t('expenses')}</h3>
+          <button
+            onClick={() => setShowAddExpense(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            {t('addExpense')}
+          </button>
+        </div>
+
+        {/* Add Expense Form */}
+        {showAddExpense && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium mb-3">{t('newExpense')}</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('category')}</label>
+                <select
+                  value={newExpense.category}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">{t('selectCategory')}</option>
+                  <option value="fuel">{t('fuel')}</option>
+                  <option value="transportation">{t('transportation')}</option>
+                  <option value="loading_unloading">{t('loadingUnloading')}</option>
+                  <option value="permits_fees">{t('permitsAndFees')}</option>
+                  <option value="equipment_rental">{t('equipmentRental')}</option>
+                  <option value="meals_accommodation">{t('mealsAndAccommodation')}</option>
+                  <option value="maintenance">{t('maintenance')}</option>
+                  <option value="other">{t('other')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('amount')} (OMR)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newExpense.amount}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, amount: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('description')}</label>
+                <input
+                  type="text"
+                  value={newExpense.description}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t('expenseDescription')}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('notes')}</label>
+                <textarea
+                  value={newExpense.notes}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, notes: e.target.value }))}
+                  rows={2}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t('additionalNotes')}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowAddExpense(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={handleAddExpense}
+                disabled={!newExpense.category || !newExpense.amount || loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading ? <LoadingSpinner size="small" /> : <Plus className="w-4 h-4" />}
+                {t('addExpense')}
+              </button>
+            </div>
           </div>
+        )}
+
+        {/* Expenses List */}
+        <div className="space-y-3">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="large" />
+            </div>
+          ) : expenses.length > 0 ? (
+            expenses.map((expense) => (
+              <div key={expense.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{getExpenseCategoryIcon(expense.category)}</span>
+                      <h4 className="font-medium text-gray-900">{expense.description}</h4>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(expense.status)}`}>
+                        {t(expense.status)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div>
+                        <span className="font-medium">{t('category')}:</span> {t(expense.category)}
+                      </div>
+                      <div>
+                        <span className="font-medium">{t('date')}:</span> {new Date(expense.createdAt).toLocaleDateString()}
+                      </div>
+                      {expense.notes && (
+                        <div className="col-span-2">
+                          <span className="font-medium">{t('notes')}:</span> {expense.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {expense.amount.toFixed(2)} OMR
+                    </div>
+                    {expense.receiptUrl && (
+                      <button className="text-blue-600 text-sm hover:underline mt-1">
+                        {t('viewReceipt')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium mb-2">{t('noExpensesRecorded')}</h3>
+              <p>{t('addExpenseToTrackCosts')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Financial Summary */}
+        {expenses.length > 0 && (
+          <div className="bg-gray-50 p-4 rounded-lg border-t">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-sm text-gray-600">{t('collectionValue')}</div>
+                <div className="text-lg font-semibold text-green-600">{(order.totalValue || 0).toFixed(2)} OMR</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">{t('totalExpenses')}</div>
+                <div className="text-lg font-semibold text-red-600">{totalExpenses.toFixed(2)} OMR</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">{t('netValue')}</div>
+                <div className={`text-lg font-semibold ${(order.totalValue || 0) - totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {((order.totalValue || 0) - totalExpenses).toFixed(2)} OMR
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
+// Supplier Notification Modal for creating collection orders from supplier notifications
+const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) => {
+  const { t } = useLocalization();
+  const [loading, setLoading] = useState(false);
+  const [callouts, setCallouts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('pending');
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCallouts();
+    }
+  }, [isOpen, statusFilter]);
+
+  const loadCallouts = async () => {
+    try {
+      setLoading(true);
+      const response = await calloutService.getCallouts({
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        search: searchTerm || undefined
+      });
+
+      if (response.success) {
+        setCallouts(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading callouts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCallouts = callouts.filter(callout =>
+    callout.calloutNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    callout.contractName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    callout.locationName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'text-orange-600 bg-orange-100';
+      case 'approved': return 'text-green-600 bg-green-100';
+      case 'scheduled': return 'text-blue-600 bg-blue-100';
+      case 'cancelled': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={t('selectSupplierNotificationForCollection')} size="large">
+      <div className="p-6 space-y-4">
+        {/* Search and Filter */}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t('searchSupplierNotifications')}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="pending">{t('pendingNotifications')}</option>
+              <option value="scheduled">{t('scheduledForCollection')}</option>
+              <option value="all">{t('allNotifications')}</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Callouts List */}
+        <div className="max-h-96 overflow-y-auto">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="large" />
+            </div>
+          ) : filteredCallouts.length > 0 ? (
+            <div className="space-y-3">
+              {filteredCallouts.map((callout) => (
+                <div
+                  key={callout.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => onSelectNotification(callout)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-medium text-gray-900">{callout.calloutNumber}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(callout.status)}`}>
+                          {t(callout.status)}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">{t('contract')}:</span> {callout.contractName}
+                        </div>
+                        <div>
+                          <span className="font-medium">{t('location')}:</span> {callout.locationName}
+                        </div>
+                        <div>
+                          <span className="font-medium">{t('materials')}:</span> {callout.materialCount || 0} {t('items')}
+                        </div>
+                        <div>
+                          <span className="font-medium">{t('estimatedValue')}:</span> {callout.totalEstimatedValue || 0} OMR
+                        </div>
+                      </div>
+
+                      {callout.instructions && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium">{t('instructions')}:</span> {callout.instructions}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center text-blue-600">
+                      <ArrowRight className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium mb-2">{t('noSupplierNotificationsFound')}</h3>
+              <p>{t('noNotificationsMatchFilter')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end pt-4 border-t">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            {t('cancel')}
+          </button>
         </div>
       </div>
     </Modal>

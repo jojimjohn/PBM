@@ -159,7 +159,9 @@ class AuthService {
     };
 
     try {
+      
       const response = await fetch(url, { ...options, headers: defaultOptions.headers });
+
 
       // Handle token expiry
       if (response.status === 401) {

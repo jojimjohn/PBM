@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Phone, User } from 'lucide-react';
+import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2 } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { calloutService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
+import CalloutFormModal from './CalloutFormModal';
 import './collections-managers.css';
 
 const CalloutManager = () => {
@@ -24,7 +25,6 @@ const CalloutManager = () => {
     totalPages: 0
   });
 
-  // Load callouts on component mount
   useEffect(() => {
     loadCallouts();
   }, [pagination.page, statusFilter, priorityFilter, searchTerm]);
@@ -75,7 +75,7 @@ const CalloutManager = () => {
       try {
         const response = await calloutService.deleteCallout(calloutId);
         if (response.success) {
-          loadCallouts(); // Refresh the list
+          loadCallouts();
         }
       } catch (error) {
         console.error('Error deleting callout:', error);
@@ -106,8 +106,8 @@ const CalloutManager = () => {
 
   const columns = [
     {
-      key: 'calloutNumber',
-      title: t('calloutNumber'),
+      key: 'orderNumber',
+      header: t('calloutNumber'),
       render: (value, row) => (
         <div className="font-medium text-blue-600">
           {value}
@@ -115,8 +115,8 @@ const CalloutManager = () => {
       )
     },
     {
-      key: 'contractName',
-      title: t('contract'),
+      key: 'contractTitle',
+      header: t('contract'),
       render: (value, row) => (
         <div>
           <div className="font-medium">{value}</div>
@@ -126,7 +126,7 @@ const CalloutManager = () => {
     },
     {
       key: 'locationName',
-      title: t('location'),
+      header: t('location'),
       render: (value, row) => (
         <div className="flex items-center">
           <MapPin className="w-4 h-4 text-gray-400 mr-1" />
@@ -135,13 +135,13 @@ const CalloutManager = () => {
       )
     },
     {
-      key: 'requestedPickupDate',
-      title: t('requestedDate'),
-      render: (value) => new Date(value).toLocaleDateString()
+      key: 'scheduledDate',
+      header: t('requestedDate'),
+      render: (value) => value ? new Date(value).toLocaleDateString() : '-'
     },
     {
       key: 'status',
-      title: t('status'),
+      header: t('status'),
       render: (value, row) => (
         <div className="flex items-center">
           {getStatusIcon(value)}
@@ -151,7 +151,7 @@ const CalloutManager = () => {
     },
     {
       key: 'priority',
-      title: t('priority'),
+      header: t('priority'),
       render: (value) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
           {t(value)}
@@ -160,17 +160,17 @@ const CalloutManager = () => {
     },
     {
       key: 'estimatedQuantity',
-      title: t('estimatedQuantity'),
+      header: t('estimatedQuantity'),
       render: (value, row) => value ? `${value} ${row.unit || ''}` : '-'
     },
     {
       key: 'totalValue',
-      title: t('totalValue'),
+      header: t('totalValue'),
       render: (value, row) => `${value || 0} ${row.currency || 'OMR'}`
     },
     {
       key: 'actions',
-      title: t('actions'),
+      header: t('actions'),
       render: (value, row) => (
         <div className="flex space-x-2">
           <button
@@ -317,20 +317,6 @@ const CalloutManager = () => {
         />
       )}
     </div>
-  );
-};
-
-// Placeholder components for modals - to be implemented
-const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
-  const { t } = useLocalization();
-  
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={callout ? t('editCallout') : t('createCallout')}>
-      <div className="p-4">
-        <p>{t('calloutFormComingSoon')}</p>
-        {/* TODO: Implement callout form */}
-      </div>
-    </Modal>
   );
 };
 
