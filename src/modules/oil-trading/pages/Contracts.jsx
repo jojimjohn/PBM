@@ -778,22 +778,9 @@ const ContractViewModal = ({
       title={`${contractData.contractNumber} - ${t('contractDetails', 'Contract Details')}`}
       onClose={onClose}
       className="modal-xl contract-details-modal"
-      footer={
-        <div className="modal-footer-actions">
-          <button type="button" className="btn btn-secondary" onClick={onClose}>
-            {t('close', 'Close')}
-          </button>
-          {onEdit && (
-            <button type="button" className="btn btn-primary" onClick={onEdit}>
-              <Edit size={16} />
-              {t('editContract', 'Edit Contract')}
-            </button>
-          )}
-        </div>
-      }
     >
       <div className="supplier-view-professional">
-        {/* Compact Header Section */}
+        {/* Header Section */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
           <div style={{ 
             width: '48px', 
@@ -815,16 +802,14 @@ const ContractViewModal = ({
               <span 
                 style={{
                   padding: '4px 12px',
-                  backgroundColor: statusInfo.class === 'status-active' ? '#10b981' : 
-                                 statusInfo.class === 'status-expired' ? '#ef4444' : 
-                                 statusInfo.class === 'status-draft' ? '#f59e0b' : '#6b7280',
+                  backgroundColor: statusInfo.color || '#10b981',
                   color: 'white',
                   borderRadius: '12px',
                   fontSize: '12px',
                   fontWeight: '500'
                 }}
               >
-                {statusInfo.text}
+                {statusInfo.name || contractData.status}
               </span>
             </div>
           </div>
@@ -890,14 +875,20 @@ const ContractViewModal = ({
           return null;
         })()}
 
-        {/* Compact Information Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '24px' }}>
-          {/* Basic Information */}
-          <div>
+        {/* Information Cards Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* Contract Information Card */}
+          <div style={{
+            padding: '20px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <FileText size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
-                {t('basicInformation', 'Basic Information')}
+                {t('contractInformation', 'Contract Information')}
               </h3>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -917,30 +908,17 @@ const ContractViewModal = ({
                 <span style={{ color: '#6b7280', fontSize: '14px' }}>Total Value</span>
                 <span style={{ fontWeight: '500', color: '#1f2937' }}>{formatCurrency(contractData.totalValue || 0)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('status', 'Status')}</span>
-                <span 
-                  style={{
-                    padding: '2px 8px',
-                    backgroundColor: statusInfo.class === 'status-active' ? '#dcfdf7' : 
-                                   statusInfo.class === 'status-expired' ? '#fef2f2' : 
-                                   statusInfo.class === 'status-draft' ? '#fefbf2' : '#f3f4f6',
-                    color: statusInfo.class === 'status-active' ? '#065f46' : 
-                           statusInfo.class === 'status-expired' ? '#991b1b' : 
-                           statusInfo.class === 'status-draft' ? '#92400e' : '#374151',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {statusInfo.text}
-                </span>
-              </div>
             </div>
           </div>
 
-          {/* Contract Period */}
-          <div>
+          {/* Contract Period Card */}
+          <div style={{
+            padding: '20px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <Calendar size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
@@ -972,9 +950,16 @@ const ContractViewModal = ({
           </div>
         </div>
 
-        {/* Contract Terms Section */}
+        {/* Contract Terms Card */}
         {contractData.terms && (
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ 
+            marginBottom: '24px',
+            padding: '20px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <Settings size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
@@ -994,13 +979,20 @@ const ContractViewModal = ({
           </div>
         )}
 
-        {/* Contract Notes Section */}
+        {/* Contract Notes Card */}
         {contractData.notes && (
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ 
+            marginBottom: '24px',
+            padding: '20px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <FileText size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
-                {t('Notes', 'Notes')}
+                {t('notes', 'Notes')}
               </h3>
             </div>
             <div style={{ 
@@ -1016,9 +1008,16 @@ const ContractViewModal = ({
           </div>
         )}
 
-        {/* Location-Material Rates Section */}
+        {/* Location-Material Rates Card */}
         {contractData.locations && contractData.locations.length > 0 && (
-          <div>
+          <div style={{ 
+            marginBottom: '24px',
+            padding: '20px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
               <Package size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
               <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
@@ -1185,6 +1184,50 @@ const ContractViewModal = ({
             ))}
           </div>
         )}
+
+        {/* Modal Footer with Action Buttons */}
+        <div style={{ 
+          marginTop: '32px', 
+          paddingTop: '24px', 
+          borderTop: '1px solid #e5e7eb',
+          display: 'flex', 
+          gap: '12px', 
+          justifyContent: 'flex-end' 
+        }}>
+          <button 
+            type="button" 
+            className="btn btn-secondary" 
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              borderRadius: '6px',
+              border: '1px solid #d1d5db',
+              backgroundColor: '#f9fafb',
+              color: '#374151'
+            }}
+          >
+            {t('close', 'Close')}
+          </button>
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={onEdit}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Edit size={16} />
+            {t('editContract', 'Edit Contract')}
+          </button>
+        </div>
       </div>
     </Modal>
   )

@@ -273,7 +273,7 @@ const CollectionOrderManager = () => {
       <div className="search-and-filters">
         <div className="search-bar">
           <div className="search-input">
-            <Search className="w-5 h-5 search-icon" />
+            <Search className="search-icon" />
             <input
               type="text"
               value={searchTerm}
@@ -282,61 +282,117 @@ const CollectionOrderManager = () => {
               className="search-field"
             />
           </div>
-        </div>
+          
+          <div className="search-filters">
+            <div className="filter-group">
+              <label className="filter-label">{t('status')}</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">{t('allStatuses')}</option>
+                <option value="scheduled">{t('scheduled')}</option>
+                <option value="in_transit">{t('inTransit')}</option>
+                <option value="collecting">{t('collecting')}</option>
+                <option value="completed">{t('completed')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
+              </select>
+            </div>
 
-        <div className="filters">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">{t('allStatuses')}</option>
-            <option value="scheduled">{t('scheduled')}</option>
-            <option value="in_transit">{t('inTransit')}</option>
-            <option value="collecting">{t('collecting')}</option>
-            <option value="completed">{t('completed')}</option>
-            <option value="cancelled">{t('cancelled')}</option>
-          </select>
-
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">{t('allDates')}</option>
-            <option value="today">{t('today')}</option>
-            <option value="tomorrow">{t('tomorrow')}</option>
-            <option value="this_week">{t('thisWeek')}</option>
-            <option value="next_week">{t('nextWeek')}</option>
-            <option value="this_month">{t('thisMonth')}</option>
-          </select>
+            <div className="filter-group">
+              <label className="filter-label">{t('date')}</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">{t('allDates')}</option>
+                <option value="today">{t('today')}</option>
+                <option value="tomorrow">{t('tomorrow')}</option>
+                <option value="this_week">{t('thisWeek')}</option>
+                <option value="next_week">{t('nextWeek')}</option>
+                <option value="this_month">{t('thisMonth')}</option>
+              </select>
+            </div>
+            
+            <div className="filter-actions">
+              <button 
+                className="filter-btn advanced-filters-btn"
+                onClick={() => {/* TODO: Implement advanced filters modal */}}
+                title={t('advancedFilters')}
+              >
+                <Filter className="w-4 h-4" />
+                {t('advancedFilters')}
+              </button>
+              
+              <button 
+                className="filter-btn columns-btn"
+                onClick={() => {/* TODO: Implement column toggle */}}
+                title={t('columns')}
+              >
+                <Eye className="w-4 h-4" />
+                {t('columns')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Quick Action Bar */}
-      <div className="quick-actions">
-        <div className="action-buttons">
-          <button 
-            className="action-btn scheduled"
+      {/* Collection Statistics Cards */}
+      <div className="collection-stats">
+        <div className="stats-grid">
+          <div 
+            className={`stat-card clickable ${statusFilter === 'scheduled' ? 'active' : ''}`}
             onClick={() => setStatusFilter('scheduled')}
           >
-            <Calendar className="w-4 h-4" />
-            {t('viewScheduled')}
-          </button>
-          <button 
-            className="action-btn in-transit"
+            <div className="stat-icon scheduled">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{orders.filter(o => o.status === 'scheduled').length}</div>
+              <div className="stat-label">{t('scheduled')}</div>
+            </div>
+          </div>
+          
+          <div 
+            className={`stat-card clickable ${statusFilter === 'in_transit' ? 'active' : ''}`}
             onClick={() => setStatusFilter('in_transit')}
           >
-            <Truck className="w-4 h-4" />
-            {t('viewInTransit')}
-          </button>
-          <button 
-            className="action-btn collecting"
+            <div className="stat-icon in-transit">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{orders.filter(o => o.status === 'in_transit').length}</div>
+              <div className="stat-label">{t('inTransit')}</div>
+            </div>
+          </div>
+          
+          <div 
+            className={`stat-card clickable ${statusFilter === 'collecting' ? 'active' : ''}`}
             onClick={() => setStatusFilter('collecting')}
           >
-            <Package className="w-4 h-4" />
-            {t('viewCollecting')}
-          </button>
+            <div className="stat-icon collecting">
+              <Package className="w-5 h-5" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{orders.filter(o => o.status === 'collecting').length}</div>
+              <div className="stat-label">{t('collecting')}</div>
+            </div>
+          </div>
+          
+          <div 
+            className={`stat-card clickable ${statusFilter === 'completed' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('completed')}
+          >
+            <div className="stat-icon completed">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{orders.filter(o => o.status === 'completed').length}</div>
+              <div className="stat-label">{t('completed')}</div>
+            </div>
+          </div>
         </div>
       </div>
 
