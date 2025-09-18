@@ -9,12 +9,14 @@ import DataTable from '../../../components/ui/DataTable'
 import contractService from '../../../services/contractService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
-import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase, Package } from 'lucide-react'
+import supplierLocationService from '../../../services/supplierLocationService'
+import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin } from 'lucide-react'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import '../styles/Contracts.css'
+import '../styles/ContractForm.css'
 
 const Contracts = () => {
-  const { selectedCompany } = useAuth()
+  const { selectedCompany, user } = useAuth()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
   const [contracts, setContracts] = useState([])
@@ -26,8 +28,11 @@ const Contracts = () => {
   const [selectedContract, setSelectedContract] = useState(null)
   const [suppliers, setSuppliers] = useState([])
   const [materials, setMaterials] = useState([])
+  const [supplierLocations, setSupplierLocations] = useState([])
   const [editFormData, setEditFormData] = useState({})
   const [createFormData, setCreateFormData] = useState({})
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [viewContractData, setViewContractData] = useState(null)
 
   useEffect(() => {
     loadContracts()
@@ -39,12 +44,8 @@ const Contracts = () => {
       const response = await contractService.getAll()
       
       if (response.success) {
-        // Contracts are already filtered by company in the service
-        const companyContracts = response.data.filter(
-          contract => contract.companyId === selectedCompany?.id
-        )
-        
-        setContracts(companyContracts)
+        // Contracts are already filtered by company in the backend service
+        setContracts(response.data || [])
         // Set default contract types and statuses if not provided by API
         setContractTypes({
           'service': { name: 'Service Contract', color: '#3b82f6' },
@@ -91,20 +92,41 @@ const Contracts = () => {
     }
   }
 
+  const loadSupplierLocations = async (supplierId) => {
+    try {
+      if (!supplierId) {
+        setSupplierLocations([])
+        return
+      }
+
+      const response = await supplierLocationService.getBySupplier(supplierId)
+      
+      if (response.success) {
+        setSupplierLocations(response.data || [])
+      } else {
+        console.error('Error loading supplier locations:', response.error)
+        setSupplierLocations([])
+      }
+    } catch (error) {
+      console.error('Error loading supplier locations:', error)
+      setSupplierLocations([])
+    }
+  }
+
   const initializeCreateForm = () => {
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     return {
+      contractNumber: '',
       supplierId: '',
-      contractType: 'service',
       title: '',
-      description: '',
-      startDate: '',
+      startDate: today,
       endDate: '',
       totalValue: 0,
       currency: 'OMR',
-      paymentTerms: '',
-      specialTerms: '',
-      status: 'draft',
-      materials: []
+      terms: '',
+      notes: '',
+      status: 'active',
+      locations: []
     }
   }
 
@@ -113,17 +135,44 @@ const Contracts = () => {
       setLoading(true)
       
       // Basic validation
-      if (!createFormData.supplierId || !createFormData.title || !createFormData.startDate || !createFormData.endDate) {
+      if (!createFormData.supplierId || !createFormData.startDate || !createFormData.endDate) {
         alert(t('fillRequiredFields'))
         return
       }
 
+      // Transform data to match backend schema
       const contractData = {
-        ...createFormData,
-        companyId: selectedCompany.id,
-        createdAt: new Date().toISOString(),
-        createdBy: 'current_user', // This should come from auth context
+        contractNumber: createFormData.contractNumber,
+        supplierId: parseInt(createFormData.supplierId),
+        title: createFormData.title || `Contract ${createFormData.contractNumber}`,
+        startDate: createFormData.startDate,
+        endDate: createFormData.endDate,
+        status: createFormData.status,
+        terms: createFormData.terms || '',
+        notes: createFormData.notes || '',
         totalValue: parseFloat(createFormData.totalValue) || 0,
+        currency: createFormData.currency,
+        createdBy: user?.id || 1, // From auth context
+        locations: createFormData.locations.map(location => ({
+          id: location.id ? location.id.toString() : undefined,
+          locationName: location.locationName || '',
+          locationCode: location.locationCode || `LOC_${Date.now()}`,
+          materials: location.materials.map(material => {
+            const materialData = materials.find(m => m.id === parseInt(material.materialId))
+            return {
+              materialId: parseInt(material.materialId),
+              rateType: material.rateType || 'fixed_rate',
+              contractRate: parseFloat(material.contractRate) || 0,
+              discountPercentage: parseFloat(material.discountPercentage) || 0,
+              minimumPrice: parseFloat(material.minimumPrice) || 0,
+              paymentDirection: material.paymentDirection || 'we_receive',
+              unit: material.unit || materialData?.unit || 'kg',
+              minimumQuantity: parseFloat(material.minQuantity) || 0,
+              maximumQuantity: parseFloat(material.maxQuantity) || 0,
+              description: material.description || ''
+            }
+          })
+        }))
       }
       
       const response = await contractService.create(contractData)
@@ -168,6 +217,150 @@ const Contracts = () => {
     }
   }
 
+  const handleEditContract = async (contractId) => {
+    try {
+      setLoading(true)
+      const response = await contractService.getById(contractId)
+      
+      if (response.success) {
+        const contract = response.data
+        
+        // Transform contract data to form format
+        // Group rates by location
+        const locationsMap = {}
+        if (contract.rates && contract.rates.length > 0) {
+          contract.rates.forEach(rate => {
+            const locationKey = rate.locationId
+            if (!locationsMap[locationKey]) {
+              locationsMap[locationKey] = {
+                id: rate.locationId,
+                name: rate.locationName,
+                locationCode: rate.locationCode,
+                materials: []
+              }
+            }
+            locationsMap[locationKey].materials.push({
+              materialId: rate.materialId,
+              materialName: rate.materialName,
+              rateType: rate.rateType || 'fixed_rate',
+              contractRate: rate.contractRate || 0,
+              discountPercentage: rate.discountPercentage || 0,
+              minimumPrice: rate.minimumPrice || 0,
+              paymentDirection: rate.paymentDirection || 'we_receive',
+              unit: rate.unit || 'liters',
+              minimumQuantity: rate.minimumQuantity || 0,
+              maximumQuantity: rate.maximumQuantity || 0,
+              description: rate.description || '',
+              locationCode: rate.locationCode
+            })
+          })
+        }
+
+        const formData = {
+          contractNumber: contract.contractNumber || '',
+          supplierId: contract.supplierId || '',
+          title: contract.title || '',
+          startDate: contract.startDate ? contract.startDate.split('T')[0] : '',
+          endDate: contract.endDate ? contract.endDate.split('T')[0] : '', 
+          status: contract.status || 'active',
+          terms: contract.terms || '',
+          locations: Object.values(locationsMap).map(location => ({
+            id: String(location.id),
+            locationName: location.name,
+            locationCode: location.locationCode || 'LOC-' + location.id,
+            materials: (location.materials || []).map(material => ({
+              materialId: material.materialId,
+              rateType: material.rateType,
+              contractRate: material.contractRate,
+              discountPercentage: material.discountPercentage || 0,
+              minimumPrice: material.minimumPrice || 0,
+              paymentDirection: material.paymentDirection || 'we_receive',
+              unit: material.unit || 'liters',
+              minimumQuantity: material.minimumQuantity || 0,
+              maximumQuantity: material.maximumQuantity || 0,
+              description: material.description || ''
+            }))
+          }))
+        }
+        
+        setEditFormData(formData)
+        // Load supplier locations for the contract's supplier
+        if (contract.supplierId) {
+          await loadSupplierLocations(contract.supplierId)
+        }
+        setShowEditForm(true)
+      } else {
+        console.error('Error fetching contract:', response.error)
+        alert(t('errorFetching', 'Error fetching contract details'))
+      }
+    } catch (error) {
+      console.error('Error fetching contract:', error)
+      alert(t('errorFetching', 'Error fetching contract details'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleViewContract = async (contractId) => {
+    try {
+      setLoading(true)
+      const response = await contractService.getById(contractId)
+      
+      if (response.success) {
+        const contract = response.data
+        
+        // Transform contract data to view format  
+        // Group rates by location
+        const locationsMap = {}
+        if (contract.rates && contract.rates.length > 0) {
+          contract.rates.forEach(rate => {
+            const locationKey = rate.locationId
+            if (!locationsMap[locationKey]) {
+              locationsMap[locationKey] = {
+                id: rate.locationId,
+                name: rate.locationName,
+                locationCode: rate.locationCode,
+                materials: []
+              }
+            }
+            locationsMap[locationKey].materials.push({
+              materialId: rate.materialId,
+              materialName: rate.materialName,
+              rateType: rate.rateType || 'fixed_rate',
+              contractRate: rate.contractRate || 0,
+              discountPercentage: rate.discountPercentage || 0,
+              minimumPrice: rate.minimumPrice || 0,
+              paymentDirection: rate.paymentDirection || 'we_receive',
+              unit: rate.unit || 'liters',
+              minimumQuantity: rate.minimumQuantity || 0,
+              maximumQuantity: rate.maximumQuantity || 0,
+              description: rate.description || '',
+              locationCode: rate.locationCode
+            })
+          })
+        }
+
+        const contractData = {
+          ...contract,
+          locations: Object.values(locationsMap),
+          formattedStartDate: contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : 'N/A',
+          formattedEndDate: contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : 'N/A'
+        }
+        
+        setViewContractData(contractData)
+        setShowViewModal(true)
+      } else {
+        console.error('Error fetching contract:', response.error)
+        alert(t('errorFetching', 'Error fetching contract details'))
+      }
+    } catch (error) {
+      console.error('Error fetching contract:', error)
+      alert(t('errorFetching', 'Error fetching contract details'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDeleteContract = async (contractId) => {
     if (!confirm(t('confirmDelete', 'Are you sure you want to delete this contract?'))) {
       return
@@ -190,7 +383,8 @@ const Contracts = () => {
   }
 
   const formatCurrency = (amount) => {
-    return `OMR ${(amount || 0).toFixed(2)}`
+    const numAmount = parseFloat(amount) || 0
+    return `OMR ${numAmount.toFixed(2)}`
   }
 
   const formatDate = (dateString) => {
@@ -332,9 +526,9 @@ const Contracts = () => {
           <PermissionGate permission={PERMISSIONS.VIEW_CONTRACTS}>
             <button 
               className="btn btn-outline btn-sm" 
-              onClick={() => {
+              onClick={async () => {
                 setSelectedContract(row)
-                // Show view modal logic would go here
+                await handleViewContract(row.id)
               }}
               title={t('viewDetails')}
             >
@@ -345,10 +539,9 @@ const Contracts = () => {
           <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
             <button 
               className="btn btn-outline btn-sm" 
-              onClick={() => {
+              onClick={async () => {
                 setSelectedContract(row)
-                setEditFormData(row)
-                setShowEditForm(true)
+                await handleEditContract(row.id)
               }}
               title={t('edit')}
             >
@@ -478,6 +671,8 @@ const Contracts = () => {
           setFormData={setCreateFormData}
           suppliers={suppliers}
           materials={materials}
+          supplierLocations={supplierLocations}
+          loadSupplierLocations={loadSupplierLocations}
           contractTypes={contractTypes}
           isEdit={false}
           loading={loading}
@@ -499,13 +694,499 @@ const Contracts = () => {
           setFormData={setEditFormData}
           suppliers={suppliers}
           materials={materials}
+          supplierLocations={supplierLocations}
+          loadSupplierLocations={loadSupplierLocations}
           contractTypes={contractTypes}
           isEdit={true}
           loading={loading}
           t={t}
         />
       )}
+
+      {showViewModal && viewContractData && (
+        <ContractViewModal
+          isOpen={showViewModal}
+          onClose={() => {
+            setShowViewModal(false)
+            setViewContractData(null)
+          }}
+          contractData={viewContractData}
+          onEdit={() => {
+            setShowViewModal(false)
+            setSelectedContract(viewContractData)
+            setEditFormData({
+              contractNumber: viewContractData.contractNumber || '',
+              supplierId: viewContractData.supplierId || '',
+              title: viewContractData.title || '',
+              startDate: viewContractData.startDate ? viewContractData.startDate.split('T')[0] : '',
+              endDate: viewContractData.endDate ? viewContractData.endDate.split('T')[0] : '', 
+              status: viewContractData.status || 'active',
+              totalValue: viewContractData.totalValue || 0,
+              currency: viewContractData.currency || 'OMR',
+              terms: viewContractData.terms || '',
+              notes: viewContractData.notes || '',
+              locations: (viewContractData.locations || []).map(location => ({
+                id: String(location.id),
+                locationName: location.name,
+                locationCode: location.locationCode || 'LOC-' + location.id,
+                materials: (location.materials || []).map(material => ({
+                  materialId: material.materialId,
+                  rateType: material.rateType,
+                  contractRate: material.contractRate,
+                  discountPercentage: material.discountPercentage || 0,
+                  minimumPrice: material.minimumPrice || 0,
+                  paymentDirection: material.paymentDirection || 'we_receive',
+                  unit: material.unit || 'liters',
+                  minimumQuantity: material.minimumQuantity || 0,
+                  maximumQuantity: material.maximumQuantity || 0,
+                  description: material.description || ''
+                }))
+              }))
+            })
+            // Load supplier locations for the contract's supplier
+            if (viewContractData.supplierId) {
+              loadSupplierLocations(viewContractData.supplierId)
+            }
+            setShowEditForm(true)
+          }}
+          formatCurrency={formatCurrency}
+          getContractStatusInfo={getContractStatusInfo}
+          t={t}
+        />
+      )}
     </div>
+  )
+}
+
+// Contract View Modal Component
+const ContractViewModal = ({ 
+  isOpen, 
+  onClose, 
+  contractData,
+  onEdit,
+  formatCurrency,
+  getContractStatusInfo,
+  t 
+}) => {
+  if (!contractData) return null
+
+  const statusInfo = getContractStatusInfo(contractData.status)
+
+  return (
+    <Modal 
+      isOpen={isOpen}
+      title={`${contractData.contractNumber} - ${t('contractDetails', 'Contract Details')}`}
+      onClose={onClose}
+      className="modal-xl contract-details-modal"
+      footer={
+        <div className="modal-footer-actions">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            {t('close', 'Close')}
+          </button>
+          {onEdit && (
+            <button type="button" className="btn btn-primary" onClick={onEdit}>
+              <Edit size={16} />
+              {t('editContract', 'Edit Contract')}
+            </button>
+          )}
+        </div>
+      }
+    >
+      <div className="supplier-view-professional">
+        {/* Compact Header Section */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ 
+            width: '48px', 
+            height: '48px', 
+            borderRadius: '12px', 
+            backgroundColor: '#3b82f6', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginRight: '16px'
+          }}>
+            <FileText size={24} color="white" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '24px', fontWeight: '600', margin: '0 0 4px 0', color: '#1f2937' }}>
+              {contractData.title}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span 
+                style={{
+                  padding: '4px 12px',
+                  backgroundColor: statusInfo.class === 'status-active' ? '#10b981' : 
+                                 statusInfo.class === 'status-expired' ? '#ef4444' : 
+                                 statusInfo.class === 'status-draft' ? '#f59e0b' : '#6b7280',
+                  color: 'white',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}
+              >
+                {statusInfo.text}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Contract Expiry Alert */}
+        {(() => {
+          const today = new Date();
+          const endDate = new Date(contractData.endDate);
+          const daysUntilExpiry = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+          
+          if (daysUntilExpiry <= 30 && daysUntilExpiry > 0) {
+            return (
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: daysUntilExpiry <= 7 ? '#fef2f2' : '#fefbf2',
+                border: `1px solid ${daysUntilExpiry <= 7 ? '#fecaca' : '#fed7aa'}`,
+                borderRadius: '8px',
+                marginBottom: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertTriangle 
+                  size={16} 
+                  color={daysUntilExpiry <= 7 ? '#dc2626' : '#d97706'} 
+                />
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: daysUntilExpiry <= 7 ? '#dc2626' : '#d97706'
+                }}>
+                  {daysUntilExpiry <= 7 
+                    ? `⚠️ Contract expires in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}!`
+                    : `📅 Contract expires in ${daysUntilExpiry} days`
+                  }
+                </span>
+              </div>
+            );
+          } else if (daysUntilExpiry <= 0) {
+            return (
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                marginBottom: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertTriangle size={16} color="#dc2626" />
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#dc2626'
+                }}>
+                  🚨 Contract has expired {Math.abs(daysUntilExpiry)} day{Math.abs(daysUntilExpiry) === 1 ? '' : 's'} ago!
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {/* Compact Information Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '24px' }}>
+          {/* Basic Information */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <FileText size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                {t('basicInformation', 'Basic Information')}
+              </h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('contractNumber', 'Contract Number')}</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>{contractData.contractNumber}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>Title</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>{contractData.title}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('supplier', 'Supplier')}</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>{contractData.supplierName}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>Total Value</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>{formatCurrency(contractData.totalValue || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('status', 'Status')}</span>
+                <span 
+                  style={{
+                    padding: '2px 8px',
+                    backgroundColor: statusInfo.class === 'status-active' ? '#dcfdf7' : 
+                                   statusInfo.class === 'status-expired' ? '#fef2f2' : 
+                                   statusInfo.class === 'status-draft' ? '#fefbf2' : '#f3f4f6',
+                    color: statusInfo.class === 'status-active' ? '#065f46' : 
+                           statusInfo.class === 'status-expired' ? '#991b1b' : 
+                           statusInfo.class === 'status-draft' ? '#92400e' : '#374151',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}
+                >
+                  {statusInfo.text}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Contract Period */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <Calendar size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                {t('contractPeriod', 'Contract Period')}
+              </h3>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('startDate', 'Start Date')}</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>{contractData.formattedStartDate}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('endDate', 'End Date')}</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>{contractData.formattedEndDate}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>{t('duration', 'Duration')}</span>
+                <span style={{ fontWeight: '500', color: '#1f2937' }}>
+                  {(() => {
+                    const start = new Date(contractData.startDate)
+                    const end = new Date(contractData.endDate)
+                    const diffTime = Math.abs(end - start)
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                    return `${diffDays} ${t('days', 'days')}`
+                  })()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contract Terms Section */}
+        {contractData.terms && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <Settings size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                {t('terms', 'Terms & Conditions')}
+              </h3>
+            </div>
+            <div style={{ 
+              padding: '16px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#374151',
+              lineHeight: '1.5'
+            }}>
+              {contractData.terms}
+            </div>
+          </div>
+        )}
+
+        {/* Contract Notes Section */}
+        {contractData.notes && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <FileText size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                {t('Notes', 'Notes')}
+              </h3>
+            </div>
+            <div style={{ 
+              padding: '16px', 
+              backgroundColor: '#f9fafb', 
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#374151',
+              lineHeight: '1.5'
+            }}>
+              {contractData.notes}
+            </div>
+          </div>
+        )}
+
+        {/* Location-Material Rates Section */}
+        {contractData.locations && contractData.locations.length > 0 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <Package size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                {t('locationMaterialRates', 'Location & Material Rates')}
+              </h3>
+            </div>
+            {contractData.locations.map((location, locationIndex) => (
+              <div key={locationIndex} style={{ marginBottom: '20px' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  marginBottom: '12px',
+                  padding: '8px 12px',
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: '6px'
+                }}>
+                  <MapPin size={16} style={{ marginRight: '8px', color: '#6b7280' }} />
+                  <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+                    {location.name}
+                  </span>
+                </div>
+                {location.materials && location.materials.length > 0 && (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ 
+                      width: '100%', 
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f9fafb' }}>
+                          <th style={{ 
+                            padding: '8px 12px', 
+                            textAlign: 'left', 
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            borderBottom: '1px solid #e5e7eb'
+                          }}>
+                            {t('material', 'Material')}
+                          </th>
+                          <th style={{ 
+                            padding: '8px 12px', 
+                            textAlign: 'left', 
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            borderBottom: '1px solid #e5e7eb'
+                          }}>
+                            {t('unit', 'Unit')}
+                          </th>
+                          <th style={{ 
+                            padding: '8px 12px', 
+                            textAlign: 'left', 
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            borderBottom: '1px solid #e5e7eb'
+                          }}>
+                            {t('rateType', 'Rate Type')}
+                          </th>
+                          <th style={{ 
+                            padding: '8px 12px', 
+                            textAlign: 'right', 
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            borderBottom: '1px solid #e5e7eb'
+                          }}>
+                            {t('contractRate', 'Contract Rate')}
+                          </th>
+                          <th style={{ 
+                            padding: '8px 12px', 
+                            textAlign: 'center', 
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            borderBottom: '1px solid #e5e7eb'
+                          }}>
+                            {t('minQty', 'Min Qty')}
+                          </th>
+                          <th style={{ 
+                            padding: '8px 12px', 
+                            textAlign: 'center', 
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            borderBottom: '1px solid #e5e7eb'
+                          }}>
+                            {t('maxQty', 'Max Qty')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {location.materials.map((material, materialIndex) => (
+                          <tr key={materialIndex}>
+                            <td style={{ 
+                              padding: '8px 12px', 
+                              borderBottom: '1px solid #e5e7eb',
+                              color: '#1f2937'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Package size={14} style={{ marginRight: '8px', color: '#6b7280' }} />
+                                <span>{material.materialName}</span>
+                              </div>
+                            </td>
+                            <td style={{ 
+                              padding: '8px 12px', 
+                              borderBottom: '1px solid #e5e7eb',
+                              color: '#374151'
+                            }}>
+                              {material.unit || 'liters'}
+                            </td>
+                            <td style={{ 
+                              padding: '8px 12px', 
+                              borderBottom: '1px solid #e5e7eb'
+                            }}>
+                              <span style={{
+                                padding: '2px 8px',
+                                backgroundColor: '#e0f2fe',
+                                color: '#0369a1',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                              }}>
+                                {material.rateType === 'fixed_rate' && t('fixedRate', 'Fixed Rate')}
+                                {material.rateType === 'discount_percentage' && t('discountPercentage', 'Discount %')}
+                                {material.rateType === 'minimum_price_guarantee' && t('minimumPriceGuarantee', 'Min. Price')}
+                                {material.rateType === 'free' && t('free', 'Free')}
+                                {material.rateType === 'we_pay' && t('wePay', 'We Pay')}
+                              </span>
+                            </td>
+                            <td style={{ 
+                              padding: '8px 12px', 
+                              borderBottom: '1px solid #e5e7eb',
+                              textAlign: 'right'
+                            }}>
+                              {material.rateType === 'free' ? (
+                                <span style={{ color: '#10b981', fontWeight: '500' }}>
+                                  {t('free', 'Free')}
+                                </span>
+                              ) : (
+                                <span style={{ fontWeight: '500', color: '#1f2937' }}>
+                                  {formatCurrency(material.contractRate)}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ 
+                              padding: '8px 12px', 
+                              borderBottom: '1px solid #e5e7eb',
+                              textAlign: 'center',
+                              color: '#374151'
+                            }}>
+                              {material.minimumQuantity || 0}
+                            </td>
+                            <td style={{ 
+                              padding: '8px 12px', 
+                              borderBottom: '1px solid #e5e7eb',
+                              textAlign: 'center',
+                              color: '#374151'
+                            }}>
+                              {material.maximumQuantity || '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Modal>
   )
 }
 
@@ -519,6 +1200,8 @@ const ContractFormModal = ({
   setFormData, 
   suppliers,
   materials,
+  supplierLocations,
+  loadSupplierLocations,
   contractTypes,
   isEdit, 
   loading,
@@ -529,38 +1212,139 @@ const ContractFormModal = ({
     onSave()
   }
 
-  const addMaterial = () => {
+  const addLocation = (supplierLocationId) => {
+    // Convert to number for comparison since IDs might be strings from select value
+    const locationId = parseInt(supplierLocationId)
+    const supplierLocation = supplierLocations.find(loc => parseInt(loc.id) === locationId)
+    
+    if (!supplierLocation) {
+      return
+    }
+
+    // Check if location already added
+    const alreadyAdded = formData.locations.some(loc => parseInt(loc.id) === locationId)
+    if (alreadyAdded) {
+      alert('This location is already added to the contract')
+      return
+    }
+
+    const newLocation = {
+      id: supplierLocation.id,
+      locationName: supplierLocation.locationName,
+      locationCode: supplierLocation.locationCode,
+      address: supplierLocation.address,
+      contactPerson: supplierLocation.contactPerson,
+      contactPhone: supplierLocation.contactPhone,
+      materials: []
+    }
+    
+    setFormData(prev => {
+      const newLocations = [...(prev.locations || []), newLocation]
+      const newLocationIndex = newLocations.length - 1
+      
+      // Create a material row for the new location
+      const newMaterial = {
+        id: `mat_${Date.now()}`,
+        materialId: '',
+        rateType: 'fixed_rate',
+        contractRate: 0,
+        discountPercentage: 0,
+        minimumPrice: 0,
+        paymentDirection: 'we_receive',
+        unit: '',
+        minQuantity: '',
+        maxQuantity: '',
+        description: ''
+      }
+      
+      // Add the material to the new location
+      newLocations[newLocationIndex].materials = [newMaterial]
+      
+      return {
+        ...prev,
+        locations: newLocations
+      }
+    })
+  }
+
+  const removeLocation = (locationIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      locations: prev.locations.filter((_, index) => index !== locationIndex)
+    }))
+  }
+
+  const updateLocation = (locationIndex, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      locations: prev.locations.map((location, index) => 
+        index === locationIndex 
+          ? { ...location, [field]: value }
+          : location
+      )
+    }))
+  }
+
+  const addMaterialToLocation = (locationIndex) => {
     const newMaterial = {
       id: `mat_${Date.now()}`,
       materialId: '',
       materialName: '',
-      rate: 0,
+      materialType: '',
+      rateType: 'fixed_rate',
+      contractRate: '',
+      discountPercentage: 0,
+      minimumPrice: 0,
+      paymentDirection: 'we_receive',
       currency: 'OMR',
-      minimumQuantity: 0,
-      maximumQuantity: 0,
-      unit: ''
+      unit: '',
+      minimumQuantity: '',
+      maximumQuantity: '',
+      description: '',
+      isActive: true
     }
     
     setFormData(prev => ({
       ...prev,
-      materials: [...(prev.materials || []), newMaterial]
+      locations: prev.locations.map((location, index) => 
+        index === locationIndex 
+          ? { 
+              ...location, 
+              materials: [...(location.materials || []), newMaterial]
+            }
+          : location
+      )
     }))
   }
 
-  const removeMaterial = (materialIndex) => {
+  const removeMaterialFromLocation = (locationIndex, materialIndex) => {
     setFormData(prev => ({
       ...prev,
-      materials: prev.materials.filter((_, index) => index !== materialIndex)
+      locations: prev.locations.map((location, index) => 
+        index === locationIndex 
+          ? { 
+              ...location, 
+              materials: location.materials.filter((_, mIndex) => mIndex !== materialIndex)
+            }
+          : location
+      )
     }))
   }
 
-  const updateMaterial = (materialIndex, field, value) => {
+  const updateLocationMaterial = (locationIndex, materialIndex, field, value) => {
     setFormData(prev => ({
       ...prev,
-      materials: prev.materials.map((material, index) => 
-        index === materialIndex 
-          ? { ...material, [field]: value }
-          : material
+      locations: prev.locations.map((location, locIndex) => 
+        locIndex === locationIndex 
+          ? {
+              ...location,
+              materials: location.materials.map((material, matIndex) => 
+                matIndex === materialIndex 
+                  ? { ...material, [field]: value }
+                  : material
+              )
+            }
+          : location
       )
     }))
   }
@@ -582,21 +1366,31 @@ const ContractFormModal = ({
           
           <div className="form-grid">
             <div className="form-group">
-              <label>Contract Title *</label>
+              <label>Contract Number *</label>
               <input
                 type="text"
-                value={formData.title || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                value={formData.contractNumber || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, contractNumber: e.target.value }))}
                 required
-                placeholder="Enter contract title"
+                placeholder="Enter contract number"
               />
             </div>
+
 
             <div className="form-group">
               <label>Supplier *</label>
               <select
                 value={formData.supplierId || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, supplierId: e.target.value }))}
+                onChange={(e) => {
+                  const selectedSupplier = suppliers.find(s => s.id === e.target.value)
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    supplierId: e.target.value,
+                    supplierName: selectedSupplier ? selectedSupplier.name : '',
+                    locations: [] // Reset locations when supplier changes
+                  }))
+                  loadSupplierLocations(e.target.value) // Load locations for selected supplier
+                }}
                 required
               >
                 <option value="">Select Supplier</option>
@@ -611,14 +1405,13 @@ const ContractFormModal = ({
             <div className="form-group">
               <label>Contract Type</label>
               <select
-                value={formData.contractType || 'service'}
+                value={formData.contractType || 'oil_supply'}
                 onChange={(e) => setFormData(prev => ({ ...prev, contractType: e.target.value }))}
               >
-                {Object.entries(contractTypes).map(([key, type]) => (
-                  <option key={key} value={key}>
-                    {type.name}
-                  </option>
-                ))}
+                <option value="oil_supply">Oil Supply</option>
+                <option value="waste_management">Waste Management</option>
+                <option value="scrap_collection">Scrap Collection</option>
+                <option value="material_supply">Material Supply</option>
               </select>
             </div>
 
@@ -655,136 +1448,271 @@ const ContractFormModal = ({
             </div>
 
             <div className="form-group">
-              <label>Description</label>
+              <label>Notes</label>
               <textarea
-                value={formData.description || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Contract description"
+                value={formData.notes || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Contract notes"
                 rows={3}
               />
             </div>
 
             <div className="form-group">
-              <label>Payment Terms</label>
-              <input
-                type="text"
-                value={formData.paymentTerms || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: e.target.value }))}
-                placeholder="e.g., Net 30 days"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Special Terms</label>
+              <label>Terms</label>
               <textarea
-                value={formData.specialTerms || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, specialTerms: e.target.value }))}
-                placeholder="Any special terms or conditions"
-                rows={2}
+                value={formData.terms || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, terms: e.target.value }))}
+                placeholder="Terms and conditions"
+                rows={4}
               />
             </div>
           </div>
         </div>
 
-        {/* Contract Materials (Optional) */}
+        {/* Contract Locations with Materials */}
         <div className="form-section">
           <div className="form-section-title">
-            <Package size={20} />
-            Contract Materials
-            <span className="section-subtitle">Define materials covered by this contract</span>
+            <MapPin size={20} />
+            Contract Locations & Materials
+            <span className="section-subtitle">Select supplier locations and define material rates</span>
           </div>
 
-          <div className="materials-container">
-            {(formData.materials || []).map((material, materialIndex) => (
-              <div key={material.id} className="material-item">
-                <div className="material-header">
-                  <h4>Material {materialIndex + 1}</h4>
+          {/* Add Location Button */}
+          {formData.supplierId && supplierLocations.length > 0 && (
+            <div className="add-location-section">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    addLocation(e.target.value)
+                    e.target.value = ''
+                  }
+                }}
+                className="location-selector-dropdown"
+              >
+                <option value="">+ Add Location to Contract</option>
+                {supplierLocations
+                  .filter(loc => !formData.locations.some(selected => parseInt(selected.id) === parseInt(loc.id)))
+                  .map(location => (
+                    <option key={location.id} value={location.id}>
+                      {location.locationName} ({location.locationCode}) - {location.address}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+          )}
+
+          {/* No Supplier Selected */}
+          {!formData.supplierId && (
+            <div className="empty-state">
+              <p>Please select a supplier first to see available locations.</p>
+            </div>
+          )}
+
+          {/* No Locations Available */}
+          {formData.supplierId && supplierLocations.length === 0 && (
+            <div className="empty-state">
+              <p>No locations found for this supplier. Please add locations in the Supplier Locations module first.</p>
+            </div>
+          )}
+
+          {/* Selected Locations */}
+          <div className="selected-locations">
+            {(formData.locations || []).map((location, locationIndex) => (
+              <div key={location.id || locationIndex} className="location-card">
+                <div className="location-card-header">
+                  <div className="location-info">
+                    <h4 className="location-name">
+                      <MapPin size={16} />
+                      {location.locationName} ({location.locationCode})
+                    </h4>
+                    <p className="location-details">
+                      {location.address} • {location.contactPerson} - {location.contactPhone}
+                    </p>
+                  </div>
                   <button 
                     type="button"
-                    onClick={() => removeMaterial(materialIndex)}
-                    className="btn btn-danger btn-xs"
+                    onClick={() => removeLocation(locationIndex)}
+                    className="remove-location-btn"
+                    title="Remove Location"
                   >
-                    <X size={14} />
+                    <X size={16} />
                   </button>
                 </div>
 
-                <div className="material-fields">
-                  <div className="form-group">
-                    <label>Material</label>
-                    <select
-                      value={material.materialId || ''}
-                      onChange={(e) => {
-                        const selectedMaterial = materials.find(m => m.id === e.target.value)
-                        if (selectedMaterial) {
-                          updateMaterial(materialIndex, 'materialId', selectedMaterial.id)
-                          updateMaterial(materialIndex, 'materialName', selectedMaterial.name)
-                          updateMaterial(materialIndex, 'unit', selectedMaterial.unit)
-                        }
-                      }}
+                {/* Materials Table */}
+                <div className="materials-table-section">
+                  <div className="materials-table-header">
+                    <h5>Materials & Rates</h5>
+                    <button 
+                      type="button"
+                      onClick={() => addMaterialToLocation(locationIndex)}
+                      className="add-material-btn-table"
                     >
-                      <option value="">Select Material</option>
-                      {materials.map(mat => (
-                        <option key={mat.id} value={mat.id}>
-                          {mat.name} ({mat.type})
-                        </option>
-                      ))}
-                    </select>
+                      <Plus size={14} />
+                      Add Row
+                    </button>
                   </div>
 
-                  <div className="form-group">
-                    <label>Rate per Unit</label>
-                    <div className="rate-input-group">
-                      <input
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        value={material.rate || 0}
-                        onChange={(e) => updateMaterial(materialIndex, 'rate', parseFloat(e.target.value) || 0)}
-                        placeholder="0.000"
-                      />
-                      <select
-                        value={material.currency || 'OMR'}
-                        onChange={(e) => updateMaterial(materialIndex, 'currency', e.target.value)}
-                        className="currency-select"
-                      >
-                        <option value="OMR">OMR</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Minimum Quantity</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={material.minimumQuantity || 0}
-                      onChange={(e) => updateMaterial(materialIndex, 'minimumQuantity', parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Maximum Quantity</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={material.maximumQuantity || 0}
-                      onChange={(e) => updateMaterial(materialIndex, 'maximumQuantity', parseInt(e.target.value) || 0)}
-                    />
+                  <div className="materials-table-container">
+                    <table className="materials-table">
+                      <thead>
+                        <tr>
+                          <th>Material</th>
+                          <th>Unit</th>
+                          <th>Rate Type</th>
+                          <th>Rate</th>
+                          <th>Currency</th>
+                          <th>Min Qty</th>
+                          <th>Max Qty</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(location.materials || []).length === 0 ? (
+                          <tr className="empty-row">
+                            <td colSpan="8" className="empty-message">
+                              No materials added. Click "Add Row" to define rates for this location.
+                            </td>
+                          </tr>
+                        ) : (
+                          (location.materials || []).map((material, materialIndex) => (
+                            <tr key={material.id || materialIndex} className="material-row">
+                              <td className="material-cell">
+                                <select
+                                  value={material.materialId || ''}
+                                  onChange={(e) => {
+                                    const selectedMaterial = materials.find(m => String(m.id) === String(e.target.value))
+                                    if (selectedMaterial) {
+                                      updateLocationMaterial(locationIndex, materialIndex, 'materialId', selectedMaterial.id)
+                                      updateLocationMaterial(locationIndex, materialIndex, 'materialName', selectedMaterial.name)
+                                      updateLocationMaterial(locationIndex, materialIndex, 'materialType', selectedMaterial.category)
+                                      updateLocationMaterial(locationIndex, materialIndex, 'unit', selectedMaterial.unit)
+                                    }
+                                  }}
+                                  className="table-select"
+                                  required
+                                >
+                                  <option value="">Select Material</option>
+                                  {materials.map(mat => (
+                                    <option key={mat.id} value={mat.id}>
+                                      {mat.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              
+                              <td className="unit-cell">
+                                <select
+                                  value={material.unit || ''}
+                                  onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'unit', e.target.value)}
+                                  className="table-select-small"
+                                >
+                                  <option value="">Unit</option>
+                                  <option value="liters">Liters</option>
+                                  <option value="drums">Drums</option>
+                                  <option value="tons">Tons</option>
+                                  <option value="kg">Kg</option>
+                                  <option value="pieces">Pieces</option>
+                                  <option value="cubic_meters">m³</option>
+                                </select>
+                              </td>
+                              
+                              <td className="rate-type-cell">
+                                <select
+                                  value={material.rateType || 'fixed_rate'}
+                                  onChange={(e) => {
+                                    updateLocationMaterial(locationIndex, materialIndex, 'rateType', e.target.value)
+                                    // Auto-set rate to 0 for free type
+                                    if (e.target.value === 'free') {
+                                      updateLocationMaterial(locationIndex, materialIndex, 'contractRate', 0)
+                                    }
+                                  }}
+                                  className="table-select-small"
+                                >
+                                  <option value="fixed_rate">Fixed Rate</option>
+                                  <option value="discount_percentage">Discount %</option>
+                                  <option value="minimum_price_guarantee">Min Price</option>
+                                  <option value="free">Free</option>
+                                  <option value="we_pay">We Pay</option>
+                                </select>
+                              </td>
+                              
+                              <td className="rate-cell">
+                                <input
+                                  type="number"
+                                  step="0.001"
+                                  min="0"
+                                  value={material.rateType === 'free' ? '0.000' : (material.contractRate || '')}
+                                  onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'contractRate', parseFloat(e.target.value) || 0)}
+                                  placeholder="0.000"
+                                  className="table-input-number"
+                                  disabled={material.rateType === 'free'}
+                                  style={{
+                                    backgroundColor: material.rateType === 'free' ? '#f3f4f6' : 'white',
+                                    cursor: material.rateType === 'free' ? 'not-allowed' : 'text'
+                                  }}
+                                />
+                              </td>
+                              
+                              <td className="currency-cell">
+                                <span className="currency-display">OMR</span>
+                                <input type="hidden" value="OMR" />
+                              </td>
+                              
+                              <td className="min-qty-cell">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.001"
+                                  value={material.minimumQuantity || ''}
+                                  onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'minimumQuantity', parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="table-input-small"
+                                />
+                              </td>
+                              
+                              <td className="max-qty-cell">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.001"
+                                  value={material.maximumQuantity || ''}
+                                  onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'maximumQuantity', parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="table-input-small"
+                                />
+                              </td>
+                              
+                              <td className="actions-cell">
+                                <button 
+                                  type="button"
+                                  onClick={() => removeMaterialFromLocation(locationIndex, materialIndex)}
+                                  className="table-remove-btn"
+                                  title="Remove"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             ))}
 
-            <button 
-              type="button"
-              onClick={addMaterial}
-              className="btn btn-outline btn-sm add-material-btn"
-            >
-              <Plus size={16} />
-              Add Material
-            </button>
+            {formData.locations.length === 0 && formData.supplierId && supplierLocations.length > 0 && (
+              <div className="empty-locations">
+                <div className="empty-state-icon">
+                  <MapPin size={48} />
+                </div>
+                <h3>No locations selected</h3>
+                <p>Select locations from the dropdown above to define material rates for this contract.</p>
+              </div>
+            )}
           </div>
         </div>
 

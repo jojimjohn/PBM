@@ -451,6 +451,7 @@ class ContractService {
       };
     }
   }
+
 }
 
 const contractService = new ContractService();

@@ -340,6 +340,13 @@ const translations = {
     createNewContract: 'Create New Contract',
     renewContract: 'Renew Contract',
     editContract: 'Edit Contract',
+    newContract: 'New Contract',
+    contractDetails: 'Contract Details',
+    basicInformation: 'Basic Information',
+    locationMaterialRates: 'Location & Material Rates',
+    contractPeriod: 'Contract Period',
+    duration: 'Duration',
+    days: 'days',
     
     // Settings
     generalSettings: 'General Settings',
@@ -537,6 +544,7 @@ const translations = {
     confirmDelete: 'Are you sure you want to delete this item?',
     errorDeleting: 'Error deleting item',
     errorSaving: 'Error saving data',
+    errorFetching: 'Error fetching data',
     fillRequiredFields: 'Please fill in all required fields',
     
     // Success Messages
@@ -1401,6 +1409,13 @@ const translations = {
     createNewContract: 'إنشاء عقد جديد',
     renewContract: 'تجديد العقد',
     editContract: 'تعديل العقد',
+    newContract: 'عقد جديد',
+    contractDetails: 'تفاصيل العقد',
+    basicInformation: 'المعلومات الأساسية',
+    locationMaterialRates: 'أسعار المواقع والمواد',
+    contractPeriod: 'فترة العقد',
+    duration: 'المدة',
+    days: 'أيام',
     
     // Inventory Management
     addMaterial: 'إضافة مادة',
@@ -1806,6 +1821,7 @@ const translations = {
     confirmDelete: 'هل أنت متأكد أنك تريد حذف هذا العنصر؟',
     errorDeleting: 'خطأ في حذف العنصر',
     errorSaving: 'خطأ في حفظ البيانات',
+    errorFetching: 'خطأ في جلب البيانات',
     fillRequiredFields: 'يرجى ملء جميع الحقول المطلوبة',
     
     // Success Messages
