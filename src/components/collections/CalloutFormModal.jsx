@@ -56,10 +56,12 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
   const loadCalloutForEditing = async (calloutId) => {
     try {
       setLoading(true);
+      
       const response = await calloutService.getCallout(calloutId);
       
       if (response.ok) {
         const data = await response.json();
+        
         if (data.success) {
           const calloutData = data.data;
           
@@ -67,14 +69,14 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
           const materials = calloutData.items?.map(item => ({
             materialId: item.materialId,
             materialName: item.materialName,
-            estimatedQuantity: item.estimatedQuantity,
+            estimatedQuantity: item.requestedQuantity, // Map from backend requestedQuantity
             unit: item.materialUnit,
             qualityGrade: item.qualityGrade,
-            condition: item.condition,
+            condition: item.materialCondition, // Map from backend materialCondition
             notes: item.notes
           })) || [];
 
-          setFormData({
+          const newFormData = {
             contractId: calloutData.contractId || '',
             supplierId: calloutData.supplierId || '',
             locationId: calloutData.locationId || '',
@@ -83,8 +85,16 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
             contactPerson: calloutData.contactPerson || '',
             contactPhone: calloutData.contactPhone || '',
             materials: materials
-          });
-          setSpecialInstructions(calloutData.specialInstructions || '');
+          };
+
+          setFormData(newFormData);
+          setSpecialInstructions(calloutData.notes || ''); // Map from backend notes field
+          
+          // Also update contractMaterials to show quantities in the form
+          if (calloutData.contractId) {
+            // Load contract details to get the full material list, then merge with existing quantities
+            loadContractDetails(calloutData.contractId, materials);
+          }
         }
       }
     } catch (error) {
@@ -226,9 +236,9 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
         specialInstructions: specialInstructions,
         materials: selectedMaterials.map(material => ({
           materialId: material.materialId,
-          availableQuantity: material.availableQuantity,
+          estimatedQuantity: material.availableQuantity, // Map frontend availableQuantity to backend estimatedQuantity
           unit: material.unit,
-          materialCondition: material.materialCondition,
+          condition: material.materialCondition, // Map to backend condition field
           contractRate: parseFloat(material.contractRate) || 0,
           appliedRateType: material.appliedRateType || material.rateType,
           estimatedValue: material.availableQuantity * (parseFloat(material.contractRate) || 0),
