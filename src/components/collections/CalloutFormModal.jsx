@@ -69,10 +69,10 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
           const materials = calloutData.items?.map(item => ({
             materialId: item.materialId,
             materialName: item.materialName,
-            estimatedQuantity: item.requestedQuantity, // Map from backend requestedQuantity
+            availableQuantity: item.availableQuantity, // Map from backend availableQuantity
             unit: item.materialUnit,
             qualityGrade: item.qualityGrade,
-            condition: item.materialCondition, // Map from backend materialCondition
+            materialCondition: item.materialCondition, // Map from backend materialCondition
             notes: item.notes
           })) || [];
 
@@ -131,9 +131,10 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
     }
   };
 
-  const loadContractDetails = async () => {
+  const loadContractDetails = async (contractId = null, existingMaterials = []) => {
     try {
-      const response = await contractService.getById(formData.contractId);
+      const targetContractId = contractId || formData.contractId;
+      const response = await contractService.getById(targetContractId);
       if (response.success && response.data) {
         const contract = response.data;
         
@@ -159,6 +160,9 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
               });
             }
             
+            // Check if this material has existing quantities from loaded callout data
+            const existingMaterial = existingMaterials.find(m => m.materialId === rate.materialId);
+            
             materials.push({
               materialId: rate.materialId,
               materialName: rate.materialName,
@@ -172,9 +176,9 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
               maximumQuantity: rate.maximumQuantity,
               locationId: locationId,
               locationName: locationName,
-              availableQuantity: 0,
-              materialCondition: 'good',
-              notes: ''
+              availableQuantity: existingMaterial?.availableQuantity || 0, // Use existing quantity if available
+              materialCondition: existingMaterial?.materialCondition || 'good',
+              notes: existingMaterial?.notes || ''
             });
           });
           
@@ -236,9 +240,9 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
         specialInstructions: specialInstructions,
         materials: selectedMaterials.map(material => ({
           materialId: material.materialId,
-          estimatedQuantity: material.availableQuantity, // Map frontend availableQuantity to backend estimatedQuantity
+          availableQuantity: material.availableQuantity, // Use consistent field name
           unit: material.unit,
-          condition: material.materialCondition, // Map to backend condition field
+          condition: material.materialCondition,
           contractRate: parseFloat(material.contractRate) || 0,
           appliedRateType: material.appliedRateType || material.rateType,
           estimatedValue: material.availableQuantity * (parseFloat(material.contractRate) || 0),
