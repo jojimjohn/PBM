@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2 } from 'lucide-react';
+import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { calloutService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
@@ -24,6 +24,11 @@ const CalloutManager = () => {
     total: 0,
     totalPages: 0
   });
+
+  // Driver and Status Management
+  const [showDriverModal, setShowDriverModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedCollectionOrder, setSelectedCollectionOrder] = useState(null);
 
   useEffect(() => {
     loadCallouts();
@@ -80,6 +85,42 @@ const CalloutManager = () => {
       } catch (error) {
         console.error('Error deleting callout:', error);
       }
+    }
+  };
+
+  const handleAssignDriver = (callout) => {
+    setSelectedCollectionOrder(callout);
+    setShowDriverModal(true);
+  };
+
+  const handleUpdateStatus = (callout) => {
+    setSelectedCollectionOrder(callout);
+    setShowStatusModal(true);
+  };
+
+  const handleDriverAssignmentSave = async (driverData) => {
+    try {
+      const response = await calloutService.updateDriverDetails(selectedCollectionOrder.id, driverData);
+      if (response.success) {
+        loadCallouts();
+        setShowDriverModal(false);
+        setSelectedCollectionOrder(null);
+      }
+    } catch (error) {
+      console.error('Error assigning driver:', error);
+    }
+  };
+
+  const handleStatusUpdate = async (statusData) => {
+    try {
+      const response = await calloutService.updateStatus(selectedCollectionOrder.id, statusData);
+      if (response.success) {
+        loadCallouts();
+        setShowStatusModal(false);
+        setSelectedCollectionOrder(null);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
     }
   };
 
@@ -169,6 +210,24 @@ const CalloutManager = () => {
       render: (value, row) => `${value || 0} ${row.currency || 'OMR'}`
     },
     {
+      key: 'driverName',
+      header: t('driver'),
+      render: (value, row) => (
+        <div>
+          {value ? (
+            <div>
+              <div className="font-medium">{value}</div>
+              {row.vehiclePlateNumber && (
+                <div className="text-sm text-gray-500">{row.vehiclePlateNumber}</div>
+              )}
+            </div>
+          ) : (
+            <span className="text-gray-400 text-sm">{t('notAssigned')}</span>
+          )}
+        </div>
+      )
+    },
+    {
       key: 'actions',
       header: t('actions'),
       render: (value, row) => (
@@ -180,6 +239,30 @@ const CalloutManager = () => {
           >
             <Eye className="w-4 h-4" />
           </button>
+          
+          {/* Driver Assignment - available for scheduled and in_progress orders */}
+          {(row.status === 'scheduled' || row.status === 'in_progress') && (
+            <button
+              onClick={() => handleAssignDriver(row)}
+              className="p-1 text-purple-600 hover:bg-purple-50 rounded"
+              title={t('assignDriver')}
+            >
+              <Truck className="w-4 h-4" />
+            </button>
+          )}
+          
+          {/* Status Update - available for scheduled and in_progress orders */}
+          {(row.status === 'scheduled' || row.status === 'in_progress') && (
+            <button
+              onClick={() => handleUpdateStatus(row)}
+              className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+              title={t('updateStatus')}
+            >
+              <Play className="w-4 h-4" />
+            </button>
+          )}
+          
+          {/* Edit/Delete - only for pending and scheduled orders */}
           {(row.status === 'pending' || row.status === 'scheduled') && (
             <>
               <button
@@ -314,6 +397,32 @@ const CalloutManager = () => {
             setShowDetailsModal(false);
             setSelectedCallout(null);
           }}
+        />
+      )}
+
+      {/* Driver Assignment Modal */}
+      {showDriverModal && selectedCollectionOrder && (
+        <DriverAssignmentModal
+          collectionOrder={selectedCollectionOrder}
+          isOpen={showDriverModal}
+          onClose={() => {
+            setShowDriverModal(false);
+            setSelectedCollectionOrder(null);
+          }}
+          onSave={handleDriverAssignmentSave}
+        />
+      )}
+
+      {/* Status Update Modal */}
+      {showStatusModal && selectedCollectionOrder && (
+        <StatusUpdateModal
+          collectionOrder={selectedCollectionOrder}
+          isOpen={showStatusModal}
+          onClose={() => {
+            setShowStatusModal(false);
+            setSelectedCollectionOrder(null);
+          }}
+          onSave={handleStatusUpdate}
         />
       )}
     </div>
@@ -587,6 +696,354 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose }) => {
           </button>
         </div>
       </div>
+    </Modal>
+  );
+};
+
+// Driver Assignment Modal Component
+const DriverAssignmentModal = ({ collectionOrder, isOpen, onClose, onSave }) => {
+  const { t } = useLocalization();
+  const [formData, setFormData] = useState({
+    driverName: collectionOrder.driverName || '',
+    driverPhone: collectionOrder.driverPhone || '',
+    vehiclePlateNumber: collectionOrder.vehiclePlateNumber || '',
+    vehicleType: collectionOrder.vehicleType || ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={t('assignDriver')}>
+      <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>
+            {t('collectionOrder')}: {collectionOrder.orderNumber}
+          </h3>
+          <p style={{ fontSize: '14px', color: '#64748b' }}>
+            {collectionOrder.contractTitle} - {collectionOrder.locationName}
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+              {t('driverName')} *
+            </label>
+            <input
+              type="text"
+              value={formData.driverName}
+              onChange={(e) => handleChange('driverName', e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+              {t('driverPhone')}
+            </label>
+            <input
+              type="tel"
+              value={formData.driverPhone}
+              onChange={(e) => handleChange('driverPhone', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+              {t('vehiclePlateNumber')} *
+            </label>
+            <input
+              type="text"
+              value={formData.vehiclePlateNumber}
+              onChange={(e) => handleChange('vehiclePlateNumber', e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+              {t('vehicleType')}
+            </label>
+            <select
+              value={formData.vehicleType}
+              onChange={(e) => handleChange('vehicleType', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            >
+              <option value="">{t('selectVehicleType')}</option>
+              <option value="truck">{t('truck')}</option>
+              <option value="pickup">{t('pickup')}</option>
+              <option value="van">{t('van')}</option>
+              <option value="trailer">{t('trailer')}</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            {t('cancel')}
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? t('saving') : t('assignDriver')}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+// Status Update Modal Component
+const StatusUpdateModal = ({ collectionOrder, isOpen, onClose, onSave }) => {
+  const { t } = useLocalization();
+  const [formData, setFormData] = useState({
+    status: collectionOrder.status || 'scheduled',
+    actualCollectionDate: '',
+    collectionNotes: '',
+    actualQuantityCollected: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const statusOptions = [
+    { value: 'scheduled', label: t('scheduled'), color: '#3b82f6' },
+    { value: 'in_progress', label: t('inProgress'), color: '#f59e0b' },
+    { value: 'completed', label: t('completed'), color: '#10b981' },
+    { value: 'cancelled', label: t('cancelled'), color: '#ef4444' }
+  ];
+
+  const getNextStatuses = (currentStatus) => {
+    switch (currentStatus) {
+      case 'scheduled':
+        return ['in_progress', 'cancelled'];
+      case 'in_progress':
+        return ['completed', 'cancelled'];
+      default:
+        return [];
+    }
+  };
+
+  const availableStatuses = statusOptions.filter(option => 
+    getNextStatuses(collectionOrder.status).includes(option.value) || option.value === collectionOrder.status
+  );
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={t('updateStatus')}>
+      <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>
+            {t('collectionOrder')}: {collectionOrder.orderNumber}
+          </h3>
+          <p style={{ fontSize: '14px', color: '#64748b' }}>
+            {collectionOrder.contractTitle} - {collectionOrder.locationName}
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+            {t('status')} *
+          </label>
+          <select
+            value={formData.status}
+            onChange={(e) => handleChange('status', e.target.value)}
+            required
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          >
+            {availableStatuses.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {formData.status === 'completed' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+                {t('actualCollectionDate')}
+              </label>
+              <input
+                type="date"
+                value={formData.actualCollectionDate}
+                onChange={(e) => handleChange('actualCollectionDate', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+                {t('actualQuantityCollected')}
+              </label>
+              <input
+                type="number"
+                step="0.001"
+                value={formData.actualQuantityCollected}
+                onChange={(e) => handleChange('actualQuantityCollected', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+            {t('notes')}
+          </label>
+          <textarea
+            value={formData.collectionNotes}
+            onChange={(e) => handleChange('collectionNotes', e.target.value)}
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              fontSize: '14px',
+              resize: 'vertical'
+            }}
+            placeholder={t('enterCollectionNotes')}
+          />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            {t('cancel')}
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? t('updating') : t('updateStatus')}
+          </button>
+        </div>
+      </form>
     </Modal>
   );
 };

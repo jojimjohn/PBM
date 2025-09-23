@@ -122,6 +122,52 @@ export const calloutService = {
     });
   },
 
+  // Update driver details for collection order
+  updateDriverDetails: async (id, driverData) => {
+    try {
+      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}/driver`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(driverData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data: data.data, message: data.message };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Failed to update driver details' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
+  // Update status with transition validation
+  updateStatus: async (id, statusData) => {
+    try {
+      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(statusData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data: data.data, message: data.message };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Failed to update status' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Network error' };
+    }
+  },
+
   // Get active callouts summary
   getActiveCalloutsSummary: async () => {
     return await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts/summary`);

@@ -33,6 +33,13 @@ const Contracts = () => {
   const [createFormData, setCreateFormData] = useState({})
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewContractData, setViewContractData] = useState(null)
+  
+  // Soft delete state management for edit mode
+  const [pendingDeletions, setPendingDeletions] = useState({
+    locations: [], // locationIds to be deleted
+    materials: []  // materialIds to be deleted
+  })
+  const [originalFormData, setOriginalFormData] = useState(null)
 
   useEffect(() => {
     loadContracts()
@@ -130,13 +137,102 @@ const Contracts = () => {
     }
   }
 
+  const validateContractForm = (formData) => {
+    const errors = []
+    
+    // Basic field validation
+    if (!formData.supplierId) errors.push('Supplier is required')
+    if (!formData.contractNumber) errors.push('Contract number is required')
+    // Title is auto-generated, so not required from user
+    if (!formData.startDate) errors.push('Start date is required')
+    if (!formData.endDate) errors.push('End date is required')
+    
+    // Location and material validation
+    if (!formData.locations || formData.locations.length === 0) {
+      errors.push('At least one contract location is required')
+    } else {
+      let hasMaterialRates = false
+      formData.locations.forEach((location, locationIndex) => {
+        if (!location.materials || location.materials.length === 0) {
+          errors.push(`Location "${location.locationName || location.name}" must have at least one material rate defined`)
+        } else {
+          location.materials.forEach((material, materialIndex) => {
+            const locationName = location.locationName || location.name || `Location ${locationIndex + 1}`
+            
+            // Check if material ID is selected (could be string or number)
+            const hasValidMaterial = material.materialId && material.materialId !== '' && material.materialId !== 'undefined'
+            if (!hasValidMaterial) {
+              errors.push(`${locationName} row ${materialIndex + 1}: Material selection is required`)
+            }
+            
+            // Check if unit is selected
+            if (!material.unit || material.unit === '') {
+              errors.push(`${locationName} row ${materialIndex + 1}: Unit is required`)
+            }
+            
+            // Check contract rate for non-free rate types
+            if (material.rateType !== 'free' && (!material.contractRate || material.contractRate <= 0)) {
+              errors.push(`${locationName} row ${materialIndex + 1}: Contract rate must be greater than 0`)
+            }
+            
+            // Count valid material rates
+            if (hasValidMaterial && material.unit && material.unit !== '' && 
+                (material.rateType === 'free' || (material.contractRate && material.contractRate > 0))) {
+              hasMaterialRates = true
+            }
+          })
+        }
+      })
+      
+      if (!hasMaterialRates) {
+        errors.push('At least one complete material rate (material + unit + rate) must be defined')
+      }
+    }
+    
+    return errors
+  }
+
+  const isFormValid = (formData) => {
+    const errors = validateContractForm(formData)
+    return errors.length === 0
+  }
+
+  // Soft delete management functions
+  const clearPendingDeletions = () => {
+    setPendingDeletions({ locations: [], materials: [] })
+    setOriginalFormData(null)
+  }
+
+  const markLocationForDeletion = (locationId) => {
+    setPendingDeletions(prev => ({
+      ...prev,
+      locations: [...prev.locations, locationId]
+    }))
+  }
+
+  const markMaterialForDeletion = (materialId) => {
+    setPendingDeletions(prev => ({
+      ...prev,
+      materials: [...prev.materials, materialId]
+    }))
+  }
+
+  const restoreFromOriginal = () => {
+    if (originalFormData) {
+      setEditFormData(JSON.parse(JSON.stringify(originalFormData)))
+      clearPendingDeletions()
+    }
+  }
+
   const handleCreateContract = async () => {
     try {
       setLoading(true)
       
-      // Basic validation
-      if (!createFormData.supplierId || !createFormData.startDate || !createFormData.endDate) {
-        alert(t('fillRequiredFields'))
+      // Comprehensive validation
+      const validationErrors = validateContractForm(createFormData)
+      if (validationErrors.length > 0) {
+        alert('Please fix the following errors:\n\n' + validationErrors.join('\n'))
+        setLoading(false)
         return
       }
 
@@ -198,12 +294,28 @@ const Contracts = () => {
     try {
       setLoading(true)
       
-      const response = await contractService.update(selectedContract.id, editFormData)
+      // Comprehensive validation for update
+      const validationErrors = validateContractForm(editFormData)
+      if (validationErrors.length > 0) {
+        alert('Please fix the following errors:\n\n' + validationErrors.join('\n'))
+        setLoading(false)
+        return
+      }
+      
+      // Ensure title is auto-generated if empty
+      const updateData = {
+        ...editFormData,
+        title: editFormData.title || `Contract ${editFormData.contractNumber}`
+      }
+      
+      const response = await contractService.update(selectedContract.id, updateData)
       
       if (response.success) {
         setContracts(prev => prev.map(c => c.id === selectedContract.id ? response.data : c))
         setShowEditForm(false)
         setSelectedContract(null)
+        // Clear any pending deletions
+        clearPendingDeletions()
         alert(t('contractUpdated', 'Contract updated successfully!'))
       } else {
         console.error('Error updating contract:', response.error)
@@ -224,6 +336,10 @@ const Contracts = () => {
       
       if (response.success) {
         const contract = response.data
+        
+        // Store original data for rollback capability
+        setOriginalFormData(JSON.parse(JSON.stringify(contract)))
+        clearPendingDeletions()
         
         // Transform contract data to form format
         // Group rates by location
@@ -677,6 +793,10 @@ const Contracts = () => {
           isEdit={false}
           loading={loading}
           t={t}
+          // Enhanced validation props
+          validateForm={validateContractForm}
+          isFormValid={isFormValid}
+          clearPendingDeletions={clearPendingDeletions}
         />
       )}
 
@@ -685,8 +805,21 @@ const Contracts = () => {
         <ContractFormModal
           isOpen={showEditForm}
           onClose={() => {
+            // Enhanced close with rollback protection
+            if (originalFormData) {
+              const hasChanges = JSON.stringify(editFormData) !== JSON.stringify(originalFormData)
+              if (hasChanges) {
+                const confirmClose = window.confirm(
+                  'You have unsaved changes. Are you sure you want to close?\n\n' +
+                  'Note: Any modifications will be lost and original data will be restored.'
+                )
+                if (!confirmClose) return
+              }
+            }
+            
             setShowEditForm(false)
             setSelectedContract(null)
+            clearPendingDeletions()
           }}
           onSave={handleUpdateContract}
           title={t('editContract', 'Edit Contract')}
@@ -700,6 +833,12 @@ const Contracts = () => {
           isEdit={true}
           loading={loading}
           t={t}
+          // Enhanced validation props
+          validateForm={validateContractForm}
+          isFormValid={isFormValid}
+          clearPendingDeletions={clearPendingDeletions}
+          originalFormData={originalFormData}
+          restoreFromOriginal={restoreFromOriginal}
         />
       )}
 
@@ -1233,7 +1372,7 @@ const ContractViewModal = ({
   )
 }
 
-// Contract Form Modal Component (Simplified without locations)
+// Contract Form Modal Component (Enhanced with validation)
 const ContractFormModal = ({ 
   isOpen, 
   onClose, 
@@ -1248,7 +1387,13 @@ const ContractFormModal = ({
   contractTypes,
   isEdit, 
   loading,
-  t 
+  t,
+  // Enhanced validation props
+  validateForm,
+  isFormValid,
+  originalFormData,
+  restoreFromOriginal,
+  clearPendingDeletions
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -1514,10 +1659,51 @@ const ContractFormModal = ({
 
         {/* Contract Locations with Materials */}
         <div className="form-section">
-          <div className="form-section-title">
-            <MapPin size={20} />
-            Contract Locations & Materials
-            <span className="section-subtitle">Select supplier locations and define material rates</span>
+          <div className="form-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MapPin size={20} />
+                Contract Locations & Materials
+                <span style={{ color: '#ef4444', fontWeight: 'bold' }}>*</span>
+              </div>
+              <span className="section-subtitle">Select supplier locations and define material rates</span>
+            </div>
+            {/* Validation Status Indicator */}
+            {formData.locations && formData.locations.length > 0 && 
+             formData.locations.some(loc => loc.materials && loc.materials.length > 0 && 
+                                           loc.materials.some(mat => mat.materialId && mat.unit)) ? (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                color: '#10b981', 
+                fontSize: '14px',
+                fontWeight: '500',
+                padding: '4px 8px',
+                backgroundColor: '#f0fdf4',
+                borderRadius: '6px',
+                border: '1px solid #bbf7d0'
+              }}>
+                <Check size={16} />
+                Valid
+              </div>
+            ) : (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                color: '#ef4444', 
+                fontSize: '14px',
+                fontWeight: '500',
+                padding: '4px 8px',
+                backgroundColor: '#fef2f2',
+                borderRadius: '6px',
+                border: '1px solid #fecaca'
+              }}>
+                <AlertTriangle size={16} />
+                Required
+              </div>
+            )}
           </div>
 
           {/* Add Location Button */}
@@ -1748,12 +1934,26 @@ const ContractFormModal = ({
             ))}
 
             {formData.locations.length === 0 && formData.supplierId && supplierLocations.length > 0 && (
-              <div className="empty-locations">
+              <div className="empty-locations" style={{
+                border: '2px dashed #ef4444',
+                borderRadius: '8px',
+                padding: '24px',
+                textAlign: 'center',
+                backgroundColor: '#fef2f2',
+                margin: '16px 0'
+              }}>
                 <div className="empty-state-icon">
-                  <MapPin size={48} />
+                  <AlertTriangle size={48} style={{ color: '#ef4444' }} />
                 </div>
-                <h3>No locations selected</h3>
-                <p>Select locations from the dropdown above to define material rates for this contract.</p>
+                <h3 style={{ color: '#ef4444', marginBottom: '8px' }}>⚠️ Contract Locations Required</h3>
+                <p style={{ color: '#dc2626', fontWeight: '500' }}>
+                  You must select locations and define material rates to create this contract.
+                  <br />
+                  Use the dropdown above to add locations, then define rates for each material.
+                </p>
+                <p style={{ color: '#991b1b', fontSize: '14px', marginTop: '8px' }}>
+                  💡 Tip: Scroll up to find the "Add Location" dropdown
+                </p>
               </div>
             )}
           </div>
@@ -1761,13 +1961,40 @@ const ContractFormModal = ({
 
         {/* Form Actions */}
         <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button 
+            type="button" 
+            className="btn btn-outline" 
+            onClick={() => {
+              if (isEdit && originalFormData && restoreFromOriginal) {
+                // Check if form has been modified
+                const hasChanges = JSON.stringify(formData) !== JSON.stringify(originalFormData)
+                if (hasChanges) {
+                  const confirmCancel = window.confirm(
+                    'You have unsaved changes. Are you sure you want to cancel?\n\n' +
+                    'Note: Any modifications will be lost and original data will be restored.'
+                  )
+                  if (!confirmCancel) return
+                  
+                  // Restore original data
+                  restoreFromOriginal()
+                }
+              }
+              if (clearPendingDeletions) {
+                clearPendingDeletions()
+              }
+              onClose()
+            }}
+          >
             Cancel
           </button>
           <button 
             type="submit" 
             className="btn btn-primary" 
-            disabled={loading}
+            disabled={loading || (isFormValid ? !isFormValid(formData) : false)}
+            style={{
+              opacity: (isFormValid && !isFormValid(formData) && !loading) ? 0.6 : 1,
+              cursor: (isFormValid && !isFormValid(formData) && !loading) ? 'not-allowed' : 'pointer'
+            }}
           >
             {loading ? (
               <>

@@ -6,12 +6,11 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Modal from '../components/ui/Modal';
 import CollectionDashboard from '../components/collections/CollectionDashboard';
 import CalloutManager from '../components/collections/CalloutManager';
-import CollectionOrderManager from '../components/collections/CollectionOrderManager';
 import './Collections.css';
 
 const Collections = () => {
   const { t, isRTL } = useLocalization();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('orders');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -36,16 +35,10 @@ const Collections = () => {
       component: CollectionDashboard
     },
     {
-      id: 'notifications',
-      name: t('supplierNotifications'),
-      icon: <AlertCircle className="w-4 h-4" />,
-      component: CalloutManager
-    },
-    {
       id: 'orders',
       name: t('collectionOrders'),
       icon: <Truck className="w-4 h-4" />,
-      component: CollectionOrderManager
+      component: CalloutManager
     }
   ];
 
