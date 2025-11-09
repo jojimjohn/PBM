@@ -5,7 +5,8 @@ import systemSettingsService from '../../../services/systemSettingsService'
 import inventoryService from '../../../services/inventoryService'
 import customerService from '../../../services/customerService'
 import materialService from '../../../services/materialService'
-import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package } from 'lucide-react'
+import branchService from '../../../services/branchService'
+import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package, Building } from 'lucide-react'
 import './SalesOrderForm.css'
 
 const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, editingOrder = null }) => {
@@ -14,6 +15,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   const [formData, setFormData] = useState({
     orderNumber: '',
     customer: selectedCustomer || null,
+    branch_id: '',
     orderDate: getInputDate(),
     deliveryDate: '',
     items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
@@ -28,9 +30,11 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
   const [customers, setCustomers] = useState([])
   const [materials, setMaterials] = useState([])
+  const [branches, setBranches] = useState([])
   const [contractRates, setContractRates] = useState({})
   const [warnings, setWarnings] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingBranches, setLoadingBranches] = useState(false)
   const [overrideRequests, setOverrideRequests] = useState({})
   const [showOverrideModal, setShowOverrideModal] = useState(false)
   const [currentOverride, setCurrentOverride] = useState(null)
@@ -44,6 +48,9 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
     // Load VAT rate from database
     loadVatRate()
+
+    // Load active branches
+    loadBranches()
   }, [isOpen])
 
   const loadVatRate = async () => {
@@ -53,6 +60,20 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     } catch (error) {
       console.error('Error loading VAT rate:', error)
       // Keep default 5% if loading fails
+    }
+  }
+
+  const loadBranches = async () => {
+    try {
+      setLoadingBranches(true)
+      const response = await branchService.getActive()
+      if (response.success) {
+        setBranches(response.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading branches:', error)
+    } finally {
+      setLoadingBranches(false)
     }
   }
 
@@ -101,6 +122,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         setFormData({
           orderNumber: editingOrder.orderNumber || editingOrder.id || '',
           customer: customerObj,
+          branch_id: editingOrder.branch_id || '',
           orderDate: editingOrder.date ? editingOrder.date.split('T')[0] : getInputDate(),
           deliveryDate: deliveryDate,
           items: transformedItems,
@@ -129,6 +151,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       setFormData({
         orderNumber: '',
         customer: null,
+        branch_id: '',
         orderDate: getInputDate(),
         deliveryDate: '',
         items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
@@ -654,6 +677,28 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 ))}
               </select>
             </div>
+
+            <div className="form-group">
+              <label>
+                Branch {formData.status !== 'draft' && '*'}
+                <Building size={14} style={{ marginLeft: '4px', display: 'inline' }} />
+              </label>
+              <select
+                value={formData.branch_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, branch_id: e.target.value }))}
+                required={formData.status !== 'draft'}
+                disabled={loadingBranches}
+              >
+                <option value="">Select Branch...</option>
+                {branches.map(branch => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name} ({branch.code})
+                  </option>
+                ))}
+              </select>
+              {loadingBranches && <span className="loading-text">Loading branches...</span>}
+            </div>
+
             {formData.customer && (
               <>
                 <div className="form-group">

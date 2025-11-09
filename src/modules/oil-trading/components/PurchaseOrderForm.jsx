@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import systemSettingsService from '../../../services/systemSettingsService'
-import { Plus, Trash2, Save, Truck, FileText, Calculator, Package, AlertTriangle } from 'lucide-react'
+import branchService from '../../../services/branchService'
+import { Plus, Trash2, Save, Truck, FileText, Calculator, Package, AlertTriangle, Building } from 'lucide-react'
 import './PurchaseOrderForm.css'
 
 const PurchaseOrderForm = ({ 
@@ -20,6 +21,7 @@ const PurchaseOrderForm = ({
   const [formData, setFormData] = useState({
     orderNumber: '',
     supplierId: '',
+    branch_id: '',
     orderDate: getInputDate(),
     expectedDeliveryDate: '',
     paymentTerms: 30,
@@ -34,6 +36,8 @@ const PurchaseOrderForm = ({
 
   const [loading, setLoading] = useState(false)
   const [loadingVat, setLoadingVat] = useState(false)
+  const [branches, setBranches] = useState([])
+  const [loadingBranches, setLoadingBranches] = useState(false)
   const [errors, setErrors] = useState({})
 
   // Helper function to format date from ISO to yyyy-MM-dd
@@ -77,6 +81,9 @@ const PurchaseOrderForm = ({
 
       // Load VAT rate from database
       loadVatRate()
+
+      // Load active branches
+      loadBranches()
     }
   }, [isOpen, initialData, getInputDate])
 
@@ -90,6 +97,20 @@ const PurchaseOrderForm = ({
       // Keep default 5% if loading fails
     } finally {
       setLoadingVat(false)
+    }
+  }
+
+  const loadBranches = async () => {
+    try {
+      setLoadingBranches(true)
+      const response = await branchService.getActive()
+      if (response.success) {
+        setBranches(response.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading branches:', error)
+    } finally {
+      setLoadingBranches(false)
     }
   }
 
@@ -184,6 +205,11 @@ const PurchaseOrderForm = ({
     // Required for all statuses
     if (!formData.supplierId) {
       newErrors.supplierId = 'Please select a supplier'
+    }
+
+    // Branch is required for new orders (not draft edits)
+    if (!formData.branch_id && !isDraft) {
+      newErrors.branch_id = 'Please select a branch'
     }
 
     if (!formData.orderDate) {
@@ -326,6 +352,29 @@ const PurchaseOrderForm = ({
                 ))}
               </select>
               {errors.supplierId && <span className="error-message">{errors.supplierId}</span>}
+            </div>
+
+            <div className="form-group">
+              <label>
+                Branch {formData.status !== 'draft' && '*'}
+                <Building size={14} style={{ marginLeft: '4px', display: 'inline' }} />
+              </label>
+              <select
+                value={formData.branch_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, branch_id: e.target.value }))}
+                required={formData.status !== 'draft'}
+                className={errors.branch_id ? 'error' : ''}
+                disabled={loadingBranches}
+              >
+                <option value="">Select Branch...</option>
+                {branches.map(branch => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name} ({branch.code})
+                  </option>
+                ))}
+              </select>
+              {errors.branch_id && <span className="error-message">{errors.branch_id}</span>}
+              {loadingBranches && <span className="loading-text">Loading branches...</span>}
             </div>
 
             <div className="form-group">
