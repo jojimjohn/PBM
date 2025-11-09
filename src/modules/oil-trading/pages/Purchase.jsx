@@ -40,6 +40,7 @@ const Purchase = () => {
   // Modal states
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [viewingOrder, setViewingOrder] = useState(null)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showReceiptForm, setShowReceiptForm] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
@@ -248,10 +249,20 @@ const Purchase = () => {
     }
   }
 
-  const handleViewOrder = (order) => {
-    console.log('Viewing purchase order:', order)
-    setSelectedOrder(order)
-    alert(`✅ Viewing details for order ${order.orderNumber}`)
+  const handleViewOrder = async (order) => {
+    try {
+      console.log('Viewing purchase order:', order)
+      // Fetch full order details including items
+      const result = await purchaseOrderService.getById(order.id)
+      if (result.success && result.data) {
+        setViewingOrder(result.data)
+      } else {
+        alert(`❌ Failed to load order details: ${result.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error loading order details:', error)
+      alert(`❌ Failed to load order details: ${error.message}`)
+    }
   }
 
   const handleApproveOrder = async (order) => {
@@ -792,6 +803,99 @@ const Purchase = () => {
           isOpen={showLocationManager}
           onClose={() => setShowLocationManager(false)}
         />
+      )}
+
+      {/* View Purchase Order Modal */}
+      {viewingOrder && (
+        <div className="modal-backdrop" onClick={() => setViewingOrder(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Purchase Order Details</h3>
+              <button className="modal-close" onClick={() => setViewingOrder(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="order-details">
+                <div className="order-info-grid">
+                  <div className="info-row">
+                    <strong>Order Number:</strong>
+                    <span>{viewingOrder.orderNumber}</span>
+                  </div>
+                  <div className="info-row">
+                    <strong>Supplier:</strong>
+                    <span>{viewingOrder.supplierName}</span>
+                  </div>
+                  <div className="info-row">
+                    <strong>Order Date:</strong>
+                    <span>{formatDate(viewingOrder.orderDate)}</span>
+                  </div>
+                  <div className="info-row">
+                    <strong>Expected Delivery:</strong>
+                    <span>{viewingOrder.expectedDeliveryDate ? formatDate(viewingOrder.expectedDeliveryDate) : 'Not specified'}</span>
+                  </div>
+                  <div className="info-row">
+                    <strong>Status:</strong>
+                    <span className={`status-badge status-${viewingOrder.status}`}>
+                      {viewingOrder.status?.charAt(0).toUpperCase() + viewingOrder.status?.slice(1)}
+                    </span>
+                  </div>
+                  {viewingOrder.notes && (
+                    <div className="info-row full-width">
+                      <strong>Notes:</strong>
+                      <span>{viewingOrder.notes}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="order-totals">
+                  <div className="total-row">
+                    <span>Subtotal:</span>
+                    <span>{formatCurrency(viewingOrder.subtotal)}</span>
+                  </div>
+                  <div className="total-row">
+                    <span>Tax Amount:</span>
+                    <span>{formatCurrency(viewingOrder.taxAmount)}</span>
+                  </div>
+                  <div className="total-row">
+                    <span>Shipping Cost:</span>
+                    <span>{formatCurrency(viewingOrder.shippingCost)}</span>
+                  </div>
+                  <div className="total-row total-final">
+                    <strong>Total Amount:</strong>
+                    <strong>{formatCurrency(viewingOrder.totalAmount)}</strong>
+                  </div>
+                </div>
+
+                {viewingOrder.items && viewingOrder.items.length > 0 && (
+                  <div className="order-items">
+                    <h4>Order Items</h4>
+                    <table className="items-table">
+                      <thead>
+                        <tr>
+                          <th>Material</th>
+                          <th>Code</th>
+                          <th>Quantity</th>
+                          <th>Unit Price</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingOrder.items.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.materialName}</td>
+                            <td>{item.materialCode}</td>
+                            <td>{item.quantityOrdered} {item.unit}</td>
+                            <td>{formatCurrency(item.unitPrice)}</td>
+                            <td>{formatCurrency(item.totalPrice)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

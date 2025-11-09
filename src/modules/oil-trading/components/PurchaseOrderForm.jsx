@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import systemSettingsService from '../../../services/systemSettingsService'
 import { Plus, Trash2, Save, Truck, FileText, Calculator, Package, AlertTriangle } from 'lucide-react'
 import './PurchaseOrderForm.css'
 
@@ -32,24 +33,65 @@ const PurchaseOrderForm = ({
   })
 
   const [loading, setLoading] = useState(false)
+  const [loadingVat, setLoadingVat] = useState(false)
   const [errors, setErrors] = useState({})
+
+  // Helper function to format date from ISO to yyyy-MM-dd
+  const formatDateForInput = (dateValue) => {
+    if (!dateValue) return ''
+    // If it's already in yyyy-MM-dd format, return as is
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return dateValue
+    }
+    // Convert ISO format or Date object to yyyy-MM-dd
+    try {
+      const date = new Date(dateValue)
+      if (isNaN(date.getTime())) return ''
+      return date.toISOString().split('T')[0]
+    } catch {
+      return ''
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        // Editing existing order
-        setFormData({ ...initialData })
+        // Editing existing order - ensure items is always an array and format dates
+        setFormData({
+          ...initialData,
+          orderDate: formatDateForInput(initialData.orderDate),
+          expectedDeliveryDate: formatDateForInput(initialData.expectedDeliveryDate),
+          items: initialData.items && initialData.items.length > 0
+            ? initialData.items
+            : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
+        })
       } else {
         // Creating new order - generate order number
         const orderNum = `PO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`
-        setFormData(prev => ({ 
-          ...prev, 
+        setFormData(prev => ({
+          ...prev,
           orderNumber: orderNum,
           orderDate: getInputDate()
         }))
       }
+
+      // Load VAT rate from database
+      loadVatRate()
     }
   }, [isOpen, initialData, getInputDate])
+
+  const loadVatRate = async () => {
+    try {
+      setLoadingVat(true)
+      const vatRate = await systemSettingsService.getVatRate()
+      setFormData(prev => ({ ...prev, taxPercent: vatRate }))
+    } catch (error) {
+      console.error('Error loading VAT rate:', error)
+      // Keep default 5% if loading fails
+    } finally {
+      setLoadingVat(false)
+    }
+  }
 
   useEffect(() => {
     calculateTotals()
@@ -132,7 +174,14 @@ const PurchaseOrderForm = ({
 
   const validateForm = () => {
     const newErrors = {}
+    const isDraft = formData.status === 'draft'
 
+    console.log('🔍 PO Validation Debug:')
+    console.log('- Status:', formData.status)
+    console.log('- isDraft:', isDraft)
+    console.log('- Items:', formData.items)
+
+    // Required for all statuses
     if (!formData.supplierId) {
       newErrors.supplierId = 'Please select a supplier'
     }
@@ -141,29 +190,38 @@ const PurchaseOrderForm = ({
       newErrors.orderDate = 'Order date is required'
     }
 
-    if (!formData.expectedDeliveryDate) {
-      newErrors.expectedDeliveryDate = 'Expected delivery date is required'
+    // Only required for non-draft statuses
+    if (!isDraft) {
+      if (!formData.expectedDeliveryDate) {
+        newErrors.expectedDeliveryDate = 'Expected delivery date is required'
+      }
+
+      if (formData.expectedDeliveryDate && new Date(formData.expectedDeliveryDate) <= new Date(formData.orderDate)) {
+        newErrors.expectedDeliveryDate = 'Delivery date must be after order date'
+      }
+
+      const hasValidItems = formData.items.some(item =>
+        item.materialId && item.quantity && item.rate
+      )
+
+      console.log('- hasValidItems:', hasValidItems)
+
+      if (!hasValidItems) {
+        newErrors.items = 'Please add at least one valid item with complete details'
+      }
+    } else {
+      console.log('✅ Draft mode - skipping items validation')
     }
 
-    if (new Date(formData.expectedDeliveryDate) <= new Date(formData.orderDate)) {
-      newErrors.expectedDeliveryDate = 'Delivery date must be after order date'
-    }
-
-    const hasValidItems = formData.items.some(item => 
-      item.materialId && item.quantity && item.rate
-    )
-
-    if (!hasValidItems) {
-      newErrors.items = 'Please add at least one valid item'
-    }
-
-    // Validate individual items
+    // Validate individual items (only if filled)
     formData.items.forEach((item, index) => {
       if (item.materialId && (!item.quantity || !item.rate)) {
+        console.log(`❌ Item ${index} incomplete:`, item)
         newErrors[`item_${index}`] = 'Please fill in quantity and rate'
       }
     })
 
+    console.log('- Validation errors:', newErrors)
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -180,12 +238,28 @@ const PurchaseOrderForm = ({
     try {
       // Add supplier name for display purposes
       const supplier = suppliers.find(s => s.id === formData.supplierId)
+
+      // For drafts: allow items with at least materialId (partial items OK)
+      // For confirmed: require all fields (materialId, quantity, rate)
+      const isDraft = formData.status === 'draft'
+      const filteredItems = isDraft
+        ? formData.items.filter(item => item.materialId) // Only need material for drafts
+        : formData.items.filter(item => item.materialId && item.quantity && item.rate) // All fields for confirmed
+
+      console.log('📤 Submitting PO Data:')
+      console.log('- Status:', formData.status)
+      console.log('- isDraft:', isDraft)
+      console.log('- Items before filter:', formData.items)
+      console.log('- Items after filter:', filteredItems)
+
       const orderData = {
         ...formData,
         supplierName: supplier?.name || '',
         // Filter out empty items
-        items: formData.items.filter(item => item.materialId && item.quantity && item.rate)
+        items: filteredItems
       }
+
+      console.log('- Final orderData:', orderData)
 
       await onSave(orderData)
     } catch (error) {
@@ -206,6 +280,16 @@ const PurchaseOrderForm = ({
       className="modal-xxl"
     >
       <form className="purchase-order-form" onSubmit={handleSubmit}>
+        {/* Draft Mode Info */}
+        {formData.status === 'draft' && (
+          <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={18} style={{ color: '#1976d2' }} />
+            <span style={{ color: '#1565c0' }}>
+              <strong>Draft Mode:</strong> You can save with minimal information (Supplier and Order Date only). Additional details can be added later.
+            </span>
+          </div>
+        )}
+
         {/* Order Header */}
         <div className="form-section">
           <div className="form-section-title">
@@ -257,13 +341,13 @@ const PurchaseOrderForm = ({
             </div>
 
             <div className="form-group">
-              <label>Expected Delivery Date *</label>
+              <label>Expected Delivery Date {formData.status !== 'draft' && '*'}</label>
               <input
                 type="date"
                 value={formData.expectedDeliveryDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, expectedDeliveryDate: e.target.value }))}
                 min={formData.orderDate}
-                required
+                required={formData.status !== 'draft'}
                 className={errors.expectedDeliveryDate ? 'error' : ''}
               />
               {errors.expectedDeliveryDate && <span className="error-message">{errors.expectedDeliveryDate}</span>}
@@ -373,14 +457,15 @@ const PurchaseOrderForm = ({
             {formData.items.map((item, index) => {
               const selectedMaterial = materials.find(m => m.id === item.materialId)
               const hasContractRate = selectedSupplier?.contractDetails?.rates?.[item.materialId]
-              
+              const isDraft = formData.status === 'draft'
+
               return (
                 <div key={index} className={`item-row ${errors[`item_${index}`] ? 'error' : ''}`}>
                   <div className="item-field">
                     <select
                       value={item.materialId}
                       onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
-                      required
+                      required={!isDraft}
                     >
                       <option value="">Select material...</option>
                       {materials.map(material => (
@@ -390,7 +475,7 @@ const PurchaseOrderForm = ({
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="item-field">
                     <input
                       type="number"
@@ -399,16 +484,16 @@ const PurchaseOrderForm = ({
                       placeholder="0"
                       min="0"
                       step="0.001"
-                      required
+                      required={!isDraft}
                     />
                   </div>
-                  
+
                   <div className="item-field">
                     <span className="unit-display">
                       {selectedMaterial ? selectedMaterial.unit : '-'}
                     </span>
                   </div>
-                  
+
                   <div className="item-field rate-field">
                     <input
                       type="number"
@@ -417,7 +502,7 @@ const PurchaseOrderForm = ({
                       placeholder="0.000"
                       min="0"
                       step="0.001"
-                      required
+                      required={!isDraft}
                     />
                     {hasContractRate && (
                       <div className="contract-rate-indicator">
