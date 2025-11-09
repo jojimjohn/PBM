@@ -708,3 +708,434 @@
     padding: 1rem;
   }
 }
+
+/* ============================================
+   Card View Modal Styles - Enhanced UI
+   ============================================ */
+
+.petty-cash-view-modal .modal-content {
+  max-width: 900px;
+}
+
+.card-view-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Card Header */
+.card-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-icon {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-header-info .card-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: white;
+}
+
+.card-staff {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  opacity: 0.95;
+}
+
+.card-staff .separator {
+  opacity: 0.6;
+}
+
+.card-staff .department {
+  opacity: 0.85;
+}
+
+.card-header-right .status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+}
+
+.status-badge.badge-success {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.status-badge.badge-warning {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
+.status-badge.badge-danger {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.status-badge.badge-secondary {
+  background: rgba(107, 114, 128, 0.9);
+  color: white;
+}
+
+/* Balance Cards Grid */
+.balance-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.balance-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.balance-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.balance-card.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+}
+
+.balance-card.primary:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.balance-card-icon {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.balance-card-content {
+  flex: 1;
+}
+
+.balance-card-content label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.balance-card.primary label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.balance-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.balance-card.primary .balance-value {
+  color: white;
+}
+
+.balance-value.spent {
+  color: #dc2626;
+}
+
+.balance-card.primary .balance-value.spent {
+  color: #fecaca;
+}
+
+/* Utilization Section */
+.utilization-section {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+}
+
+.utilization-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.utilization-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.utilization-percent {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.utilization-bar-wrapper {
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 32px;
+}
+
+.utilization-bar {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.utilization-fill {
+  height: 100%;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  border-radius: 8px;
+}
+
+.utilization-fill.success {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.utilization-fill.warning {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.utilization-fill.danger {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.utilization-label-inside {
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Card Details Sections */
+.card-details-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.detail-item label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Expenses List View */
+.expenses-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.expense-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.expense-row:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.expense-left {
+  flex: 1;
+}
+
+.expense-description {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.expense-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.expense-number {
+  font-family: monospace;
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.expense-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.expense-amount-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.expense-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.expense-status-badge.approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.expense-status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.expense-status-badge.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Notes Display */
+.notes-display {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Modal Footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .card-view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .balance-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .expense-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+

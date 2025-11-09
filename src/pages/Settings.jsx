@@ -4,12 +4,13 @@ import { useLocalization } from '../context/LocalizationContext'
 import { useSystemSettings } from '../context/SystemSettingsContext'
 import { usePermissions } from '../hooks/usePermissions'
 import { PERMISSIONS } from '../config/roles'
-import { 
-  Settings as SettingsIcon, 
-  Globe, 
-  Calendar, 
-  DollarSign, 
-  Clock, 
+import systemSettingsService from '../services/systemSettingsService'
+import {
+  Settings as SettingsIcon,
+  Globe,
+  Calendar,
+  DollarSign,
+  Clock,
   Monitor,
   Save,
   RotateCcw,
@@ -19,7 +20,8 @@ import {
   Database,
   Users,
   Building,
-  AlertTriangle
+  AlertTriangle,
+  Percent
 } from 'lucide-react'
 import './Settings.css'
 
@@ -33,6 +35,9 @@ const Settings = () => {
   const [formData, setFormData] = useState({})
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
+  const [vatRate, setVatRate] = useState(5)
+  const [editingVat, setEditingVat] = useState(false)
+  const [savingVat, setSavingVat] = useState(false)
 
   // Check if user can manage settings
   const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS) || user?.role === 'SUPER_ADMIN'
@@ -42,7 +47,7 @@ const Settings = () => {
       setMessage({ type: 'error', text: t('unauthorized') })
       return
     }
-    
+
     // Initialize form data with current settings
     setFormData({
       language: currentLanguage,
@@ -53,7 +58,34 @@ const Settings = () => {
       firstDayOfWeek: settings.firstDayOfWeek,
       fiscalYearStart: settings.fiscalYearStart
     })
+
+    // Load VAT rate from database
+    loadVatRate()
   }, [settings, currentLanguage, canManageSettings, t])
+
+  const loadVatRate = async () => {
+    try {
+      const rate = await systemSettingsService.getVatRate()
+      setVatRate(rate)
+    } catch (error) {
+      console.error('Error loading VAT rate:', error)
+    }
+  }
+
+  const handleSaveVatRate = async () => {
+    try {
+      setSavingVat(true)
+      await systemSettingsService.updateSetting('vat_rate_percentage', vatRate)
+      setMessage({ type: 'success', text: 'VAT rate updated successfully' })
+      setEditingVat(false)
+      setTimeout(() => setMessage(null), 3000)
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to update VAT rate' })
+      setTimeout(() => setMessage(null), 3000)
+    } finally {
+      setSavingVat(false)
+    }
+  }
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -286,6 +318,60 @@ const Settings = () => {
                     <option value="01-07">July 1</option>
                     <option value="01-10">October 1</option>
                   </select>
+                </div>
+
+                <div className="setting-group">
+                  <label htmlFor="vatRate">
+                    <Percent size={16} style={{ display: 'inline', marginRight: '4px' }} />
+                    VAT Rate (%)
+                  </label>
+                  {editingVat ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        id="vatRate"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={vatRate}
+                        onChange={(e) => setVatRate(parseFloat(e.target.value) || 0)}
+                        style={{ flex: 1 }}
+                        disabled={savingVat}
+                      />
+                      <button
+                        onClick={handleSaveVatRate}
+                        disabled={savingVat}
+                        className="btn btn-primary btn-small"
+                      >
+                        {savingVat ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingVat(false)
+                          loadVatRate()
+                        }}
+                        disabled={savingVat}
+                        className="btn btn-outline btn-small"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ padding: '8px 12px', background: '#f0f0f0', borderRadius: '4px', flex: 1 }}>
+                        {vatRate}%
+                      </span>
+                      <button
+                        onClick={() => setEditingVat(true)}
+                        className="btn btn-outline btn-small"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                  <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                    This rate will be applied to all taxable customers' sales orders
+                  </small>
                 </div>
 
                 <div className="setting-info">

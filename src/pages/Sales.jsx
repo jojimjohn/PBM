@@ -84,32 +84,48 @@ const Sales = () => {
   const handleSaveOrder = async (orderData) => {
     try {
       setLoading(true)
-      console.log('Creating sales order:', orderData)
-      
-      // Create sales order via backend API
-      const result = await salesOrderService.create(orderData)
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create sales order')
+
+      let result
+
+      // Check if editing existing order or creating new one
+      if (editingOrder) {
+        console.log('Updating sales order:', editingOrder.id, orderData)
+        result = await salesOrderService.update(editingOrder.id, orderData)
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update sales order')
+        }
+
+        console.log('Sales order updated successfully:', result.data)
+      } else {
+        console.log('Creating sales order:', orderData)
+        result = await salesOrderService.create(orderData)
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create sales order')
+        }
+
+        console.log('Sales order created successfully:', result.data)
       }
-      
-      console.log('Sales order created successfully:', result.data)
-      
+
       // Refresh the sales orders list
       await loadSalesData()
-      
+
       // Reset form state
       setSelectedCustomer(null)
       setShowOrderForm(false)
       setEditingOrder(null)
-      
+
       // Show success message
-      alert(`✅ Sales order created successfully!\n\nOrder Number: ${result.data.orderNumber}\nTotal: OMR ${result.data.totalAmount?.toFixed(2) || 0}`)
-      
+      const totalAmount = parseFloat(result.data.totalAmount) || 0
+      const action = editingOrder ? 'updated' : 'created'
+      alert(`✅ Sales order ${action} successfully!\n\nOrder Number: ${result.data.orderNumber}\nTotal: OMR ${totalAmount.toFixed(2)}`)
+
     } catch (error) {
       console.error('Error saving sales order:', error)
       setError(error.message)
-      alert(`❌ Failed to create sales order:\n\n${error.message}`)
+      const action = editingOrder ? 'update' : 'create'
+      alert(`❌ Failed to ${action} sales order:\n\n${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -146,12 +162,12 @@ const Sales = () => {
   // Define table columns for sales orders
   const salesOrderColumns = [
     {
-      key: 'id',
+      key: 'orderNumber',
       header: t('orderNumber'),
       sortable: true,
-      render: (value) => (
+      render: (value, row) => (
         <div className="order-id">
-          <strong>{value || row.orderNumber}</strong>
+          <strong>{value || row.orderNumber || row.id}</strong>
         </div>
       )
     },
@@ -160,7 +176,7 @@ const Sales = () => {
       header: t('customer'),
       sortable: true,
       filterable: true,
-      render: (value) => (
+      render: (value, row) => (
         <div className="customer-info">
           <User size={14} />
           <span>{value || row.customerName}</span>
@@ -208,7 +224,7 @@ const Sales = () => {
       align: 'right',
       sortable: true,
       render: (value, row) => {
-        const total = value || row.totalAmount || 0
+        const total = parseFloat(value || row.totalAmount) || 0
         return `OMR ${total.toFixed(2)}`
       }
     },
@@ -220,17 +236,6 @@ const Sales = () => {
       render: (value) => (
         <span className={`status-badge ${value}`}>
           {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      )
-    },
-    {
-      key: 'paymentStatus',
-      header: t('paymentStatus'),
-      sortable: true,
-      filterable: true,
-      render: (value) => (
-        <span className={`payment-badge ${value || 'pending'}`}>
-          {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Pending'}
         </span>
       )
     },
@@ -422,7 +427,7 @@ const Sales = () => {
                 </svg>
               </div>
               <div className="summary-info">
-                <p className="summary-value">OMR {todaysSummary.totalSales.toFixed(2)}</p>
+                <p className="summary-value">OMR {(parseFloat(todaysSummary.totalSales) || 0).toFixed(2)}</p>
                 <p className="summary-label">Total Sales (Today)</p>
               </div>
             </div>
@@ -460,9 +465,9 @@ const Sales = () => {
       <SalesOrderForm
         isOpen={showOrderForm}
         onClose={() => {
-          setShowOrderForm(false)
-          setSelectedCustomer(null)
-          setEditingOrder(null)
+          setEditingOrder(null)      // Clear editing state first
+          setSelectedCustomer(null)  // Clear customer
+          setShowOrderForm(false)    // Close form last
         }}
         onSave={handleSaveOrder}
         selectedCustomer={selectedCustomer}
@@ -483,15 +488,14 @@ const Sales = () => {
                 <p><strong>Customer:</strong> {viewingOrder.customerName || viewingOrder.customer}</p>
                 <p><strong>Date:</strong> {new Date(viewingOrder.orderDate || viewingOrder.date).toLocaleDateString()}</p>
                 <p><strong>Status:</strong> {viewingOrder.status}</p>
-                <p><strong>Payment Status:</strong> {viewingOrder.paymentStatus}</p>
-                <p><strong>Total:</strong> OMR {(viewingOrder.totalAmount || viewingOrder.total || 0).toFixed(2)}</p>
+                <p><strong>Total:</strong> OMR {(parseFloat(viewingOrder.totalAmount || viewingOrder.total) || 0).toFixed(2)}</p>
                 {viewingOrder.notes && <p><strong>Notes:</strong> {viewingOrder.notes}</p>}
-                
+
                 <h4>Items:</h4>
                 <ul>
                   {(viewingOrder.salesOrderItems || viewingOrder.items || []).map((item, index) => (
                     <li key={index}>
-                      {item.materialName || item.name} - {item.quantity} {item.unit} @ OMR {(item.unitPrice || item.rate || 0).toFixed(3)}
+                      {item.materialName || item.name} - {item.quantity} {item.unit} @ OMR {(parseFloat(item.unitPrice || item.rate) || 0).toFixed(3)}
                     </li>
                   ))}
                 </ul>

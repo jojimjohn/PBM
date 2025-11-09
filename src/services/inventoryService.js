@@ -37,15 +37,10 @@ class InventoryService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch inventory');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory`);
 
       // Transform backend data to frontend format
-      const transformedInventory = (data.data || []).map(item => 
+      const transformedInventory = (data.data || []).map(item =>
         this.transformInventoryItem(item)
       );
 
@@ -69,12 +64,7 @@ class InventoryService {
    */
   async getById(inventoryId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch inventory item');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}`);
 
       return {
         success: true,
@@ -96,12 +86,7 @@ class InventoryService {
    */
   async getByMaterial(materialId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/material/${materialId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material inventory');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/material/${materialId}`);
 
       return {
         success: true,
@@ -123,19 +108,13 @@ class InventoryService {
    */
   async create(inventoryData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(inventoryData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create inventory item');
-      }
 
       return {
         success: true,
@@ -156,19 +135,13 @@ class InventoryService {
    */
   async update(inventoryId, inventoryData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(inventoryData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update inventory item');
-      }
 
       return {
         success: true,
@@ -189,15 +162,9 @@ class InventoryService {
    */
   async delete(inventoryId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete inventory item');
-      }
 
       return {
         success: true,
@@ -217,19 +184,13 @@ class InventoryService {
    */
   async updateStock(inventoryId, stockData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}/stock`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}/stock`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(stockData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update stock');
-      }
 
       return {
         success: true,
@@ -250,7 +211,7 @@ class InventoryService {
    */
   async setOpeningStock(materialId, openingStockData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/opening-stock`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/opening-stock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -260,12 +221,6 @@ class InventoryService {
           ...openingStockData
         }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to set opening stock');
-      }
 
       return {
         success: true,
@@ -286,12 +241,7 @@ class InventoryService {
    */
   async getCurrentStock(materialId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/material/${materialId}/stock`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch current stock');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/material/${materialId}/stock`);
 
       return {
         success: true,
@@ -313,19 +263,13 @@ class InventoryService {
    */
   async validateStockAvailability(items) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/validate-stock`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/validate-stock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ items }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to validate stock availability');
-      }
 
       return {
         success: true,
@@ -347,7 +291,7 @@ class InventoryService {
    */
   async reduceStock(items, referenceId, referenceType = 'sales_order') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/reduce-stock`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/reduce-stock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -358,12 +302,6 @@ class InventoryService {
           referenceType
         }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reduce stock');
-      }
 
       return {
         success: true,
@@ -384,7 +322,7 @@ class InventoryService {
    */
   async addStock(items, referenceId, referenceType = 'purchase_order') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/add-stock`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/add-stock`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -395,12 +333,6 @@ class InventoryService {
           referenceType
         }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to add stock');
-      }
 
       return {
         success: true,
@@ -421,12 +353,7 @@ class InventoryService {
    */
   async getLowStockItems() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/low-stock`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch low stock items');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/low-stock`);
 
       return {
         success: true,
@@ -448,12 +375,7 @@ class InventoryService {
    */
   async getInventoryValue() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/value-summary`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch inventory value');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/value-summary`);
 
       return {
         success: true,
@@ -481,14 +403,9 @@ class InventoryService {
       if (options.type) params.append('type', options.type);
       if (options.limit) params.append('limit', options.limit);
 
-      const response = await authService.makeAuthenticatedRequest(
+      const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/inventory/${inventoryId}/movements?${params.toString()}`
       );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch inventory movements');
-      }
 
       return {
         success: true,
@@ -516,12 +433,7 @@ class InventoryService {
       if (filters.lowStock) params.append('lowStock', filters.lowStock);
       if (filters.status) params.append('status', filters.status);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search inventory');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/search?${params.toString()}`);
 
       return {
         success: true,
@@ -543,12 +455,7 @@ class InventoryService {
    */
   async getAnalytics(period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/analytics?period=${period}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch inventory analytics');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/analytics?period=${period}`);
 
       return {
         success: true,
@@ -570,19 +477,13 @@ class InventoryService {
    */
   async updateReorderLevels(inventoryId, reorderData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}/reorder-levels`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/inventory/${inventoryId}/reorder-levels`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(reorderData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update reorder levels');
-      }
 
       return {
         success: true,
