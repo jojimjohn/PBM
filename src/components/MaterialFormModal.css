@@ -1,0 +1,567 @@
+/* Material Form Modal Styles - Enhanced Professional Design */
+
+/* Modal Container */
+.material-form-modal {
+  max-width: 800px !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.material-form-modal .modal-header {
+  padding: 1.25rem 1.5rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background-color: #fff !important;
+  flex-shrink: 0 !important;
+}
+
+.material-form-modal .modal-header h3 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.625rem !important;
+}
+
+.material-form-modal .modal-body {
+  padding: 1.25rem 1.5rem !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+  background-color: #fafafa !important;
+}
+
+/* Form Sections - Card Style */
+.material-form-modal .form-section {
+  margin-bottom: 1rem !important;
+  padding: 1rem !important;
+  background-color: white !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.material-form-modal .form-section:last-child {
+  margin-bottom: 0 !important;
+}
+
+.material-form-modal .form-section h4 {
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 0.875rem !important;
+  padding-bottom: 0.625rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Form Grid Layouts */
+.material-form-modal .form-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 0.875rem 1rem !important;
+}
+
+.material-form-modal .form-section.compact .form-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 0.75rem 0.875rem !important;
+}
+
+.material-form-modal .form-section.pricing .form-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 0.75rem 1rem !important;
+}
+
+/* Form Groups */
+.material-form-modal .form-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.375rem !important;
+}
+
+.material-form-modal .form-group.full-width {
+  grid-column: 1 / -1 !important;
+}
+
+.material-form-modal .form-group.span-2 {
+  grid-column: span 2 !important;
+}
+
+.material-form-modal .form-group.checkbox-group {
+  display: flex !important;
+  align-items: center !important;
+  padding-top: 1.5rem !important;
+}
+
+/* Labels */
+.material-form-modal .form-group label {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+.material-form-modal .form-group label small {
+  font-size: 0.6875rem !important;
+  font-weight: 400 !important;
+  color: #9ca3af !important;
+}
+
+.material-form-modal .form-group.checkbox-group label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.8125rem !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.material-form-modal .form-group .required {
+  color: #dc2626 !important;
+}
+
+/* Input Fields */
+.material-form-modal .form-group input[type="text"],
+.material-form-modal .form-group input[type="number"],
+.material-form-modal .form-group input[type="date"],
+.material-form-modal .form-group select,
+.material-form-modal .form-group textarea {
+  padding: 0.5rem 0.75rem !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.375rem !important;
+  font-size: 0.8125rem !important;
+  transition: all 0.15s !important;
+  background-color: white !important;
+}
+
+.material-form-modal .form-group input[type="text"]::placeholder,
+.material-form-modal .form-group input[type="number"]::placeholder,
+.material-form-modal .form-group textarea::placeholder {
+  color: #cbd5e1 !important;
+  font-size: 0.8125rem !important;
+  font-style: italic !important;
+  opacity: 0.7 !important;
+}
+
+.material-form-modal .form-group input[type="text"]:focus,
+.material-form-modal .form-group input[type="number"]:focus,
+.material-form-modal .form-group input[type="date"]:focus,
+.material-form-modal .form-group select:focus,
+.material-form-modal .form-group textarea:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.material-form-modal .form-group input[type="text"].error,
+.material-form-modal .form-group input[type="number"].error,
+.material-form-modal .form-group select.error,
+.material-form-modal .form-group textarea.error {
+  border-color: #dc2626 !important;
+}
+
+.material-form-modal .form-group input[type="text"]:disabled,
+.material-form-modal .form-group input[type="number"]:disabled,
+.material-form-modal .form-group select:disabled,
+.material-form-modal .form-group textarea:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.material-form-modal .form-group textarea {
+  resize: vertical !important;
+  min-height: 60px !important;
+}
+
+/* Small Text & Hints */
+.material-form-modal .form-group small {
+  font-size: 0.6875rem !important;
+  color: #6b7280 !important;
+  margin-top: -0.125rem !important;
+}
+
+.material-form-modal .form-group small.error-text {
+  color: #dc2626 !important;
+  font-weight: 500 !important;
+}
+
+/* Checkbox Styles */
+.material-form-modal .form-group label input[type="checkbox"] {
+  margin-right: 0.5rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  cursor: pointer !important;
+}
+
+/* Error Message */
+.material-form-modal .error-message {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.75rem 1rem !important;
+  background-color: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 0.375rem !important;
+  color: #991b1b !important;
+  font-size: 0.875rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Composite Material Section */
+.material-form-modal .composite-section {
+  background-color: #fff !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #e0e7ff !important;
+  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.05) !important;
+}
+
+.material-form-modal .composite-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 1rem !important;
+}
+
+.material-form-modal .composite-header h4 {
+  margin-bottom: 0 !important;
+}
+
+/* Toggle Switch */
+.material-form-modal .toggle-switch {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.material-form-modal .toggle-switch input[type="checkbox"] {
+  display: none !important;
+}
+
+.material-form-modal .toggle-slider {
+  position: relative !important;
+  width: 44px !important;
+  height: 24px !important;
+  background-color: #d1d5db !important;
+  border-radius: 12px !important;
+  transition: background-color 0.3s !important;
+}
+
+.material-form-modal .toggle-slider::before {
+  content: '' !important;
+  position: absolute !important;
+  width: 20px !important;
+  height: 20px !important;
+  background-color: white !important;
+  border-radius: 50% !important;
+  top: 2px !important;
+  left: 2px !important;
+  transition: transform 0.3s !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.material-form-modal .toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+  background-color: #3b82f6 !important;
+}
+
+.material-form-modal .toggle-switch input[type="checkbox"]:checked + .toggle-slider::before {
+  transform: translateX(20px) !important;
+}
+
+.material-form-modal .toggle-label {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+}
+
+/* Composite Info Box */
+.material-form-modal .composite-info {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.625rem !important;
+  padding: 0.75rem 0.875rem !important;
+  background-color: #f0f9ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 0.375rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.material-form-modal .composite-info svg {
+  flex-shrink: 0 !important;
+  margin-top: 0.125rem !important;
+  color: #3b82f6 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.material-form-modal .composite-info p {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  color: #1e40af !important;
+  line-height: 1.5 !important;
+}
+
+/* Compositions Builder */
+.material-form-modal .compositions-builder {
+  margin-top: 1rem !important;
+}
+
+.material-form-modal .builder-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 1rem !important;
+}
+
+.material-form-modal .builder-header h5 {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  margin: 0 !important;
+}
+
+/* Compositions Table */
+.material-form-modal .compositions-table {
+  overflow-x: auto !important;
+  margin-bottom: 0.5rem !important;
+  border-radius: 0.375rem !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.material-form-modal .compositions-table table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background-color: white !important;
+}
+
+.material-form-modal .compositions-table thead {
+  background-color: #f8fafc !important;
+}
+
+.material-form-modal .compositions-table th {
+  padding: 0.625rem 0.75rem !important;
+  text-align: left !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid #e5e7eb !important;
+  white-space: nowrap !important;
+}
+
+.material-form-modal .compositions-table td {
+  padding: 0.625rem 0.75rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  font-size: 0.8125rem !important;
+}
+
+.material-form-modal .compositions-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.material-form-modal .compositions-table tbody tr:hover {
+  background-color: #f9fafb !important;
+}
+
+.material-form-modal .compositions-table .empty-row {
+  text-align: center !important;
+  padding: 2rem !important;
+  color: #9ca3af !important;
+  font-size: 0.875rem !important;
+}
+
+/* Component Table Inputs */
+.material-form-modal .component-select,
+.material-form-modal .capacity-input,
+.material-form-modal .unit-input {
+  width: 100% !important;
+  padding: 0.4rem 0.625rem !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.8125rem !important;
+  background-color: white !important;
+  transition: all 0.15s !important;
+}
+
+.material-form-modal .component-select:focus,
+.material-form-modal .capacity-input:focus,
+.material-form-modal .unit-input:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.material-form-modal .capacity-input {
+  text-align: right !important;
+}
+
+.material-form-modal .unit-input {
+  text-align: left !important;
+  padding: 0.4rem 0.5rem !important;
+}
+
+/* Hint Text */
+.material-form-modal .hint-text {
+  display: block !important;
+  font-size: 0.75rem !important;
+  color: #6b7280 !important;
+  font-style: italic !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Button Icon */
+.material-form-modal .btn-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.5rem !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  border-radius: 0.25rem !important;
+  transition: all 0.15s !important;
+}
+
+.material-form-modal .btn-icon:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.material-form-modal .btn-icon.danger {
+  color: #dc2626 !important;
+}
+
+.material-form-modal .btn-icon.danger:hover {
+  background-color: #fef2f2 !important;
+}
+
+.material-form-modal .btn-icon:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+.material-form-modal .btn-icon:disabled:hover {
+  background-color: transparent !important;
+}
+
+/* Modal Footer */
+.material-form-modal .modal-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 0.75rem !important;
+  padding: 1.25rem 1.5rem !important;
+  border-top: 1px solid #e5e7eb !important;
+  background-color: #fff !important;
+  flex-shrink: 0 !important;
+}
+
+.material-form-modal .modal-footer .btn {
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  border-radius: 0.375rem !important;
+  transition: all 0.15s !important;
+}
+
+.material-form-modal .modal-footer .btn-primary {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border: 1px solid #3b82f6 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.material-form-modal .modal-footer .btn-primary:hover:not(:disabled) {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.material-form-modal .modal-footer .btn-outline {
+  background-color: white !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.material-form-modal .modal-footer .btn-outline:hover:not(:disabled) {
+  background-color: #f9fafb !important;
+  border-color: #9ca3af !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .material-form-modal {
+    max-width: 95vw !important;
+    margin: 1rem !important;
+  }
+
+  .material-form-modal .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .material-form-modal .form-group.full-width {
+    grid-column: 1 !important;
+  }
+
+  .material-form-modal .composite-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .material-form-modal .builder-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .material-form-modal .compositions-table {
+    font-size: 0.75rem !important;
+  }
+
+  .material-form-modal .compositions-table th,
+  .material-form-modal .compositions-table td {
+    padding: 0.5rem 0.25rem !important;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .material-form-modal .composite-header {
+  flex-direction: row-reverse !important;
+}
+
+[dir="rtl"] .material-form-modal .builder-header {
+  flex-direction: row-reverse !important;
+}
+
+[dir="rtl"] .material-form-modal .composite-info {
+  flex-direction: row-reverse !important;
+}
+
+[dir="rtl"] .material-form-modal .toggle-slider::before {
+  left: auto !important;
+  right: 2px !important;
+}
+
+[dir="rtl"] .material-form-modal .toggle-switch input[type="checkbox"]:checked + .toggle-slider::before {
+  transform: translateX(-20px) !important;
+}
+
+[dir="rtl"] .material-form-modal .form-group label input[type="checkbox"] {
+  margin-right: 0 !important;
+  margin-left: 0.5rem !important;
+}
+
+[dir="rtl"] .material-form-modal .error-message {
+  flex-direction: row-reverse !important;
+}

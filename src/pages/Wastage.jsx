@@ -605,6 +605,7 @@ const Wastage = () => {
         title={t('wastageAnalytics', 'Wastage Analytics')}
         onClose={() => setShowChartsModal(false)}
         className="modal-xl"
+        closeOnOverlayClick={false}
       >
           <div className="charts-container">
             <StockChart
@@ -641,6 +642,7 @@ const Wastage = () => {
         title={t('reportWastage', 'Report Wastage')}
         onClose={() => setShowAddForm(false)}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
           <WastageForm
             materials={materials}
@@ -656,6 +658,7 @@ const Wastage = () => {
         title={t('editWastage', 'Edit Wastage')}
         onClose={() => setShowEditForm(false)}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
           <WastageForm
             materials={materials}
@@ -673,6 +676,7 @@ const Wastage = () => {
         title={t('wastageDetails', 'Wastage Details')}
         onClose={() => setShowViewModal(false)}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
           <WastageDetails
             wastage={selectedWastage}

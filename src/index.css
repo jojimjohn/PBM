@@ -65,6 +65,31 @@ body.light {
   --muted-foreground: #718096;
 }
 
+/* Global Placeholder Styles - Makes placeholders visually distinct from entered values */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #cbd5e1 !important;
+  font-style: italic !important;
+  opacity: 0.7 !important;
+}
+
+/* Specific placeholder styles for all input types */
+input[type="text"]::placeholder,
+input[type="number"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="url"]::placeholder,
+input[type="search"]::placeholder,
+input[type="date"]::placeholder,
+input[type="time"]::placeholder,
+input[type="datetime-local"]::placeholder {
+  color: #cbd5e1 !important;
+  font-style: italic !important;
+  opacity: 0.7 !important;
+}
+
 /* Modern Gradient Backgrounds */
 .gradient-bg {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%);

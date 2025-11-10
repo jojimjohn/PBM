@@ -742,4 +742,79 @@
   .branches-table td {
     padding: 0.75rem;
   }
+
+  .compositions-table {
+    font-size: 0.875rem;
+  }
+
+  .compositions-table th,
+  .compositions-table td {
+    padding: 0.75rem;
+  }
+}
+
+/* Material Compositions Styles */
+.compositions-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.compositions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compositions-table thead {
+  background: #f9fafb;
+}
+
+.compositions-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.compositions-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.compositions-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.compositions-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.component-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.component-type-badge.content {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.component-type-badge.container {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }

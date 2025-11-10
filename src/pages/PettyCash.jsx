@@ -801,6 +801,7 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
       title={card ? t('editCard', 'Edit Card') : t('addNewCard', 'Add New Card')}
       onClose={onClose}
       className="modal-lg"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={onSubmit} className="card-form">
         <div className="form-section">
@@ -932,6 +933,7 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
       title={t('addExpense', 'Add Expense')}
       onClose={onClose}
       className="modal-lg"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="expense-form">
         <div className="form-grid">
@@ -1086,6 +1088,7 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
       title={t('reloadCard', 'Reload Card')}
       onClose={onClose}
       className="modal-md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="reload-form">
         <div className="card-info-display">
@@ -1205,6 +1208,7 @@ const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t })
       title={t('pettyCashCardDetails', 'Petty Cash Card Details')}
       onClose={onClose}
       className="modal-xl petty-cash-view-modal"
+      closeOnOverlayClick={false}
     >
       <div className="card-view-content">
         {/* Card Header - Prominent Display */}

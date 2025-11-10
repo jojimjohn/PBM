@@ -212,9 +212,15 @@ export const SystemSettingsProvider = ({ children }) => {
   }
 
   const formatCurrency = (amount, currency = settings.currency) => {
-    if (typeof amount !== 'number') return `${currency} 0.000`
-    
-    return `${currency} ${amount.toFixed(3)}`
+    // Convert string to number if needed (MySQL returns DECIMAL as strings)
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+
+    // Handle invalid values
+    if (typeof numericAmount !== 'number' || isNaN(numericAmount)) {
+      return `${currency} 0.000`
+    }
+
+    return `${currency} ${numericAmount.toFixed(3)}`
   }
 
   // Get current date in various formats

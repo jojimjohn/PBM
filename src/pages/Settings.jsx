@@ -62,6 +62,7 @@ const Settings = () => {
     is_active: true
   })
   const [savingBranch, setSavingBranch] = useState(false)
+  const [loadingBranches, setLoadingBranches] = useState(false)
 
   // Check if user can manage settings
   const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS) || user?.role === 'SUPER_ADMIN'
@@ -101,12 +102,15 @@ const Settings = () => {
 
   const loadBranches = async () => {
     try {
+      setLoadingBranches(true)
       const response = await branchService.getAll({ limit: 100 })
       if (response.success) {
         setBranches(response.data || [])
       }
     } catch (error) {
       console.error('Error loading branches:', error)
+    } finally {
+      setLoadingBranches(false)
     }
   }
 
