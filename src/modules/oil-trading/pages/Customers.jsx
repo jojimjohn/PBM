@@ -525,10 +525,11 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={true}
-      title={customer ? 'Edit Customer' : 'Add New Customer'} 
+      title={customer ? 'Edit Customer' : 'Add New Customer'}
       onClose={onCancel}
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="customer-form">
         {/* Basic Information Section */}
@@ -789,11 +790,12 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
 // Customer Details Modal Component
 const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) => {
   return (
-    <Modal 
+    <Modal
       isOpen={true}
       title={`Customer Details - ${customer.name}`}
       onClose={onClose}
       className="modal-xl"
+      closeOnOverlayClick={false}
     >
       <div className="view-modal-content">
         <div className="form-section">
@@ -994,11 +996,12 @@ const ContractDetailsModal = ({ customer, onClose, onEdit }) => {
   if (!contract) {
     console.log('No contract details found for customer:', customer?.name)
     return (
-      <Modal 
+      <Modal
         isOpen={true}
         title="Contract Details - No Contract Found"
         onClose={onClose}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
         <div className="view-modal-content">
           <div className="empty-rates">
@@ -1021,11 +1024,12 @@ const ContractDetailsModal = ({ customer, onClose, onEdit }) => {
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={true}
       title={`Contract Details - ${contract.contractId}`}
       onClose={onClose}
       className="modal-xxl"
+      closeOnOverlayClick={false}
     >
       <div className="view-modal-content">
         {loading && (
@@ -1285,7 +1289,7 @@ const ContractEditModal = ({ customer, onClose, onSave }) => {
 
   if (loading) {
     return (
-      <Modal isOpen={true} title="Edit Contract" onClose={onClose} className="modal-xxl">
+      <Modal isOpen={true} title="Edit Contract" onClose={onClose} className="modal-xxl" closeOnOverlayClick={false}>
         <div className="loading-section">
           <div className="loading-spinner"></div>
           <p>Loading contract editor...</p>
@@ -1295,7 +1299,7 @@ const ContractEditModal = ({ customer, onClose, onSave }) => {
   }
 
   return (
-    <Modal isOpen={true} title={`Edit Contract - ${customer.name}`} onClose={onClose} className="modal-xxl">
+    <Modal isOpen={true} title={`Edit Contract - ${customer.name}`} onClose={onClose} className="modal-xxl" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="view-modal-content">
         {/* Contract Basic Information */}
         <div className="form-section">

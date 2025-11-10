@@ -5,6 +5,7 @@ import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
+import Modal from '../../../components/ui/Modal'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import PurchaseOrderReceipt from '../../../components/PurchaseOrderReceipt'
 import PurchaseExpenseForm from '../../../components/PurchaseExpenseForm'
@@ -133,9 +134,24 @@ const Purchase = () => {
     setShowCreateForm(true)
   }
 
-  const handleEditOrder = (order) => {
-    setSelectedOrder(order)
-    setShowEditForm(true)
+  const handleEditOrder = async (order) => {
+    try {
+      // Fetch full order details with items from backend
+      const result = await purchaseOrderService.getById(order.id)
+
+      if (result.success) {
+        setSelectedOrder(result.data)
+        setShowEditForm(true)
+      } else {
+        throw new Error(result.error || 'Failed to load order details')
+      }
+    } catch (error) {
+      console.error('Error loading order for edit:', error)
+      setMessage({
+        type: 'error',
+        text: `Failed to load order: ${error.message}`
+      })
+    }
   }
 
   const handleReceiveOrder = (order) => {
@@ -807,95 +823,268 @@ const Purchase = () => {
 
       {/* View Purchase Order Modal */}
       {viewingOrder && (
-        <div className="modal-backdrop" onClick={() => setViewingOrder(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Purchase Order Details</h3>
-              <button className="modal-close" onClick={() => setViewingOrder(null)}>×</button>
+        <Modal
+          isOpen={true}
+          title={`${viewingOrder.orderNumber} - Purchase Order Details`}
+          onClose={() => setViewingOrder(null)}
+          className="modal-xl purchase-order-view-modal"
+          closeOnOverlayClick={false}
+        >
+          <div className="purchase-order-view-professional">
+            {/* Header Section */}
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                backgroundColor: '#3b82f6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '16px'
+              }}>
+                <FileText size={24} color="white" />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: '600', margin: '0 0 4px 0', color: '#1f2937' }}>
+                  {viewingOrder.orderNumber}
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      padding: '4px 12px',
+                      backgroundColor: getStatusColor(viewingOrder.status),
+                      color: 'white',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    {getStatusIcon(viewingOrder.status)}
+                    {getStatusName(viewingOrder.status)}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="modal-body">
-              <div className="order-details">
-                <div className="order-info-grid">
-                  <div className="info-row">
-                    <strong>Order Number:</strong>
-                    <span>{viewingOrder.orderNumber}</span>
+
+            {/* Information Cards Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+              {/* Supplier & Basic Information Card */}
+              <div style={{
+                padding: '20px',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                  <Building size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                    Supplier Information
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>Supplier Name</span>
+                    <span style={{ fontWeight: '500', color: '#1f2937' }}>{viewingOrder.supplierName || viewingOrder.vendorName || 'N/A'}</span>
                   </div>
-                  <div className="info-row">
-                    <strong>Supplier:</strong>
-                    <span>{viewingOrder.supplierName}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>Order Number</span>
+                    <span style={{ fontWeight: '500', color: '#1f2937' }}>{viewingOrder.orderNumber}</span>
                   </div>
-                  <div className="info-row">
-                    <strong>Order Date:</strong>
-                    <span>{formatDate(viewingOrder.orderDate)}</span>
-                  </div>
-                  <div className="info-row">
-                    <strong>Expected Delivery:</strong>
-                    <span>{viewingOrder.expectedDeliveryDate ? formatDate(viewingOrder.expectedDeliveryDate) : 'Not specified'}</span>
-                  </div>
-                  <div className="info-row">
-                    <strong>Status:</strong>
-                    <span className={`status-badge status-${viewingOrder.status}`}>
-                      {viewingOrder.status?.charAt(0).toUpperCase() + viewingOrder.status?.slice(1)}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>Status</span>
+                    <span style={{
+                      padding: '2px 8px',
+                      backgroundColor: getStatusColor(viewingOrder.status) + '20',
+                      color: getStatusColor(viewingOrder.status),
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}>
+                      {getStatusName(viewingOrder.status)}
                     </span>
                   </div>
-                  {viewingOrder.notes && (
-                    <div className="info-row full-width">
-                      <strong>Notes:</strong>
-                      <span>{viewingOrder.notes}</span>
+                </div>
+              </div>
+
+              {/* Dates Card */}
+              <div style={{
+                padding: '20px',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                  <Clock size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                    Important Dates
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>Order Date</span>
+                    <span style={{ fontWeight: '500', color: '#1f2937' }}>{formatDate(viewingOrder.orderDate)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>Expected Delivery</span>
+                    <span style={{ fontWeight: '500', color: '#1f2937' }}>
+                      {viewingOrder.expectedDeliveryDate ? formatDate(viewingOrder.expectedDeliveryDate) : 'Not specified'}
+                    </span>
+                  </div>
+                  {viewingOrder.actualDeliveryDate && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#6b7280', fontSize: '14px' }}>Actual Delivery</span>
+                      <span style={{ fontWeight: '500', color: '#059669' }}>{formatDate(viewingOrder.actualDeliveryDate)}</span>
                     </div>
                   )}
                 </div>
-
-                <div className="order-totals">
-                  <div className="total-row">
-                    <span>Subtotal:</span>
-                    <span>{formatCurrency(viewingOrder.subtotal)}</span>
-                  </div>
-                  <div className="total-row">
-                    <span>Tax Amount:</span>
-                    <span>{formatCurrency(viewingOrder.taxAmount)}</span>
-                  </div>
-                  <div className="total-row">
-                    <span>Shipping Cost:</span>
-                    <span>{formatCurrency(viewingOrder.shippingCost)}</span>
-                  </div>
-                  <div className="total-row total-final">
-                    <strong>Total Amount:</strong>
-                    <strong>{formatCurrency(viewingOrder.totalAmount)}</strong>
-                  </div>
-                </div>
-
-                {viewingOrder.items && viewingOrder.items.length > 0 && (
-                  <div className="order-items">
-                    <h4>Order Items</h4>
-                    <table className="items-table">
-                      <thead>
-                        <tr>
-                          <th>Material</th>
-                          <th>Code</th>
-                          <th>Quantity</th>
-                          <th>Unit Price</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {viewingOrder.items.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.materialName}</td>
-                            <td>{item.materialCode}</td>
-                            <td>{item.quantityOrdered} {item.unit}</td>
-                            <td>{formatCurrency(item.unitPrice)}</td>
-                            <td>{formatCurrency(item.totalPrice)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
               </div>
             </div>
+
+            {/* Order Items Section */}
+            {viewingOrder.items && viewingOrder.items.length > 0 && (
+              <div style={{
+                marginBottom: '24px',
+                padding: '20px',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                  <Package size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                    Order Items ({viewingOrder.items.length})
+                  </h3>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="purchase-order-items-table">
+                    <thead>
+                      <tr>
+                        <th>Material</th>
+                        <th>Material Code</th>
+                        <th style={{ textAlign: 'right' }}>Quantity</th>
+                        <th style={{ textAlign: 'right' }}>Unit Price</th>
+                        <th style={{ textAlign: 'right' }}>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewingOrder.items.map((item, index) => (
+                        <tr key={index}>
+                          <td>
+                            <div style={{ fontWeight: '500', color: '#1f2937' }}>{item.materialName}</div>
+                          </td>
+                          <td>
+                            <span style={{
+                              padding: '2px 8px',
+                              backgroundColor: '#f3f4f6',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontFamily: 'monospace'
+                            }}>
+                              {item.materialCode}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right', color: '#374151' }}>
+                            {item.quantityOrdered} {item.unit}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: '500', color: '#374151' }}>
+                            {formatCurrency(item.unitPrice)}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: '600', color: '#059669' }}>
+                            {formatCurrency(item.totalPrice)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Financial Summary Section */}
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#f9fafb',
+              border: '2px solid #e5e7eb',
+              borderRadius: '8px',
+              marginBottom: '24px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                <Calculator size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+                <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                  Financial Summary
+                </h3>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+                  <span style={{ color: '#6b7280', fontSize: '14px' }}>Subtotal</span>
+                  <span style={{ fontWeight: '500', color: '#1f2937', fontSize: '16px' }}>
+                    {formatCurrency(viewingOrder.subtotal || 0)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+                  <span style={{ color: '#6b7280', fontSize: '14px' }}>Tax Amount</span>
+                  <span style={{ fontWeight: '500', color: '#1f2937', fontSize: '16px' }}>
+                    {formatCurrency(viewingOrder.taxAmount || 0)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+                  <span style={{ color: '#6b7280', fontSize: '14px' }}>Shipping Cost</span>
+                  <span style={{ fontWeight: '500', color: '#1f2937', fontSize: '16px' }}>
+                    {formatCurrency(viewingOrder.shippingCost || 0)}
+                  </span>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px 0 8px 0',
+                  marginTop: '8px',
+                  borderTop: '2px solid #d1d5db'
+                }}>
+                  <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>Total Amount</span>
+                  <span style={{ fontSize: '24px', fontWeight: '700', color: '#059669' }}>
+                    {formatCurrency(viewingOrder.totalAmount || 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            {viewingOrder.notes && (
+              <div style={{
+                padding: '20px',
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                  <FileText size={18} style={{ marginRight: '8px', color: '#6b7280' }} />
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#374151' }}>
+                    Notes
+                  </h3>
+                </div>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  color: '#374151',
+                  lineHeight: '1.6'
+                }}>
+                  {viewingOrder.notes}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

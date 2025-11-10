@@ -912,11 +912,12 @@ const ContractViewModal = ({
   const statusInfo = getContractStatusInfo(contractData.status)
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
       title={`${contractData.contractNumber} - ${t('contractDetails', 'Contract Details')}`}
       onClose={onClose}
       className="modal-xl contract-details-modal"
+      closeOnOverlayClick={false}
     >
       <div className="supplier-view-professional">
         {/* Header Section */}
@@ -1538,11 +1539,12 @@ const ContractFormModal = ({
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={title} 
+      title={title}
       onClose={onClose}
       className="modal-xl"
+      closeOnOverlayClick={false}
     >
       <form className="contract-form" onSubmit={handleSubmit}>
         {/* Basic Information */}

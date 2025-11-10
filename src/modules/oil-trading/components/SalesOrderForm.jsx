@@ -582,11 +582,12 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={editingOrder ? 'Edit Sales Order' : 'Create Sales Order'} 
+      title={editingOrder ? 'Edit Sales Order' : 'Create Sales Order'}
       onClose={onClose}
       className="modal-xxl"
+      closeOnOverlayClick={false}
     >
       <form className="sales-order-form" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}

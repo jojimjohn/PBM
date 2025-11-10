@@ -60,15 +60,34 @@ const PurchaseOrderForm = ({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
-        // Editing existing order - ensure items is always an array and format dates
+        // Editing existing order - map backend field names to frontend field names
+        console.log('🔍 Loading PO for Edit:', initialData)
+        console.log('📦 Initial Items:', initialData.items)
+
+        const mappedItems = (initialData.items && initialData.items.length > 0)
+          ? initialData.items.map(item => {
+              console.log('🔄 Mapping item:', item)
+              const mapped = {
+                materialId: String(item.materialId || ''), // Ensure string type for select
+                quantity: String(item.quantityOrdered || item.quantity || ''), // Backend uses quantityOrdered
+                rate: String(item.unitPrice || item.rate || ''), // Backend uses unitPrice
+                amount: parseFloat(item.totalPrice || item.amount || 0) // Backend uses totalPrice
+              }
+              console.log('✅ Mapped to:', mapped)
+              return mapped
+            })
+          : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
+
+        console.log('📋 All mapped items:', mappedItems)
+
         setFormData({
           ...initialData,
           orderDate: formatDateForInput(initialData.orderDate),
           expectedDeliveryDate: formatDateForInput(initialData.expectedDeliveryDate),
-          items: initialData.items && initialData.items.length > 0
-            ? initialData.items
-            : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
+          items: mappedItems
         })
+
+        console.log('✨ FormData set with items:', mappedItems)
       } else {
         // Creating new order - generate order number
         const orderNum = `PO-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`
@@ -122,6 +141,15 @@ const PurchaseOrderForm = ({
     const subtotal = formData.items.reduce((sum, item) => sum + (item.amount || 0), 0)
     const taxAmount = (subtotal * (formData.taxPercent || 0)) / 100
     const totalAmount = subtotal + taxAmount
+
+    console.log('💰 Calculating totals:', {
+      itemsCount: formData.items.length,
+      itemAmounts: formData.items.map(i => i.amount),
+      subtotal,
+      taxPercent: formData.taxPercent,
+      taxAmount,
+      totalAmount
+    })
 
     setFormData(prev => ({
       ...prev,
@@ -285,7 +313,13 @@ const PurchaseOrderForm = ({
         items: filteredItems
       }
 
-      console.log('- Final orderData:', orderData)
+      console.log('💰 Final orderData financial values:', {
+        subtotal: orderData.subtotal,
+        taxAmount: orderData.taxAmount,
+        totalAmount: orderData.totalAmount,
+        shippingCost: orderData.shippingCost
+      })
+      console.log('- Full orderData:', orderData)
 
       await onSave(orderData)
     } catch (error) {
@@ -299,11 +333,12 @@ const PurchaseOrderForm = ({
   const selectedSupplier = suppliers.find(s => s.id === formData.supplierId)
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={title} 
+      title={title}
       onClose={onClose}
       className="modal-xxl"
+      closeOnOverlayClick={false}
     >
       <form className="purchase-order-form" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}

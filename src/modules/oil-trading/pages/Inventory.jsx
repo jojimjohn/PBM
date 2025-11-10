@@ -6,6 +6,7 @@ import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import Modal from '../../../components/ui/Modal'
 import StockChart from '../../../components/StockChart'
+import MaterialFormModal from '../../../components/MaterialFormModal'
 import inventoryService from '../../../services/inventoryService'
 import materialService from '../../../services/materialService'
 import supplierService from '../../../services/supplierService'
@@ -20,6 +21,7 @@ const Inventory = () => {
   const [activeTab, setActiveTab] = useState('overview')
   const [inventory, setInventory] = useState([])
   const [materials, setMaterials] = useState([])
+  const [materialCategories, setMaterialCategories] = useState([])
   const [vendors, setVendors] = useState([])
   const [stockMovements, setStockMovements] = useState([])
   const [alerts, setAlerts] = useState([])
@@ -28,9 +30,12 @@ const Inventory = () => {
   const [selectedMaterial, setSelectedMaterial] = useState(null)
   const [showOpeningStockModal, setShowOpeningStockModal] = useState(false)
   const [showCharts, setShowCharts] = useState(false)
+  const [showMaterialForm, setShowMaterialForm] = useState(false)
+  const [editingMaterial, setEditingMaterial] = useState(null)
+  const [message, setMessage] = useState(null)
 
-  // Material categories based on PRD
-  const materialCategories = {
+  // Material category display config based on PRD
+  const categoryDisplayConfig = {
     'engine-oils': {
       name: 'Engine Oils',
       icon: Droplets,
@@ -88,17 +93,29 @@ const Inventory = () => {
 
   useEffect(() => {
     loadInventoryData()
+    loadMaterialCategories()
   }, [])
+
+  const loadMaterialCategories = async () => {
+    try {
+      const categoriesResult = await materialService.getCategories()
+      if (categoriesResult.success) {
+        setMaterialCategories(categoriesResult.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading material categories:', error)
+    }
+  }
 
   const loadInventoryData = async () => {
     try {
       setLoading(true)
-      
+
       // Load inventory data using API service
       const inventoryResult = await inventoryService.getAll()
       const companyInventory = inventoryResult.success ? inventoryResult.data : []
       setInventory(companyInventory)
-      
+
       // Load materials data using API service
       const materialsResult = await materialService.getAll()
       const companyMaterials = materialsResult.success ? materialsResult.data : []
@@ -209,6 +226,61 @@ const Inventory = () => {
     setShowPurchaseForm(false)
   }
 
+  // Material management handlers
+  const handleAddMaterial = () => {
+    setEditingMaterial(null)
+    setShowMaterialForm(true)
+  }
+
+  const handleEditMaterial = async (material) => {
+    try {
+      // Load full material data with compositions
+      const materialResult = await materialService.getById(material.id)
+      if (materialResult.success) {
+        setEditingMaterial(materialResult.data)
+        setShowMaterialForm(true)
+      } else {
+        setMessage({ type: 'error', text: 'Failed to load material details' })
+        setTimeout(() => setMessage(null), 3000)
+      }
+    } catch (error) {
+      console.error('Error loading material:', error)
+      setMessage({ type: 'error', text: 'Failed to load material details' })
+      setTimeout(() => setMessage(null), 3000)
+    }
+  }
+
+  const handleSaveMaterial = async (materialData, materialId) => {
+    try {
+      let response
+      if (materialId) {
+        // Update existing material
+        response = await materialService.update(materialId, materialData)
+      } else {
+        // Create new material
+        response = await materialService.create(materialData)
+      }
+
+      if (response.success) {
+        setMessage({
+          type: 'success',
+          text: materialId ? 'Material updated successfully' : 'Material created successfully'
+        })
+        setTimeout(() => setMessage(null), 3000)
+
+        // Reload materials
+        await loadInventoryData()
+        setShowMaterialForm(false)
+        setEditingMaterial(null)
+      } else {
+        throw new Error(response.error || 'Failed to save material')
+      }
+    } catch (error) {
+      console.error('Error saving material:', error)
+      throw error // Re-throw to let modal handle the error
+    }
+  }
+
   if (loading) {
     return (
       <div className="page-loading">
@@ -249,6 +321,13 @@ const Inventory = () => {
           </button>
         </div>
       </div>
+
+      {/* Message Display */}
+      {message && (
+        <div className={`message ${message.type}`} style={{ marginBottom: '1rem' }}>
+          {message.text}
+        </div>
+      )}
 
       {/* Alerts Section */}
       {alerts.length > 0 && (
@@ -367,7 +446,7 @@ const Inventory = () => {
               const stock = inventory[material.id]
               const status = getStockStatus(material.id)
               const stockValue = stock ? stock.currentStock * material.standardPrice : 0
-              const category = materialCategories[material.category]
+              const category = categoryDisplayConfig[material.category]
               
               return {
                 ...material,
@@ -495,19 +574,19 @@ const Inventory = () => {
 
       {activeTab === 'materials' && (
         <div className="materials-view">
+          <div className="materials-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-primary" onClick={handleAddMaterial}>
+              <Plus size={16} />
+              {t('addMaterial', 'Add Material')}
+            </button>
+          </div>
           <DataTable
             data={materials.map(material => {
-              const category = materialCategories[material.category]
-              
+              const category = categoryDisplayConfig[material.category]
+
               return {
-                id: material.id,
-                code: material.code,
-                name: material.name,
-                category: material.category,
-                categoryInfo: category,
-                unit: material.unit,
-                standardPrice: material.standardPrice,
-                description: material.description || 'Material definition'
+                ...material,
+                categoryInfo: category
               }
             })}
             columns={[
@@ -575,15 +654,15 @@ const Inventory = () => {
                 sortable: false,
                 render: (value, row) => (
                   <div className="action-buttons">
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      onClick={() => handlePurchaseOrder(row.id)}
-                      title="Create Purchase Order"
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => handleEditMaterial(row)}
+                      title="Edit Material"
                     >
-                      <ShoppingCart size={14} />
-                      Order
+                      <Edit size={14} />
+                      Edit
                     </button>
-                    <button 
+                    <button
                       className="btn btn-outline btn-sm"
                       onClick={() => handleViewHistory(row)}
                       title="View Material Details"
@@ -817,6 +896,19 @@ const Inventory = () => {
           materials={materials}
         />
       )}
+
+      {/* Material Form Modal */}
+      <MaterialFormModal
+        isOpen={showMaterialForm}
+        onClose={() => {
+          setShowMaterialForm(false)
+          setEditingMaterial(null)
+        }}
+        onSave={handleSaveMaterial}
+        editingMaterial={editingMaterial}
+        categories={materialCategories}
+        allMaterials={materials}
+      />
     </div>
   )
 }
