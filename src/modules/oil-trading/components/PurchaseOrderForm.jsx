@@ -24,7 +24,7 @@ const PurchaseOrderForm = ({
     branch_id: '',
     orderDate: getInputDate(),
     expectedDeliveryDate: '',
-    paymentTerms: 30,
+    paymentTerms: 'net_30',
     items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
     notes: '',
     subtotal: 0,
@@ -438,14 +438,18 @@ const PurchaseOrderForm = ({
             </div>
 
             <div className="form-group">
-              <label>Payment Terms (Days)</label>
-              <input
-                type="number"
+              <label>Payment Terms</label>
+              <select
                 value={formData.paymentTerms}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: parseInt(e.target.value) || 30 }))}
-                min="1"
-                max="365"
-              />
+                onChange={(e) => setFormData(prev => ({ ...prev, paymentTerms: e.target.value }))}
+              >
+                <option value="immediate">Immediate</option>
+                <option value="net_30">Net 30 Days</option>
+                <option value="net_60">Net 60 Days</option>
+                <option value="net_90">Net 90 Days</option>
+                <option value="advance">Advance Payment</option>
+                <option value="cod">Cash on Delivery</option>
+              </select>
             </div>
 
             <div className="form-group">
@@ -631,18 +635,17 @@ const PurchaseOrderForm = ({
             </div>
             <div className="totals-row">
               <label>
-                Tax:
-                <input
-                  type="number"
-                  value={formData.taxPercent}
-                  onChange={(e) => setFormData(prev => ({ ...prev, taxPercent: parseFloat(e.target.value) || 0 }))}
-                  placeholder="0"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="tax-input"
-                />
-                %
+                Tax ({formData.taxPercent}%):
+                <span style={{
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  marginLeft: '0.5rem'
+                }}>
+                  From system settings
+                </span>
               </label>
               <span>{formatCurrency(formData.taxAmount)}</span>
             </div>

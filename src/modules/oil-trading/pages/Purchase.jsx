@@ -11,9 +11,14 @@ import PurchaseOrderReceipt from '../../../components/PurchaseOrderReceipt'
 import PurchaseExpenseForm from '../../../components/PurchaseExpenseForm'
 import VendorManager from '../../../components/VendorManager'
 import StorageLocationManager from '../../../components/StorageLocationManager'
+import PurchaseInvoiceModal from '../../../components/PurchaseInvoiceModal'
+import PurchaseOrderAmendmentModal from '../../../components/PurchaseOrderAmendmentModal'
+import DocumentUpload from '../../../components/DocumentUpload'
 import purchaseOrderService from '../../../services/purchaseOrderService'
+import purchaseOrderAmendmentService from '../../../services/purchaseOrderAmendmentService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
+import expenseService from '../../../services/expenseService'
 import { 
   Plus, Search, Filter, Eye, Edit, Truck, Package, 
   CheckCircle, Clock, AlertTriangle, FileText, Download,
@@ -33,6 +38,7 @@ const Purchase = () => {
   // Data states
   const [purchaseOrders, setPurchaseOrders] = useState([])
   const [purchaseExpenses, setPurchaseExpenses] = useState([])
+  const [amendmentCounts, setAmendmentCounts] = useState({}) // Map of orderId -> amendment count
   const [vendors, setVendors] = useState([])
   const [materials, setMaterials] = useState([])
   const [orderStatuses, setOrderStatuses] = useState({})
@@ -49,6 +55,12 @@ const Purchase = () => {
   const [showLocationManager, setShowLocationManager] = useState(false)
   const [receivingOrder, setReceivingOrder] = useState(false)
 
+  // Sprint 4: New modal states
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [showAmendmentModal, setShowAmendmentModal] = useState(false)
+  const [selectedOrderForModal, setSelectedOrderForModal] = useState(null)
+  const [message, setMessage] = useState({ type: '', text: '' })
+
   useEffect(() => {
     loadPurchaseData()
   }, [selectedCompany])
@@ -61,33 +73,32 @@ const Purchase = () => {
       const ordersResult = await purchaseOrderService.getAll()
       const companyOrders = ordersResult.success ? ordersResult.data : []
       setPurchaseOrders(companyOrders)
-      
-      // Load purchase expenses - Mock for now
-      setPurchaseExpenses([
-        {
-          id: 1,
-          purchaseOrderId: 1,
-          orderNumber: 'PO-2024-001',
-          category: 'transportation',
-          description: 'Transportation from Sohar to Muscat',
-          amount: 500.00,
-          vendor: 'Express Logistics',
-          expenseDate: '2024-08-20',
-          status: 'approved'
-        },
-        {
-          id: 2,
-          purchaseOrderId: 1,
-          orderNumber: 'PO-2024-001',
-          category: 'loading_unloading',
-          description: 'Loading and unloading charges',
-          amount: 150.00,
-          vendor: 'Port Services LLC',
-          expenseDate: '2024-08-20',
-          status: 'approved'
+
+      // Sprint 4: Load purchase expenses from unified_expenses API
+      try {
+        const expensesResult = await expenseService.getAll({ expenseType: 'purchase' })
+        const expenses = expensesResult.success ? expensesResult.data : []
+        setPurchaseExpenses(expenses)
+      } catch (error) {
+        console.error('Error loading purchase expenses:', error)
+        setPurchaseExpenses([])
+      }
+
+      // Sprint 4: Load amendment counts for each purchase order
+      try {
+        const counts = {}
+        for (const order of companyOrders) {
+          const amendmentsResult = await purchaseOrderAmendmentService.getAll(order.id)
+          if (amendmentsResult.success && amendmentsResult.data) {
+            counts[order.id] = amendmentsResult.data.length
+          }
         }
-      ])
-      
+        setAmendmentCounts(counts)
+      } catch (error) {
+        console.error('Error loading amendment counts:', error)
+        setAmendmentCounts({})
+      }
+
       // Set default order statuses
       setOrderStatuses({
         draft: { name: 'Draft', color: '#6b7280' },
@@ -162,6 +173,34 @@ const Purchase = () => {
   const handleAddExpense = (order) => {
     setSelectedOrder(order)
     setShowExpenseForm(true)
+  }
+
+  // Sprint 4: Invoice and Amendment handlers
+  const handleShowInvoices = (order) => {
+    setSelectedOrderForModal(order)
+    setShowInvoiceModal(true)
+  }
+
+  const handleShowAmendments = async (order) => {
+    try {
+      // Fetch full order details with items
+      const result = await purchaseOrderService.getById(order.id)
+
+      if (result.success) {
+        setSelectedOrderForModal(result.data)
+        setShowAmendmentModal(true)
+      } else {
+        alert('Failed to load purchase order details: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error loading purchase order:', error)
+      alert('Failed to load purchase order details')
+    }
+  }
+
+  const handleInvoiceSuccess = () => {
+    // Refresh data after invoice operations
+    loadPurchaseData()
   }
 
   const handleReceiveSubmit = async (receiptData) => {
@@ -494,7 +533,27 @@ const Purchase = () => {
                   filterable: true,
                   render: (value, row) => (
                     <div>
-                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{value}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontWeight: '600', color: '#1f2937' }}>{value}</span>
+                        {amendmentCounts[row.id] > 0 && (
+                          <span
+                            style={{
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '0.75rem',
+                              fontSize: '0.625rem',
+                              fontWeight: '600',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                            title={`${amendmentCounts[row.id]} amendment${amendmentCounts[row.id] > 1 ? 's' : ''}`}
+                          >
+                            🔄 {amendmentCounts[row.id]}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{formatDate(row.orderDate)}</div>
                     </div>
                   )
@@ -556,11 +615,11 @@ const Purchase = () => {
                       </PermissionGate>
                       
                       <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
-                        <button 
+                        <button
                           className="btn btn-outline btn-sm"
                           onClick={() => handleEditOrder(row)}
-                          title="Edit"
-                          disabled={row.status === 'received' || row.status === 'completed'}
+                          title={row.status === 'draft' ? 'Edit' : 'Only draft orders can be edited directly'}
+                          disabled={row.status !== 'draft'}
                         >
                           <Edit size={14} />
                         </button>
@@ -580,7 +639,7 @@ const Purchase = () => {
 
                       <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
                         {(row.status === 'received' || row.status === 'completed') && (
-                          <button 
+                          <button
                             className="btn btn-info btn-sm"
                             onClick={() => handleAddExpense(row)}
                             title="Add Purchase Expenses"
@@ -588,6 +647,30 @@ const Purchase = () => {
                             <DollarSign size={14} />
                           </button>
                         )}
+                      </PermissionGate>
+
+                      {/* Sprint 4: Invoices button */}
+                      <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
+                        {(row.status === 'received' || row.status === 'completed') && (
+                          <button
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleShowInvoices(row)}
+                            title="Manage Invoices"
+                          >
+                            <Receipt size={14} />
+                          </button>
+                        )}
+                      </PermissionGate>
+
+                      {/* Sprint 4: Amendments button */}
+                      <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE}>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => handleShowAmendments(row)}
+                          title="View Amendment History"
+                        >
+                          <FileText size={14} />
+                        </button>
                       </PermissionGate>
                     </div>
                   )
@@ -1083,8 +1166,60 @@ const Purchase = () => {
                 </div>
               </div>
             )}
+
+            {/* Sprint 4: Attachments Section */}
+            <div style={{
+              padding: '20px',
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+              marginTop: '16px'
+            }}>
+              <DocumentUpload
+                attachments={viewingOrder.attachments || []}
+                onUpload={async (files) => {
+                  // Upload files logic will be implemented
+                  console.log('Upload files:', files)
+                }}
+                onDelete={async (filename) => {
+                  // Delete file logic will be implemented
+                  console.log('Delete file:', filename)
+                }}
+                disabled={true}
+                label="Purchase Order Attachments"
+              />
+            </div>
           </div>
         </Modal>
+      )}
+
+      {/* Sprint 4: Invoice Modal */}
+      {showInvoiceModal && (
+        <PurchaseInvoiceModal
+          isOpen={showInvoiceModal}
+          onClose={() => {
+            setShowInvoiceModal(false)
+            setSelectedOrderForModal(null)
+          }}
+          purchaseOrder={selectedOrderForModal}
+          onSuccess={handleInvoiceSuccess}
+        />
+      )}
+
+      {/* Sprint 4: Amendment Modal */}
+      {showAmendmentModal && (
+        <PurchaseOrderAmendmentModal
+          isOpen={showAmendmentModal}
+          onClose={() => {
+            setShowAmendmentModal(false)
+            setSelectedOrderForModal(null)
+          }}
+          purchaseOrder={selectedOrderForModal}
+          vendors={vendors}
+          materials={materials}
+          onSuccess={loadPurchaseData}
+        />
       )}
     </div>
   )
