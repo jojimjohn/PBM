@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
+import FileUpload from '../../../components/ui/FileUpload'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import systemSettingsService from '../../../services/systemSettingsService'
 import inventoryService from '../../../services/inventoryService'
 import customerService from '../../../services/customerService'
 import materialService from '../../../services/materialService'
 import branchService from '../../../services/branchService'
+import uploadService from '../../../services/uploadService'
+import salesOrderService from '../../../services/salesOrderService'
 import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package, Building } from 'lucide-react'
 import './SalesOrderForm.css'
 
@@ -94,7 +97,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         customerObj = customers.find(c => c.id === editingOrder.customerId) || null
       }
         
-        // Transform items data to match form structure - handle both 'name' and 'materialId' fields
+        // Transform items data to match form structure
+        // Backend returns 'items' array with unitPrice/totalPrice, form uses rate/amount
         const transformedItems = editingOrder.items ? editingOrder.items.map(item => {
           // Find material by name if materialId is not present
           let materialId = item.materialId || ''
@@ -102,36 +106,38 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             const material = materials.find(m => m.name === item.name)
             materialId = material ? material.id : ''
           }
-          
+
           return {
             materialId: materialId,
             quantity: item.quantity || '',
-            rate: item.rate || '',
-            amount: item.amount || 0
+            rate: item.unitPrice || item.rate || '',
+            amount: item.totalPrice || item.amount || 0
           }
         }) : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
-        
+
         // Calculate delivery date if not provided (default to 7 days from order date)
-        let deliveryDate = editingOrder.deliveryDate || ''
-        if (!deliveryDate && editingOrder.date) {
-          const orderDate = new Date(editingOrder.date)
+        let deliveryDate = editingOrder.deliveryDate || editingOrder.expectedDeliveryDate || ''
+        if (!deliveryDate && (editingOrder.date || editingOrder.orderDate)) {
+          const orderDate = new Date(editingOrder.date || editingOrder.orderDate)
           orderDate.setDate(orderDate.getDate() + 7) // Add 7 days
           deliveryDate = orderDate.toISOString().split('T')[0]
         }
-        
+
         setFormData({
           orderNumber: editingOrder.orderNumber || editingOrder.id || '',
           customer: customerObj,
           branch_id: editingOrder.branch_id || '',
-          orderDate: editingOrder.date ? editingOrder.date.split('T')[0] : getInputDate(),
+          orderDate: (editingOrder.orderDate || editingOrder.date) ? new Date(editingOrder.orderDate || editingOrder.date).toISOString().split('T')[0] : getInputDate(),
           deliveryDate: deliveryDate,
           items: transformedItems,
           notes: editingOrder.notes || 'Order imported from existing data',
           specialInstructions: editingOrder.specialInstructions || '',
-          totalAmount: editingOrder.total || 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          netAmount: editingOrder.total || 0,
+          totalAmount: editingOrder.subtotal || editingOrder.total || 0,
+          discountPercent: editingOrder.discountPercent || 0,
+          discountAmount: editingOrder.discountAmount || 0,
+          vatRate: editingOrder.vatRate || defaultVatRate,
+          vatAmount: editingOrder.vatAmount || editingOrder.taxAmount || 0,
+          netAmount: editingOrder.totalAmount || editingOrder.total || 0,
           status: editingOrder.status || 'draft'
         })
     }
@@ -985,6 +991,12 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               </label>
               <span>OMR {formData.discountAmount.toFixed(3)}</span>
             </div>
+            {formData.vatAmount > 0 && (
+              <div className="totals-row">
+                <label>VAT ({formData.vatRate}%):</label>
+                <span>OMR {formData.vatAmount.toFixed(3)}</span>
+              </div>
+            )}
             <div className="totals-row total-row">
               <label>Total Amount:</label>
               <span>OMR {formData.netAmount.toFixed(3)}</span>
@@ -1016,6 +1028,52 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             </div>
           </div>
         </div>
+
+        {/* Attachments - Only in edit mode */}
+        {editingOrder?.id && (
+          <div className="form-section">
+            <div className="form-section-title">Attachments</div>
+            <FileUpload
+              mode="multiple"
+              accept=".pdf,.jpg,.jpeg,.png"
+              maxSize={5242880}
+              maxFiles={10}
+              onUpload={async (files) => {
+                const result = await uploadService.uploadFiles('sales-orders', editingOrder.id, files);
+                if (result.success) {
+                  // Refresh the order data to get updated attachments
+                  const updated = await salesOrderService.getById(editingOrder.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('Files uploaded successfully');
+                } else {
+                  alert('Failed to upload files: ' + result.error);
+                }
+              }}
+              onDelete={async (filename) => {
+                const result = await uploadService.deleteFile('sales-orders', editingOrder.id, filename);
+                if (result.success) {
+                  // Refresh the order data to get updated attachments
+                  const updated = await salesOrderService.getById(editingOrder.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('File deleted successfully');
+                } else {
+                  alert('Failed to delete file: ' + result.error);
+                }
+              }}
+              existingFiles={formData.attachments || []}
+            />
+          </div>
+        )}
 
         {/* Form Actions */}
         <div className="form-actions">

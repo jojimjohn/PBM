@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
+import FileUpload from '../../../components/ui/FileUpload'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import systemSettingsService from '../../../services/systemSettingsService'
 import branchService from '../../../services/branchService'
+import uploadService from '../../../services/uploadService'
+import purchaseOrderService from '../../../services/purchaseOrderService'
 import { Plus, Trash2, Save, Truck, FileText, Calculator, Package, AlertTriangle, Building } from 'lucide-react'
 import './PurchaseOrderForm.css'
 
@@ -662,13 +665,59 @@ const PurchaseOrderForm = ({
           <div className="form-group full-width">
             <label>Order Notes</label>
             <textarea
-              value={formData.notes}
+              value={formData.notes || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               placeholder="Any special notes or instructions for this order..."
               rows="3"
             />
           </div>
         </div>
+
+        {/* Attachments - Only in edit mode */}
+        {isEdit && initialData?.id && (
+          <div className="form-section">
+            <div className="form-section-title">Attachments</div>
+            <FileUpload
+              mode="multiple"
+              accept=".pdf,.jpg,.jpeg,.png"
+              maxSize={5242880}
+              maxFiles={10}
+              onUpload={async (files) => {
+                const result = await uploadService.uploadFiles('purchase-orders', initialData.id, files);
+                if (result.success) {
+                  // Refresh the order data to get updated attachments
+                  const updated = await purchaseOrderService.getById(initialData.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('Files uploaded successfully');
+                } else {
+                  alert('Failed to upload files: ' + result.error);
+                }
+              }}
+              onDelete={async (filename) => {
+                const result = await uploadService.deleteFile('purchase-orders', initialData.id, filename);
+                if (result.success) {
+                  // Refresh the order data to get updated attachments
+                  const updated = await purchaseOrderService.getById(initialData.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('File deleted successfully');
+                } else {
+                  alert('Failed to delete file: ' + result.error);
+                }
+              }}
+              existingFiles={formData.attachments || []}
+            />
+          </div>
+        )}
 
         {/* Form Actions */}
         <div className="form-actions">

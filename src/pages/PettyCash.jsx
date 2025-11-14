@@ -7,7 +7,9 @@ import Modal from '../components/ui/Modal'
 import DataTable from '../components/ui/DataTable'
 import StockChart from '../components/StockChart'
 import ImageUpload from '../components/ui/ImageUpload'
+import FileUpload from '../components/ui/FileUpload'
 import pettyCashService from '../services/pettyCashService'
+import uploadService from '../services/uploadService'
 import userService from '../services/userService'
 import {
   CreditCard,
@@ -1026,6 +1028,12 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
 
         <div className="form-group">
           <label>{t('receiptPhotos', 'Receipt Photos')}</label>
+          {/*
+            TODO Sprint 4+: Replace ImageUpload with backend FileUpload when adding expense edit functionality
+            Current: ImageUpload (client-side only, not persisted to backend)
+            Future: FileUpload component with uploadService.uploadSingleFile('receipts', expenseId, file)
+            Backend route ready: POST /api/uploads/receipts/:id/attachment
+          */}
           <ImageUpload
             images={formData.receiptPhotos}
             onImagesChange={(images) => setFormData(prev => ({ ...prev, receiptPhotos: images }))}
