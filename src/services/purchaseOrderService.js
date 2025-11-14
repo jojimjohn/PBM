@@ -245,6 +245,81 @@ class PurchaseOrderService {
       };
     }
   }
+
+  /**
+   * Get all amendments for a purchase order
+   */
+  async getAmendments(orderId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments?orderId=${orderId}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching amendments:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch amendments',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Get a specific amendment by ID
+   */
+  async getAmendmentById(amendmentId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments/${amendmentId}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching amendment:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch amendment',
+        data: null
+      };
+    }
+  }
+
+  /**
+   * Create a new amendment for a purchase order
+   */
+  async createAmendment(orderId, amendmentData) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments`, {
+        method: 'POST',
+        body: JSON.stringify({
+          originalOrderId: orderId,
+          ...amendmentData
+        }),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error creating amendment:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to create amendment'
+      };
+    }
+  }
+
+  /**
+   * Approve or reject an amendment
+   */
+  async approveAmendment(amendmentId, approvalData) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments/${amendmentId}/approve`, {
+        method: 'PUT',
+        body: JSON.stringify(approvalData),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error approving/rejecting amendment:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to process amendment approval'
+      };
+    }
+  }
 }
 
 const purchaseOrderService = new PurchaseOrderService();

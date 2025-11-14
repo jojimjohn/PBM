@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './ui/Modal';
+import FileUpload from './ui/FileUpload';
 import { useSystemSettings } from '../context/SystemSettingsContext';
 import purchaseInvoiceService from '../services/purchaseInvoiceService';
+import uploadService from '../services/uploadService';
 import { FileText, DollarSign, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import './PurchaseInvoiceModal.css';
 
@@ -542,6 +544,52 @@ const PurchaseInvoiceModal = ({
             <p className="invoice-view-notes">{selectedInvoice.notes}</p>
           </div>
         )}
+
+        {/* Invoice Attachment */}
+        <div className="invoice-view-section">
+          <h4>Invoice Document</h4>
+          <FileUpload
+            mode="single"
+            accept=".pdf,.jpg,.jpeg,.png"
+            maxSize={5242880}
+            onUpload={async (file) => {
+              const result = await uploadService.uploadSingleFile('invoices', selectedInvoice.id, file);
+              if (result.success) {
+                // Refresh invoices to get updated attachment
+                await loadInvoices();
+                // Update selected invoice
+                const updated = await purchaseInvoiceService.getById(selectedInvoice.id);
+                if (updated.success) {
+                  setSelectedInvoice(updated.data);
+                }
+                setMessage({ type: 'success', text: 'Invoice document uploaded successfully' });
+              } else {
+                setMessage({ type: 'error', text: 'Failed to upload document: ' + result.error });
+              }
+            }}
+            onDelete={async () => {
+              const result = await uploadService.deleteSingleFile('invoices', selectedInvoice.id);
+              if (result.success) {
+                // Refresh invoices to get updated attachment
+                await loadInvoices();
+                // Update selected invoice
+                const updated = await purchaseInvoiceService.getById(selectedInvoice.id);
+                if (updated.success) {
+                  setSelectedInvoice(updated.data);
+                }
+                setMessage({ type: 'success', text: 'Invoice document deleted successfully' });
+              } else {
+                setMessage({ type: 'error', text: 'Failed to delete document: ' + result.error });
+              }
+            }}
+            existingFiles={selectedInvoice?.attachment ? [{
+              filename: selectedInvoice.attachment.split('/').pop(),
+              originalName: selectedInvoice.attachment.split('/').pop(),
+              path: selectedInvoice.attachment,
+              size: 0
+            }] : []}
+          />
+        </div>
 
         {selectedInvoice?.balance_due > 0 && (
           <div className="invoice-view-actions">

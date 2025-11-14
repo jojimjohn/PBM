@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './ui/Modal';
 import { useSystemSettings } from '../context/SystemSettingsContext';
+import { usePermissions } from '../hooks/usePermissions';
 import purchaseOrderAmendmentService from '../services/purchaseOrderAmendmentService';
-import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import purchaseOrderService from '../services/purchaseOrderService';
+import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Plus, Trash2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import './PurchaseOrderAmendmentModal.css';
 
 const PurchaseOrderAmendmentModal = ({
@@ -14,6 +16,7 @@ const PurchaseOrderAmendmentModal = ({
   onSuccess
 }) => {
   const { formatCurrency, formatDate, vatRate } = useSystemSettings();
+  const { hasPermission } = usePermissions();
 
   const [mode, setMode] = useState('list'); // 'list', 'details', 'create'
   const [amendments, setAmendments] = useState([]);
@@ -21,6 +24,7 @@ const PurchaseOrderAmendmentModal = ({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [approvalNotes, setApprovalNotes] = useState('');
 
   // Amendment form data
   const [formData, setFormData] = useState({
@@ -60,6 +64,7 @@ const PurchaseOrderAmendmentModal = ({
 
   const handleViewDetails = (amendment) => {
     setSelectedAmendment(amendment);
+    setApprovalNotes(''); // Clear any previous approval notes
     setMode('details');
   };
 
@@ -114,6 +119,7 @@ const PurchaseOrderAmendmentModal = ({
   const handleClose = () => {
     setMode('list');
     setSelectedAmendment(null);
+    setApprovalNotes(''); // Clear approval notes
     setFormData({
       reason: '',
       orderDate: '',
@@ -210,6 +216,94 @@ const PurchaseOrderAmendmentModal = ({
         amount: 0
       }]
     });
+  };
+
+  const handleApproveAmendment = async () => {
+    if (!selectedAmendment) return;
+
+    if (!window.confirm('Are you sure you want to approve this amendment? This will apply the changes to the purchase order.')) {
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const result = await purchaseOrderService.approveAmendment(selectedAmendment.id, {
+        status: 'approved',
+        notes: approvalNotes
+      });
+
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Amendment approved successfully!' });
+        setApprovalNotes('');
+
+        // Refresh amendments list
+        await loadAmendments();
+
+        // Notify parent to refresh PO data
+        if (onSuccess) onSuccess();
+
+        // Return to list after short delay
+        setTimeout(() => {
+          setMode('list');
+          setSelectedAmendment(null);
+          setMessage({ type: '', text: '' });
+        }, 2000);
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to approve amendment' });
+      }
+    } catch (error) {
+      console.error('Error approving amendment:', error);
+      setMessage({ type: 'error', text: 'An error occurred while approving the amendment' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectAmendment = async () => {
+    if (!selectedAmendment) return;
+
+    if (!approvalNotes || approvalNotes.trim().length < 10) {
+      setMessage({ type: 'error', text: 'Please provide a reason for rejection (minimum 10 characters)' });
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to reject this amendment?')) {
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const result = await purchaseOrderService.approveAmendment(selectedAmendment.id, {
+        status: 'rejected',
+        notes: approvalNotes
+      });
+
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Amendment rejected successfully!' });
+        setApprovalNotes('');
+
+        // Refresh amendments list
+        await loadAmendments();
+
+        // Return to list after short delay
+        setTimeout(() => {
+          setMode('list');
+          setSelectedAmendment(null);
+          setMessage({ type: '', text: '' });
+        }, 2000);
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to reject amendment' });
+      }
+    } catch (error) {
+      console.error('Error rejecting amendment:', error);
+      setMessage({ type: 'error', text: 'An error occurred while rejecting the amendment' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -929,6 +1023,94 @@ const PurchaseOrderAmendmentModal = ({
               </div>
             </div>
           )}
+
+        {/* Approval Actions - Only show for pending amendments with permission */}
+        {selectedAmendment.status === 'pending' && hasPermission('APPROVE_PURCHASE') && (
+          <div className="amendment-details-section">
+            <h4>Approval Actions</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
+                  Notes / Reason (Optional for approval, required for rejection)
+                </label>
+                <textarea
+                  value={approvalNotes}
+                  onChange={(e) => setApprovalNotes(e.target.value)}
+                  placeholder="Add notes or reason for your decision..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+                {approvalNotes.length > 0 && approvalNotes.length < 10 && (
+                  <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                    {approvalNotes.length} / 10 characters (minimum for rejection)
+                  </p>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  onClick={handleApproveAmendment}
+                  disabled={submitting}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: submitting ? '#9ca3af' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => !submitting && (e.target.style.backgroundColor = '#059669')}
+                  onMouseLeave={(e) => !submitting && (e.target.style.backgroundColor = '#10b981')}
+                >
+                  <ThumbsUp size={16} />
+                  {submitting ? 'Processing...' : 'Approve Amendment'}
+                </button>
+
+                <button
+                  onClick={handleRejectAmendment}
+                  disabled={submitting}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: submitting ? '#9ca3af' : '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => !submitting && (e.target.style.backgroundColor = '#dc2626')}
+                  onMouseLeave={(e) => !submitting && (e.target.style.backgroundColor = '#ef4444')}
+                >
+                  <ThumbsDown size={16} />
+                  {submitting ? 'Processing...' : 'Reject Amendment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {selectedAmendment.status !== 'pending' && selectedAmendment.approvedByName && (
           <div className="amendment-details-section">

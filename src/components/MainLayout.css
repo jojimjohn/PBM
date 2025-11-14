@@ -653,6 +653,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #3b82f6;
 }
 
 .mobile-logo .logo-icon {
