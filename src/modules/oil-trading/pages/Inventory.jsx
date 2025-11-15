@@ -10,7 +10,8 @@ import MaterialFormModal from '../../../components/MaterialFormModal'
 import inventoryService from '../../../services/inventoryService'
 import materialService from '../../../services/materialService'
 import supplierService from '../../../services/supplierService'
-import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, DollarSign, BarChart3, Calendar } from 'lucide-react'
+import materialCompositionService from '../../../services/materialCompositionService'
+import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, DollarSign, BarChart3, Calendar, ChevronDown, ChevronRight, Building } from 'lucide-react'
 import '../../../styles/theme.css'
 import './Inventory.css'
 
@@ -18,11 +19,12 @@ const Inventory = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('stock')
   const [inventory, setInventory] = useState([])
   const [materials, setMaterials] = useState([])
   const [materialCategories, setMaterialCategories] = useState([])
   const [vendors, setVendors] = useState([])
+  const [branches, setBranches] = useState([])
   const [stockMovements, setStockMovements] = useState([])
   const [alerts, setAlerts] = useState([])
   const [showPurchaseForm, setShowPurchaseForm] = useState(false)
@@ -33,6 +35,16 @@ const Inventory = () => {
   const [showMaterialForm, setShowMaterialForm] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState(null)
   const [message, setMessage] = useState(null)
+
+  // Material composition state
+  const [expandedRows, setExpandedRows] = useState(new Set())
+  const [showComponents, setShowComponents] = useState(() => {
+    // Load preference from localStorage
+    const saved = localStorage.getItem('inventory_showComponents')
+    return saved === 'true'
+  })
+  const [componentMaterialIds, setComponentMaterialIds] = useState([])
+  const [materialCompositions, setMaterialCompositions] = useState({})
 
   // Material category display config based on PRD
   const categoryDisplayConfig = {
@@ -96,6 +108,11 @@ const Inventory = () => {
     loadMaterialCategories()
   }, [])
 
+  // Save filter preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('inventory_showComponents', showComponents)
+  }, [showComponents])
+
   const loadMaterialCategories = async () => {
     try {
       const categoriesResult = await materialService.getCategories()
@@ -120,7 +137,41 @@ const Inventory = () => {
       const materialsResult = await materialService.getAll()
       const companyMaterials = materialsResult.success ? materialsResult.data : []
       setMaterials(companyMaterials)
-      
+
+      // Load component material IDs for filtering
+      const componentIds = await materialCompositionService.getComponentMaterialIds()
+      setComponentMaterialIds(componentIds)
+
+      // Load compositions for composite materials
+      const compositions = {}
+      for (const material of companyMaterials) {
+        if (material.is_composite) {
+          const compResult = await materialCompositionService.getByComposite(material.id)
+          if (compResult.success && compResult.data) {
+            // Attach stock levels to each component
+            compositions[material.id] = compResult.data.map(comp => {
+              const compStock = companyInventory.find(inv => inv.materialId === comp.component_material_id)
+              return {
+                ...comp,
+                currentStock: compStock?.currentStock || 0,
+                unit: compStock?.unit || comp.capacity_unit || 'units'
+              }
+            })
+          }
+        }
+      }
+      setMaterialCompositions(compositions)
+
+      // Load branches data using API service
+      try {
+        const branchesResult = await branchService.getAll()
+        const companyBranches = branchesResult.success ? branchesResult.data : []
+        setBranches(companyBranches)
+      } catch (branchError) {
+        console.error('Error loading branches:', branchError)
+        setBranches([])
+      }
+
       // Load supplier/vendor data using API service (Al Ramrami may not have suppliers)
       // Check if company uses suppliers before attempting to load
       if (selectedCompany?.id !== 'al_ramrami') {
@@ -136,16 +187,16 @@ const Inventory = () => {
         // Al Ramrami doesn't use suppliers in their business model
         setVendors([])
       }
-      
+
       // Create alerts for low stock items
-      const lowStockItems = companyInventory.filter(item => 
+      const lowStockItems = companyInventory.filter(item =>
         item.currentStock <= item.reorderLevel
       )
       setAlerts(lowStockItems.map(item => ({
         type: 'warning',
         message: `Low stock alert: ${item.materialCode} (${item.currentStock} ${item.unit})`
       })))
-      
+
     } catch (error) {
       console.error('Error loading inventory data:', error)
     } finally {
@@ -195,7 +246,7 @@ const Inventory = () => {
 
   const handleViewAllCategory = (categoryKey) => {
     console.log('Viewing all materials for category:', categoryKey)
-    setActiveTab('materials')
+    setActiveTab('master')
   }
 
   const handleAdjustStock = (material) => {
@@ -224,6 +275,27 @@ const Inventory = () => {
     console.log('Saving purchase order:', orderData)
     alert('✅ Purchase order created successfully!')
     setShowPurchaseForm(false)
+  }
+
+  // Material composition handlers
+  const toggleExpandRow = (materialId) => {
+    const newExpanded = new Set(expandedRows)
+    if (newExpanded.has(materialId)) {
+      newExpanded.delete(materialId)
+    } else {
+      newExpanded.add(materialId)
+    }
+    setExpandedRows(newExpanded)
+  }
+
+  const getFilteredMaterials = () => {
+    if (showComponents) {
+      // Show all materials
+      return materials
+    } else {
+      // Hide component materials
+      return materials.filter(m => !componentMaterialIds.includes(m.id))
+    }
   }
 
   // Material management handlers
@@ -378,31 +450,31 @@ const Inventory = () => {
 
       {/* Tab Navigation */}
       <div className="tab-navigation">
-        <button 
-          className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
+        <button
+          className={`tab-btn ${activeTab === 'stock' ? 'active' : ''}`}
+          onClick={() => setActiveTab('stock')}
         >
           <Package size={16} />
-          Inventory Stock
+          Stock Overview
         </button>
-        <button 
-          className={`tab-btn ${activeTab === 'materials' ? 'active' : ''}`}
-          onClick={() => setActiveTab('materials')}
-        >
-          <Droplets size={16} />
-          Materials Catalog
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'movements' ? 'active' : ''}`}
-          onClick={() => setActiveTab('movements')}
+        <button
+          className={`tab-btn ${activeTab === 'transactions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transactions')}
         >
           <TrendingUp size={16} />
-          Stock Movements
+          Transactions
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'master' ? 'active' : ''}`}
+          onClick={() => setActiveTab('master')}
+        >
+          <Droplets size={16} />
+          Material Master
         </button>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'overview' && (
+      {activeTab === 'stock' && (
         <div className="inventory-overview">
           {/* Summary Stats */}
           <div className="overview-stats">
@@ -411,7 +483,7 @@ const Inventory = () => {
                 <Package size={24} />
               </div>
               <div className="stat-info">
-                <p className="stat-value">{materials.length}</p>
+                <p className="stat-value">{materials.filter(m => !m.is_composite).length}</p>
                 <p className="stat-label">Total Materials</p>
               </div>
             </div>
@@ -432,6 +504,8 @@ const Inventory = () => {
                 <p className="stat-value">{formatCurrency(
                   Object.entries(inventory).reduce((sum, [id, stock]) => {
                     const material = materials.find(m => m.id === id)
+                    // Only count actual materials, not composite groupings
+                    if (material?.is_composite) return sum
                     return sum + (stock.currentStock * (material?.standardPrice || 0))
                   }, 0)
                 )}</p>
@@ -440,21 +514,62 @@ const Inventory = () => {
             </div>
           </div>
 
+          {/* Filter Controls */}
+          <div className="filter-controls" style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={showComponents}
+                onChange={(e) => setShowComponents(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              <span>Show component materials</span>
+            </label>
+            {!showComponents && componentMaterialIds.length > 0 && (
+              <span style={{ color: '#6b7280', fontSize: '0.9em' }}>
+                ({componentMaterialIds.length} component material{componentMaterialIds.length !== 1 ? 's' : ''} hidden)
+              </span>
+            )}
+          </div>
+
           {/* All Materials DataTable */}
           <DataTable
-            data={materials.map(material => {
+            data={getFilteredMaterials().flatMap(material => {
               const stock = inventory[material.id]
               const status = getStockStatus(material.id)
               const stockValue = stock ? stock.currentStock * material.standardPrice : 0
               const category = categoryDisplayConfig[material.category]
-              
-              return {
+
+              const rows = [{
                 ...material,
                 stock: stock || { currentStock: 0, unit: material.unit, reorderLevel: 0 },
                 status,
                 stockValue,
-                categoryInfo: category
+                categoryInfo: category,
+                isComponent: false
+              }]
+
+              // If composite material is expanded, add component rows
+              if (material.is_composite && expandedRows.has(material.id)) {
+                const components = materialCompositions[material.id] || []
+                components.forEach(comp => {
+                  rows.push({
+                    id: `${material.id}-comp-${comp.component_material_id}`,
+                    parentId: material.id,
+                    name: comp.component_material_name,
+                    code: comp.component_material_code,
+                    category: '',
+                    stock: { currentStock: comp.currentStock, unit: comp.unit },
+                    status: 'component',
+                    stockValue: 0,
+                    componentType: comp.component_type,
+                    categoryInfo: null,
+                    isComponent: true
+                  })
+                })
               }
+
+              return rows
             })}
             columns={[
               {
@@ -462,12 +577,52 @@ const Inventory = () => {
                 header: t('material'),
                 sortable: true,
                 filterable: true,
-                render: (value, row) => (
-                  <div className="material-info">
-                    <span className="material-name">{value}</span>
-                    <span className="material-id">{row.id}</span>
-                  </div>
-                )
+                render: (value, row) => {
+                  if (row.isComponent) {
+                    // Component row - indented with type badge
+                    return (
+                      <div className="material-info component-row" style={{ paddingLeft: '40px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="material-name">{value}</span>
+                          <span className={`component-type-badge component-type-${row.componentType}`}>
+                            {row.componentType === 'container' ? '📦 container' : '🛢️ content'}
+                          </span>
+                        </div>
+                        <span className="component-details" style={{ color: '#6b7280', fontSize: '0.85em' }}>
+                          Stock: {row.stock.currentStock} {row.stock.unit}
+                        </span>
+                      </div>
+                    )
+                  }
+
+                  // Regular material row
+                  const isComposite = row.is_composite
+                  const isExpanded = expandedRows.has(row.id)
+                  const hasComponents = isComposite && materialCompositions[row.id]?.length > 0
+
+                  return (
+                    <div className="material-info">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {isComposite && hasComponents && (
+                          <span
+                            className="expand-icon"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleExpandRow(row.id)
+                            }}
+                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          >
+                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                          </span>
+                        )}
+                        <div>
+                          <span className="material-name">{value}</span>
+                          <span className="material-id">{row.id}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
               },
               {
                 key: 'category',
@@ -475,6 +630,9 @@ const Inventory = () => {
                 sortable: true,
                 filterable: true,
                 render: (value, row) => {
+                  if (row.isComponent) {
+                    return null // No category for component rows
+                  }
                   if (!row.categoryInfo?.icon) {
                     return <span>{value || 'N/A'}</span>
                   }
@@ -484,6 +642,25 @@ const Inventory = () => {
                       <CategoryIcon size={14} />
                       {row.categoryInfo.name}
                     </div>
+                  )
+                }
+              },
+              {
+                key: 'branchName',
+                header: 'Branch/Location',
+                sortable: true,
+                filterable: true,
+                render: (value, row) => {
+                  if (row.isComponent) {
+                    return null // No branch for component rows
+                  }
+                  // Get branch name from inventory data or default to 'Main'
+                  const branchName = row.stock?.branchName || branches.find(b => b.id === row.stock?.branch_id)?.name || 'Main'
+                  return (
+                    <span style={{ fontSize: '0.9em', color: '#6b7280' }}>
+                      <Building size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                      {branchName}
+                    </span>
                   )
                 }
               },
@@ -534,24 +711,31 @@ const Inventory = () => {
                 key: 'actions',
                 header: t('actions'),
                 sortable: false,
-                render: (value, row) => (
-                  <div className="action-buttons">
-                    <button 
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleAdjustStock(row)}
-                      title="Adjust Stock"
-                    >
-                      <Edit size={14} />
-                    </button>
-                    <button 
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleViewHistory(row)}
-                      title="View History"
-                    >
-                      <FileText size={14} />
-                    </button>
-                  </div>
-                )
+                render: (value, row) => {
+                  // Don't show actions for component rows
+                  if (row.isComponent) {
+                    return null
+                  }
+
+                  return (
+                    <div className="action-buttons">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => handleAdjustStock(row)}
+                        title="Adjust Stock"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => handleViewHistory(row)}
+                        title="View History"
+                      >
+                        <FileText size={14} />
+                      </button>
+                    </div>
+                  )
+                }
               }
             ]}
             title="Current Inventory Stock"
@@ -572,22 +756,60 @@ const Inventory = () => {
         </div>
       )}
 
-      {activeTab === 'materials' && (
+      {activeTab === 'master' && (
         <div className="materials-view">
-          <div className="materials-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="materials-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="filter-controls" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={showComponents}
+                  onChange={(e) => setShowComponents(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span>Show component materials</span>
+              </label>
+              {!showComponents && componentMaterialIds.length > 0 && (
+                <span style={{ color: '#6b7280', fontSize: '0.9em' }}>
+                  ({componentMaterialIds.length} component material{componentMaterialIds.length !== 1 ? 's' : ''} hidden)
+                </span>
+              )}
+            </div>
             <button className="btn btn-primary" onClick={handleAddMaterial}>
               <Plus size={16} />
               {t('addMaterial', 'Add Material')}
             </button>
           </div>
           <DataTable
-            data={materials.map(material => {
+            data={getFilteredMaterials().flatMap(material => {
               const category = categoryDisplayConfig[material.category]
-
-              return {
+              const rows = [{
                 ...material,
-                categoryInfo: category
+                categoryInfo: category,
+                isComponent: false
+              }]
+
+              // If composite material is expanded, add component rows
+              if (material.is_composite && expandedRows.has(material.id)) {
+                const components = materialCompositions[material.id] || []
+                components.forEach(comp => {
+                  rows.push({
+                    id: `${material.id}-comp-${comp.component_material_id}`,
+                    parentId: material.id,
+                    name: comp.component_material_name,
+                    code: comp.component_material_code,
+                    category: '',
+                    unit: comp.unit,
+                    standardPrice: 0,
+                    currentStock: comp.currentStock,
+                    componentType: comp.component_type,
+                    categoryInfo: null,
+                    isComponent: true
+                  })
+                })
               }
+
+              return rows
             })}
             columns={[
               {
@@ -595,12 +817,52 @@ const Inventory = () => {
                 header: t('material'),
                 sortable: true,
                 filterable: true,
-                render: (value, row) => (
-                  <div className="material-info">
-                    <span className="material-name">{value}</span>
-                    <span className="material-id">{row.id}</span>
-                  </div>
-                )
+                render: (value, row) => {
+                  if (row.isComponent) {
+                    // Component row - indented with type badge
+                    return (
+                      <div className="material-info component-row" style={{ paddingLeft: '40px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="material-name">{value}</span>
+                          <span className={`component-type-badge component-type-${row.componentType}`}>
+                            {row.componentType === 'container' ? '📦 container' : '🛢️ content'}
+                          </span>
+                        </div>
+                        <span className="component-details" style={{ color: '#6b7280', fontSize: '0.85em' }}>
+                          Stock: {row.currentStock} {row.unit}
+                        </span>
+                      </div>
+                    )
+                  }
+
+                  // Regular material row
+                  const isComposite = row.is_composite
+                  const isExpanded = expandedRows.has(row.id)
+                  const hasComponents = isComposite && materialCompositions[row.id]?.length > 0
+
+                  return (
+                    <div className="material-info">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {isComposite && hasComponents && (
+                          <span
+                            className="expand-icon"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleExpandRow(row.id)
+                            }}
+                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          >
+                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                          </span>
+                        )}
+                        <div>
+                          <span className="material-name">{value}</span>
+                          <span className="material-id">{row.id}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
               },
               {
                 key: 'category',
@@ -652,26 +914,33 @@ const Inventory = () => {
                 key: 'actions',
                 header: 'Actions',
                 sortable: false,
-                render: (value, row) => (
-                  <div className="action-buttons">
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleEditMaterial(row)}
-                      title="Edit Material"
-                    >
-                      <Edit size={14} />
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleViewHistory(row)}
-                      title="View Material Details"
-                    >
-                      <FileText size={14} />
-                      Details
-                    </button>
-                  </div>
-                )
+                render: (value, row) => {
+                  // Don't show actions for component rows
+                  if (row.isComponent) {
+                    return null
+                  }
+
+                  return (
+                    <div className="action-buttons">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => handleEditMaterial(row)}
+                        title="Edit Material"
+                      >
+                        <Edit size={14} />
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => handleViewHistory(row)}
+                        title="View Material Details"
+                      >
+                        <FileText size={14} />
+                        Details
+                      </button>
+                    </div>
+                  )
+                }
               }
             ]}
             title="Materials Catalog"
@@ -692,7 +961,7 @@ const Inventory = () => {
         </div>
       )}
 
-      {activeTab === 'movements' && (
+      {activeTab === 'transactions' && (
         <div className="movements-view">
           <DataTable
             data={stockMovements.map(movement => {
@@ -745,6 +1014,21 @@ const Inventory = () => {
                     )}
                   </span>
                 )
+              },
+              {
+                key: 'branchName',
+                header: 'Branch/Location',
+                sortable: true,
+                filterable: true,
+                render: (value, row) => {
+                  const branchName = row.branchName || branches.find(b => b.id === row.branch_id)?.name || 'Main'
+                  return (
+                    <span style={{ fontSize: '0.9em', color: '#6b7280' }}>
+                      <Building size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                      {branchName}
+                    </span>
+                  )
+                }
               },
               {
                 key: 'quantity',

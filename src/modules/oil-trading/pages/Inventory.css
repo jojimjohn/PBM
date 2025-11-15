@@ -895,3 +895,66 @@
     flex: 1;
   }
 }
+
+/* Material Composition Styles */
+.component-row {
+  background: #f9fafb;
+  border-left: 3px solid #e5e7eb;
+}
+
+.component-details {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.9em;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.component-type-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+}
+
+.component-type-container {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.component-type-content {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.expand-icon {
+  cursor: pointer;
+  transition: transform 0.2s;
+  color: var(--gray-600);
+}
+
+.expand-icon:hover {
+  color: var(--primary-600);
+}
+
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.filter-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+}
+
+.filter-controls input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

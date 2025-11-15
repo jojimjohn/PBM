@@ -159,6 +159,28 @@ const materialCompositionService = {
   },
 
   /**
+   * Get all material IDs that are used as components in any composition
+   * Used to filter component materials from main inventory list
+   * @returns {Promise<Array<number>>} Array of material IDs
+   */
+  async getComponentMaterialIds() {
+    try {
+      const response = await this.getAll({ is_active: true })
+      if (response.success && response.data) {
+        // Extract unique component material IDs
+        const uniqueIds = [...new Set(
+          response.data.map(comp => comp.component_material_id)
+        )]
+        return uniqueIds
+      }
+      return []
+    } catch (error) {
+      console.error('Error fetching component material IDs:', error)
+      return []
+    }
+  },
+
+  /**
    * Get composition components for a composite material
    * Note: Actual quantities are determined at PO receipt, not by fixed ratios
    * @param {number} compositeMaterialId - Composite material ID
