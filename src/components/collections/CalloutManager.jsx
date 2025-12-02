@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play } from 'lucide-react';
+import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play, FileCheck, FileEdit, Navigation, PackageSearch } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { calloutService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
 import CalloutFormModal from './CalloutFormModal';
+import CalloutDetailsModal from './CalloutDetailsModal';
+import DriverAssignmentModal from './DriverAssignmentModal';
+import StatusUpdateModal from './StatusUpdateModal';
+import WCNFinalizationModal from './WCNFinalizationModal';
+import WCNRectificationModal from './WCNRectificationModal';
 import './collections-managers.css';
 
 const CalloutManager = () => {
@@ -29,6 +34,11 @@ const CalloutManager = () => {
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedCollectionOrder, setSelectedCollectionOrder] = useState(null);
+
+  // WCN Management (Sprint 4.5)
+  const [showWCNFinalizationModal, setShowWCNFinalizationModal] = useState(false);
+  const [showWCNRectificationModal, setShowWCNRectificationModal] = useState(false);
+  const [selectedWCNOrder, setSelectedWCNOrder] = useState(null);
 
   useEffect(() => {
     loadCallouts();
@@ -65,8 +75,20 @@ const CalloutManager = () => {
     setShowCreateModal(true);
   };
 
-  const handleViewCallout = (callout) => {
-    setSelectedCallout(callout);
+  const handleViewCallout = async (callout) => {
+    try {
+      // Fetch full details including items from the backend
+      const response = await calloutService.getCallout(callout.id);
+      if (response.success) {
+        setSelectedCallout(response.data);
+      } else {
+        // Fallback to row data if fetch fails
+        setSelectedCallout(callout);
+      }
+    } catch (error) {
+      console.error('Error fetching callout details:', error);
+      setSelectedCallout(callout);
+    }
     setShowDetailsModal(true);
   };
 
@@ -111,26 +133,39 @@ const CalloutManager = () => {
     }
   };
 
-  const handleStatusUpdate = async (statusData) => {
-    try {
-      const response = await calloutService.updateStatus(selectedCollectionOrder.id, statusData);
-      if (response.success) {
-        loadCallouts();
-        setShowStatusModal(false);
-        setSelectedCollectionOrder(null);
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
+  // WCN Finalization Handler (Sprint 4.5)
+  const handleFinalizeWCN = (collectionOrder) => {
+    setSelectedWCNOrder(collectionOrder);
+    setShowWCNFinalizationModal(true);
+  };
+
+  const handleWCNFinalizationSuccess = () => {
+    loadCallouts(); // Refresh the list
+    setShowWCNFinalizationModal(false);
+    setSelectedWCNOrder(null);
+  };
+
+  // WCN Rectification Handler (Sprint 4.5)
+  const handleRectifyWCN = (collectionOrder) => {
+    setSelectedWCNOrder(collectionOrder);
+    setShowWCNRectificationModal(true);
+  };
+
+  const handleWCNRectificationSuccess = () => {
+    loadCallouts(); // Refresh the list
+    setShowWCNRectificationModal(false);
+    setSelectedWCNOrder(null);
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
       case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
       case 'scheduled': return <Calendar className="w-4 h-4 text-blue-500" />;
-      case 'in_progress': return <Package className="w-4 h-4 text-orange-500" />;
+      case 'in_transit': return <Navigation className="w-4 h-4 text-purple-500" />;
+      case 'collecting': return <PackageSearch className="w-4 h-4 text-orange-500" />;
       case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'cancelled': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'failed': return <AlertCircle className="w-4 h-4 text-yellow-600" />;
       default: return <AlertCircle className="w-4 h-4 text-gray-500" />;
     }
   };
@@ -145,69 +180,61 @@ const CalloutManager = () => {
     }
   };
 
+  // Calculate statistics (in_transit and collecting both count as "in progress")
+  const stats = {
+    scheduled: callouts.filter(c => c.status === 'scheduled').length,
+    inProgress: callouts.filter(c => c.status === 'in_transit' || c.status === 'collecting').length,
+    completed: callouts.filter(c => c.status === 'completed' && !c.is_finalized).length,
+    finalized: callouts.filter(c => c.is_finalized).length,
+    total: pagination.total || callouts.length
+  };
+
   const columns = [
     {
       key: 'orderNumber',
       header: t('calloutNumber'),
       render: (value, row) => (
-        <div className="font-medium text-blue-600">
-          {value}
+        <div>
+          <div className="font-medium text-blue-600">{value}</div>
+          {row.scheduledDate && (
+            <div className="text-xs text-gray-500">
+              {new Date(row.scheduledDate).toLocaleDateString()}
+            </div>
+          )}
         </div>
       )
     },
     {
       key: 'contractTitle',
-      header: t('contract'),
+      header: t('contract') + ' & ' + t('location'),
       render: (value, row) => (
         <div>
           <div className="font-medium">{value}</div>
-          <div className="text-sm text-gray-500">{row.supplierName}</div>
+          <div className="text-sm text-gray-600">{row.supplierName}</div>
+          <div className="text-xs text-gray-500 flex items-center mt-1">
+            <MapPin className="w-3 h-3 mr-1" />
+            {row.locationName}
+          </div>
         </div>
       )
-    },
-    {
-      key: 'locationName',
-      header: t('location'),
-      render: (value, row) => (
-        <div className="flex items-center">
-          <MapPin className="w-4 h-4 text-gray-400 mr-1" />
-          <span>{value}</span>
-        </div>
-      )
-    },
-    {
-      key: 'scheduledDate',
-      header: t('requestedDate'),
-      render: (value) => value ? new Date(value).toLocaleDateString() : '-'
     },
     {
       key: 'status',
       header: t('status'),
       render: (value, row) => (
-        <div className="flex items-center">
-          {getStatusIcon(value)}
-          <span className="ml-1">{t(value)}</span>
+        <div>
+          <div className="flex items-center mb-1">
+            {getStatusIcon(value)}
+            <span className="ml-1 text-sm font-medium">{t(value)}</span>
+          </div>
+          {!!row.is_finalized && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+              <FileCheck className="w-3 h-3 mr-1" />
+              {t('wcnFinalized')}
+            </span>
+          )}
         </div>
       )
-    },
-    {
-      key: 'priority',
-      header: t('priority'),
-      render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(value)}`}>
-          {t(value)}
-        </span>
-      )
-    },
-    {
-      key: 'estimatedQuantity',
-      header: t('estimatedQuantity'),
-      render: (value, row) => value ? `${value} ${row.unit || ''}` : '-'
-    },
-    {
-      key: 'totalValue',
-      header: t('totalValue'),
-      render: (value, row) => `${value || 0} ${row.currency || 'OMR'}`
     },
     {
       key: 'driverName',
@@ -216,13 +243,13 @@ const CalloutManager = () => {
         <div>
           {value ? (
             <div>
-              <div className="font-medium">{value}</div>
+              <div className="text-sm font-medium">{value}</div>
               {row.vehiclePlateNumber && (
-                <div className="text-sm text-gray-500">{row.vehiclePlateNumber}</div>
+                <div className="text-xs text-gray-500">{row.vehiclePlateNumber}</div>
               )}
             </div>
           ) : (
-            <span className="text-gray-400 text-sm">{t('notAssigned')}</span>
+            <span className="text-gray-400 text-xs">{t('notAssigned')}</span>
           )}
         </div>
       )
@@ -239,9 +266,32 @@ const CalloutManager = () => {
           >
             <Eye className="w-4 h-4" />
           </button>
-          
-          {/* Driver Assignment - available for scheduled and in_progress orders */}
-          {(row.status === 'scheduled' || row.status === 'in_progress') && (
+
+          {/* WCN Finalization - Sprint 4.5: Only for completed but NOT finalized orders */}
+          {row.status === 'completed' && !row.is_finalized && (
+            <button
+              onClick={() => handleFinalizeWCN(row)}
+              className="p-1 text-green-600 hover:bg-green-50 rounded"
+              title={t('finalizeWCN')}
+            >
+              <FileCheck className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* WCN Rectification - Sprint 4.5: Only for finalized orders */}
+          {/* Note: Use Boolean() or !! to avoid rendering 0 when is_finalized is 0 */}
+          {!!row.is_finalized && (
+            <button
+              onClick={() => handleRectifyWCN(row)}
+              className="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+              title={t('rectifyWCN')}
+            >
+              <FileEdit className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Driver Assignment - available for scheduled, in_transit, and collecting orders */}
+          {(row.status === 'scheduled' || row.status === 'in_transit' || row.status === 'collecting') && (
             <button
               onClick={() => handleAssignDriver(row)}
               className="p-1 text-purple-600 hover:bg-purple-50 rounded"
@@ -250,9 +300,9 @@ const CalloutManager = () => {
               <Truck className="w-4 h-4" />
             </button>
           )}
-          
-          {/* Status Update - available for scheduled and in_progress orders */}
-          {(row.status === 'scheduled' || row.status === 'in_progress') && (
+
+          {/* Status Update - available for scheduled, in_transit, collecting, and failed orders */}
+          {(row.status === 'scheduled' || row.status === 'in_transit' || row.status === 'collecting' || row.status === 'failed') && (
             <button
               onClick={() => handleUpdateStatus(row)}
               className="p-1 text-orange-600 hover:bg-orange-50 rounded"
@@ -261,7 +311,7 @@ const CalloutManager = () => {
               <Play className="w-4 h-4" />
             </button>
           )}
-          
+
           {/* Edit/Delete - only for pending and scheduled orders */}
           {(row.status === 'pending' || row.status === 'scheduled') && (
             <>
@@ -288,56 +338,107 @@ const CalloutManager = () => {
 
   return (
     <div className={`callout-manager ${isRTL ? 'rtl' : 'ltr'}`}>
+      {/* Statistics Cards */}
+      <div className="stats-grid">
+        <div className="stat-card stat-card-blue">
+          <div className="stat-icon">
+            <Calendar className="w-6 h-6" />
+          </div>
+          <div className="stat-details">
+            <p className="stat-label">{t('scheduled')}</p>
+            <h3 className="stat-value">{stats.scheduled}</h3>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-orange">
+          <div className="stat-icon">
+            <Package className="w-6 h-6" />
+          </div>
+          <div className="stat-details">
+            <p className="stat-label">{t('inProgress')}</p>
+            <h3 className="stat-value">{stats.inProgress}</h3>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-green">
+          <div className="stat-icon">
+            <CheckCircle className="w-6 h-6" />
+          </div>
+          <div className="stat-details">
+            <p className="stat-label">{t('completed')}</p>
+            <h3 className="stat-value">{stats.completed}</h3>
+          </div>
+        </div>
+
+        <div className="stat-card stat-card-purple">
+          <div className="stat-icon">
+            <FileCheck className="w-6 h-6" />
+          </div>
+          <div className="stat-details">
+            <p className="stat-label">{t('wcnFinalized')}</p>
+            <h3 className="stat-value">{stats.finalized}</h3>
+          </div>
+        </div>
+      </div>
+
       <div className="manager-header">
         <div className="header-title">
-          <AlertCircle className="w-6 h-6" />
-          <h2>{t('calloutManagement')}</h2>
+          <Truck className="w-6 h-6" />
+          <div>
+            <h2>{t('collectionOrders')}</h2>
+            <p className="header-subtitle">{stats.total} {t('totalOrders')}</p>
+          </div>
         </div>
         <div className="header-actions">
-          <button 
-            className="filter-btn"
-            onClick={() => {/* TODO: Implement filter modal */}}
+          <button
+            className="btn-secondary"
+            onClick={() => loadCallouts()}
+            title={t('refresh')}
           >
-            <Filter className="w-4 h-4" />
-            {t('filter')}
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 21h5v-5" />
+            </svg>
+            {t('refresh')}
           </button>
-          <button 
-            className="add-btn"
+          <button
+            className="btn-primary"
             onClick={handleCreateCallout}
           >
             <Plus className="w-4 h-4" />
-            {t('newCallout')}
+            {t('newCollectionOrder')}
           </button>
         </div>
       </div>
 
       {/* Search and Filters */}
       <div className="search-and-filters">
-        <div className="search-bar">
-          <div className="search-input">
-            <Search className="w-5 h-5 search-icon" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('searchCallouts')}
-              className="search-field"
-            />
-          </div>
+        <div className="search-input-wrapper">
+          <Search className="w-5 h-5 search-icon" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={t('searchCallouts')}
+            className="search-field"
+          />
         </div>
 
-        <div className="filters">
+        <div className="filters-row">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="filter-select"
           >
             <option value="all">{t('allStatuses')}</option>
-            <option value="pending">{t('pending')}</option>
             <option value="scheduled">{t('scheduled')}</option>
-            <option value="in_progress">{t('inProgress')}</option>
+            <option value="in_transit">{t('inTransit') || 'In Transit'}</option>
+            <option value="collecting">{t('collecting') || 'Collecting'}</option>
             <option value="completed">{t('completed')}</option>
             <option value="cancelled">{t('cancelled')}</option>
+            <option value="failed">{t('failed') || 'Failed'}</option>
           </select>
 
           <select
@@ -422,629 +523,38 @@ const CalloutManager = () => {
             setShowStatusModal(false);
             setSelectedCollectionOrder(null);
           }}
-          onSave={handleStatusUpdate}
+          onSuccess={async () => {
+            await loadCallouts(); // Refresh collection orders list after status update
+          }}
+        />
+      )}
+
+      {/* WCN Finalization Modal - Sprint 4.5 */}
+      {showWCNFinalizationModal && selectedWCNOrder && (
+        <WCNFinalizationModal
+          collectionOrder={selectedWCNOrder}
+          isOpen={showWCNFinalizationModal}
+          onClose={() => {
+            setShowWCNFinalizationModal(false);
+            setSelectedWCNOrder(null);
+          }}
+          onSuccess={handleWCNFinalizationSuccess}
+        />
+      )}
+
+      {/* WCN Rectification Modal - Sprint 4.5 */}
+      {showWCNRectificationModal && selectedWCNOrder && (
+        <WCNRectificationModal
+          collectionOrder={selectedWCNOrder}
+          isOpen={showWCNRectificationModal}
+          onClose={() => {
+            setShowWCNRectificationModal(false);
+            setSelectedWCNOrder(null);
+          }}
+          onSuccess={handleWCNRectificationSuccess}
         />
       )}
     </div>
-  );
-};
-
-const CalloutDetailsModal = ({ callout, isOpen, onClose }) => {
-  const { t } = useLocalization();
-  const [loading, setLoading] = useState(true);
-  const [fullCalloutData, setFullCalloutData] = useState(null);
-
-  useEffect(() => {
-    if (isOpen && callout) {
-      loadFullCalloutData();
-    }
-  }, [isOpen, callout]);
-
-  const loadFullCalloutData = async () => {
-    try {
-      setLoading(true);
-      const response = await calloutService.getCallout(callout.id);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setFullCalloutData(data.data);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading callout details:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose} title={t('calloutDetails')}>
-        <div className="p-6 text-center">
-          <LoadingSpinner />
-          <p className="mt-2 text-gray-600">{t('loading')}</p>
-        </div>
-      </Modal>
-    );
-  }
-
-  const data = fullCalloutData || callout;
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('calloutDetails')}>
-      <div style={{ padding: '24px', maxHeight: '80vh', overflowY: 'auto' }}>
-        
-        {/* Header Information */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '20px',
-          marginBottom: '24px',
-          padding: '20px',
-          backgroundColor: '#f8fafc',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0'
-        }}>
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {t('calloutNumber')}
-            </label>
-            <p style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', marginTop: '4px' }}>
-              {data.orderNumber || data.calloutNumber || '-'}
-            </p>
-          </div>
-          
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {t('status')}
-            </label>
-            <p style={{ 
-              fontSize: '14px', 
-              fontWeight: '500', 
-              marginTop: '4px',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              backgroundColor: data.status === 'scheduled' ? '#dbeafe' : '#f3f4f6',
-              color: data.status === 'scheduled' ? '#1e40af' : '#374151',
-              display: 'inline-block'
-            }}>
-              {t(data.status || 'scheduled')}
-            </p>
-          </div>
-
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {t('priority')}
-            </label>
-            <p style={{ 
-              fontSize: '14px', 
-              fontWeight: '500', 
-              marginTop: '4px',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              backgroundColor: data.priority === 'high' ? '#fef2f2' : data.priority === 'urgent' ? '#fdf2f8' : '#f0fdf4',
-              color: data.priority === 'high' ? '#dc2626' : data.priority === 'urgent' ? '#be185d' : '#16a34a',
-              display: 'inline-block'
-            }}>
-              {t(data.priority || 'normal')}
-            </p>
-          </div>
-
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {t('scheduledDate')}
-            </label>
-            <p style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', marginTop: '4px' }}>
-              {data.scheduledDate ? new Date(data.scheduledDate).toLocaleDateString() : '-'}
-            </p>
-          </div>
-        </div>
-
-        {/* Contract & Location Information */}
-        <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
-            {t('contractAndLocation')}
-          </h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-            gap: '16px'
-          }}>
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {t('contract')}
-              </label>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', marginTop: '4px' }}>
-                {data.contractTitle || '-'}
-              </p>
-            </div>
-            
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {t('supplier')}
-              </label>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', marginTop: '4px' }}>
-                {data.supplierName || '-'}
-              </p>
-            </div>
-
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {t('location')}
-              </label>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', marginTop: '4px' }}>
-                {data.locationName || '-'}
-              </p>
-            </div>
-
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {t('totalValue')}
-              </label>
-              <p style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b', marginTop: '4px' }}>
-                {(parseFloat(data.totalValue) || 0).toFixed(2)} OMR
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Materials */}
-        {data.items && data.items.length > 0 && (
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
-              {t('materials')} ({data.items.length})
-            </h3>
-            <div style={{ 
-              border: '1px solid #e2e8f0', 
-              borderRadius: '8px', 
-              overflow: 'hidden',
-              backgroundColor: '#ffffff'
-            }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ backgroundColor: '#f8fafc' }}>
-                  <tr>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
-                      {t('material')}
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
-                      {t('quantity')}
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
-                      {t('condition')}
-                    </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
-                      {t('value')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item, index) => (
-                    <tr key={index} style={{ borderBottom: index < data.items.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1e293b' }}>
-                        <div style={{ fontWeight: '500' }}>{item.materialName}</div>
-                        {item.materialCode && (
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>{item.materialCode}</div>
-                        )}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1e293b' }}>
-                        {(parseFloat(item.availableQuantity || item.requestedQuantity) || 0).toFixed(3)} {item.materialUnit || item.unit}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1e293b' }}>
-                        <span style={{ 
-                          padding: '2px 6px', 
-                          borderRadius: '4px', 
-                          fontSize: '12px', 
-                          backgroundColor: '#f0fdf4', 
-                          color: '#16a34a' 
-                        }}>
-                          {t(item.materialCondition || 'good')}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1e293b', fontWeight: '500' }}>
-                        {(parseFloat(item.totalValue) || 0).toFixed(2)} OMR
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Special Instructions */}
-        {data.notes && (
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px' }}>
-              {t('specialInstructions')}
-            </h3>
-            <div style={{ 
-              padding: '16px', 
-              backgroundColor: '#f8fafc', 
-              borderRadius: '8px', 
-              border: '1px solid #e2e8f0',
-              fontSize: '14px',
-              color: '#374151',
-              lineHeight: '1.5'
-            }}>
-              {data.notes}
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          gap: '12px',
-          paddingTop: '24px',
-          borderTop: '1px solid #e2e8f0'
-        }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            {t('close')}
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
-// Driver Assignment Modal Component
-const DriverAssignmentModal = ({ collectionOrder, isOpen, onClose, onSave }) => {
-  const { t } = useLocalization();
-  const [formData, setFormData] = useState({
-    driverName: collectionOrder.driverName || '',
-    driverPhone: collectionOrder.driverPhone || '',
-    vehiclePlateNumber: collectionOrder.vehiclePlateNumber || '',
-    vehicleType: collectionOrder.vehicleType || ''
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await onSave(formData);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('assignDriver')}>
-      <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>
-            {t('collectionOrder')}: {collectionOrder.orderNumber}
-          </h3>
-          <p style={{ fontSize: '14px', color: '#64748b' }}>
-            {collectionOrder.contractTitle} - {collectionOrder.locationName}
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              {t('driverName')} *
-            </label>
-            <input
-              type="text"
-              value={formData.driverName}
-              onChange={(e) => handleChange('driverName', e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              {t('driverPhone')}
-            </label>
-            <input
-              type="tel"
-              value={formData.driverPhone}
-              onChange={(e) => handleChange('driverPhone', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              {t('vehiclePlateNumber')} *
-            </label>
-            <input
-              type="text"
-              value={formData.vehiclePlateNumber}
-              onChange={(e) => handleChange('vehiclePlateNumber', e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-              {t('vehicleType')}
-            </label>
-            <select
-              value={formData.vehicleType}
-              onChange={(e) => handleChange('vehicleType', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            >
-              <option value="">{t('selectVehicleType')}</option>
-              <option value="truck">{t('truck')}</option>
-              <option value="pickup">{t('pickup')}</option>
-              <option value="van">{t('van')}</option>
-              <option value="trailer">{t('trailer')}</option>
-            </select>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            {t('cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1
-            }}
-          >
-            {loading ? t('saving') : t('assignDriver')}
-          </button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Status Update Modal Component
-const StatusUpdateModal = ({ collectionOrder, isOpen, onClose, onSave }) => {
-  const { t } = useLocalization();
-  const [formData, setFormData] = useState({
-    status: collectionOrder.status || 'scheduled',
-    actualCollectionDate: '',
-    collectionNotes: '',
-    actualQuantityCollected: ''
-  });
-  const [loading, setLoading] = useState(false);
-
-  const statusOptions = [
-    { value: 'scheduled', label: t('scheduled'), color: '#3b82f6' },
-    { value: 'in_progress', label: t('inProgress'), color: '#f59e0b' },
-    { value: 'completed', label: t('completed'), color: '#10b981' },
-    { value: 'cancelled', label: t('cancelled'), color: '#ef4444' }
-  ];
-
-  const getNextStatuses = (currentStatus) => {
-    switch (currentStatus) {
-      case 'scheduled':
-        return ['in_progress', 'cancelled'];
-      case 'in_progress':
-        return ['completed', 'cancelled'];
-      default:
-        return [];
-    }
-  };
-
-  const availableStatuses = statusOptions.filter(option => 
-    getNextStatuses(collectionOrder.status).includes(option.value) || option.value === collectionOrder.status
-  );
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await onSave(formData);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={t('updateStatus')}>
-      <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>
-            {t('collectionOrder')}: {collectionOrder.orderNumber}
-          </h3>
-          <p style={{ fontSize: '14px', color: '#64748b' }}>
-            {collectionOrder.contractTitle} - {collectionOrder.locationName}
-          </p>
-        </div>
-
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-            {t('status')} *
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) => handleChange('status', e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}
-          >
-            {availableStatuses.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {formData.status === 'completed' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                {t('actualCollectionDate')}
-              </label>
-              <input
-                type="date"
-                value={formData.actualCollectionDate}
-                onChange={(e) => handleChange('actualCollectionDate', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                {t('actualQuantityCollected')}
-              </label>
-              <input
-                type="number"
-                step="0.001"
-                value={formData.actualQuantityCollected}
-                onChange={(e) => handleChange('actualQuantityCollected', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-            {t('notes')}
-          </label>
-          <textarea
-            value={formData.collectionNotes}
-            onChange={(e) => handleChange('collectionNotes', e.target.value)}
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              resize: 'vertical'
-            }}
-            placeholder={t('enterCollectionNotes')}
-          />
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#6b7280',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            {t('cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1
-            }}
-          >
-            {loading ? t('updating') : t('updateStatus')}
-          </button>
-        </div>
-      </form>
-    </Modal>
   );
 };
 

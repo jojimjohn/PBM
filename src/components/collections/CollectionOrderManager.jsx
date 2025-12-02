@@ -7,6 +7,9 @@ import inventoryService from '../../services/inventoryService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
+import DatePicker from '../ui/DatePicker';
+import Autocomplete from '../ui/Autocomplete';
+import Input, { Textarea } from '../ui/Input';
 import './collections-managers.css';
 
 const CollectionOrderManager = () => {
@@ -753,71 +756,47 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
             
             {/* Contract Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('selectContract')} *
-                </label>
-                <select
-                  value={formData.contractId}
-                  onChange={(e) => handleInputChange('contractId', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                  disabled={!!callout}
-                >
-                  <option value="">{t('selectContract')}</option>
-                  {contracts.map(contract => (
-                    <option key={contract.id} value={contract.id}>
-                      {contract.contractNumber} - {contract.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Autocomplete
+                label={`${t('selectContract')} *`}
+                options={contracts}
+                value={formData.contractId}
+                onChange={(contractId) => handleInputChange('contractId', contractId)}
+                getOptionLabel={(contract) => contract ? `${contract.contractNumber} - ${contract.title}` : ''}
+                getOptionValue={(contract) => contract?.id || ''}
+                placeholder={t('selectContract')}
+                searchable
+                required
+                disabled={!!callout}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('pickupLocation')} *
-                </label>
-                <select
-                  value={formData.locationId}
-                  onChange={(e) => handleInputChange('locationId', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                  disabled={!formData.contractId || !!callout}
-                >
-                  <option value="">{t('selectLocation')}</option>
-                  {locations.map(location => (
-                    <option key={location.id} value={location.id}>
-                      {location.locationName} - {location.address}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Autocomplete
+                label={`${t('pickupLocation')} *`}
+                options={locations}
+                value={formData.locationId}
+                onChange={(locationId) => handleInputChange('locationId', locationId)}
+                getOptionLabel={(location) => location ? `${location.locationName} - ${location.address}` : ''}
+                getOptionValue={(location) => location?.id || ''}
+                placeholder={t('selectLocation')}
+                searchable
+                required
+                disabled={!formData.contractId || !!callout}
+              />
             </div>
 
             {/* Contact Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('contactPerson')}
-                </label>
-                <input
-                  type="text"
-                  value={formData.contactPerson}
-                  onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('contactPhone')}
-                </label>
-                <input
-                  type="tel"
-                  value={formData.contactPhone}
-                  onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              <Input
+                label={t('contactPerson')}
+                type="text"
+                value={formData.contactPerson}
+                onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+              />
+              <Input
+                label={t('contactPhone')}
+                type="tel"
+                value={formData.contactPhone}
+                onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+              />
             </div>
 
             <div className="flex justify-between">
@@ -843,75 +822,54 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
             
             {/* Collection Date & Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('scheduledDate')} *
-                </label>
-                <input
-                  type="date"
-                  value={formData.scheduledDate}
-                  onChange={(e) => handleInputChange('scheduledDate', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
+              <DatePicker
+                label={`${t('scheduledDate')} *`}
+                value={formData.scheduledDate ? new Date(formData.scheduledDate) : null}
+                onChange={(date) => handleInputChange('scheduledDate', date ? date.toISOString().split('T')[0] : '')}
+                dateFormat="dd/MM/yyyy"
+                minDate={new Date()}
+                required
+              />
             </div>
 
             {/* Vehicle & Driver Information */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('driverName')}
-                </label>
-                <input
-                  type="text"
-                  value={formData.driverName}
-                  onChange={(e) => handleInputChange('driverName', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('vehiclePlate')}
-                </label>
-                <input
-                  type="text"
-                  value={formData.vehiclePlate}
-                  onChange={(e) => handleInputChange('vehiclePlate', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('vehicleType')}
-                </label>
-                <select
-                  value={formData.vehicleType}
-                  onChange={(e) => handleInputChange('vehicleType', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">{t('selectVehicleType')}</option>
-                  <option value="truck">{t('truck')}</option>
-                  <option value="van">{t('van')}</option>
-                  <option value="trailer">{t('trailer')}</option>
-                </select>
-              </div>
+              <Input
+                label={t('driverName')}
+                type="text"
+                value={formData.driverName}
+                onChange={(e) => handleInputChange('driverName', e.target.value)}
+              />
+
+              <Input
+                label={t('vehiclePlate')}
+                type="text"
+                value={formData.vehiclePlate}
+                onChange={(e) => handleInputChange('vehiclePlate', e.target.value)}
+              />
+
+              <Autocomplete
+                label={t('vehicleType')}
+                options={[
+                  { value: 'truck', label: t('truck') },
+                  { value: 'van', label: t('van') },
+                  { value: 'trailer', label: t('trailer') }
+                ]}
+                value={formData.vehicleType}
+                onChange={(value) => handleInputChange('vehicleType', value)}
+                placeholder={t('selectVehicleType')}
+                searchable={false}
+              />
             </div>
 
             {/* Special Instructions */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('specialInstructions')}
-              </label>
-              <textarea
-                value={formData.specialInstructions}
-                onChange={(e) => handleInputChange('specialInstructions', e.target.value)}
-                rows={3}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={t('anySpecialInstructionsForCollection')}
-              />
-            </div>
+            <Textarea
+              label={t('specialInstructions')}
+              value={formData.specialInstructions}
+              onChange={(e) => handleInputChange('specialInstructions', e.target.value)}
+              rows={3}
+              placeholder={t('anySpecialInstructionsForCollection')}
+            />
 
             <div className="flex justify-between">
               <button type="button" onClick={() => setStep(1)} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">

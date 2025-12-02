@@ -61,6 +61,7 @@ const DataTable = ({
   columns = [],
   title,
   subtitle,
+  headerActions = null,
   searchable = true,
   filterable = true,
   sortable = true,
@@ -356,13 +357,71 @@ const DataTable = ({
   }, [data, activeColumns])
 
 
+  // Skeleton loading component
+  const SkeletonTable = () => (
+    <div className="table-wrapper">
+      <table className="data-table skeleton-table">
+        <thead>
+          <tr>
+            {selectable && <th className="skeleton-header-cell select-header"></th>}
+            {columns.map((col, index) => (
+              <th key={col.key || index} className="skeleton-header-cell">
+                <div className={`skeleton skeleton-header ${index % 3 === 0 ? 'skeleton-short' : index % 3 === 1 ? 'skeleton-medium' : ''}`}></div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 5 }).map((_, rowIndex) => (
+            <tr key={rowIndex} className="skeleton-row">
+              {selectable && (
+                <td className="skeleton-cell select-cell">
+                  <div className="skeleton skeleton-icon"></div>
+                </td>
+              )}
+              {columns.map((col, colIndex) => (
+                <td key={col.key || colIndex} className="skeleton-cell">
+                  {col.type === 'status' ? (
+                    <div className="skeleton skeleton-badge"></div>
+                  ) : (
+                    <div className={`skeleton ${colIndex % 2 === 0 ? 'skeleton-short' : colIndex % 3 === 1 ? 'skeleton-medium' : 'skeleton-long'}`}></div>
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+
   if (loading) {
     return (
-      <div className="data-table-container">
-        <div className="data-table-loading">
-          <div className="loading-spinner"></div>
-          <p>{t('loading')}</p>
-        </div>
+      <div className={`data-table-container ${className || ''} ${isRTL ? 'rtl' : ''}`}>
+        {/* Header */}
+        {(title || subtitle) && (
+          <div className="data-table-header">
+            {title && <h2 className="data-table-title">{title}</h2>}
+            {subtitle && <p className="data-table-subtitle">{subtitle}</p>}
+          </div>
+        )}
+
+        {/* Skeleton loading */}
+        <SkeletonTable />
+
+        {/* Skeleton pagination */}
+        {paginated && (
+          <div className="data-table-pagination">
+            <div className="pagination-info">
+              <div className="skeleton" style={{ width: '150px', height: '14px' }}></div>
+            </div>
+            <div className="pagination-controls">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div key={i} className="skeleton" style={{ width: '32px', height: '32px', borderRadius: '4px' }}></div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -381,10 +440,17 @@ const DataTable = ({
   return (
     <div className={`data-table-container ${className || ''} ${isRTL ? 'rtl' : ''}`}>
       {/* Header */}
-      {(title || subtitle) && (
-        <div className="data-table-header">
-          {title && <h2 className="data-table-title">{title}</h2>}
-          {subtitle && <p className="data-table-subtitle">{subtitle}</p>}
+      {(title || subtitle || headerActions) && (
+        <div className="data-table-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            {title && <h2 className="data-table-title">{title}</h2>}
+            {subtitle && <p className="data-table-subtitle">{subtitle}</p>}
+          </div>
+          {headerActions && (
+            <div className="data-table-header-actions">
+              {headerActions}
+            </div>
+          )}
         </div>
       )}
 

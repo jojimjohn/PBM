@@ -14,17 +14,11 @@ export const calloutService = {
         }
         return acc;
       }, {});
-      
-      const queryParams = new URLSearchParams(filteredParams);
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts?${queryParams}`);
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data: data.data || [], pagination: data.pagination };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.error || 'Failed to load callouts', data: [] };
-      }
+      const queryParams = new URLSearchParams(filteredParams);
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts?${queryParams}`);
+
+      return { success: true, data: data.data || [], pagination: data.pagination };
     } catch (error) {
       return { success: false, error: error.message || 'Network error', data: [] };
     }
@@ -38,7 +32,7 @@ export const calloutService = {
   // Create new callout
   createCallout: async (calloutData) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts`, {
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/callouts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,13 +40,7 @@ export const calloutService = {
         body: JSON.stringify(calloutData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data: data.data, message: data.message };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.error || 'Failed to create callout' };
-      }
+      return { success: true, data: data.data, message: data.message };
     } catch (error) {
       return { success: false, error: error.message || 'Network error' };
     }
@@ -72,7 +60,7 @@ export const calloutService = {
   // Update callout
   updateCallout: async (id, calloutData) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`, {
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -80,13 +68,7 @@ export const calloutService = {
         body: JSON.stringify(calloutData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data: data.data, message: data.message };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.error || 'Failed to update callout' };
-      }
+      return { success: true, data: data.data, message: data.message };
     } catch (error) {
       return { success: false, error: error.message || 'Network error' };
     }
@@ -95,17 +77,11 @@ export const calloutService = {
   // Delete callout
   deleteCallout: async (id) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`, {
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data: data.data, message: data.message };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.error || 'Failed to delete callout' };
-      }
+      return { success: true, data: data.data, message: data.message };
     } catch (error) {
       return { success: false, error: error.message || 'Network error' };
     }
@@ -122,10 +98,29 @@ export const calloutService = {
     });
   },
 
+  /**
+   * Get materials available for a specific contract and location
+   * Returns unselected materials (no pre-selection) for dynamic material selection
+   * @param {number} contractId - Contract ID
+   * @param {number} locationId - Supplier location ID
+   * @returns {Promise} Materials array with constraints
+   */
+  getContractMaterials: async (contractId, locationId) => {
+    return await authService.makeAuthenticatedRequest(
+      `${BASE_URL}/contracts/${contractId}/locations/${locationId}/materials`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  },
+
   // Update driver details for collection order
   updateDriverDetails: async (id, driverData) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}/driver`, {
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}/driver`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -133,36 +128,7 @@ export const calloutService = {
         body: JSON.stringify(driverData),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data: data.data, message: data.message };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.error || 'Failed to update driver details' };
-      }
-    } catch (error) {
-      return { success: false, error: error.message || 'Network error' };
-    }
-  },
-
-  // Update status with transition validation
-  updateStatus: async (id, statusData) => {
-    try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/collection-orders/${id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(statusData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data: data.data, message: data.message };
-      } else {
-        const errorData = await response.json();
-        return { success: false, error: errorData.error || 'Failed to update status' };
-      }
+      return { success: true, data: data.data, message: data.message };
     } catch (error) {
       return { success: false, error: error.message || 'Network error' };
     }
@@ -263,6 +229,64 @@ export const collectionOrderService = {
       },
       body: JSON.stringify(orderData),
     });
+  },
+
+  // ===== WCN (Waste Consignment Note) Methods - Sprint 4.5 =====
+
+  // Finalize WCN and auto-generate PO
+  finalizeWCN: async (collectionOrderId, wcnData) => {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${BASE_URL}/collection-orders/${collectionOrderId}/finalize-wcn`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(wcnData),
+        }
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || 'WCN finalized successfully',
+      };
+    } catch (error) {
+      console.error('Error finalizing WCN:', error);
+      return {
+        success: false,
+        error: error.message || 'Network error',
+      };
+    }
+  },
+
+  // Rectify WCN (post-finalization quantity adjustments)
+  rectifyWCN: async (collectionOrderId, rectificationData) => {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${BASE_URL}/collection-orders/${collectionOrderId}/rectify-wcn`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(rectificationData),
+        }
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || 'WCN rectified successfully',
+      };
+    } catch (error) {
+      console.error('Error rectifying WCN:', error);
+      return {
+        success: false,
+        error: error.message || 'Network error',
+      };
+    }
   }
 };
 
@@ -320,12 +344,7 @@ export const contractLocationService = {
   // Get locations by supplier (for contract form)
   getBySupplier: async (supplierId) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/contract-locations?supplierId=${supplierId}`);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch supplier locations');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/contract-locations?supplierId=${supplierId}`);
 
       return {
         success: true,
@@ -345,22 +364,13 @@ export const contractLocationService = {
   // Create new location (alias for createContractLocation)
   createLocation: async (locationData) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/contract-locations`, {
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/contract-locations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(locationData),
       });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        let errorMessage = data.error || 'Failed to create location';
-        if (data.details && Array.isArray(data.details)) {
-          errorMessage += '\n' + data.details.map(d => `${d.field}: ${d.message}`).join('\n');
-        }
-        throw new Error(errorMessage);
-      }
 
       return {
         success: true,
@@ -376,21 +386,16 @@ export const contractLocationService = {
     }
   },
 
-  // Update location (alias for updateContractLocation) 
+  // Update location (alias for updateContractLocation)
   updateLocation: async (id, locationData) => {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${BASE_URL}/contract-locations/${id}`, {
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/contract-locations/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(locationData),
       });
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update location');
-      }
 
       return {
         success: true,

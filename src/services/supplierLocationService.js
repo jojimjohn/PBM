@@ -12,12 +12,7 @@ class SupplierLocationService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch supplier locations');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`);
 
       return {
         success: true,
@@ -39,12 +34,7 @@ class SupplierLocationService {
    */
   async getBySupplier(supplierId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations?supplierId=${supplierId}&isActive=true`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch supplier locations');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations?supplierId=${supplierId}&isActive=true`);
 
       return {
         success: true,
@@ -66,12 +56,7 @@ class SupplierLocationService {
    */
   async getById(locationId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch supplier location');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}`);
 
       return {
         success: true,
@@ -93,19 +78,13 @@ class SupplierLocationService {
    */
   async create(locationData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(locationData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create supplier location');
-      }
 
       return {
         success: true,
@@ -126,19 +105,13 @@ class SupplierLocationService {
    */
   async update(locationId, locationData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(locationData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update supplier location');
-      }
 
       return {
         success: true,
@@ -159,15 +132,9 @@ class SupplierLocationService {
    */
   async delete(locationId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete supplier location');
-      }
 
       return {
         success: true,
@@ -187,19 +154,13 @@ class SupplierLocationService {
    */
   async reactivate(locationId, locationData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}/reactivate`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations/${locationId}/reactivate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(locationData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reactivate supplier location');
-      }
 
       return {
         success: true,

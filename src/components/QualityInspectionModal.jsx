@@ -104,6 +104,7 @@ const QualityInspectionModal = ({
       onClose={onClose}
       title={`Quality Inspection - ${item?.materialName}`}
       size="xl"
+      closeOnOverlayClick={false}
     >
       <div className="quality-inspection-container">
         {/* Header with Overall Status */}

@@ -13,12 +13,7 @@ class ContractService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch contracts');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts`);
 
       return {
         success: true,
@@ -40,12 +35,7 @@ class ContractService {
    */
   async getById(contractId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch contract');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}`);
 
       return {
         success: true,
@@ -67,19 +57,13 @@ class ContractService {
    */
   async create(contractData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(contractData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create contract');
-      }
 
       return {
         success: true,
@@ -100,19 +84,13 @@ class ContractService {
    */
   async update(contractId, contractData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(contractData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update contract');
-      }
 
       return {
         success: true,
@@ -133,15 +111,9 @@ class ContractService {
    */
   async delete(contractId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete contract');
-      }
 
       return {
         success: true,
@@ -169,12 +141,7 @@ class ContractService {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search contracts');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/search?${params.toString()}`);
 
       return {
         success: true,
@@ -196,12 +163,7 @@ class ContractService {
    */
   async getByCustomer(customerId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/customer/${customerId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch customer contracts');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/customer/${customerId}`);
 
       return {
         success: true,
@@ -223,12 +185,7 @@ class ContractService {
    */
   async getActive() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/active`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch active contracts');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/active`);
 
       return {
         success: true,
@@ -250,12 +207,7 @@ class ContractService {
    */
   async getExpiring(days = 30) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/expiring?days=${days}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expiring contracts');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/expiring?days=${days}`);
 
       return {
         success: true,
@@ -277,19 +229,13 @@ class ContractService {
    */
   async updateStatus(contractId, status) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/status`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update contract status');
-      }
 
       return {
         success: true,
@@ -310,19 +256,13 @@ class ContractService {
    */
   async renew(contractId, renewalData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/renew`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/renew`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(renewalData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to renew contract');
-      }
 
       return {
         success: true,
@@ -343,12 +283,7 @@ class ContractService {
    */
   async getPricing(contractId, materialId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/pricing/${materialId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch contract pricing');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/pricing/${materialId}`);
 
       return {
         success: true,
@@ -370,19 +305,13 @@ class ContractService {
    */
   async updatePricing(contractId, materialId, pricingData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/pricing/${materialId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/pricing/${materialId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(pricingData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update contract pricing');
-      }
 
       return {
         success: true,
@@ -403,12 +332,7 @@ class ContractService {
    */
   async getTerms(contractId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/terms`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch contract terms');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/terms`);
 
       return {
         success: true,
@@ -430,12 +354,7 @@ class ContractService {
    */
   async getPerformanceMetrics(contractId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/performance`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch contract performance');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/${contractId}/performance`);
 
       return {
         success: true,

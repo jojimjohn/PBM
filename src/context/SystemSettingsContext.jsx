@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
+import authService from '../services/authService'
+import { API_BASE_URL } from '../config/api'
 
 const SystemSettingsContext = createContext({})
 
@@ -34,7 +36,8 @@ export const SystemSettingsProvider = ({ children }) => {
   }
   
   const [settings, setSettings] = useState(getDefaultSettings())
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('light')
+  const [vatRate, setVatRate] = useState(5) // Default 5%, will be loaded from API
 
   const toggleTheme = () => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
@@ -62,13 +65,40 @@ export const SystemSettingsProvider = ({ children }) => {
     return () => clearInterval(interval)
   }, [])
 
+  // Load VAT rate from system settings API
+  const loadVatRate = async () => {
+    if (!user || !selectedCompany) {
+      setVatRate(5) // Default
+      return
+    }
+
+    try {
+      const response = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/system-settings/vat_rate_percentage`,
+        { method: 'GET' }
+      )
+
+      if (response.success && response.data) {
+        const rate = parseFloat(response.data.setting_value)
+        setVatRate(isNaN(rate) ? 5 : rate)
+      } else {
+        setVatRate(5) // Default on error
+      }
+    } catch (error) {
+      console.error('Error loading VAT rate:', error)
+      setVatRate(5) // Default on error
+    }
+  }
+
   // Load user-specific settings when user or company changes
   useEffect(() => {
     if (user && selectedCompany) {
       loadUserSettings()
+      loadVatRate()
     } else {
       // Reset to defaults when no user/company
       setSettings(getDefaultSettings())
+      setVatRate(5)
     }
   }, [user?.id, selectedCompany?.id])
   
@@ -212,9 +242,15 @@ export const SystemSettingsProvider = ({ children }) => {
   }
 
   const formatCurrency = (amount, currency = settings.currency) => {
-    if (typeof amount !== 'number') return `${currency} 0.000`
-    
-    return `${currency} ${amount.toFixed(3)}`
+    // Convert string to number if needed (MySQL returns DECIMAL as strings)
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+
+    // Handle invalid values
+    if (typeof numericAmount !== 'number' || isNaN(numericAmount)) {
+      return `${currency} 0.000`
+    }
+
+    return `${currency} ${numericAmount.toFixed(3)}`
   }
 
   // Get current date in various formats
@@ -245,7 +281,8 @@ export const SystemSettingsProvider = ({ children }) => {
     getInputDate,
     systemDate: settings.systemDate,
     theme,
-    toggleTheme
+    toggleTheme,
+    vatRate // VAT rate percentage from system settings
   }
 
   return (

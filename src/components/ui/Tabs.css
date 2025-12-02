@@ -1,0 +1,229 @@
+/* Tabs Component Styles */
+
+.tabs-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Tabs List */
+.tabs-list {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+/* Line Variant (Underline) */
+.tabs-list-line {
+  border-bottom: 2px solid var(--gray-200);
+  gap: var(--space-6);
+}
+
+.tabs-list-line .tabs-trigger {
+  position: relative;
+  padding: var(--space-3) var(--space-1);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--gray-600);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  margin-bottom: -2px;
+}
+
+.tabs-list-line .tabs-trigger:hover {
+  color: var(--gray-900);
+  border-bottom-color: var(--gray-300);
+}
+
+.tabs-list-line .tabs-trigger[data-state="active"] {
+  color: var(--primary-600);
+  border-bottom-color: var(--primary-600);
+  font-weight: var(--font-semibold);
+}
+
+.tabs-list-line .tabs-trigger:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* Enclosed Variant (Bordered tabs) */
+.tabs-list-enclosed {
+  border-bottom: 1px solid var(--gray-200);
+  gap: var(--space-2);
+}
+
+.tabs-list-enclosed .tabs-trigger {
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  color: var(--gray-600);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  margin-bottom: -1px;
+}
+
+.tabs-list-enclosed .tabs-trigger:hover {
+  background: var(--gray-50);
+  color: var(--gray-900);
+}
+
+.tabs-list-enclosed .tabs-trigger[data-state="active"] {
+  background: white;
+  border-color: var(--gray-200);
+  border-bottom-color: white;
+  color: var(--primary-600);
+  font-weight: var(--font-semibold);
+}
+
+.tabs-list-enclosed .tabs-trigger:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Pills Variant (Rounded buttons) */
+.tabs-list-pills {
+  padding: var(--space-1);
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  gap: var(--space-1);
+}
+
+.tabs-list-pills .tabs-trigger {
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--gray-600);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.tabs-list-pills .tabs-trigger:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--gray-900);
+}
+
+.tabs-list-pills .tabs-trigger[data-state="active"] {
+  background: white;
+  color: var(--primary-600);
+  font-weight: var(--font-semibold);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabs-list-pills .tabs-trigger:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Tabs Content */
+.tabs-content {
+  padding-top: var(--space-4);
+  outline: none;
+}
+
+.tabs-content:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}
+
+/* Disabled State */
+.tabs-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .tabs-list-line {
+  border-bottom-color: var(--gray-700);
+}
+
+[data-theme="dark"] .tabs-list-line .tabs-trigger {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .tabs-list-line .tabs-trigger:hover {
+  color: var(--gray-200);
+  border-bottom-color: var(--gray-600);
+}
+
+[data-theme="dark"] .tabs-list-line .tabs-trigger[data-state="active"] {
+  color: var(--primary-400);
+  border-bottom-color: var(--primary-400);
+}
+
+[data-theme="dark"] .tabs-list-enclosed {
+  border-bottom-color: var(--gray-700);
+}
+
+[data-theme="dark"] .tabs-list-enclosed .tabs-trigger {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .tabs-list-enclosed .tabs-trigger:hover {
+  background: var(--gray-800);
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .tabs-list-enclosed .tabs-trigger[data-state="active"] {
+  background: var(--gray-900);
+  border-color: var(--gray-700);
+  border-bottom-color: var(--gray-900);
+  color: var(--primary-400);
+}
+
+[data-theme="dark"] .tabs-list-pills {
+  background: var(--gray-800);
+}
+
+[data-theme="dark"] .tabs-list-pills .tabs-trigger {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .tabs-list-pills .tabs-trigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .tabs-list-pills .tabs-trigger[data-state="active"] {
+  background: var(--gray-700);
+  color: var(--primary-400);
+}
+
+/* RTL Support */
+[dir="rtl"] .tabs-list {
+  direction: rtl;
+}
+
+[dir="rtl"] .tabs-content {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tabs-list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs-list-line {
+    gap: var(--space-4);
+  }
+
+  .tabs-list-enclosed .tabs-trigger,
+  .tabs-list-pills .tabs-trigger {
+    white-space: nowrap;
+  }
+}

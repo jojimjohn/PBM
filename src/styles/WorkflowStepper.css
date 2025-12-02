@@ -1,0 +1,510 @@
+/* ===================================================================
+   Workflow Stepper Component Styles
+   Visual guide for purchase workflow progression
+   =================================================================== */
+
+.workflow-stepper {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background pattern for visual interest */
+.workflow-stepper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 1;
+  pointer-events: none;
+}
+
+/* Header section */
+.workflow-header {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.workflow-title {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.workflow-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Steps container */
+.workflow-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 20px;
+  padding: 0 12px;
+}
+
+/* Individual step */
+.workflow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.workflow-step.clickable {
+  cursor: pointer;
+}
+
+.workflow-step.clickable:hover .step-icon-wrapper {
+  transform: translateY(-4px);
+}
+
+.workflow-step.clickable:hover .step-icon {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Step icon wrapper */
+.step-icon-wrapper {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+/* Step icon */
+.step-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+/* Active step */
+.workflow-step.active .step-icon {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #667eea;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(255, 255, 255, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Completed step */
+.workflow-step.completed .step-icon {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+/* Pending step */
+.workflow-step.pending .step-icon {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Step check mark (for completed steps) */
+.step-check {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.step-check svg {
+  width: 12px;
+  height: 12px;
+  color: #ffffff;
+}
+
+/* Step content (label and number) */
+.step-content {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.step-label {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.step-number {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Active step indicator */
+.step-indicator {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Workflow connector (arrow between steps) */
+.workflow-connector {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 40px;
+  margin: 0 8px;
+  padding-top: 20px; /* Account for step icon size */
+}
+
+.connector-line {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  flex: 1;
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.workflow-connector.completed .connector-line {
+  background: #10b981;
+}
+
+.connector-arrow {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 20px;
+  font-weight: bold;
+  margin-left: 4px;
+  transition: color 0.3s ease;
+}
+
+.workflow-connector.completed .connector-arrow {
+  color: #10b981;
+}
+
+/* Help section */
+.workflow-help {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 12px 16px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.help-icon {
+  font-size: 24px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.help-text {
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.help-text strong {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* ===================================================================
+   RTL Support
+   =================================================================== */
+
+[dir="rtl"] .workflow-steps {
+  direction: rtl;
+}
+
+[dir="rtl"] .connector-arrow {
+  margin-left: 0;
+  margin-right: 4px;
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .help-icon {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+[dir="rtl"] .step-check {
+  right: auto;
+  left: -2px;
+}
+
+/* ===================================================================
+   Responsive Design
+   =================================================================== */
+
+@media (max-width: 1200px) {
+  .workflow-steps {
+    padding: 0 8px;
+  }
+
+  .step-label {
+    font-size: 12px;
+  }
+
+  .step-number {
+    font-size: 10px;
+  }
+
+  .step-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .connector-arrow {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 992px) {
+  .workflow-stepper {
+    padding: 20px;
+  }
+
+  .workflow-title {
+    font-size: 18px;
+  }
+
+  .workflow-subtitle {
+    font-size: 13px;
+  }
+
+  .step-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .step-label {
+    font-size: 11px;
+  }
+
+  .step-number {
+    display: none; /* Hide step numbers on smaller screens */
+  }
+
+  .workflow-connector {
+    min-width: 30px;
+    margin: 0 4px;
+  }
+
+  .help-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-stepper {
+    padding: 16px;
+  }
+
+  .workflow-steps {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 0 4px 12px 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .workflow-step {
+    min-width: 70px;
+  }
+
+  .step-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .step-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .step-label {
+    font-size: 10px;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .step-indicator {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .connector-arrow {
+    font-size: 16px;
+  }
+
+  .workflow-help {
+    padding: 10px 12px;
+  }
+
+  .help-icon {
+    font-size: 20px;
+    margin-right: 8px;
+  }
+
+  .help-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .workflow-title {
+    font-size: 16px;
+  }
+
+  .workflow-subtitle {
+    font-size: 12px;
+  }
+
+  .workflow-steps {
+    padding-bottom: 16px;
+  }
+
+  .step-content {
+    margin-top: 8px;
+  }
+
+  .step-indicator {
+    bottom: -28px;
+  }
+
+  .help-text strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+}
+
+/* ===================================================================
+   Accessibility
+   =================================================================== */
+
+.workflow-step:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.workflow-step.clickable:focus .step-icon {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .workflow-step,
+  .step-icon,
+  .step-icon-wrapper,
+  .connector-line,
+  .connector-arrow {
+    transition: none;
+  }
+
+  .workflow-step.active .step-icon {
+    animation: none;
+  }
+
+  .step-indicator {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .workflow-stepper {
+    background: #ffffff;
+    border: 2px solid #667eea;
+    box-shadow: none;
+  }
+
+  .workflow-stepper::before {
+    display: none;
+  }
+
+  .workflow-title,
+  .workflow-subtitle,
+  .step-label,
+  .step-number,
+  .help-text {
+    color: #1f2937;
+  }
+
+  .step-icon {
+    border-color: #667eea;
+    color: #667eea;
+  }
+
+  .workflow-step.active .step-icon {
+    background: #667eea;
+    color: #ffffff;
+  }
+}

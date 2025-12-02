@@ -13,7 +13,8 @@ class FinancialService {
     try {
       // Use API service to load transactions
       const authService = await import('./authService')
-      const response = await authService.default.makeAuthenticatedRequest('/api/transactions')
+      const { API_BASE_URL } = await import('../config/api')
+      const response = await authService.default.makeAuthenticatedRequest(`${API_BASE_URL}/transactions`)
       this.transactions = response.data || []
       return this.transactions
     } catch (error) {

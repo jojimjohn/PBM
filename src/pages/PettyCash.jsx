@@ -7,12 +7,15 @@ import Modal from '../components/ui/Modal'
 import DataTable from '../components/ui/DataTable'
 import StockChart from '../components/StockChart'
 import ImageUpload from '../components/ui/ImageUpload'
+import FileUpload from '../components/ui/FileUpload'
 import pettyCashService from '../services/pettyCashService'
-import { 
-  CreditCard, 
-  Plus, 
-  DollarSign, 
-  TrendingUp, 
+import uploadService from '../services/uploadService'
+import userService from '../services/userService'
+import {
+  CreditCard,
+  Plus,
+  DollarSign,
+  TrendingUp,
   User,
   Calendar,
   Receipt,
@@ -25,7 +28,9 @@ import {
   Filter,
   Download,
   Upload,
-  Camera
+  Camera,
+  Lock,
+  FileText
 } from 'lucide-react'
 import './PettyCash.css'
 
@@ -38,6 +43,7 @@ const PettyCash = () => {
   const [cards, setCards] = useState([])
   const [expenses, setExpenses] = useState([])
   const [expenseTypes, setExpenseTypes] = useState([])
+  const [users, setUsers] = useState([])
   const [stats, setStats] = useState({})
   const [error, setError] = useState(null)
   
@@ -45,6 +51,7 @@ const PettyCash = () => {
   const [showCardModal, setShowCardModal] = useState(false)
   const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [showReloadModal, setShowReloadModal] = useState(false)
+  const [showViewModal, setShowViewModal] = useState(false)
   const [selectedCard, setSelectedCard] = useState(null)
   const [editingCard, setEditingCard] = useState(null)
   
@@ -100,12 +107,24 @@ const PettyCash = () => {
       if (statsResult.success) {
         setStats(statsResult.data || {})
       }
-      
+
+      // Load users
+      const usersResult = await userService.getAll()
+      console.log('📋 Users API Result:', usersResult)
+      if (usersResult.success) {
+        console.log('✅ Users loaded:', usersResult.data?.length, 'users')
+        setUsers(usersResult.data || [])
+      } else {
+        console.error('❌ Failed to load users:', usersResult.error)
+        setUsers([])
+      }
+
     } catch (error) {
       console.error('Error loading petty cash data:', error)
       setError(error.message)
       setCards([])
       setExpenses([])
+      setUsers([])
     } finally {
       setLoading(false)
     }
@@ -134,17 +153,15 @@ const PettyCash = () => {
 
   // Handle card operations
   const handleAddCard = () => {
+    const today = new Date().toISOString().split('T')[0]
     setCardForm({
-      cardName: '',
-      assignedStaffName: '',
-      assignedStaffRole: '',
-      assignedStaffPhone: '',
-      assignedStaffEmail: '',
+      assignedTo: '',
+      staffName: '',
+      department: '',
       initialBalance: '',
       monthlyLimit: '',
-      dailyLimit: '',
-      cardType: 'monthly',
-      allowedExpenseTypes: [],
+      issueDate: today,
+      expiryDate: '',
       notes: ''
     })
     setEditingCard(null)
@@ -152,18 +169,35 @@ const PettyCash = () => {
   }
 
   const handleEditCard = (card) => {
+    // Format dates for HTML date inputs (YYYY-MM-DD)
+    const formatDateForInput = (dateValue) => {
+      if (!dateValue) return ''
+
+      // If already in YYYY-MM-DD format, return as-is
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue
+      }
+
+      // Handle date objects or ISO timestamps - use local date to avoid timezone shifts
+      const date = new Date(dateValue)
+      if (isNaN(date.getTime())) return '' // Invalid date
+
+      // Use local date components to avoid timezone issues
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
     setCardForm({
-      cardName: card.cardName,
-      assignedStaffName: card.assignedStaff.name,
-      assignedStaffRole: card.assignedStaff.role,
-      assignedStaffPhone: card.assignedStaff.phone,
-      assignedStaffEmail: card.assignedStaff.email,
-      initialBalance: card.currentBalance,
-      monthlyLimit: card.monthlyLimit,
-      dailyLimit: card.dailyLimit,
-      cardType: card.cardType,
-      allowedExpenseTypes: card.allowedExpenseTypes,
-      notes: card.notes
+      assignedTo: card.assignedTo?.toString() || '',
+      staffName: card.staffName || '',
+      department: card.department || '',
+      initialBalance: card.initialBalance || '',
+      monthlyLimit: card.monthlyLimit || '',
+      issueDate: formatDateForInput(card.issueDate),
+      expiryDate: formatDateForInput(card.expiryDate),
+      notes: card.notes || ''
     })
     setEditingCard(card)
     setShowCardModal(true)
@@ -231,17 +265,31 @@ const PettyCash = () => {
     }
   }
 
-  const handleSaveCard = async (cardData) => {
+  const handleSaveCard = async (e) => {
+    e.preventDefault()
+
     try {
       setLoading(true)
+
+      // Map form data to backend schema
+      const cardData = {
+        assignedTo: parseInt(cardForm.assignedTo),
+        staffName: cardForm.staffName,
+        department: cardForm.department || null,
+        initialBalance: parseFloat(cardForm.initialBalance),
+        monthlyLimit: parseFloat(cardForm.monthlyLimit) || null,
+        issueDate: cardForm.issueDate,
+        expiryDate: cardForm.expiryDate || null,
+        notes: cardForm.notes || null
+      }
+
       let result
-      
       if (editingCard) {
         result = await pettyCashService.updateCard(editingCard.id, cardData)
       } else {
         result = await pettyCashService.createCard(cardData)
       }
-      
+
       if (result.success) {
         await loadPettyCashData()
         setShowCardModal(false)
@@ -372,6 +420,7 @@ const PettyCash = () => {
             onClick={(e) => {
               e.stopPropagation()
               setSelectedCard(row)
+              setShowViewModal(true)
             }}
             className="action-btn view"
             title={t('viewDetails', 'View Details')}
@@ -520,9 +569,7 @@ const PettyCash = () => {
     }
   ]
 
-  if (loading) {
-    return <LoadingSpinner />
-  }
+  // Remove early return - let DataTable handle loading state with skeleton
 
   return (
     <div className="petty-cash-page">
@@ -637,6 +684,7 @@ const PettyCash = () => {
           sortable={true}
           paginated={true}
           exportable={true}
+          loading={loading}
           emptyMessage={t('noCardsFound', 'No cards found')}
           className="cards-table"
         />
@@ -668,6 +716,7 @@ const PettyCash = () => {
           sortable={true}
           paginated={true}
           exportable={true}
+          loading={loading}
           emptyMessage={t('noExpensesFound', 'No expenses found')}
           className="expenses-table"
         />
@@ -681,10 +730,11 @@ const PettyCash = () => {
             setShowCardModal(false)
             setEditingCard(null)
           }}
+          onSubmit={handleSaveCard}
           card={editingCard}
           formData={cardForm}
           setFormData={setCardForm}
-          expenseTypes={expenseTypes}
+          users={users}
           t={t}
         />
       )}
@@ -714,17 +764,37 @@ const PettyCash = () => {
           t={t}
         />
       )}
+
+      {/* Card View Modal */}
+      {showViewModal && selectedCard && (
+        <CardViewModal
+          isOpen={showViewModal}
+          onClose={() => {
+            setShowViewModal(false)
+            setSelectedCard(null)
+          }}
+          card={selectedCard}
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+          t={t}
+        />
+      )}
     </div>
   )
 }
 
 // Card Form Modal Component
-const CardFormModal = ({ isOpen, onClose, card, formData, setFormData, expenseTypes, t }) => {
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Handle card creation/update
-    console.log('Card form submitted:', formData)
-    onClose()
+const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, users, t }) => {
+  // Handle user selection - auto-populate staffName
+  const handleUserChange = (userId) => {
+    const selectedUser = users.find(u => u.id === parseInt(userId))
+    if (selectedUser) {
+      setFormData(prev => ({
+        ...prev,
+        assignedTo: userId,
+        staffName: selectedUser.fullName
+      }))
+    }
   }
 
   return (
@@ -733,68 +803,44 @@ const CardFormModal = ({ isOpen, onClose, card, formData, setFormData, expenseTy
       title={card ? t('editCard', 'Edit Card') : t('addNewCard', 'Add New Card')}
       onClose={onClose}
       className="modal-lg"
+      closeOnOverlayClick={false}
     >
-      <form onSubmit={handleSubmit} className="card-form">
-        <div className="form-grid">
-          <div className="form-group">
-            <label>{t('cardName', 'Card Name')} *</label>
-            <input
-              type="text"
-              value={formData.cardName}
-              onChange={(e) => setFormData(prev => ({ ...prev, cardName: e.target.value }))}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>{t('cardType', 'Card Type')} *</label>
-            <select
-              value={formData.cardType}
-              onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
-              required
-            >
-              <option value="monthly">{t('monthly', 'Monthly')}</option>
-              <option value="weekly">{t('weekly', 'Weekly')}</option>
-              <option value="bi_weekly">{t('biWeekly', 'Bi-weekly')}</option>
-            </select>
-          </div>
-        </div>
-
+      <form onSubmit={onSubmit} className="card-form">
         <div className="form-section">
           <h3>{t('staffAssignment', 'Staff Assignment')}</h3>
           <div className="form-grid">
             <div className="form-group">
+              <label>{t('assignedUser', 'Assigned User')} *</label>
+              <select
+                value={formData.assignedTo}
+                onChange={(e) => handleUserChange(e.target.value)}
+                required
+              >
+                <option value="">{t('selectUser', 'Select User...')}</option>
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.fullName} - {user.role}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
               <label>{t('staffName', 'Staff Name')} *</label>
               <input
                 type="text"
-                value={formData.assignedStaffName}
-                onChange={(e) => setFormData(prev => ({ ...prev, assignedStaffName: e.target.value }))}
+                value={formData.staffName}
+                onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
                 required
+                readOnly
               />
             </div>
             <div className="form-group">
-              <label>{t('staffRole', 'Staff Role')} *</label>
+              <label>{t('department', 'Department')}</label>
               <input
                 type="text"
-                value={formData.assignedStaffRole}
-                onChange={(e) => setFormData(prev => ({ ...prev, assignedStaffRole: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('phoneNumber', 'Phone Number')}</label>
-              <input
-                type="tel"
-                value={formData.assignedStaffPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, assignedStaffPhone: e.target.value }))}
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('emailAddress', 'Email Address')}</label>
-              <input
-                type="email"
-                value={formData.assignedStaffEmail}
-                onChange={(e) => setFormData(prev => ({ ...prev, assignedStaffEmail: e.target.value }))}
+                value={formData.department}
+                onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                placeholder={t('departmentPlaceholder', 'e.g., Accounting, Sales')}
               />
             </div>
           </div>
@@ -811,59 +857,43 @@ const CardFormModal = ({ isOpen, onClose, card, formData, setFormData, expenseTy
                 value={formData.initialBalance}
                 onChange={(e) => setFormData(prev => ({ ...prev, initialBalance: e.target.value }))}
                 required
+                min="0"
               />
             </div>
             <div className="form-group">
-              <label>{t('monthlyLimit', 'Monthly Limit')} (OMR) *</label>
+              <label>{t('monthlyLimit', 'Monthly Limit')} (OMR)</label>
               <input
                 type="number"
                 step="0.001"
                 value={formData.monthlyLimit}
                 onChange={(e) => setFormData(prev => ({ ...prev, monthlyLimit: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>{t('dailyLimit', 'Daily Limit')} (OMR)</label>
-              <input
-                type="number"
-                step="0.001"
-                value={formData.dailyLimit}
-                onChange={(e) => setFormData(prev => ({ ...prev, dailyLimit: e.target.value }))}
+                min="0"
               />
             </div>
           </div>
         </div>
 
         <div className="form-section">
-          <h3>{t('allowedExpenseTypes', 'Allowed Expense Types')}</h3>
-          <div className="checkbox-grid">
-            {expenseTypes.map(type => (
-              <label key={type.id} className="checkbox-card">
-                <input
-                  type="checkbox"
-                  checked={formData.allowedExpenseTypes?.includes(type.id)}
-                  onChange={(e) => {
-                    const current = formData.allowedExpenseTypes || []
-                    if (e.target.checked) {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        allowedExpenseTypes: [...current, type.id] 
-                      }))
-                    } else {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        allowedExpenseTypes: current.filter(t => t !== type.id) 
-                      }))
-                    }
-                  }}
-                />
-                <div className="checkbox-content">
-                  <span className="checkbox-title">{type.name}</span>
-                  <span className="checkbox-description">{type.description}</span>
-                </div>
-              </label>
-            ))}
+          <h3>{t('validityPeriod', 'Validity Period')}</h3>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>{t('issueDate', 'Issue Date')} *</label>
+              <input
+                type="date"
+                value={formData.issueDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, issueDate: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>{t('expiryDate', 'Expiry Date')}</label>
+              <input
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                min={formData.issueDate}
+              />
+            </div>
           </div>
         </div>
 
@@ -873,6 +903,7 @@ const CardFormModal = ({ isOpen, onClose, card, formData, setFormData, expenseTy
             value={formData.notes}
             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
             rows="3"
+            placeholder={t('notesPlaceholder', 'Any additional notes about this card...')}
           />
         </div>
 
@@ -904,6 +935,7 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
       title={t('addExpense', 'Add Expense')}
       onClose={onClose}
       className="modal-lg"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="expense-form">
         <div className="form-grid">
@@ -996,6 +1028,12 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
 
         <div className="form-group">
           <label>{t('receiptPhotos', 'Receipt Photos')}</label>
+          {/*
+            TODO Sprint 4+: Replace ImageUpload with backend FileUpload when adding expense edit functionality
+            Current: ImageUpload (client-side only, not persisted to backend)
+            Future: FileUpload component with uploadService.uploadSingleFile('receipts', expenseId, file)
+            Backend route ready: POST /api/uploads/receipts/:id/attachment
+          */}
           <ImageUpload
             images={formData.receiptPhotos}
             onImagesChange={(images) => setFormData(prev => ({ ...prev, receiptPhotos: images }))}
@@ -1058,6 +1096,7 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
       title={t('reloadCard', 'Reload Card')}
       onClose={onClose}
       className="modal-md"
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="reload-form">
         <div className="card-info-display">
@@ -1124,6 +1163,229 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
           </button>
         </div>
       </form>
+    </Modal>
+  )
+}
+
+// Card View Modal Component
+const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t }) => {
+  if (!card) return null
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      active: {
+        className: 'badge-success',
+        label: t('active', 'Active'),
+        icon: <CheckCircle size={14} />
+      },
+      suspended: {
+        className: 'badge-warning',
+        label: t('suspended', 'Suspended'),
+        icon: <AlertCircle size={14} />
+      },
+      expired: {
+        className: 'badge-danger',
+        label: t('expired', 'Expired'),
+        icon: <Clock size={14} />
+      },
+      closed: {
+        className: 'badge-secondary',
+        label: t('closed', 'Closed'),
+        icon: <Lock size={14} />
+      }
+    }
+    const config = statusConfig[status] || statusConfig.active
+    return (
+      <span className={`status-badge ${config.className}`}>
+        {config.icon}
+        <span>{config.label}</span>
+      </span>
+    )
+  }
+
+  // Calculate utilization percentage
+  const totalSpent = parseFloat(card.totalSpent) || 0
+  const monthlyLimit = parseFloat(card.monthlyLimit) || 0
+  const utilization = monthlyLimit > 0
+    ? ((totalSpent / monthlyLimit) * 100).toFixed(1)
+    : 0
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      title={t('pettyCashCardDetails', 'Petty Cash Card Details')}
+      onClose={onClose}
+      className="modal-xl petty-cash-view-modal"
+      closeOnOverlayClick={false}
+    >
+      <div className="card-view-content">
+        {/* Card Header - Prominent Display */}
+        <div className="card-view-header">
+          <div className="card-header-left">
+            <div className="card-icon">
+              <CreditCard size={32} />
+            </div>
+            <div className="card-header-info">
+              <h2 className="card-number">{card.cardNumber}</h2>
+              <div className="card-staff">
+                <User size={16} />
+                <span>{card.staffName}</span>
+                {card.department && (
+                  <>
+                    <span className="separator">•</span>
+                    <span className="department">{card.department}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="card-header-right">
+            {getStatusBadge(card.status)}
+          </div>
+        </div>
+
+        {/* Balance Cards - Most Important Information */}
+        <div className="balance-cards-grid">
+          <div className="balance-card primary">
+            <div className="balance-card-icon">
+              <DollarSign size={24} />
+            </div>
+            <div className="balance-card-content">
+              <label>{t('currentBalance', 'Current Balance')}</label>
+              <div className="balance-value">{formatCurrency(card.currentBalance)}</div>
+            </div>
+          </div>
+
+          <div className="balance-card">
+            <div className="balance-card-content">
+              <label>{t('initialBalance', 'Initial Balance')}</label>
+              <div className="balance-value">{formatCurrency(card.initialBalance)}</div>
+            </div>
+          </div>
+
+          <div className="balance-card">
+            <div className="balance-card-content">
+              <label>{t('totalSpent', 'Total Spent')}</label>
+              <div className="balance-value spent">{formatCurrency(totalSpent)}</div>
+            </div>
+          </div>
+
+          <div className="balance-card">
+            <div className="balance-card-content">
+              <label>{t('monthlyLimit', 'Monthly Limit')}</label>
+              <div className="balance-value">
+                {monthlyLimit > 0 ? formatCurrency(monthlyLimit) : t('noLimit', 'No Limit')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Utilization Bar - Only if monthly limit exists */}
+        {monthlyLimit > 0 && (
+          <div className="utilization-section">
+            <div className="utilization-header">
+              <span className="utilization-label">
+                <TrendingUp size={16} />
+                {t('monthlyUtilization', 'Monthly Utilization')}
+              </span>
+              <span className="utilization-percent">{utilization}%</span>
+            </div>
+            <div className="utilization-bar-wrapper">
+              <div className="utilization-bar">
+                <div
+                  className={`utilization-fill ${
+                    utilization > 90 ? 'danger' :
+                    utilization > 70 ? 'warning' :
+                    'success'
+                  }`}
+                  style={{ width: `${Math.min(utilization, 100)}%` }}
+                >
+                  <span className="utilization-label-inside">
+                    {utilization > 10 && `${utilization}%`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="card-details-sections">
+          {/* Validity Period */}
+          <div className="detail-section">
+            <h3 className="section-title">
+              <Calendar size={18} />
+              {t('validityPeriod', 'Validity Period')}
+            </h3>
+            <div className="detail-grid">
+              <div className="detail-item">
+                <label>{t('issueDate', 'Issue Date')}</label>
+                <div className="detail-value">
+                  {card.issueDate ? formatDate(card.issueDate) : '-'}
+                </div>
+              </div>
+              <div className="detail-item">
+                <label>{t('expiryDate', 'Expiry Date')}</label>
+                <div className="detail-value">
+                  {card.expiryDate ? formatDate(card.expiryDate) : t('noExpiry', 'No Expiry')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Expenses */}
+          {card.recentExpenses && card.recentExpenses.length > 0 && (
+            <div className="detail-section">
+              <h3 className="section-title">
+                <Receipt size={18} />
+                {t('recentExpenses', 'Recent Expenses')} ({card.recentExpenses.length})
+              </h3>
+              <div className="expenses-list-view">
+                {card.recentExpenses.map((expense, index) => (
+                  <div key={expense.id || index} className="expense-row">
+                    <div className="expense-left">
+                      <div className="expense-description">{expense.description}</div>
+                      <div className="expense-meta">
+                        <span className="expense-number">{expense.expenseNumber}</span>
+                        <span className="separator">•</span>
+                        <span className="expense-date">{formatDate(expense.expenseDate)}</span>
+                      </div>
+                    </div>
+                    <div className="expense-right">
+                      <div className="expense-amount-value">
+                        {formatCurrency(expense.amount)}
+                      </div>
+                      <span className={`expense-status-badge ${expense.status}`}>
+                        {expense.status === 'approved' && <CheckCircle size={12} />}
+                        {expense.status === 'pending' && <Clock size={12} />}
+                        {expense.status === 'rejected' && <AlertCircle size={12} />}
+                        {t(expense.status, expense.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {card.notes && (
+            <div className="detail-section">
+              <h3 className="section-title">
+                <FileText size={18} />
+                {t('notes', 'Notes')}
+              </h3>
+              <div className="notes-display">{card.notes}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="modal-footer">
+          <button type="button" className="btn btn-outline" onClick={onClose}>
+            {t('close', 'Close')}
+          </button>
+        </div>
+      </div>
     </Modal>
   )
 }

@@ -13,12 +13,7 @@ class WastageService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch wastages');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages`);
 
       return {
         success: true,
@@ -40,12 +35,7 @@ class WastageService {
    */
   async getById(wastageId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch wastage');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}`);
 
       return {
         success: true,
@@ -67,19 +57,13 @@ class WastageService {
    */
   async create(wastageData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(wastageData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create wastage record');
-      }
 
       return {
         success: true,
@@ -100,19 +84,13 @@ class WastageService {
    */
   async update(wastageId, wastageData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(wastageData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update wastage record');
-      }
 
       return {
         success: true,
@@ -133,15 +111,9 @@ class WastageService {
    */
   async delete(wastageId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete wastage record');
-      }
 
       return {
         success: true,
@@ -169,12 +141,7 @@ class WastageService {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search wastage records');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/search?${params.toString()}`);
 
       return {
         success: true,
@@ -196,12 +163,7 @@ class WastageService {
    */
   async getPendingApproval() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/pending-approval`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch pending approval wastages');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/pending-approval`);
 
       return {
         success: true,
@@ -223,19 +185,13 @@ class WastageService {
    */
   async approve(wastageId, approvalData = {}) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/approve`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(approvalData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to approve wastage record');
-      }
 
       return {
         success: true,
@@ -256,19 +212,13 @@ class WastageService {
    */
   async reject(wastageId, rejectionData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/reject`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(rejectionData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reject wastage record');
-      }
 
       return {
         success: true,
@@ -289,12 +239,7 @@ class WastageService {
    */
   async getAnalytics(period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/analytics?period=${period}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch wastage analytics');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/analytics?period=${period}`);
 
       return {
         success: true,
@@ -316,12 +261,7 @@ class WastageService {
    */
   async getByMaterial(materialId, period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/material/${materialId}?period=${period}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material wastages');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/material/${materialId}?period=${period}`);
 
       return {
         success: true,
@@ -343,12 +283,7 @@ class WastageService {
    */
   async getTypes() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/types`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch wastage types');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/types`);
 
       return {
         success: true,
@@ -370,12 +305,7 @@ class WastageService {
    */
   async getCostImpact(wastageId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/cost-impact`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch wastage cost impact');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/cost-impact`);
 
       return {
         success: true,
@@ -397,12 +327,7 @@ class WastageService {
    */
   async getMonthlyTrends(months = 12) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/monthly-trends?months=${months}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch monthly wastage trends');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/monthly-trends?months=${months}`);
 
       return {
         success: true,

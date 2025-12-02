@@ -1,29 +1,55 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
-import { useLocalization } from '../context/LocalizationContext'
-import LoadingSpinner from '../components/LoadingSpinner'
-import DataTable from '../components/ui/DataTable'
-import inventoryService from '../services/inventoryService'
-import financialService from '../services/financialService'
-import supplierService from '../services/supplierService'
-import purchaseOrderService from '../services/purchaseOrderService'
-import expenseService from '../services/expenseService'
-import PurchaseOrderForm from '../modules/oil-trading/components/PurchaseOrderForm'
-import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, Download, DollarSign } from 'lucide-react'
+import { useAuth } from '../../../context/AuthContext'
+import { useLocalization } from '../../../context/LocalizationContext'
+import LoadingSpinner from '../../../components/LoadingSpinner'
+import DataTable from '../../../components/ui/DataTable'
+import inventoryService from '../../../services/inventoryService'
+import financialService from '../../../services/financialService'
+import supplierService from '../../../services/supplierService'
+import purchaseOrderService from '../../../services/purchaseOrderService'
+import expenseService from '../../../services/expenseService'
+import { calloutService } from '../../../services/collectionService'
+import PurchaseOrderForm from '../components/PurchaseOrderForm'
+import Collections from './Collections'
+import PurchaseOrderViewModal from '../../../components/PurchaseOrderViewModal'
+import PurchaseOrderStats from '../../../components/purchase/PurchaseOrderStats'
+import CollectionStats from '../../../components/purchase/CollectionStats'
+import ExpenseStats from '../../../components/purchase/ExpenseStats'
+import WorkflowStepper from '../../../components/purchase/WorkflowStepper'
+import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, Download, DollarSign, MapPin, Edit3 } from 'lucide-react'
 import '../styles/Purchase.css'
 
 const Purchase = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('orders') // 'orders', 'expenses', or 'vendors'
+  const [activeTab, setActiveTab] = useState('orders') // 'orders', 'collections', 'expenses', or 'vendors'
   const [purchaseOrders, setPurchaseOrders] = useState([])
+  const [collectionOrders, setCollectionOrders] = useState([])
   const [suppliers, setSuppliers] = useState([])
   const [expenses, setExpenses] = useState([])
   const [processingOrder, setProcessingOrder] = useState(null)
   const [showOrderForm, setShowOrderForm] = useState(false)
   const [editingOrder, setEditingOrder] = useState(null)
   const [viewingOrder, setViewingOrder] = useState(null)
+
+  // Read tab from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabFromUrl = params.get('tab');
+    const validTabs = ['orders', 'collections', 'expenses', 'vendors'];
+
+    if (tabFromUrl && validTabs.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, []);
+
+  // Update URL when tab changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', activeTab);
+    window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
+  }, [activeTab]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -34,9 +60,16 @@ const Purchase = () => {
   const loadPurchaseData = async () => {
     try {
       setLoading(true)
-      
-      // Load suppliers from API instead of vendors from JSON
-      const suppliersResult = await supplierService.getAll()
+
+      // Task 3.4: Load all tab data in parallel using Promise.all for instant tab switching
+      const [suppliersResult, ordersResult, collectionsResult, expensesResult] = await Promise.all([
+        supplierService.getAll(),
+        purchaseOrderService.getAll(),
+        calloutService.getCallouts(),
+        expenseService.getPurchaseExpenses()
+      ])
+
+      // Process suppliers
       if (suppliersResult.success) {
         setSuppliers(suppliersResult.data)
         console.log('Suppliers loaded:', suppliersResult.data.length)
@@ -44,9 +77,8 @@ const Purchase = () => {
         console.error('Failed to load suppliers:', suppliersResult.error)
         alert(`Failed to load suppliers: ${suppliersResult.error}`)
       }
-      
-      // Load purchase orders from API
-      const ordersResult = await purchaseOrderService.getAll()
+
+      // Process purchase orders
       if (ordersResult.success) {
         setPurchaseOrders(ordersResult.data)
         console.log('Purchase orders loaded:', ordersResult.data.length)
@@ -54,9 +86,17 @@ const Purchase = () => {
         console.error('Failed to load purchase orders:', ordersResult.error)
         alert(`Failed to load purchase orders: ${ordersResult.error}`)
       }
-      
-      // Load purchase expenses from unified expense API
-      const expensesResult = await expenseService.getPurchaseExpenses()
+
+      // Process collection orders
+      if (collectionsResult.success) {
+        setCollectionOrders(collectionsResult.data)
+        console.log('Collection orders loaded:', collectionsResult.data.length)
+      } else {
+        console.error('Failed to load collection orders:', collectionsResult.error)
+        // Don't show alert for collections as it's not critical
+      }
+
+      // Process purchase expenses
       if (expensesResult.success) {
         setExpenses(expensesResult.data)
         console.log('Purchase expenses loaded:', expensesResult.data.length)
@@ -64,7 +104,7 @@ const Purchase = () => {
         console.error('Failed to load purchase expenses:', expensesResult.error)
         // Don't show alert for expenses as it's not critical
       }
-      
+
     } catch (error) {
       console.error('Error loading purchase data:', error)
       alert('Failed to load purchase data')
@@ -189,6 +229,64 @@ const Purchase = () => {
     }
   }
 
+  /**
+   * Task 3.5: Render tab-specific statistics
+   * Dynamically displays statistics based on active tab
+   */
+  const renderTabStatistics = (activeTab) => {
+    switch (activeTab) {
+      case 'orders':
+        return <PurchaseOrderStats purchaseOrders={purchaseOrders} />
+      case 'collections':
+        return <CollectionStats collectionOrders={collectionOrders} />
+      case 'expenses':
+        return <ExpenseStats expenses={expenses} />
+      case 'vendors':
+        return null // No stats for vendors tab (redirects to /suppliers)
+      default:
+        return null
+    }
+  }
+
+  /**
+   * Task 3.6: Render tab-specific action buttons
+   * Shows context-appropriate actions for each tab
+   */
+  const renderTabActions = (activeTab) => {
+    switch (activeTab) {
+      case 'orders':
+        return (
+          <button className="btn btn-primary" onClick={handleCreatePurchaseOrder}>
+            <Plus size={18} />
+            {t('newPurchaseOrder')}
+          </button>
+        )
+      case 'collections':
+        return (
+          <button className="btn btn-primary" onClick={() => window.location.href = '/collections'}>
+            <Plus size={18} />
+            {t('newCollectionOrder')}
+          </button>
+        )
+      case 'expenses':
+        return (
+          <button className="btn btn-primary" onClick={() => alert('Add Expense functionality coming soon')}>
+            <Plus size={18} />
+            {t('addExpense')}
+          </button>
+        )
+      case 'vendors':
+        return (
+          <button className="btn btn-outline" onClick={() => window.location.href = '/suppliers'}>
+            <MapPin size={18} />
+            {t('goToSuppliers')} →
+          </button>
+        )
+      default:
+        return null
+    }
+  }
+
   if (loading) {
     return (
       <div className="page-loading">
@@ -204,24 +302,18 @@ const Purchase = () => {
           <h1>Purchase Management</h1>
           <p>Manage purchase orders and expenses</p>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-outline">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7,10 12,15 17,10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export
-          </button>
-          <button className="btn btn-primary" onClick={handleCreatePurchaseOrder}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New Purchase Order
-          </button>
-        </div>
       </div>
+
+      {/* Task 3.7a: Render tab-specific statistics */}
+      <div className="stats-section">
+        {renderTabStatistics(activeTab)}
+      </div>
+
+      {/* Workflow Guidance - Shows purchase workflow progression */}
+      <WorkflowStepper
+        activeTab={activeTab}
+        onStepClick={(tab) => setActiveTab(tab)}
+      />
 
       <div className="purchase-content">
         <div className="tab-navigation">
@@ -236,7 +328,7 @@ const Purchase = () => {
             </svg>
             Purchase Orders
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`}
             onClick={() => setActiveTab('expenses')}
           >
@@ -245,7 +337,14 @@ const Purchase = () => {
             </svg>
             Expenses
           </button>
-          <button 
+          <button
+            className={`tab-btn ${activeTab === 'collections' ? 'active' : ''}`}
+            onClick={() => setActiveTab('collections')}
+          >
+            <MapPin className="w-4 h-4" />
+            Collections
+          </button>
+          <button
             className={`tab-btn ${activeTab === 'vendors' ? 'active' : ''}`}
             onClick={() => {
               // Redirect to suppliers module instead of showing vendors tab
@@ -264,6 +363,13 @@ const Purchase = () => {
 
         {activeTab === 'orders' && (
           <div className="purchase-orders">
+            <div className="tab-header">
+              <h3>Purchase Orders</h3>
+              <button className="btn btn-primary" onClick={handleCreatePurchaseOrder}>
+                <Plus size={18} />
+                {t('newPurchaseOrder')}
+              </button>
+            </div>
             <DataTable
               data={purchaseOrders.map(order => ({
                 ...order,
@@ -284,6 +390,29 @@ const Purchase = () => {
                       <small>{row.date}</small>
                     </div>
                   )
+                },
+                {
+                  key: 'source_type',
+                  header: 'Source',
+                  sortable: true,
+                  filterable: true,
+                  render: (value, row) => {
+                    if (value === 'wcn_auto') {
+                      return (
+                        <span className="source-type-badge wcn-auto" title={`Auto-generated from WCN ${row.wcn_number || ''}`}>
+                          <Truck size={12} />
+                          AUTO
+                        </span>
+                      );
+                    } else {
+                      return (
+                        <span className="source-type-badge manual" title={row.collection_order_id ? `Linked to WCN ${row.wcn_number || ''}` : 'Manually created'}>
+                          <Edit3 size={12} />
+                          MANUAL
+                        </span>
+                      );
+                    }
+                  }
                 },
                 {
                   key: 'supplier',
@@ -509,48 +638,9 @@ const Purchase = () => {
           </div>
         )}
 
-        <div className="purchase-summary">
-          <div className="summary-cards">
-            <div className="summary-card">
-              <div className="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="9" cy="21" r="1" />
-                  <circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                </svg>
-              </div>
-              <div className="summary-info">
-                <p className="summary-value">OMR 1,200.00</p>
-                <p className="summary-label">Total Purchases (Month)</p>
-              </div>
-            </div>
-            
-            <div className="summary-card">
-              <div className="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </div>
-              <div className="summary-info">
-                <p className="summary-value">OMR 175.00</p>
-                <p className="summary-label">Total Expenses (Month)</p>
-              </div>
-            </div>
-            
-            <div className="summary-card">
-              <div className="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12,6 12,12 16,14" />
-                </svg>
-              </div>
-              <div className="summary-info">
-                <p className="summary-value">1</p>
-                <p className="summary-label">Pending Orders</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {activeTab === 'collections' && (
+          <Collections />
+        )}
       </div>
 
       {/* Purchase Order Form Modal */}
@@ -568,35 +658,15 @@ const Purchase = () => {
         />
       )}
 
-      {/* View Order Modal */}
-      {viewingOrder && (
-        <div className="modal-backdrop" onClick={() => setViewingOrder(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Purchase Order Details</h3>
-              <button className="modal-close" onClick={() => setViewingOrder(null)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="order-details">
-                <p><strong>Order ID:</strong> {viewingOrder.id}</p>
-                <p><strong>Supplier:</strong> {viewingOrder.supplier}</p>
-                <p><strong>Date:</strong> {viewingOrder.date}</p>
-                <p><strong>Status:</strong> {viewingOrder.status}</p>
-                <p><strong>Total:</strong> OMR {viewingOrder.total.toFixed(2)}</p>
-                
-                <h4>Items:</h4>
-                <ul>
-                  {viewingOrder.items.map((item, index) => (
-                    <li key={index}>
-                      {item.name} - {item.quantity} {item.unit} @ OMR {item.rate.toFixed(3)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* View Order Modal - Sprint 4.5 Enhanced */}
+      <PurchaseOrderViewModal
+        isOpen={!!viewingOrder}
+        onClose={() => setViewingOrder(null)}
+        orderData={viewingOrder}
+        onEdit={handleEditOrder}
+        onRefresh={loadPurchaseData}
+        t={t}
+      />
     </div>
   )
 }

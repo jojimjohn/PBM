@@ -13,18 +13,8 @@ class PurchaseOrderService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch purchase orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders`);
+      return data;
     } catch (error) {
       console.error('Error fetching purchase orders:', error);
       return {
@@ -40,18 +30,8 @@ class PurchaseOrderService {
    */
   async getById(orderId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch purchase order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching purchase order:', error);
       return {
@@ -63,29 +43,43 @@ class PurchaseOrderService {
   }
 
   /**
+   * Get unbilled purchase orders (for vendor bill creation)
+   * @returns {Promise<Object>} List of POs suitable for vendor billing
+   */
+  async getUnbilledPOs() {
+    try {
+      const params = new URLSearchParams({
+        status: 'received',
+        unbilled: 'true'
+      });
+
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-orders?${params.toString()}`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching unbilled purchase orders:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch unbilled purchase orders',
+        data: []
+      };
+    }
+  }
+
+  /**
    * Create a new purchase order
    */
   async create(orderData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(orderData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create purchase order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Purchase order created successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error creating purchase order:', error);
       return {
@@ -100,25 +94,14 @@ class PurchaseOrderService {
    */
   async update(orderId, orderData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(orderData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update purchase order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Purchase order updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating purchase order:', error);
       return {
@@ -133,20 +116,10 @@ class PurchaseOrderService {
    */
   async delete(orderId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete purchase order');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Purchase order deleted successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error deleting purchase order:', error);
       return {
@@ -169,18 +142,8 @@ class PurchaseOrderService {
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (filters.materialId) params.append('materialId', filters.materialId);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search purchase orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/search?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Error searching purchase orders:', error);
       return {
@@ -196,18 +159,8 @@ class PurchaseOrderService {
    */
   async getBySupplier(supplierId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/supplier/${supplierId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch supplier purchase orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/supplier/${supplierId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching supplier purchase orders:', error);
       return {
@@ -223,18 +176,8 @@ class PurchaseOrderService {
    */
   async getPending() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/pending`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch pending purchase orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/pending`);
+      return data;
     } catch (error) {
       console.error('Error fetching pending purchase orders:', error);
       return {
@@ -250,25 +193,14 @@ class PurchaseOrderService {
    */
   async updateStatus(orderId, status) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}/status`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update order status');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Order status updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating order status:', error);
       return {
@@ -283,25 +215,14 @@ class PurchaseOrderService {
    */
   async approve(orderId, approvalData = {}) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}/approve`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(approvalData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to approve purchase order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Purchase order approved successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error approving purchase order:', error);
       return {
@@ -316,25 +237,14 @@ class PurchaseOrderService {
    */
   async receive(orderId, receiptData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}/receive`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${orderId}/receive`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(receiptData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to receive purchase order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Purchase order received successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error receiving purchase order:', error);
       return {
@@ -349,24 +259,109 @@ class PurchaseOrderService {
    */
   async getAnalytics(period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/analytics?period=${period}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch purchase analytics');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/analytics?period=${period}`);
+      return data;
     } catch (error) {
       console.error('Error fetching purchase analytics:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch purchase analytics',
         data: null
+      };
+    }
+  }
+
+  /**
+   * Get all amendments for a purchase order
+   */
+  async getAmendments(orderId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments?orderId=${orderId}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching amendments:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch amendments',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Get a specific amendment by ID
+   */
+  async getAmendmentById(amendmentId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments/${amendmentId}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching amendment:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch amendment',
+        data: null
+      };
+    }
+  }
+
+  /**
+   * Create a new amendment for a purchase order
+   */
+  async createAmendment(orderId, amendmentData) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments`, {
+        method: 'POST',
+        body: JSON.stringify({
+          originalOrderId: orderId,
+          ...amendmentData
+        }),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error creating amendment:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to create amendment'
+      };
+    }
+  }
+
+  /**
+   * Approve or reject an amendment
+   */
+  async approveAmendment(amendmentId, approvalData) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-order-amendments/${amendmentId}/approve`, {
+        method: 'PUT',
+        body: JSON.stringify(approvalData),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error approving/rejecting amendment:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to process amendment approval'
+      };
+    }
+  }
+
+  /**
+   * Manually link PO to WCN and update inventory
+   * Sprint 4.5: Supports manual PO → WCN workflow
+   */
+  async linkToWCN(purchaseOrderId, wcnData) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders/${purchaseOrderId}/link-wcn`, {
+        method: 'POST',
+        body: JSON.stringify(wcnData),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error linking PO to WCN:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to link PO to WCN'
       };
     }
   }

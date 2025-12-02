@@ -9,6 +9,7 @@ import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
+import typesService from '../../../services/typesService'
 import SupplierLocationManager from '../../../components/suppliers/SupplierLocationManager'
 import { 
   Plus, 
@@ -41,6 +42,7 @@ const OilTradingSuppliers = () => {
   const { hasPermission } = usePermissions()
   const [loading, setLoading] = useState(true)
   const [suppliers, setSuppliers] = useState([])
+  const [supplierTypes, setSupplierTypes] = useState([])
   const [regions, setRegions] = useState([])
   const [specializations, setSpecializations] = useState([])
   const [showAddForm, setShowAddForm] = useState(false)
@@ -53,14 +55,6 @@ const OilTradingSuppliers = () => {
   const [typeFilter, setTypeFilter] = useState('all')
   const [activeTab, setActiveTab] = useState('suppliers')
 
-  // Oil trading specific supplier types and statuses
-  const supplierTypes = {
-    'individual': { name: 'Individual', color: '#3b82f6' },
-    'business': { name: 'Business', color: '#10b981' },
-    'government': { name: 'Government Entity', color: '#8b5cf6' },
-    'contractor': { name: 'Contractor', color: '#f59e0b' }
-  }
-
   const supplierStatuses = {
     'active': { name: 'Active', color: '#10b981' },
     'inactive': { name: 'Inactive', color: '#6b7280' },
@@ -72,7 +66,19 @@ const OilTradingSuppliers = () => {
     loadSuppliers()
     loadRegions()
     loadSpecializations()
+    loadSupplierTypes()
   }, [selectedCompany])
+
+  const loadSupplierTypes = async () => {
+    try {
+      const result = await typesService.getSupplierTypes()
+      if (result.success) {
+        setSupplierTypes(result.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading supplier types:', error)
+    }
+  }
 
   const loadSuppliers = async () => {
     try {
@@ -333,13 +339,7 @@ const OilTradingSuppliers = () => {
     return new Date(dateString).toLocaleDateString('en-GB')
   }
 
-  if (loading && activeTab === 'suppliers') {
-    return (
-      <div className="page-loading">
-        <LoadingSpinner message="Loading suppliers..." size="large" />
-      </div>
-    )
-  }
+  // Remove early return - let DataTable handle loading state with skeleton
 
   // Define table columns for oil trading suppliers
   const supplierColumns = [
@@ -359,17 +359,20 @@ const OilTradingSuppliers = () => {
       header: t('supplierName'),
       sortable: true,
       filterable: true,
-      render: (value, row) => (
-        <div className="supplier-info">
-          <div className="supplier-avatar" style={{ backgroundColor: supplierTypes[row.type]?.color }}>
-            {value.substring(0, 2).toUpperCase()}
+      render: (value, row) => {
+        const supplierType = supplierTypes.find(t => t.code === row.type)
+        return (
+          <div className="supplier-info">
+            <div className="supplier-avatar" style={{ backgroundColor: '#3b82f6' }}>
+              {value.substring(0, 2).toUpperCase()}
+            </div>
+            <div className="supplier-details">
+              <strong>{value}</strong>
+              <span className="supplier-type">{supplierType?.name || row.type}</span>
+            </div>
           </div>
-          <div className="supplier-details">
-            <strong>{value}</strong>
-            <span className="supplier-type">{supplierTypes[row.type]?.name || row.type}</span>
-          </div>
-        </div>
-      )
+        )
+      }
     },
     {
       key: 'contactPerson',
@@ -721,11 +724,12 @@ const SupplierFormModal = ({
             <div className="form-group">
               <label>Supplier Type</label>
               <select
-                value={formData.type || 'business'}
+                value={formData.type || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
               >
-                {Object.entries(supplierTypes).map(([key, type]) => (
-                  <option key={key} value={key}>
+                <option value="">Select Type...</option>
+                {supplierTypes.map(type => (
+                  <option key={type.id} value={type.code}>
                     {type.name}
                   </option>
                 ))}
@@ -989,17 +993,23 @@ const SupplierFormModal = ({
 }
 
 // Supplier View Modal Component
-const SupplierViewModal = ({ 
-  isOpen, 
+const SupplierViewModal = ({
+  isOpen,
   onClose,
-  onEdit, 
-  supplier, 
-  supplierTypes, 
-  supplierStatuses, 
-  formatCurrency, 
+  onEdit,
+  supplier,
+  supplierTypes,
+  supplierStatuses,
+  formatCurrency,
   formatDate,
-  t 
+  t
 }) => {
+  // Debug logging
+  console.log('🔍 Supplier ViewModal Debug:')
+  console.log('- supplier.type:', supplier.type)
+  console.log('- supplierTypes array:', supplierTypes)
+  console.log('- Found type:', supplierTypes.find(t => t.code === supplier.type))
+
   return (
     <Modal 
       isOpen={isOpen}
@@ -1011,15 +1021,15 @@ const SupplierViewModal = ({
         {/* Professional Header Section */}
         <div className="supplier-header-section">
           <div className="supplier-main-info">
-            <div className="supplier-avatar-large" style={{ backgroundColor: supplierTypes[supplier.type]?.color }}>
+            <div className="supplier-avatar-large" style={{ backgroundColor: supplierTypes.find(t => t.code === supplier.type)?.color || '#6366f1' }}>
               {supplier.name.substring(0, 2).toUpperCase()}
             </div>
             <div className="supplier-identity">
               <h2 className="supplier-name-large">{supplier.name}</h2>
               <div className="supplier-meta">
                 <span className="supplier-code-badge">{supplier.code}</span>
-                <span className="supplier-type-badge">{supplierTypes[supplier.type]?.name || supplier.type}</span>
-                <span 
+                <span className="supplier-type-badge">{supplierTypes.find(t => t.code === supplier.type)?.name || supplier.type}</span>
+                <span
                   className="supplier-status-professional"
                   style={{ backgroundColor: supplier.isActive ? '#10b981' : '#ef4444' }}
                 >
@@ -1076,7 +1086,9 @@ const SupplierViewModal = ({
             <div className="info-card-content">
               <div className="info-row">
                 <span className="info-label">Supplier Type</span>
-                <span className="info-value">{supplierTypes[supplier.type]?.name || supplier.type}</span>
+                <span className="info-value">
+                  {supplierTypes.find(t => t.code === supplier.type)?.name || supplier.type}
+                </span>
               </div>
               {supplier.businessRegistration && (
                 <div className="info-row">

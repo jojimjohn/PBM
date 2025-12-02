@@ -168,7 +168,7 @@ class AuthService {
         try {
           // Try to refresh token
           await this.refreshAccessToken();
-          
+
           // Retry request with new token
           const newToken = this.getToken();
           const retryResponse = await fetch(url, {
@@ -179,7 +179,7 @@ class AuthService {
             },
           });
 
-          return retryResponse;
+          return await retryResponse.json();
         } catch (refreshError) {
           // Refresh failed, redirect to login
           this.clearAuth();
@@ -188,7 +188,7 @@ class AuthService {
         }
       }
 
-      return response;
+      return await response.json();
     } catch (error) {
       console.error('API request error:', error);
       throw error;

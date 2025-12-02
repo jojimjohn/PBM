@@ -11,22 +11,35 @@ class PettyCashService {
   // === PETTY CASH CARDS ===
 
   /**
+   * Transform backend card data to frontend format
+   */
+  transformCard(backendCard) {
+    return {
+      ...backendCard,
+      assignedStaff: {
+        name: `${backendCard.assignedUserFirstName || ''} ${backendCard.assignedUserLastName || ''}`.trim() || backendCard.staffName || 'Unknown',
+        role: backendCard.assignedUserRole || backendCard.department || 'N/A',
+        email: backendCard.assignedUserEmail || ''
+      },
+      createdBy: {
+        name: `${backendCard.createdByFirstName || ''} ${backendCard.createdByLastName || ''}`.trim() || 'System'
+      }
+    };
+  }
+
+  /**
    * Get all petty cash cards
    */
   async getAllCards() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards`);
-      const data = await response.json();
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards`);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch petty cash cards');
+      // Transform the data to match frontend expectations
+      if (data.success && data.data) {
+        data.data = data.data.map(card => this.transformCard(card));
       }
 
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      return data;
     } catch (error) {
       console.error('Error fetching petty cash cards:', error);
       return {
@@ -42,18 +55,14 @@ class PettyCashService {
    */
   async getCardById(cardId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}`);
-      const data = await response.json();
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}`);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch petty cash card');
+      // Transform the data to match frontend expectations
+      if (data.success && data.data) {
+        data.data = this.transformCard(data.data);
       }
 
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      return data;
     } catch (error) {
       console.error('Error fetching petty cash card:', error);
       return {
@@ -69,25 +78,14 @@ class PettyCashService {
    */
   async createCard(cardData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(cardData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create petty cash card');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Petty cash card created successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error creating petty cash card:', error);
       return {
@@ -102,25 +100,14 @@ class PettyCashService {
    */
   async updateCard(cardId, cardData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(cardData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update petty cash card');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Petty cash card updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating petty cash card:', error);
       return {
@@ -135,20 +122,10 @@ class PettyCashService {
    */
   async deleteCard(cardId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete petty cash card');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Petty cash card deleted successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error deleting petty cash card:', error);
       return {
@@ -163,25 +140,14 @@ class PettyCashService {
    */
   async reloadCard(cardId, reloadData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}/reload`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-cards/${cardId}/reload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(reloadData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reload petty cash card');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Petty cash card reloaded successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error reloading petty cash card:', error);
       return {
@@ -198,18 +164,8 @@ class PettyCashService {
    */
   async getAllExpenses() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch petty cash expenses');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses`);
+      return data;
     } catch (error) {
       console.error('Error fetching petty cash expenses:', error);
       return {
@@ -225,18 +181,8 @@ class PettyCashService {
    */
   async getExpensesByCard(cardId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/card/${cardId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch card expenses');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/card/${cardId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching card expenses:', error);
       return {
@@ -252,25 +198,14 @@ class PettyCashService {
    */
   async createExpense(expenseData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(expenseData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create expense');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Expense created successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error creating expense:', error);
       return {
@@ -285,25 +220,14 @@ class PettyCashService {
    */
   async updateExpense(expenseId, expenseData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(expenseData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update expense');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Expense updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating expense:', error);
       return {
@@ -318,20 +242,10 @@ class PettyCashService {
    */
   async deleteExpense(expenseId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete expense');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Expense deleted successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error deleting expense:', error);
       return {
@@ -346,25 +260,14 @@ class PettyCashService {
    */
   async approveExpense(expenseId, approvalData = {}) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/approve`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(approvalData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to approve expense');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Expense approved successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error approving expense:', error);
       return {
@@ -379,25 +282,14 @@ class PettyCashService {
    */
   async rejectExpense(expenseId, rejectionData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/reject`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(rejectionData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reject expense');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Expense rejected successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error rejecting expense:', error);
       return {
@@ -412,18 +304,8 @@ class PettyCashService {
    */
   async getPendingApprovalExpenses() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/pending-approval`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch pending expenses');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/pending-approval`);
+      return data;
     } catch (error) {
       console.error('Error fetching pending expenses:', error);
       return {
@@ -447,18 +329,8 @@ class PettyCashService {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search expenses');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/search?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Error searching expenses:', error);
       return {
@@ -474,18 +346,8 @@ class PettyCashService {
    */
   async getExpenseAnalytics(period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/analytics?period=${period}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expense analytics');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/analytics?period=${period}`);
+      return data;
     } catch (error) {
       console.error('Error fetching expense analytics:', error);
       return {
@@ -501,18 +363,8 @@ class PettyCashService {
    */
   async getExpenseCategories() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/categories`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expense categories');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/categories`);
+      return data;
     } catch (error) {
       console.error('Error fetching expense categories:', error);
       return {
@@ -545,22 +397,11 @@ class PettyCashService {
       const formData = new FormData();
       formData.append('receipt', receiptFile);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipt`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipt`, {
         method: 'POST',
         body: formData,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload receipt');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Receipt uploaded successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error uploading receipt:', error);
       return {

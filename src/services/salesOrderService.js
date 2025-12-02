@@ -9,22 +9,52 @@ import { API_BASE_URL } from '../config/api.js';
 
 class SalesOrderService {
   /**
+   * Transform decimal fields from strings to numbers
+   * Defensive programming in case backend doesn't convert them
+   * @param {Object|Array} data - Single order or array of orders
+   * @returns {Object|Array} Data with decimal fields converted to numbers
+   */
+  transformDecimalFields(data) {
+    const decimalFields = [
+      'subtotal', 'taxAmount', 'discountAmount', 'shippingCost', 'totalAmount',
+      'quantity', 'unitPrice', 'totalPrice', 'discountPercentage'
+    ];
+
+    const transformObject = (obj) => {
+      if (!obj) return obj;
+      const transformed = { ...obj };
+
+      // Convert decimal fields
+      decimalFields.forEach(field => {
+        if (transformed[field] !== undefined && transformed[field] !== null) {
+          transformed[field] = parseFloat(transformed[field]) || 0;
+        }
+      });
+
+      // Transform items array if present
+      if (transformed.items && Array.isArray(transformed.items)) {
+        transformed.items = transformed.items.map(item => transformObject(item));
+      }
+
+      return transformed;
+    };
+
+    return Array.isArray(data) ? data.map(transformObject) : transformObject(data);
+  }
+
+  /**
    * Get all sales orders for the current company
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders`);
-      const data = await response.json();
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders`);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch sales orders');
+      // Transform decimal fields if data exists
+      if (response.success && response.data) {
+        response.data = this.transformDecimalFields(response.data);
       }
 
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      return response;
     } catch (error) {
       console.error('Error fetching sales orders:', error);
       return {
@@ -40,18 +70,14 @@ class SalesOrderService {
    */
   async getById(orderId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`);
-      const data = await response.json();
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch sales order');
+      // Transform decimal fields if data exists
+      if (response.success && response.data) {
+        response.data = this.transformDecimalFields(response.data);
       }
 
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      return response;
     } catch (error) {
       console.error('Error fetching sales order:', error);
       return {
@@ -67,7 +93,7 @@ class SalesOrderService {
    */
   async create(orderData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,17 +101,12 @@ class SalesOrderService {
         body: JSON.stringify(orderData),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create sales order');
+      // Transform decimal fields if data exists
+      if (response.success && response.data) {
+        response.data = this.transformDecimalFields(response.data);
       }
 
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Sales order created successfully'
-      };
+      return response;
     } catch (error) {
       console.error('Error creating sales order:', error);
       return {
@@ -100,25 +121,14 @@ class SalesOrderService {
    */
   async update(orderId, orderData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(orderData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update sales order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Sales order updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating sales order:', error);
       return {
@@ -133,20 +143,10 @@ class SalesOrderService {
    */
   async delete(orderId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete sales order');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Sales order deleted successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error deleting sales order:', error);
       return {
@@ -169,18 +169,8 @@ class SalesOrderService {
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (filters.materialId) params.append('materialId', filters.materialId);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search sales orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/search?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Error searching sales orders:', error);
       return {
@@ -196,18 +186,8 @@ class SalesOrderService {
    */
   async getByCustomer(customerId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/customer/${customerId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch customer sales orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/customer/${customerId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching customer sales orders:', error);
       return {
@@ -223,18 +203,8 @@ class SalesOrderService {
    */
   async getPending() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/pending`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch pending sales orders');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/pending`);
+      return data;
     } catch (error) {
       console.error('Error fetching pending sales orders:', error);
       return {
@@ -250,25 +220,14 @@ class SalesOrderService {
    */
   async updateStatus(orderId, status) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/status`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update order status');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Order status updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating order status:', error);
       return {
@@ -283,25 +242,14 @@ class SalesOrderService {
    */
   async process(orderId, processingData = {}) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/process`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(processingData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to process sales order');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Sales order processed successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error processing sales order:', error);
       return {
@@ -316,18 +264,8 @@ class SalesOrderService {
    */
   async getItems(orderId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/items`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch order items');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/items`);
+      return data;
     } catch (error) {
       console.error('Error fetching order items:', error);
       return {
@@ -343,25 +281,14 @@ class SalesOrderService {
    */
   async calculatePricing(orderData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/calculate-pricing`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/calculate-pricing`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(orderData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to calculate order pricing');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      return data;
     } catch (error) {
       console.error('Error calculating order pricing:', error);
       return {
@@ -377,25 +304,14 @@ class SalesOrderService {
    */
   async generateInvoice(orderId, invoiceData = {}) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/invoice`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/invoice`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(invoiceData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate invoice');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Invoice generated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error generating invoice:', error);
       return {
@@ -410,18 +326,8 @@ class SalesOrderService {
    */
   async getAnalytics(period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/analytics?period=${period}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch sales analytics');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/analytics?period=${period}`);
+      return data;
     } catch (error) {
       console.error('Error fetching sales analytics:', error);
       return {
@@ -437,18 +343,14 @@ class SalesOrderService {
    */
   async getTodaysSummary() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/today-summary`);
-      const data = await response.json();
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/today-summary`);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch today\'s sales summary');
+      // Transform decimal fields if data exists
+      if (response.success && response.data) {
+        response.data = this.transformDecimalFields(response.data);
       }
 
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      return response;
     } catch (error) {
       console.error('Error fetching today\'s sales summary:', error);
       return {

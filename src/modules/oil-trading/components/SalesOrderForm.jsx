@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
+import FileUpload from '../../../components/ui/FileUpload'
+import DatePicker from '../../../components/ui/DatePicker'
+import Autocomplete from '../../../components/ui/Autocomplete'
+import Input, { Textarea } from '../../../components/ui/Input'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import systemSettingsService from '../../../services/systemSettingsService'
 import inventoryService from '../../../services/inventoryService'
 import customerService from '../../../services/customerService'
 import materialService from '../../../services/materialService'
-import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package } from 'lucide-react'
+import branchService from '../../../services/branchService'
+import uploadService from '../../../services/uploadService'
+import salesOrderService from '../../../services/salesOrderService'
+import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package, Building } from 'lucide-react'
 import './SalesOrderForm.css'
 
 const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, editingOrder = null }) => {
@@ -13,6 +21,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   const [formData, setFormData] = useState({
     orderNumber: '',
     customer: selectedCustomer || null,
+    branch_id: '',
     orderDate: getInputDate(),
     deliveryDate: '',
     items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
@@ -21,36 +30,78 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     totalAmount: 0,
     discountPercent: 0,
     discountAmount: 0,
-    netAmount: 0
+    netAmount: 0,
+    status: 'draft' // Order status: draft, confirmed, delivered, cancelled
   })
 
   const [customers, setCustomers] = useState([])
   const [materials, setMaterials] = useState([])
+  const [branches, setBranches] = useState([])
   const [contractRates, setContractRates] = useState({})
   const [warnings, setWarnings] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingBranches, setLoadingBranches] = useState(false)
   const [overrideRequests, setOverrideRequests] = useState({})
   const [showOverrideModal, setShowOverrideModal] = useState(false)
   const [currentOverride, setCurrentOverride] = useState(null)
   const [contractTermsExpanded, setContractTermsExpanded] = useState(false)
   const [stockInfo, setStockInfo] = useState({}) // Track current stock levels
+  const [defaultVatRate, setDefaultVatRate] = useState(5) // VAT rate from database
 
   useEffect(() => {
     // Load customers and materials data first
     loadCustomersAndMaterials()
+
+    // Load VAT rate from database
+    loadVatRate()
+
+    // Load active branches
+    loadBranches()
   }, [isOpen])
+
+  const loadVatRate = async () => {
+    try {
+      const vatRate = await systemSettingsService.getVatRate()
+      setDefaultVatRate(vatRate)
+    } catch (error) {
+      console.error('Error loading VAT rate:', error)
+      // Keep default 5% if loading fails
+    }
+  }
+
+  const loadBranches = async () => {
+    try {
+      setLoadingBranches(true)
+      const response = await branchService.getActive()
+      if (response.success) {
+        setBranches(response.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading branches:', error)
+    } finally {
+      setLoadingBranches(false)
+    }
+  }
 
   // Separate useEffect for populating edit data after customers and materials are loaded
   useEffect(() => {
     if (isOpen && editingOrder && customers.length > 0 && materials.length > 0) {
       // Pre-fill form with existing order data
-      // Handle customer - if it's a string, find the customer object
+      // Handle customer - resolve to customer object from customers array
       let customerObj = editingOrder.customer
       if (typeof customerObj === 'string') {
+        // Try to find by name (legacy support)
         customerObj = customers.find(c => c.name === editingOrder.customer) || null
+      } else if (typeof customerObj === 'object' && customerObj !== null && customerObj.id) {
+        // If it's an object, ensure it's the same reference from customers array for dropdown matching
+        customerObj = customers.find(c => c.id === customerObj.id) || customerObj
+      } else if (editingOrder.customerId) {
+        // If only customerId is provided, find the customer
+        customerObj = customers.find(c => c.id === editingOrder.customerId) || null
       }
         
-        // Transform items data to match form structure - handle both 'name' and 'materialId' fields
+        // Transform items data to match form structure
+        // Backend returns 'items' array with unitPrice/totalPrice, form uses rate/amount
         const transformedItems = editingOrder.items ? editingOrder.items.map(item => {
           // Find material by name if materialId is not present
           let materialId = item.materialId || ''
@@ -58,35 +109,39 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             const material = materials.find(m => m.name === item.name)
             materialId = material ? material.id : ''
           }
-          
+
           return {
             materialId: materialId,
             quantity: item.quantity || '',
-            rate: item.rate || '',
-            amount: item.amount || 0
+            rate: item.unitPrice || item.rate || '',
+            amount: item.totalPrice || item.amount || 0
           }
         }) : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
-        
+
         // Calculate delivery date if not provided (default to 7 days from order date)
-        let deliveryDate = editingOrder.deliveryDate || ''
-        if (!deliveryDate && editingOrder.date) {
-          const orderDate = new Date(editingOrder.date)
+        let deliveryDate = editingOrder.deliveryDate || editingOrder.expectedDeliveryDate || ''
+        if (!deliveryDate && (editingOrder.date || editingOrder.orderDate)) {
+          const orderDate = new Date(editingOrder.date || editingOrder.orderDate)
           orderDate.setDate(orderDate.getDate() + 7) // Add 7 days
           deliveryDate = orderDate.toISOString().split('T')[0]
         }
-        
+
         setFormData({
-          orderNumber: editingOrder.id || '',
+          orderNumber: editingOrder.orderNumber || editingOrder.id || '',
           customer: customerObj,
-          orderDate: editingOrder.date ? editingOrder.date.split('T')[0] : getInputDate(),
+          branch_id: editingOrder.branch_id || '',
+          orderDate: (editingOrder.orderDate || editingOrder.date) ? new Date(editingOrder.orderDate || editingOrder.date).toISOString().split('T')[0] : getInputDate(),
           deliveryDate: deliveryDate,
           items: transformedItems,
           notes: editingOrder.notes || 'Order imported from existing data',
           specialInstructions: editingOrder.specialInstructions || '',
-          totalAmount: editingOrder.total || 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          netAmount: editingOrder.total || 0
+          totalAmount: editingOrder.subtotal || editingOrder.total || 0,
+          discountPercent: editingOrder.discountPercent || 0,
+          discountAmount: editingOrder.discountAmount || 0,
+          vatRate: editingOrder.vatRate || defaultVatRate,
+          vatAmount: editingOrder.vatAmount || editingOrder.taxAmount || 0,
+          netAmount: editingOrder.totalAmount || editingOrder.total || 0,
+          status: editingOrder.status || 'draft'
         })
     }
   }, [isOpen, editingOrder, customers, materials])
@@ -98,6 +153,29 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       setFormData(prev => ({ ...prev, orderNumber: orderNum }))
     }
   }, [isOpen, editingOrder, formData.orderNumber])
+
+  // Reset form when modal closes to ensure clean state
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        orderNumber: '',
+        customer: null,
+        branch_id: '',
+        orderDate: getInputDate(),
+        deliveryDate: '',
+        items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
+        notes: '',
+        specialInstructions: '',
+        totalAmount: 0,
+        discountPercent: 0,
+        discountAmount: 0,
+        netAmount: 0,
+        status: 'draft'
+      })
+      setWarnings([])
+      setOverrideRequests({})
+    }
+  }, [isOpen])
 
   useEffect(() => {
     // Load contract rates when customer changes
@@ -220,7 +298,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   }
 
   const handleCustomerChange = (customerId) => {
-    const customer = customers.find(c => c.id === customerId)
+    // Use type-coercion comparison to handle both string and number IDs
+    const customer = customers.find(c => c.id == customerId)
     setFormData(prev => ({ ...prev, customer }))
     setWarnings([]) // Clear previous warnings
   }
@@ -321,14 +400,23 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   }
 
   const calculateTotals = () => {
-    const totalAmount = formData.items.reduce((sum, item) => sum + (item.amount || 0), 0)
-    const discountAmount = (totalAmount * (formData.discountPercent || 0)) / 100
-    const netAmount = totalAmount - discountAmount
+    const subtotal = formData.items.reduce((sum, item) => sum + (item.amount || 0), 0)
+    const discountAmount = (subtotal * (formData.discountPercent || 0)) / 100
+    const subtotalAfterDiscount = subtotal - discountAmount
+
+    // Determine VAT rate based on customer taxable status
+    const isTaxable = formData.customer?.is_taxable !== false // Default to taxable if not specified
+    const vatRate = isTaxable ? defaultVatRate : 0
+    const vatAmount = (subtotalAfterDiscount * vatRate) / 100
+
+    const netAmount = subtotalAfterDiscount + vatAmount
 
     setFormData(prev => ({
       ...prev,
-      totalAmount,
+      totalAmount: subtotal,
       discountAmount,
+      vatRate,
+      vatAmount,
       netAmount
     }))
   }
@@ -443,25 +531,41 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     setLoading(true)
 
     try {
-      // Validate required fields
+      const isDraft = formData.status === 'draft'
+
+      // Validate required fields (relaxed for drafts)
       if (!formData.customer) {
         throw new Error('Please select a customer')
       }
-      
-      if (formData.items.some(item => !item.materialId || !item.quantity)) {
+
+      // Only require items for non-draft statuses
+      if (!isDraft && formData.items.some(item => !item.materialId || !item.quantity)) {
         throw new Error('Please fill in all item details')
       }
+
+      // For drafts: allow items with at least materialId (partial items OK)
+      // For confirmed: require all fields (materialId, quantity, rate)
+      const filteredItems = isDraft
+        ? formData.items.filter(item => item.materialId) // Only need material for drafts
+        : formData.items.filter(item => item.materialId && item.quantity && item.rate) // All fields for confirmed
+
+      console.log('📤 Submitting SO Data:')
+      console.log('- Status:', formData.status)
+      console.log('- isDraft:', isDraft)
+      console.log('- Items before filter:', formData.items)
+      console.log('- Items after filter:', filteredItems)
 
       // Prepare order data
       const orderData = {
         ...formData,
+        items: filteredItems,  // ✅ Use filtered items
         id: `order_${Date.now()}`,
-        status: 'pending',
+        status: formData.status, // Use status from form instead of hardcoded 'pending'
         createdAt: new Date().toISOString(),
         createdBy: 'current_user', // Replace with actual user
         contractInfo: formData.customer.contractDetails ? {
           contractId: formData.customer.contractDetails.contractId,
-          ratesApplied: formData.items.map(item => ({
+          ratesApplied: filteredItems.map(item => ({  // ✅ Use filtered items
             materialId: item.materialId,
             contractRate: contractRates[item.materialId] || null,
             standardRate: materials.find(m => m.id === item.materialId)?.standardPrice || 0,
@@ -469,6 +573,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           }))
         } : null
       }
+
+      console.log('- Final orderData:', orderData)
 
       await onSave(orderData)
       onClose()
@@ -485,13 +591,24 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={editingOrder ? 'Edit Sales Order' : 'Create Sales Order'} 
+      title={editingOrder ? 'Edit Sales Order' : 'Create Sales Order'}
       onClose={onClose}
       className="modal-xxl"
+      closeOnOverlayClick={false}
     >
       <form className="sales-order-form" onSubmit={handleSubmit}>
+        {/* Draft Mode Info */}
+        {formData.status === 'draft' && (
+          <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={18} style={{ color: '#1976d2' }} />
+            <span style={{ color: '#1565c0' }}>
+              <strong>Draft Mode:</strong> You can save with minimal information (Customer only). Additional details can be added later.
+            </span>
+          </div>
+        )}
+
         {/* Order Header */}
         <div className="form-section">
           <div className="form-section-title">
@@ -500,8 +617,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           </div>
           <div className="form-grid">
             <div className="form-group">
-              <label>Order Number</label>
-              <input
+              <Input
+                label="Order Number"
                 type="text"
                 value={formData.orderNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, orderNumber: e.target.value }))}
@@ -510,21 +627,35 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               />
             </div>
             <div className="form-group">
-              <label>Order Date</label>
-              <input
-                type="date"
-                value={formData.orderDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, orderDate: e.target.value }))}
+              <DatePicker
+                label="Order Date"
+                value={formData.orderDate ? new Date(formData.orderDate) : null}
+                onChange={(date) => setFormData(prev => ({ ...prev, orderDate: date ? date.toISOString().split('T')[0] : '' }))}
+                dateFormat="dd/MM/yyyy"
                 required
               />
             </div>
             <div className="form-group">
-              <label>Expected Delivery Date</label>
-              <input
-                type="date"
-                value={formData.deliveryDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, deliveryDate: e.target.value }))}
-                min={formData.orderDate}
+              <DatePicker
+                label="Expected Delivery Date"
+                value={formData.deliveryDate ? new Date(formData.deliveryDate) : null}
+                onChange={(date) => setFormData(prev => ({ ...prev, deliveryDate: date ? date.toISOString().split('T')[0] : '' }))}
+                minDate={formData.orderDate ? new Date(formData.orderDate) : null}
+                dateFormat="dd/MM/yyyy"
+              />
+            </div>
+            <div className="form-group">
+              <Autocomplete
+                label="Order Status"
+                options={[
+                  { value: 'draft', label: 'Draft' },
+                  { value: 'confirmed', label: 'Confirmed' },
+                  { value: 'delivered', label: 'Delivered' },
+                  { value: 'cancelled', label: 'Cancelled' }
+                ]}
+                value={formData.status}
+                onChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                searchable={false}
               />
             </div>
           </div>
@@ -544,33 +675,50 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           </div>
           <div className="form-grid">
             <div className="form-group">
-              <label>Select Customer *</label>
-              <select
-                value={formData.customer?.id || ''}
-                onChange={(e) => handleCustomerChange(e.target.value)}
+              <Autocomplete
+                label="Select Customer"
+                options={customers}
+                value={formData.customer?.id || null}
+                onChange={(customerId) => handleCustomerChange(customerId)}
+                getOptionLabel={(customer) => customer ? `${customer.name} (${customer.type.replace('_', ' ').toUpperCase()})` : ''}
+                getOptionValue={(customer) => customer?.id || ''}
+                placeholder="Choose a customer..."
+                searchable
                 required
-              >
-                <option value="">Choose a customer...</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name} ({customer.type.replace('_', ' ').toUpperCase()})
-                  </option>
-                ))}
-              </select>
+                loading={loading && customers.length === 0}
+              />
             </div>
+
+            <div className="form-group">
+              <Autocomplete
+                label={`Branch ${formData.status !== 'draft' ? '*' : ''}`}
+                options={branches}
+                value={formData.branch_id || null}
+                onChange={(branchId) => setFormData(prev => ({ ...prev, branch_id: branchId }))}
+                getOptionLabel={(branch) => branch ? `${branch.name} (${branch.code})` : ''}
+                getOptionValue={(branch) => branch?.id || ''}
+                placeholder="Select Branch..."
+                searchable
+                required={formData.status !== 'draft'}
+                disabled={loadingBranches}
+                loading={loadingBranches}
+                helperText={loadingBranches ? 'Loading branches...' : null}
+              />
+            </div>
+
             {formData.customer && (
               <>
                 <div className="form-group">
-                  <label>Contact Person</label>
-                  <input
+                  <Input
+                    label="Contact Person"
                     type="text"
                     value={formData.customer.contactPerson || 'N/A'}
                     readOnly
                   />
                 </div>
                 <div className="form-group">
-                  <label>Phone</label>
-                  <input
+                  <Input
+                    label="Phone"
                     type="text"
                     value={formData.customer.contact?.phone || 'N/A'}
                     readOnly
@@ -707,26 +855,27 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               const rateLocked = isRateLocked(item.materialId)
               const discountInfo = getDiscountInfo(item.materialId)
               const isOverridden = overrideRequests[item.materialId]
-              
+              const isDraft = formData.status === 'draft'
+
               return (
                 <div key={index} className="item-row">
-                  <div className="item-field">
-                    <select
+                  <div className="item-field material-autocomplete-field">
+                    <Autocomplete
+                      options={materials}
                       value={item.materialId}
-                      onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
-                      required
-                    >
-                      <option value="">Select material...</option>
-                      {materials.map(material => {
+                      onChange={(materialId) => handleItemChange(index, 'materialId', materialId)}
+                      getOptionLabel={(material) => {
+                        if (!material) return ''
                         const stock = stockInfo[material.id]
                         const stockDisplay = stock ? `(Stock: ${stock.currentStock} ${stock.unit})` : '(Stock: N/A)'
-                        return (
-                          <option key={material.id} value={material.id}>
-                            {material.name} {stockDisplay}
-                          </option>
-                        )
-                      })}
-                    </select>
+                        return `${material.name} ${stockDisplay}`
+                      }}
+                      getOptionValue={(material) => material?.id || ''}
+                      placeholder="Select material..."
+                      searchable
+                      required={!isDraft}
+                      size="small"
+                    />
                   </div>
                   
                   <div className="item-field">
@@ -737,7 +886,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       placeholder="0"
                       min="0"
                       step="0.001"
-                      required
+                      required={!isDraft}
                     />
                     {/* Stock validation display */}
                     {item.materialId && stockInfo[item.materialId] && (
@@ -776,7 +925,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       placeholder="0.000"
                       min="0"
                       step="0.001"
-                      required
+                      required={!isDraft}
                       readOnly={rateLocked}
                       className={rateLocked ? 'locked-rate' : ''}
                       title={rateLocked ? 'Contract rate is locked. Attempt to change will require manager approval.' : ''}
@@ -842,6 +991,12 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               </label>
               <span>OMR {formData.discountAmount.toFixed(3)}</span>
             </div>
+            {formData.vatAmount > 0 && (
+              <div className="totals-row">
+                <label>VAT ({formData.vatRate}%):</label>
+                <span>OMR {formData.vatAmount.toFixed(3)}</span>
+              </div>
+            )}
             <div className="totals-row total-row">
               <label>Total Amount:</label>
               <span>OMR {formData.netAmount.toFixed(3)}</span>
@@ -854,25 +1009,71 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           <div className="form-section-title">Additional Information</div>
           <div className="form-grid">
             <div className="form-group full-width">
-              <label>Order Notes</label>
-              <textarea
+              <Textarea
+                label="Order Notes"
                 value={formData.notes}
                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Any notes or comments about this order..."
-                rows="3"
+                rows={3}
               />
             </div>
             <div className="form-group full-width">
-              <label>Special Instructions</label>
-              <textarea
+              <Textarea
+                label="Special Instructions"
                 value={formData.specialInstructions}
                 onChange={(e) => setFormData(prev => ({ ...prev, specialInstructions: e.target.value }))}
                 placeholder="Special delivery or handling instructions..."
-                rows="2"
+                rows={2}
               />
             </div>
           </div>
         </div>
+
+        {/* Attachments - Only in edit mode */}
+        {editingOrder?.id && (
+          <div className="form-section">
+            <div className="form-section-title">Attachments</div>
+            <FileUpload
+              mode="multiple"
+              accept=".pdf,.jpg,.jpeg,.png"
+              maxSize={5242880}
+              maxFiles={10}
+              onUpload={async (files) => {
+                const result = await uploadService.uploadFiles('sales-orders', editingOrder.id, files);
+                if (result.success) {
+                  // Refresh the order data to get updated attachments
+                  const updated = await salesOrderService.getById(editingOrder.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('Files uploaded successfully');
+                } else {
+                  alert('Failed to upload files: ' + result.error);
+                }
+              }}
+              onDelete={async (filename) => {
+                const result = await uploadService.deleteFile('sales-orders', editingOrder.id, filename);
+                if (result.success) {
+                  // Refresh the order data to get updated attachments
+                  const updated = await salesOrderService.getById(editingOrder.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('File deleted successfully');
+                } else {
+                  alert('Failed to delete file: ' + result.error);
+                }
+              }}
+              existingFiles={formData.attachments || []}
+            />
+          </div>
+        )}
 
         {/* Form Actions */}
         <div className="form-actions">
@@ -930,18 +1131,18 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             }}>
               <div className="override-form">
                 <div className="form-group">
-                  <label>Reason for Override *</label>
-                  <textarea
+                  <Textarea
+                    label="Reason for Override"
                     name="reason"
                     placeholder="Please provide justification for rate change..."
                     required
-                    rows="3"
+                    rows={3}
                   />
                 </div>
-                
+
                 <div className="form-group">
-                  <label>Manager Password *</label>
-                  <input
+                  <Input
+                    label="Manager Password"
                     type="password"
                     name="password"
                     placeholder="Enter manager password"

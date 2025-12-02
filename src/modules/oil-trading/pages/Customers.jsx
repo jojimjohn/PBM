@@ -6,6 +6,7 @@ import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import customerService from '../../../services/customerService'
+import typesService from '../../../services/typesService'
 import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle, Trash } from 'lucide-react'
 import '../styles/Customers.css'
 
@@ -14,6 +15,7 @@ const OilTradingCustomers = () => {
   const { t } = useLocalization()
   const { canEdit, canDelete, hasPermission } = usePermissions()
   const [customers, setCustomers] = useState([])
+  const [customerTypes, setCustomerTypes] = useState([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -22,6 +24,21 @@ const OilTradingCustomers = () => {
   const [editingContract, setEditingContract] = useState(null)
   const [error, setError] = useState(null)
 
+  // Load customer types
+  useEffect(() => {
+    const loadCustomerTypes = async () => {
+      try {
+        const result = await typesService.getCustomerTypes()
+        if (result.success) {
+          setCustomerTypes(result.data || [])
+        }
+      } catch (error) {
+        console.error('Error loading customer types:', error)
+      }
+    }
+    loadCustomerTypes()
+  }, [])
+
   // Load customers data
   useEffect(() => {
     const loadCustomers = async () => {
@@ -29,7 +46,7 @@ const OilTradingCustomers = () => {
         setLoading(true)
         setError(null)
         const result = await customerService.getAll()
-        
+
         if (result.success) {
           setCustomers(result.data || [])
         } else {
@@ -43,7 +60,7 @@ const OilTradingCustomers = () => {
         setLoading(false)
       }
     }
-    
+
     if (selectedCompany?.id) {
       loadCustomers()
     }
@@ -186,13 +203,14 @@ const OilTradingCustomers = () => {
       header: t('type'),
       sortable: true,
       filterable: true,
-      render: (value) => (
-        <span className={`customer-type-badge ${value}`}>
-          {value === 'contract' && t('contract')}
-          {value === 'project' && t('project')}
-          {value === 'walk_in' && t('walkIn')}
-        </span>
-      )
+      render: (value, row) => {
+        const typeObj = customerTypes.find(t => t.code === value)
+        return (
+          <span className={`customer-type-badge ${value}`}>
+            {typeObj ? typeObj.name : value}
+          </span>
+        )
+      }
     },
     {
       key: 'contactPerson',
@@ -320,13 +338,7 @@ const OilTradingCustomers = () => {
     }
   ]
 
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <LoadingSpinner message="Loading customers..." size="large" />
-      </div>
-    )
-  }
+  // Remove early return - let DataTable handle loading state with skeleton
 
   return (
     <div className="oil-customers-page">
@@ -381,6 +393,7 @@ const OilTradingCustomers = () => {
           customer={null}
           onSave={handleAddCustomer}
           onCancel={() => setShowAddForm(false)}
+          customerTypes={customerTypes}
           t={t}
         />
       )}
@@ -391,6 +404,7 @@ const OilTradingCustomers = () => {
           customer={editingCustomer}
           onSave={(data) => handleEditCustomer(editingCustomer.id, data)}
           onCancel={() => setEditingCustomer(null)}
+          customerTypes={customerTypes}
           t={t}
         />
       )}
@@ -445,7 +459,7 @@ const OilTradingCustomers = () => {
 }
 
 // Customer Form Modal Component
-const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
+const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => {
   const [formData, setFormData] = useState({
     name: customer?.name || '',
     type: customer?.type || 'walk_in',
@@ -459,16 +473,25 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
     country: customer?.contact?.address?.country || 'Oman',
     creditLimit: customer?.creditLimit || 0,
     paymentTerms: customer?.paymentTerms || customer?.paymentTermDays || 0,
-    specialTerms: customer?.contractDetails?.specialTerms || ''
+    specialTerms: customer?.contractDetails?.specialTerms || '',
+    isTaxable: customer?.is_taxable !== false  // Default to true
   })
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
+
+    // Map frontend customer type codes to backend ENUM values
+    const typeMapping = {
+      'individual': 'walk-in',
+      'business': 'walk-in',  // Business customers also use walk-in type
+      'project': 'project-based',
+      'contract': 'contract'
+    }
+
     // Map frontend form data to backend API format
     const customerData = {
       name: formData.name,
-      customerType: formData.type === 'walk_in' ? 'walk-in' : formData.type === 'project' ? 'project-based' : 'contract',
+      customerType: typeMapping[formData.type] || 'walk-in',
       contactPerson: formData.contactPerson,
       phone: formData.phone,
       email: formData.email,
@@ -477,6 +500,7 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
       creditLimit: parseFloat(formData.creditLimit) || 0,
       paymentTermDays: parseInt(formData.paymentTerms) || 0,
       notes: formData.specialTerms || '',
+      is_taxable: formData.isTaxable,
       isActive: true
     }
 
@@ -495,10 +519,11 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={true}
-      title={customer ? 'Edit Customer' : 'Add New Customer'} 
+      title={customer ? 'Edit Customer' : 'Add New Customer'}
       onClose={onCancel}
+      closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="customer-form">
         {/* Basic Information Section */}
@@ -535,9 +560,12 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
                 onChange={(e) => setFormData({...formData, type: e.target.value})}
                 required
               >
-                <option value="walk_in">Walk-in Customer</option>
-                <option value="project">Project Customer</option>
-                <option value="contract">Contract Customer</option>
+                <option value="">Select Type...</option>
+                {customerTypes.map(type => (
+                  <option key={type.id} value={type.code}>
+                    {type.name}
+                  </option>
+                ))}
               </select>
             </div>
             
@@ -697,8 +725,24 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
               </div>
             </div>
           </div>
+
+          {/* Tax Status */}
+          <div className="form-group full-width" style={{ marginTop: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={formData.isTaxable}
+                onChange={(e) => setFormData({...formData, isTaxable: e.target.checked})}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <span>Customer is Taxable (Apply VAT on sales)</span>
+            </label>
+            <small style={{ color: '#666', marginLeft: '26px', display: 'block', marginTop: '4px' }}>
+              If unchecked, no VAT will be applied to this customer's sales orders
+            </small>
+          </div>
         </div>
-        
+
         {/* Contract Terms Section - Only for Contract Customers */}
         {formData.type === 'contract' && (
           <div className="contract-terms-section">
@@ -740,11 +784,12 @@ const CustomerFormModal = ({ customer, onSave, onCancel, t }) => {
 // Customer Details Modal Component
 const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) => {
   return (
-    <Modal 
+    <Modal
       isOpen={true}
       title={`Customer Details - ${customer.name}`}
       onClose={onClose}
       className="modal-xl"
+      closeOnOverlayClick={false}
     >
       <div className="view-modal-content">
         <div className="form-section">
@@ -811,6 +856,12 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
             <div className="detail-item">
               <label>Payment Terms</label>
               <span>{customer.paymentTerms || 0} days</span>
+            </div>
+            <div className="detail-item">
+              <label>Tax Status</label>
+              <span className={`badge ${customer.is_taxable !== false ? 'success' : 'secondary'}`}>
+                {customer.is_taxable !== false ? '✓ Taxable (VAT Applied)' : '✗ Non-Taxable (No VAT)'}
+              </span>
             </div>
           </div>
         </div>
@@ -939,11 +990,12 @@ const ContractDetailsModal = ({ customer, onClose, onEdit }) => {
   if (!contract) {
     console.log('No contract details found for customer:', customer?.name)
     return (
-      <Modal 
+      <Modal
         isOpen={true}
         title="Contract Details - No Contract Found"
         onClose={onClose}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
         <div className="view-modal-content">
           <div className="empty-rates">
@@ -966,11 +1018,12 @@ const ContractDetailsModal = ({ customer, onClose, onEdit }) => {
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={true}
       title={`Contract Details - ${contract.contractId}`}
       onClose={onClose}
       className="modal-xxl"
+      closeOnOverlayClick={false}
     >
       <div className="view-modal-content">
         {loading && (
@@ -1230,7 +1283,7 @@ const ContractEditModal = ({ customer, onClose, onSave }) => {
 
   if (loading) {
     return (
-      <Modal isOpen={true} title="Edit Contract" onClose={onClose} className="modal-xxl">
+      <Modal isOpen={true} title="Edit Contract" onClose={onClose} className="modal-xxl" closeOnOverlayClick={false}>
         <div className="loading-section">
           <div className="loading-spinner"></div>
           <p>Loading contract editor...</p>
@@ -1240,7 +1293,7 @@ const ContractEditModal = ({ customer, onClose, onSave }) => {
   }
 
   return (
-    <Modal isOpen={true} title={`Edit Contract - ${customer.name}`} onClose={onClose} className="modal-xxl">
+    <Modal isOpen={true} title={`Edit Contract - ${customer.name}`} onClose={onClose} className="modal-xxl" closeOnOverlayClick={false}>
       <form onSubmit={handleSubmit} className="view-modal-content">
         {/* Contract Basic Information */}
         <div className="form-section">

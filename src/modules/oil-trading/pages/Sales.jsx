@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
-import { useLocalization } from '../context/LocalizationContext'
-import LoadingSpinner from '../components/LoadingSpinner'
-import DataTable from '../components/ui/DataTable'
-import SalesOrderForm from '../modules/oil-trading/components/SalesOrderForm'
-import salesOrderService from '../services/salesOrderService'
-import customerService from '../services/customerService'
+import { useAuth } from '../../../context/AuthContext'
+import { useLocalization } from '../../../context/LocalizationContext'
+import LoadingSpinner from '../../../components/LoadingSpinner'
+import DataTable from '../../../components/ui/DataTable'
+import SalesOrderForm from '../components/SalesOrderForm'
+import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
+import salesOrderService from '../../../services/salesOrderService'
+import customerService from '../../../services/customerService'
 import { Eye, Edit, FileText, DollarSign, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
 import '../styles/Sales.css'
 
@@ -84,54 +85,111 @@ const Sales = () => {
   const handleSaveOrder = async (orderData) => {
     try {
       setLoading(true)
-      console.log('Creating sales order:', orderData)
-      
-      // Create sales order via backend API
-      const result = await salesOrderService.create(orderData)
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create sales order')
+
+      let result
+
+      // Check if editing existing order or creating new one
+      if (editingOrder) {
+        console.log('Updating sales order:', editingOrder.id, orderData)
+        result = await salesOrderService.update(editingOrder.id, orderData)
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update sales order')
+        }
+
+        console.log('Sales order updated successfully:', result.data)
+      } else {
+        console.log('Creating sales order:', orderData)
+        result = await salesOrderService.create(orderData)
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create sales order')
+        }
+
+        console.log('Sales order created successfully:', result.data)
       }
-      
-      console.log('Sales order created successfully:', result.data)
-      
+
       // Refresh the sales orders list
       await loadSalesData()
-      
+
       // Reset form state
       setSelectedCustomer(null)
       setShowOrderForm(false)
       setEditingOrder(null)
-      
+
       // Show success message
-      alert(`✅ Sales order created successfully!\n\nOrder Number: ${result.data.orderNumber}\nTotal: OMR ${result.data.totalAmount?.toFixed(2) || 0}`)
-      
+      const totalAmount = parseFloat(result.data.totalAmount) || 0
+      const action = editingOrder ? 'updated' : 'created'
+      alert(`✅ Sales order ${action} successfully!\n\nOrder Number: ${result.data.orderNumber}\nTotal: OMR ${totalAmount.toFixed(2)}`)
+
     } catch (error) {
       console.error('Error saving sales order:', error)
       setError(error.message)
-      alert(`❌ Failed to create sales order:\n\n${error.message}`)
+      const action = editingOrder ? 'update' : 'create'
+      alert(`❌ Failed to ${action} sales order:\n\n${error.message}`)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleViewSalesOrder = (order) => {
-    setViewingOrder(order)
+  const handleViewSalesOrder = async (order) => {
+    try {
+      setLoading(true)
+      // Fetch full order details including items
+      const result = await salesOrderService.getById(order.id)
+
+      if (result.success && result.data) {
+        setViewingOrder(result.data)
+      } else {
+        // Fallback to basic order if fetch fails
+        console.warn('Failed to fetch full order details, showing basic data')
+        setViewingOrder(order)
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error)
+      // Fallback to basic order on error
+      setViewingOrder(order)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleEditSalesOrder = (order) => {
-    setEditingOrder(order)
-    setSelectedCustomer({ id: order.customerId, name: order.customerName })
-    setShowOrderForm(true)
+  const handleEditSalesOrder = async (order) => {
+    try {
+      setLoading(true)
+      // Fetch full order details including items
+      const result = await salesOrderService.getById(order.id)
+
+      if (result.success && result.data) {
+        setEditingOrder(result.data)
+        setSelectedCustomer({ id: result.data.customerId, name: result.data.customerName })
+      } else {
+        // Fallback to basic order if fetch fails
+        console.warn('Failed to fetch full order details for edit, using basic data')
+        setEditingOrder(order)
+        setSelectedCustomer({ id: order.customerId, name: order.customerName })
+      }
+      setShowOrderForm(true)
+    } catch (error) {
+      console.error('Error fetching order details for edit:', error)
+      // Fallback to basic order on error
+      setEditingOrder(order)
+      setSelectedCustomer({ id: order.customerId, name: order.customerName })
+      setShowOrderForm(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleGenerateInvoice = async (order) => {
     try {
       setLoading(true)
       const result = await salesOrderService.generateInvoice(order.id)
-      
+
       if (result.success) {
         alert(`🧾 Invoice generated successfully for order: ${order.orderNumber}\n\nInvoice Number: ${result.data.invoiceNumber}`)
+        // Refresh sales orders to show updated invoice number
+        await loadSalesData()
       } else {
         throw new Error(result.error || 'Failed to generate invoice')
       }
@@ -146,12 +204,12 @@ const Sales = () => {
   // Define table columns for sales orders
   const salesOrderColumns = [
     {
-      key: 'id',
+      key: 'orderNumber',
       header: t('orderNumber'),
       sortable: true,
-      render: (value) => (
+      render: (value, row) => (
         <div className="order-id">
-          <strong>{value || row.orderNumber}</strong>
+          <strong>{value || row.orderNumber || row.id}</strong>
         </div>
       )
     },
@@ -160,7 +218,7 @@ const Sales = () => {
       header: t('customer'),
       sortable: true,
       filterable: true,
-      render: (value) => (
+      render: (value, row) => (
         <div className="customer-info">
           <User size={14} />
           <span>{value || row.customerName}</span>
@@ -208,8 +266,26 @@ const Sales = () => {
       align: 'right',
       sortable: true,
       render: (value, row) => {
-        const total = value || row.totalAmount || 0
+        const total = parseFloat(value || row.totalAmount) || 0
         return `OMR ${total.toFixed(2)}`
+      }
+    },
+    {
+      key: 'invoiceNumber',
+      header: t('invoice'),
+      sortable: true,
+      render: (value, row) => {
+        if (value || row.invoiceNumber) {
+          return (
+            <div className="invoice-info">
+              <FileText size={14} style={{ color: '#10b981' }} />
+              <span style={{ color: '#10b981', fontWeight: '500' }}>
+                {value || row.invoiceNumber}
+              </span>
+            </div>
+          )
+        }
+        return <span style={{ color: '#6b7280' }}>-</span>
       }
     },
     {
@@ -220,17 +296,6 @@ const Sales = () => {
       render: (value) => (
         <span className={`status-badge ${value}`}>
           {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      )
-    },
-    {
-      key: 'paymentStatus',
-      header: t('paymentStatus'),
-      sortable: true,
-      filterable: true,
-      render: (value) => (
-        <span className={`payment-badge ${value || 'pending'}`}>
-          {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Pending'}
         </span>
       )
     },
@@ -255,25 +320,31 @@ const Sales = () => {
           >
             <Edit size={16} />
           </button>
-          <button 
-            className="btn-icon primary" 
-            title={t('generateInvoice')}
-            onClick={() => handleGenerateInvoice(row)}
-          >
-            <FileText size={16} />
-          </button>
+          {(row.status === 'confirmed' || row.status === 'delivered') && (
+            row.invoiceNumber ? (
+              <button
+                className="btn-icon success"
+                title={`Invoice: ${row.invoiceNumber} - Download invoice functionality coming soon`}
+                disabled
+              >
+                <FileText size={16} />
+              </button>
+            ) : (
+              <button
+                className="btn-icon primary"
+                title={t('generateInvoice')}
+                onClick={() => handleGenerateInvoice(row)}
+              >
+                <FileText size={16} />
+              </button>
+            )
+          )}
         </div>
       )
     }
   ]
 
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <LoadingSpinner message="Loading sales data..." size="large" />
-      </div>
-    )
-  }
+  // Remove early return - let DataTable handle loading state with skeleton
 
   return (
     <div className="sales-page">
@@ -384,7 +455,7 @@ const Sales = () => {
               columns={salesOrderColumns}
               title={t('salesOrders')}
               subtitle={t('salesOrdersSubtitle')}
-              loading={false}
+              loading={loading}
               searchable={true}
               filterable={true}
               sortable={true}
@@ -400,16 +471,107 @@ const Sales = () => {
 
         {activeTab === 'invoices' && (
           <div className="sales-invoices">
-            <div className="empty-state">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14,2 14,8 20,8" />
-                <line x1="12" y1="11" x2="12" y2="17" />
-                <path d="M9 14h6" />
-              </svg>
-              <h3>No invoices generated yet</h3>
-              <p>Create sales orders first, then generate invoices from them</p>
-            </div>
+            <DataTable
+              data={salesOrders.filter(order => order.invoiceNumber)}
+              columns={[
+                {
+                  key: 'invoiceNumber',
+                  header: t('invoiceNumber'),
+                  sortable: true,
+                  render: (value) => (
+                    <div className="invoice-number">
+                      <FileText size={14} style={{ color: '#10b981' }} />
+                      <strong>{value}</strong>
+                    </div>
+                  )
+                },
+                {
+                  key: 'orderNumber',
+                  header: t('orderNumber'),
+                  sortable: true,
+                  render: (value) => <span style={{ color: '#6b7280' }}>{value}</span>
+                },
+                {
+                  key: 'customer',
+                  header: t('customer'),
+                  sortable: true,
+                  render: (value, row) => (
+                    <div className="customer-info">
+                      <User size={14} />
+                      <span>{value || row.customerName}</span>
+                    </div>
+                  )
+                },
+                {
+                  key: 'invoiceGeneratedAt',
+                  header: t('generatedDate'),
+                  type: 'date',
+                  sortable: true,
+                  render: (value) => {
+                    if (!value) return '-'
+                    const date = new Date(value)
+                    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                  }
+                },
+                {
+                  key: 'total',
+                  header: t('amount'),
+                  type: 'currency',
+                  align: 'right',
+                  sortable: true,
+                  render: (value, row) => {
+                    const total = parseFloat(value || row.totalAmount) || 0
+                    return `OMR ${total.toFixed(2)}`
+                  }
+                },
+                {
+                  key: 'status',
+                  header: t('orderStatus'),
+                  sortable: true,
+                  render: (value) => (
+                    <span className={`status-badge ${value}`}>
+                      {value.charAt(0).toUpperCase() + value.slice(1)}
+                    </span>
+                  )
+                },
+                {
+                  key: 'actions',
+                  header: t('actions'),
+                  sortable: false,
+                  width: '120px',
+                  render: (value, row) => (
+                    <div className="table-actions">
+                      <button
+                        className="btn-icon"
+                        title={t('view')}
+                        onClick={() => handleViewSalesOrder(row)}
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        className="btn-icon"
+                        title={t('downloadInvoice')}
+                        onClick={() => alert('Download invoice functionality coming soon')}
+                      >
+                        <FileText size={16} />
+                      </button>
+                    </div>
+                  )
+                }
+              ]}
+              title={t('invoices')}
+              subtitle="Generated sales invoices"
+              loading={loading}
+              searchable={true}
+              filterable={true}
+              sortable={true}
+              paginated={true}
+              exportable={true}
+              selectable={false}
+              emptyMessage="No invoices generated yet. Generate invoices from confirmed sales orders."
+              className="invoices-table"
+              initialPageSize={10}
+            />
           </div>
         )}
 
@@ -422,7 +584,7 @@ const Sales = () => {
                 </svg>
               </div>
               <div className="summary-info">
-                <p className="summary-value">OMR {todaysSummary.totalSales.toFixed(2)}</p>
+                <p className="summary-value">OMR {(parseFloat(todaysSummary.totalSales) || 0).toFixed(2)}</p>
                 <p className="summary-label">Total Sales (Today)</p>
               </div>
             </div>
@@ -460,9 +622,9 @@ const Sales = () => {
       <SalesOrderForm
         isOpen={showOrderForm}
         onClose={() => {
-          setShowOrderForm(false)
-          setSelectedCustomer(null)
-          setEditingOrder(null)
+          setEditingOrder(null)      // Clear editing state first
+          setSelectedCustomer(null)  // Clear customer
+          setShowOrderForm(false)    // Close form last
         }}
         onSave={handleSaveOrder}
         selectedCustomer={selectedCustomer}
@@ -470,36 +632,13 @@ const Sales = () => {
       />
 
       {/* View Sales Order Modal */}
-      {viewingOrder && (
-        <div className="modal-backdrop" onClick={() => setViewingOrder(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Sales Order Details</h3>
-              <button className="modal-close" onClick={() => setViewingOrder(null)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="order-details">
-                <p><strong>Order Number:</strong> {viewingOrder.orderNumber || viewingOrder.id}</p>
-                <p><strong>Customer:</strong> {viewingOrder.customerName || viewingOrder.customer}</p>
-                <p><strong>Date:</strong> {new Date(viewingOrder.orderDate || viewingOrder.date).toLocaleDateString()}</p>
-                <p><strong>Status:</strong> {viewingOrder.status}</p>
-                <p><strong>Payment Status:</strong> {viewingOrder.paymentStatus}</p>
-                <p><strong>Total:</strong> OMR {(viewingOrder.totalAmount || viewingOrder.total || 0).toFixed(2)}</p>
-                {viewingOrder.notes && <p><strong>Notes:</strong> {viewingOrder.notes}</p>}
-                
-                <h4>Items:</h4>
-                <ul>
-                  {(viewingOrder.salesOrderItems || viewingOrder.items || []).map((item, index) => (
-                    <li key={index}>
-                      {item.materialName || item.name} - {item.quantity} {item.unit} @ OMR {(item.unitPrice || item.rate || 0).toFixed(3)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <SalesOrderViewModal
+        isOpen={!!viewingOrder}
+        onClose={() => setViewingOrder(null)}
+        orderData={viewingOrder}
+        onEdit={handleEditSalesOrder}
+        t={t}
+      />
     </div>
   )
 }

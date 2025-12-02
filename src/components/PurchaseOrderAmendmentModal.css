@@ -1,0 +1,407 @@
+.purchase-order-amendment-modal {
+  min-width: 700px;
+  max-width: 900px;
+}
+
+/* Message */
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.message-success {
+  background-color: #d1fae5;
+  border: 1px solid #10b981;
+  color: #065f46;
+}
+
+.message-error {
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
+}
+
+/* Loading */
+.amendments-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+}
+
+.amendments-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Amendments List */
+.amendments-list-container {
+  padding: 1rem;
+}
+
+.amendments-list-header {
+  margin-bottom: 1.5rem;
+}
+
+.amendments-list-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+/* Empty State */
+.amendments-empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+}
+
+.amendments-empty-state svg {
+  margin-bottom: 1rem;
+  color: #d1d5db;
+}
+
+.amendments-empty-state p {
+  margin: 1rem 0;
+  font-size: 1rem;
+}
+
+.amendments-empty-hint {
+  font-size: 0.875rem !important;
+  color: #9ca3af !important;
+}
+
+/* Amendment List */
+.amendments-list {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Amendment Card */
+.amendment-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.amendment-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.amendment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.amendment-card-header h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  color: #111827;
+}
+
+.amendment-card-date {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.amendment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.amendment-card-body {
+  margin-bottom: 1rem;
+}
+
+.amendment-card-field {
+  margin-bottom: 0.75rem;
+}
+
+.amendment-card-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.amendment-card-value {
+  display: block;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.amendment-card-new-total {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.amendment-card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.amendment-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f3f4f6;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.amendment-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-amendment-action {
+  padding: 0.5rem 1.25rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-amendment-action:hover {
+  background-color: #2563eb;
+}
+
+/* Amendment Details */
+.amendment-details {
+  padding: 1.5rem;
+}
+
+.amendment-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.amendment-details-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.btn-back {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background-color: #f9fafb;
+}
+
+.amendment-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.amendment-details-section {
+  padding: 1.25rem;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.amendment-details-section h4 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.amendment-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.amendment-details-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.amendment-details-field label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.amendment-details-field span {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.amendment-details-reason {
+  margin: 0;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+/* Financial Impact */
+.amendment-details-financial {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.amendment-financial-item {
+  flex: 1;
+  text-align: center;
+}
+
+.amendment-financial-item label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.5rem;
+}
+
+.amendment-financial-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.amendment-financial-new {
+  color: #3b82f6 !important;
+}
+
+.amendment-financial-arrow {
+  font-size: 1.5rem;
+  color: #9ca3af;
+}
+
+.amendment-financial-diff {
+  flex: 1;
+  text-align: center;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0.375rem;
+}
+
+.amendment-financial-diff .amendment-financial-value.positive {
+  color: #10b981 !important;
+}
+
+.amendment-financial-diff .amendment-financial-value.negative {
+  color: #ef4444 !important;
+}
+
+/* Changes Summary */
+.amendment-changes {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+}
+
+.amendment-changes-json {
+  margin: 0;
+  padding: 1rem;
+  background-color: #1f2937;
+  color: #f3f4f6;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-family: 'Courier New', monospace;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Approval Info */
+.amendment-details-approval {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .purchase-order-amendment-modal {
+    min-width: auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .amendment-card-row,
+  .amendment-details-grid,
+  .amendment-details-approval {
+    grid-template-columns: 1fr;
+  }
+
+  .amendment-details-financial {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .amendment-financial-arrow {
+    transform: rotate(90deg);
+  }
+}

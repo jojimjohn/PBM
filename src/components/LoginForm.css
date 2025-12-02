@@ -79,12 +79,44 @@
   .login-container {
     padding: 0.5rem;
   }
-  
+
   .login-wrapper {
     gap: 1rem;
   }
-  
+
   .login-header h1 {
     font-size: 1.5rem;
   }
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .login-container {
+  background-color: #111827;
+}
+
+[data-theme="dark"] .input-icon {
+  color: #6b7280;
+}
+
+[data-theme="dark"] .error-message {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+[data-theme="dark"] .demo-card {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .demo-card h4 {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .demo-list {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .demo-list span {
+  color: #93c5fd;
 }

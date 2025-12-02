@@ -30,6 +30,7 @@ class CustomerService {
       },
       creditLimit: parseFloat(backendCustomer.creditLimit || 0),
       paymentTerms: backendCustomer.paymentTermDays || 0,
+      is_taxable: backendCustomer.is_taxable !== 0, // Convert MySQL TINYINT to boolean
       isActive: backendCustomer.isActive === 1,
       createdAt: backendCustomer.created_at,
       lastUpdated: backendCustomer.updated_at,
@@ -77,15 +78,10 @@ class CustomerService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch customers');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers`);
 
       // Transform backend data to frontend format
-      const transformedCustomers = (data.data || []).map(customer => 
+      const transformedCustomers = (data.data || []).map(customer =>
         this.transformCustomer(customer)
       );
 
@@ -109,18 +105,8 @@ class CustomerService {
    */
   async getById(customerId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch customer');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching customer:', error);
       return {
@@ -136,25 +122,14 @@ class CustomerService {
    */
   async create(customerData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(customerData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create customer');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Customer created successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error creating customer:', error);
       return {
@@ -169,25 +144,14 @@ class CustomerService {
    */
   async update(customerId, customerData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(customerData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update customer');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Customer updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating customer:', error);
       return {
@@ -202,20 +166,10 @@ class CustomerService {
    */
   async delete(customerId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete customer');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Customer deleted successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error deleting customer:', error);
       return {
@@ -235,18 +189,8 @@ class CustomerService {
       if (filters.type) params.append('type', filters.type);
       if (filters.status) params.append('status', filters.status);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search customers');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/search?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Error searching customers:', error);
       return {
@@ -262,18 +206,8 @@ class CustomerService {
    */
   async getContracts(customerId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}/contracts`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch customer contracts');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}/contracts`);
+      return data;
     } catch (error) {
       console.error('Error fetching customer contracts:', error);
       return {
@@ -294,20 +228,10 @@ class CustomerService {
       if (options.endDate) params.append('endDate', options.endDate);
       if (options.limit) params.append('limit', options.limit);
 
-      const response = await authService.makeAuthenticatedRequest(
+      const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/customers/${customerId}/sales-history?${params.toString()}`
       );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch customer sales history');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      return data;
     } catch (error) {
       console.error('Error fetching customer sales history:', error);
       return {
@@ -323,25 +247,14 @@ class CustomerService {
    */
   async updateStatus(customerId, isActive) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}/status`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customers/${customerId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ isActive }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update customer status');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Customer status updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating customer status:', error);
       return {

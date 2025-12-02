@@ -129,3 +129,16 @@
   justify-content: center;
   min-height: 300px;
 }
+
+/* Dark Mode Support */
+[data-theme="dark"] .spinner-ring {
+  border-top-color: #60a5fa;
+}
+
+[data-theme="dark"] .loading-message {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .loading-overlay {
+  background: rgba(17, 24, 39, 0.9);
+}

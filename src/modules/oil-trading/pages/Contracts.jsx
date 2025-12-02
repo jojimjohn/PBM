@@ -6,10 +6,12 @@ import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
+import FileUpload from '../../../components/ui/FileUpload'
 import contractService from '../../../services/contractService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import supplierLocationService from '../../../services/supplierLocationService'
+import uploadService from '../../../services/uploadService'
 import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin } from 'lucide-react'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import '../styles/Contracts.css'
@@ -516,13 +518,7 @@ const Contracts = () => {
     return contractTypes[type] || { name: type, color: '#6b7280' }
   }
 
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <LoadingSpinner message="Loading contracts..." size="large" />
-      </div>
-    )
-  }
+  // Remove early return - let DataTable handle loading state with skeleton
 
   // Define table columns for contracts
   const contractColumns = [
@@ -912,11 +908,12 @@ const ContractViewModal = ({
   const statusInfo = getContractStatusInfo(contractData.status)
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
       title={`${contractData.contractNumber} - ${t('contractDetails', 'Contract Details')}`}
       onClose={onClose}
       className="modal-xl contract-details-modal"
+      closeOnOverlayClick={false}
     >
       <div className="supplier-view-professional">
         {/* Header Section */}
@@ -1538,11 +1535,12 @@ const ContractFormModal = ({
   }
 
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={title} 
+      title={title}
       onClose={onClose}
       className="modal-xl"
+      closeOnOverlayClick={false}
     >
       <form className="contract-form" onSubmit={handleSubmit}>
         {/* Basic Information */}
@@ -1958,6 +1956,52 @@ const ContractFormModal = ({
             )}
           </div>
         </div>
+
+        {/* Attachments - Only in edit mode */}
+        {isEdit && formData?.id && (
+          <div className="form-section">
+            <div className="form-section-title">Attachments</div>
+            <FileUpload
+              mode="multiple"
+              accept=".pdf,.jpg,.jpeg,.png"
+              maxSize={5242880}
+              maxFiles={10}
+              onUpload={async (files) => {
+                const result = await uploadService.uploadFiles('contracts', formData.id, files);
+                if (result.success) {
+                  // Refresh the contract data to get updated attachments
+                  const updated = await contractService.getById(formData.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('Files uploaded successfully');
+                } else {
+                  alert('Failed to upload files: ' + result.error);
+                }
+              }}
+              onDelete={async (filename) => {
+                const result = await uploadService.deleteFile('contracts', formData.id, filename);
+                if (result.success) {
+                  // Refresh the contract data to get updated attachments
+                  const updated = await contractService.getById(formData.id);
+                  if (updated.success) {
+                    setFormData(prev => ({
+                      ...prev,
+                      attachments: updated.data.attachments
+                    }));
+                  }
+                  alert('File deleted successfully');
+                } else {
+                  alert('Failed to delete file: ' + result.error);
+                }
+              }}
+              existingFiles={formData.attachments || []}
+            />
+          </div>
+        )}
 
         {/* Form Actions */}
         <div className="form-actions">

@@ -1,0 +1,292 @@
+import React, { useState, useCallback, forwardRef } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Upload, X, FileText, Image as ImageIcon, Loader, AlertCircle, Check, File } from 'lucide-react'
+import { API_BASE_URL } from '../../config/api.js'
+import './FileUpload.css'
+
+/**
+ * FileUpload Component (Modernized)
+ *
+ * Drag & drop file uploader with preview and progress
+ *
+ * @param {string} label - Field label
+ * @param {Array} value - Array of file objects (for form integration)
+ * @param {Function} onChange - Change handler (files) => void
+ * @param {'single'|'multiple'} mode - Single or multiple file upload
+ * @param {string} accept - Accepted file types (e.g., '.pdf,.jpg,.jpeg,.png')
+ * @param {number} maxSize - Maximum file size in bytes (default: 10MB)
+ * @param {number} maxFiles - Maximum number of files (default: 10)
+ * @param {Function} onUpload - Legacy: Callback when files are ready to upload
+ * @param {Function} onDelete - Legacy: Callback when file is deleted
+ * @param {Array} existingFiles - Legacy: Array of existing file objects
+ * @param {boolean} disabled - Disable upload functionality
+ * @param {string} error - Error message
+ * @param {string} helperText - Helper text
+ * @param {boolean} required - Required field indicator
+ * @param {boolean} showPreview - Show image previews (default: true)
+ * @param {string} uploadText - Custom upload zone text
+ * @param {string} className - Additional CSS classes
+ */
+const FileUpload = forwardRef(({
+  label,
+  value = [],
+  onChange,
+  mode = 'multiple',
+  accept = '.pdf,.jpg,.jpeg,.png',
+  maxSize = 10 * 1024 * 1024, // 10MB
+  maxFiles = 10,
+  onUpload,
+  onDelete,
+  existingFiles = [],
+  disabled = false,
+  error,
+  helperText,
+  required = false,
+  showPreview = true,
+  uploadText = 'Drop files here or click to browse',
+  className = '',
+  ...props
+}, ref) => {
+  const [uploadProgress, setUploadProgress] = useState({})
+  const [uploadErrors, setUploadErrors] = useState({})
+  const [internalError, setInternalError] = useState(null)
+
+  // Use either value prop (form integration) or legacy state
+  const files = onChange ? (Array.isArray(value) ? value : []) : existingFiles
+  const hasError = !!error || !!internalError
+
+  // Dropzone configuration
+  const onDrop = useCallback(async (acceptedFiles, rejectedFiles) => {
+    setInternalError(null)
+
+    // Handle rejected files
+    if (rejectedFiles.length > 0) {
+      const errors = rejectedFiles.map(({ file, errors }) => {
+        const errorMessages = errors.map(e => {
+          if (e.code === 'file-too-large') {
+            return `${file.name}: File too large (max ${formatFileSize(maxSize)})`
+          }
+          if (e.code === 'file-invalid-type') {
+            return `${file.name}: Invalid file type`
+          }
+          return `${file.name}: ${e.message}`
+        })
+        return errorMessages.join(', ')
+      })
+      setInternalError(errors.join('\n'))
+      return
+    }
+
+    // Check max files limit
+    const totalFiles = files.length + acceptedFiles.length
+    if (mode === 'multiple' && totalFiles > maxFiles) {
+      setInternalError(`Maximum ${maxFiles} files allowed`)
+      return
+    }
+
+    // Handle file addition
+    if (onChange) {
+      // Modern form integration
+      const newFiles = acceptedFiles.map(file => ({
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+        uploaded: false
+      }))
+
+      if (mode === 'single') {
+        onChange(newFiles.slice(0, 1))
+      } else {
+        onChange([...files, ...newFiles])
+      }
+    } else if (onUpload) {
+      // Legacy callback pattern
+      await onUpload(mode === 'single' ? acceptedFiles[0] : acceptedFiles)
+    }
+  }, [mode, maxSize, maxFiles, files, onChange, onUpload])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png']
+    },
+    maxSize,
+    multiple: mode === 'multiple',
+    disabled: disabled || uploading
+  });
+
+  // Remove pending file
+  const removePendingFile = (index) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+    setError(null);
+  };
+
+  // Upload all pending files
+  const handleUploadAll = async () => {
+    if (pendingFiles.length === 0) return;
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      await onUpload(mode === 'single' ? pendingFiles[0] : pendingFiles);
+      setPendingFiles([]);
+    } catch (err) {
+      setError(err.message || 'Failed to upload files');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Delete existing file
+  const handleDeleteExisting = async (filename) => {
+    if (window.confirm('Are you sure you want to delete this file?')) {
+      try {
+        await onDelete(filename);
+      } catch (err) {
+        setError(err.message || 'Failed to delete file');
+      }
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Get file icon
+  const getFileIcon = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (ext === 'pdf') return <FileText size={20} className="file-icon-pdf" />;
+    if (['jpg', 'jpeg', 'png'].includes(ext)) return <ImageIcon size={20} className="file-icon-image" />;
+    return <FileText size={20} className="file-icon-default" />;
+  };
+
+  return (
+    <div className="file-upload-container">
+      {/* Dropzone */}
+      {!disabled && (
+        <div
+          {...getRootProps()}
+          className={`dropzone ${isDragActive ? 'active' : ''} ${uploading ? 'uploading' : ''} ${error ? 'error' : ''}`}
+        >
+          <input {...getInputProps()} />
+          <Upload size={48} className="dropzone-icon" />
+          <p className="dropzone-text">
+            {isDragActive
+              ? 'Drop files here...'
+              : 'Drag & drop files here, or click to browse'
+            }
+          </p>
+          <p className="dropzone-hint">
+            Accepted: {accept} (Max {formatFileSize(maxSize)} per file)
+          </p>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="file-upload-error">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Pending Files */}
+      {pendingFiles.length > 0 && (
+        <div className="file-list">
+          <h4 className="file-list-title">Files to Upload</h4>
+          {pendingFiles.map((file, index) => (
+            <div key={index} className="file-item pending">
+              {getFileIcon(file.name)}
+              <div className="file-info">
+                <span className="file-name">{file.name}</span>
+                <span className="file-size">{formatFileSize(file.size)}</span>
+              </div>
+              {!uploading && (
+                <button
+                  className="file-delete-btn"
+                  onClick={() => removePendingFile(index)}
+                  title="Remove file"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            className="upload-btn"
+            onClick={handleUploadAll}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <>
+                <Loader size={16} className="spinner" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload size={16} />
+                Upload {pendingFiles.length} {pendingFiles.length === 1 ? 'File' : 'Files'}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Existing Files */}
+      {existingFiles.length > 0 && (
+        <div className="file-list">
+          <h4 className="file-list-title">Attached Files</h4>
+          {existingFiles.map((file, index) => (
+            <div key={index} className="file-item existing">
+              {getFileIcon(file.originalName || file.filename)}
+              <div className="file-info">
+                <span className="file-name">{file.originalName || file.filename}</span>
+                <span className="file-size">
+                  {file.size ? formatFileSize(file.size) : 'Unknown size'}
+                </span>
+              </div>
+              <div className="file-actions">
+                <a
+                  href={`${API_BASE_URL}/uploads/${file.path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="file-view-btn"
+                  title="View file"
+                >
+                  View
+                </a>
+                {!disabled && onDelete && (
+                  <button
+                    className="file-delete-btn"
+                    onClick={() => handleDeleteExisting(file.filename)}
+                    title="Delete file"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {existingFiles.length === 0 && pendingFiles.length === 0 && !error && (
+        <p className="empty-state">No files attached</p>
+      )}
+    </div>
+  );
+};
+
+export default FileUpload;

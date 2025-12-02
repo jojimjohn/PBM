@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Truck, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { useLocalization } from '../context/LocalizationContext';
-import { calloutService, collectionOrderService, collectionUtils } from '../services/collectionService';
-import LoadingSpinner from '../components/LoadingSpinner';
-import Modal from '../components/ui/Modal';
-import CollectionDashboard from '../components/collections/CollectionDashboard';
-import CalloutManager from '../components/collections/CalloutManager';
-import './Collections.css';
+import { useLocalization } from '../../../context/LocalizationContext';
+import { calloutService, collectionOrderService, collectionUtils } from '../../../services/collectionService';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import Modal from '../../../components/ui/Modal';
+import CollectionDashboard from '../../../components/collections/CollectionDashboard';
+import CalloutManager from '../../../components/collections/CalloutManager';
+import '../styles/Collections.css';
 
 const Collections = () => {
   const { t, isRTL } = useLocalization();
   const [activeTab, setActiveTab] = useState('orders');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Dashboard data
   const [dashboardData, setDashboardData] = useState({
     activeCallouts: [],
@@ -55,17 +55,17 @@ const Collections = () => {
 
       // Load collection orders for dashboard
       console.log('Loading collection orders...'); // Debug log
-      
+
       const [allOrdersResponse, recentOrdersResponse] = await Promise.all([
-        collectionOrderService.getCollectionOrders({ 
-          page: 1, 
+        collectionOrderService.getCollectionOrders({
+          page: 1,
           limit: 50 // Get more data for statistics
         }).catch(err => {
           console.error('Error loading all orders:', err);
           return { success: false, error: err.message };
         }),
-        collectionOrderService.getCollectionOrders({ 
-          page: 1, 
+        collectionOrderService.getCollectionOrders({
+          page: 1,
           limit: 10
         }).catch(err => {
           console.error('Error loading recent orders:', err);
@@ -117,10 +117,10 @@ const Collections = () => {
     if (!currentTab) return null;
 
     const Component = currentTab.component;
-    
+
     if (activeTab === 'dashboard') {
       return (
-        <Component 
+        <Component
           data={dashboardData}
           loading={loading}
           error={error}
@@ -143,9 +143,9 @@ const Collections = () => {
             <span className="header-subtitle">{t('materialCollectionWorkflow')}</span>
           </div>
         </div>
-        
+
         <div className="header-actions">
-          <button 
+          <button
             className="refresh-btn"
             onClick={loadDashboardData}
             disabled={loading}
@@ -176,7 +176,7 @@ const Collections = () => {
           <div className="error-banner">
             <AlertCircle className="w-5 h-5" />
             <span>{error}</span>
-            <button 
+            <button
               onClick={() => setError('')}
               className="error-close"
             >
@@ -204,7 +204,7 @@ const Collections = () => {
             <span className="stat-label">{t('scheduledCollections')}</span>
           </div>
         </div>
-        
+
         <div className="stat-item">
           <Truck className="stat-icon in-progress" />
           <div className="stat-details">
@@ -212,7 +212,7 @@ const Collections = () => {
             <span className="stat-label">{t('activeCollections')}</span>
           </div>
         </div>
-        
+
         <div className="stat-item">
           <CheckCircle className="stat-icon completed" />
           <div className="stat-details">
@@ -220,7 +220,7 @@ const Collections = () => {
             <span className="stat-label">{t('completedCollections')}</span>
           </div>
         </div>
-        
+
         <div className="stat-item">
           <Package className="stat-icon urgent" />
           <div className="stat-details">

@@ -8,6 +8,8 @@ import { PERMISSIONS } from '../config/roles'
 import { getModuleIconPaths } from '../config/modules'
 import PermissionGate from './PermissionGate'
 import BusinessRouter from './BusinessRouter'
+import CommandPalette from './ui/CommandPalette'
+import NotificationPanel from './ui/NotificationPanel'
 import { Menu, X } from 'lucide-react'
 import './MainLayout.css'
 
@@ -23,7 +25,51 @@ const MainLayout = () => {
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  
+
+  // Command Palette state
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+
+  // Sample notifications (replace with real data later)
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      type: 'info',
+      title: 'New Purchase Order',
+      message: 'PO-2025-0123 has been created successfully',
+      timestamp: new Date(Date.now() - 3600000),
+      read: false
+    },
+    {
+      id: 2,
+      type: 'warning',
+      title: 'Low Stock Alert',
+      message: 'Engine Oil inventory below minimum threshold',
+      timestamp: new Date(Date.now() - 7200000),
+      read: false
+    },
+    {
+      id: 3,
+      type: 'success',
+      title: 'Invoice Approved',
+      message: 'Invoice INV-2025-0156 has been approved',
+      timestamp: new Date(Date.now() - 86400000),
+      read: true
+    }
+  ])
+
+  // Keyboard shortcut for Command Palette (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsCommandPaletteOpen(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   // Detect mobile screen size
   useEffect(() => {
     const checkMobile = () => {
@@ -32,7 +78,7 @@ const MainLayout = () => {
         setIsMobileMenuOpen(false)
       }
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -54,23 +100,66 @@ const MainLayout = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
   }
 
+  // Notification handlers
+  const handleMarkAsRead = (notificationId) => {
+    setNotifications(notifications.map(n =>
+      n.id === notificationId ? { ...n, read: true } : n
+    ))
+  }
+
+  const handleDeleteNotification = (notificationId) => {
+    setNotifications(notifications.filter(n => n.id !== notificationId))
+  }
+
+  const handleClearAllNotifications = () => {
+    if (window.confirm(t('clearAllNotifications', 'Clear all notifications?'))) {
+      setNotifications([])
+    }
+  }
+
+  const handleNotificationSettings = () => {
+    navigate('/settings')
+  }
+
+  // Command palette handlers
+  const getCommandPaletteCommands = () => {
+    const navItems = getFilteredNavItems()
+    return navItems.map(item => ({
+      id: item.path,
+      title: item.label,
+      description: `Navigate to ${item.label}`,
+      type: item.module,
+      icon: item.module,
+      action: () => navigate(item.path),
+      keywords: [item.label.toLowerCase(), item.module]
+    }))
+  }
+
+  const handleCommandExecute = (command) => {
+    if (command.action) {
+      command.action()
+    }
+  }
+
   // Get navigation items based on company's enabled modules
   const getFilteredNavItems = () => {
     const accessibleModules = getAccessibleModules()
-    
-    return accessibleModules.map(moduleId => {
+
+    // Filter out 'collections' module (now part of Purchase tab)
+    const filteredModules = accessibleModules.filter(moduleId => moduleId !== 'collections')
+
+    return filteredModules.map(moduleId => {
       // Map module IDs to navigation paths
       const pathMapping = {
         'dashboard': '/dashboard',
         'customers': '/customers',
-        'suppliers': '/suppliers', 
+        'suppliers': '/suppliers',
         'inventory': '/inventory',
         'fuel-inventory': '/inventory',
         'material-inventory': '/inventory',
         'sales': '/sales',
         'purchase': '/purchase',
         'contracts': '/contracts',
-        'collections': '/collections',
         'wastage': '/wastage',
         'reports': '/reports',
         'expenses': '/expenses',
@@ -90,7 +179,6 @@ const MainLayout = () => {
         'sales': 'sales',
         'purchase': 'purchase',
         'contracts': 'contracts',
-        'collections': 'collections',
         'reports': 'reports',
         'expenses': 'expense',
         'petty-cash': 'cash',
@@ -169,13 +257,14 @@ const MainLayout = () => {
           {/* Right Side - User Info and Actions */}
           <div className="header-right">
             <div className="header-actions">
-              <button className="action-btn notification-btn">
-                <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                <span className="notification-badge">3</span>
-              </button>
+              {/* Notification Panel */}
+              <NotificationPanel
+                notifications={notifications}
+                onMarkAsRead={handleMarkAsRead}
+                onDelete={handleDeleteNotification}
+                onClearAll={handleClearAllNotifications}
+                onSettingsClick={handleNotificationSettings}
+              />
               <button onClick={toggleTheme} className="action-btn theme-toggle-btn">
                 {theme === 'light' ? (
                   <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -400,6 +489,15 @@ const MainLayout = () => {
           <BusinessRouter />
         </div>
       </main>
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        commands={getCommandPaletteCommands()}
+        onExecute={handleCommandExecute}
+        recentCommands={[]}
+      />
 
     </div>
   )

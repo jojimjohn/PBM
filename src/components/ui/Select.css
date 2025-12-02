@@ -33,3 +33,25 @@
 .select.pl-10 {
   padding-left: 2.5rem;
 }
+
+/* Dark Mode Support */
+[data-theme="dark"] .select {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+[data-theme="dark"] .select-option {
+  background-color: #1f2937;
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .select:disabled {
+  background-color: #111827;
+  border-color: #374151;
+}

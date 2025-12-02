@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
-import { useLocalization } from '../context/LocalizationContext'
-import { usePermissions } from '../hooks/usePermissions'
-import LoadingSpinner from '../components/LoadingSpinner'
-import DataTable from '../components/ui/DataTable'
-import Modal from '../components/ui/Modal'
-import StockChart from '../components/StockChart'
-import wastageService from '../services/wastageService'
-import materialService from '../services/materialService'
+import { useAuth } from '../../../context/AuthContext'
+import { useLocalization } from '../../../context/LocalizationContext'
+import { usePermissions } from '../../../hooks/usePermissions'
+import LoadingSpinner from '../../../components/LoadingSpinner'
+import DataTable from '../../../components/ui/DataTable'
+import Modal from '../../../components/ui/Modal'
+import StockChart from '../../../components/StockChart'
+import wastageService from '../../../services/wastageService'
+import materialService from '../../../services/materialService'
 import { 
   Plus, 
   AlertTriangle, 
@@ -26,7 +26,7 @@ import {
   BarChart3,
   Download
 } from 'lucide-react'
-import './Wastage.css'
+import '../styles/Wastage.css'
 
 // Placeholder components for forms
 const WastageForm = ({ materials, wasteTypes, initialData, onSave, onCancel, isEditing }) => {
@@ -605,6 +605,7 @@ const Wastage = () => {
         title={t('wastageAnalytics', 'Wastage Analytics')}
         onClose={() => setShowChartsModal(false)}
         className="modal-xl"
+        closeOnOverlayClick={false}
       >
           <div className="charts-container">
             <StockChart
@@ -641,6 +642,7 @@ const Wastage = () => {
         title={t('reportWastage', 'Report Wastage')}
         onClose={() => setShowAddForm(false)}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
           <WastageForm
             materials={materials}
@@ -656,6 +658,7 @@ const Wastage = () => {
         title={t('editWastage', 'Edit Wastage')}
         onClose={() => setShowEditForm(false)}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
           <WastageForm
             materials={materials}
@@ -673,6 +676,7 @@ const Wastage = () => {
         title={t('wastageDetails', 'Wastage Details')}
         onClose={() => setShowViewModal(false)}
         className="modal-lg"
+        closeOnOverlayClick={false}
       >
           <WastageDetails
             wastage={selectedWastage}

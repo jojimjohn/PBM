@@ -1,0 +1,269 @@
+.wastage-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.header-left h1 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 2em;
+  font-weight: 600;
+}
+
+.header-left p {
+  margin: 0;
+  color: #666;
+  font-size: 1.1em;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.card-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-icon.warning {
+  background: #FFF3CD;
+  color: #856404;
+}
+
+.card-icon.danger {
+  background: #F8D7DA;
+  color: #721C24;
+}
+
+.card-icon.info {
+  background: #D1ECF1;
+  color: #0C5460;
+}
+
+.card-icon.success {
+  background: #D4EDDA;
+  color: #155724;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-value {
+  font-size: 1.8em;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 5px 0;
+}
+
+.card-label {
+  color: #666;
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.filters-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.9em;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.wastage-table {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.waste-type-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+  border: 1px solid currentColor;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+.status-badge.warning {
+  background: #FFF3CD;
+  color: #856404;
+  border: 1px solid #FFEAA7;
+}
+
+.status-badge.success {
+  background: #D4EDDA;
+  color: #155724;
+  border: 1px solid #C3E6CB;
+}
+
+.status-badge.danger {
+  background: #F8D7DA;
+  color: #721C24;
+  border: 1px solid #F5C6CB;
+}
+
+.status-badge.default {
+  background: #E2E3E5;
+  color: #383D41;
+  border: 1px solid #D1D3D4;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.8em;
+}
+
+.btn-danger:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.charts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.monthly-chart {
+  margin-top: 20px;
+}
+
+.page-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wastage-page {
+    padding: 15px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+  }
+  
+  .header-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .filters-section {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    min-width: auto;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .wastage-page {
+  direction: rtl;
+}
+
+[dir="rtl"] .page-header {
+  direction: rtl;
+}
+
+[dir="rtl"] .summary-card {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .filters-section {
+  direction: rtl;
+}
+
+[dir="rtl"] .action-buttons {
+  flex-direction: row-reverse;
+}

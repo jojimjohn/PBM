@@ -5,16 +5,25 @@ import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
+import Modal from '../../../components/ui/Modal'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import PurchaseOrderReceipt from '../../../components/PurchaseOrderReceipt'
 import PurchaseExpenseForm from '../../../components/PurchaseExpenseForm'
 import VendorManager from '../../../components/VendorManager'
 import StorageLocationManager from '../../../components/StorageLocationManager'
+import PurchaseInvoiceModal from '../../../components/PurchaseInvoiceModal'
+import PurchaseOrderAmendmentModal from '../../../components/PurchaseOrderAmendmentModal'
+import PurchaseOrderViewModal from '../../../components/PurchaseOrderViewModal'
+import CalloutManager from '../../../components/collections/CalloutManager'
+import DocumentUpload from '../../../components/DocumentUpload'
+import WorkflowStepper from '../../../components/purchase/WorkflowStepper'
 import purchaseOrderService from '../../../services/purchaseOrderService'
+import purchaseOrderAmendmentService from '../../../services/purchaseOrderAmendmentService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
-import { 
-  Plus, Search, Filter, Eye, Edit, Truck, Package, 
+import expenseService from '../../../services/expenseService'
+import {
+  Plus, Search, Filter, Eye, Edit, Edit3, Truck, Package,
   CheckCircle, Clock, AlertTriangle, FileText, Download,
   DollarSign, MapPin, Building, Calculator, Receipt,
   Users, Settings
@@ -32,6 +41,7 @@ const Purchase = () => {
   // Data states
   const [purchaseOrders, setPurchaseOrders] = useState([])
   const [purchaseExpenses, setPurchaseExpenses] = useState([])
+  const [amendmentCounts, setAmendmentCounts] = useState({}) // Map of orderId -> amendment count
   const [vendors, setVendors] = useState([])
   const [materials, setMaterials] = useState([])
   const [orderStatuses, setOrderStatuses] = useState({})
@@ -40,12 +50,19 @@ const Purchase = () => {
   // Modal states
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const [viewingOrder, setViewingOrder] = useState(null)
   const [showEditForm, setShowEditForm] = useState(false)
   const [showReceiptForm, setShowReceiptForm] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [showVendorManager, setShowVendorManager] = useState(false)
   const [showLocationManager, setShowLocationManager] = useState(false)
   const [receivingOrder, setReceivingOrder] = useState(false)
+
+  // Sprint 4: New modal states
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [showAmendmentModal, setShowAmendmentModal] = useState(false)
+  const [selectedOrderForModal, setSelectedOrderForModal] = useState(null)
+  const [message, setMessage] = useState({ type: '', text: '' })
 
   useEffect(() => {
     loadPurchaseData()
@@ -59,33 +76,32 @@ const Purchase = () => {
       const ordersResult = await purchaseOrderService.getAll()
       const companyOrders = ordersResult.success ? ordersResult.data : []
       setPurchaseOrders(companyOrders)
-      
-      // Load purchase expenses - Mock for now
-      setPurchaseExpenses([
-        {
-          id: 1,
-          purchaseOrderId: 1,
-          orderNumber: 'PO-2024-001',
-          category: 'transportation',
-          description: 'Transportation from Sohar to Muscat',
-          amount: 500.00,
-          vendor: 'Express Logistics',
-          expenseDate: '2024-08-20',
-          status: 'approved'
-        },
-        {
-          id: 2,
-          purchaseOrderId: 1,
-          orderNumber: 'PO-2024-001',
-          category: 'loading_unloading',
-          description: 'Loading and unloading charges',
-          amount: 150.00,
-          vendor: 'Port Services LLC',
-          expenseDate: '2024-08-20',
-          status: 'approved'
+
+      // Sprint 4: Load purchase expenses from unified_expenses API
+      try {
+        const expensesResult = await expenseService.getAll({ expenseType: 'purchase' })
+        const expenses = expensesResult.success ? expensesResult.data : []
+        setPurchaseExpenses(expenses)
+      } catch (error) {
+        console.error('Error loading purchase expenses:', error)
+        setPurchaseExpenses([])
+      }
+
+      // Sprint 4: Load amendment counts for each purchase order
+      try {
+        const counts = {}
+        for (const order of companyOrders) {
+          const amendmentsResult = await purchaseOrderAmendmentService.getAll(order.id)
+          if (amendmentsResult.success && amendmentsResult.data) {
+            counts[order.id] = amendmentsResult.data.length
+          }
         }
-      ])
-      
+        setAmendmentCounts(counts)
+      } catch (error) {
+        console.error('Error loading amendment counts:', error)
+        setAmendmentCounts({})
+      }
+
       // Set default order statuses
       setOrderStatuses({
         draft: { name: 'Draft', color: '#6b7280' },
@@ -132,9 +148,24 @@ const Purchase = () => {
     setShowCreateForm(true)
   }
 
-  const handleEditOrder = (order) => {
-    setSelectedOrder(order)
-    setShowEditForm(true)
+  const handleEditOrder = async (order) => {
+    try {
+      // Fetch full order details with items from backend
+      const result = await purchaseOrderService.getById(order.id)
+
+      if (result.success) {
+        setSelectedOrder(result.data)
+        setShowEditForm(true)
+      } else {
+        throw new Error(result.error || 'Failed to load order details')
+      }
+    } catch (error) {
+      console.error('Error loading order for edit:', error)
+      setMessage({
+        type: 'error',
+        text: `Failed to load order: ${error.message}`
+      })
+    }
   }
 
   const handleReceiveOrder = (order) => {
@@ -145,6 +176,34 @@ const Purchase = () => {
   const handleAddExpense = (order) => {
     setSelectedOrder(order)
     setShowExpenseForm(true)
+  }
+
+  // Sprint 4: Invoice and Amendment handlers
+  const handleShowInvoices = (order) => {
+    setSelectedOrderForModal(order)
+    setShowInvoiceModal(true)
+  }
+
+  const handleShowAmendments = async (order) => {
+    try {
+      // Fetch full order details with items
+      const result = await purchaseOrderService.getById(order.id)
+
+      if (result.success) {
+        setSelectedOrderForModal(result.data)
+        setShowAmendmentModal(true)
+      } else {
+        alert('Failed to load purchase order details: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error loading purchase order:', error)
+      alert('Failed to load purchase order details')
+    }
+  }
+
+  const handleInvoiceSuccess = () => {
+    // Refresh data after invoice operations
+    loadPurchaseData()
   }
 
   const handleReceiveSubmit = async (receiptData) => {
@@ -248,10 +307,20 @@ const Purchase = () => {
     }
   }
 
-  const handleViewOrder = (order) => {
-    console.log('Viewing purchase order:', order)
-    setSelectedOrder(order)
-    alert(`✅ Viewing details for order ${order.orderNumber}`)
+  const handleViewOrder = async (order) => {
+    try {
+      console.log('Viewing purchase order:', order)
+      // Fetch full order details including items
+      const result = await purchaseOrderService.getById(order.id)
+      if (result.success && result.data) {
+        setViewingOrder(result.data)
+      } else {
+        alert(`❌ Failed to load order details: ${result.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error loading order details:', error)
+      alert(`❌ Failed to load order details: ${error.message}`)
+    }
   }
 
   const handleApproveOrder = async (order) => {
@@ -338,8 +407,9 @@ const Purchase = () => {
   const tabs = [
     { id: 'orders', name: 'Purchase Orders', icon: FileText },
     { id: 'expenses', name: 'Purchase Expenses', icon: DollarSign },
+    { id: 'collections', name: 'Collections', icon: Package },
     { id: 'vendors', name: 'Vendor Management', icon: Users },
-    { id: 'locations', name: 'Storage Locations', icon: MapPin },
+    { id: 'locations', name: 'Storage Locations', icon: Building },
     { id: 'analytics', name: 'Analytics', icon: Calculator }
   ]
 
@@ -362,21 +432,16 @@ const Purchase = () => {
           <h1>Purchase Management</h1>
           <p>Complete vendor procurement and expense tracking for {selectedCompany?.name}</p>
         </div>
-        
-        <div className="page-actions">
-          <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
-            <button 
-              className="btn btn-primary"
-              onClick={handleCreateOrder}
-            >
-              <Plus size={20} />
-              New Purchase Order
-            </button>
-          </PermissionGate>
-        </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Workflow Guidance - Shows purchase workflow progression */}
+      <WorkflowStepper
+        activeTab={activeTab}
+        onStepClick={(tab) => setActiveTab(tab)}
+      />
+
+      {/* Summary Cards - Only show on Orders tab */}
+      {activeTab === 'orders' && (
       <div className="purchase-summary">
         <div className="summary-card">
           <div className="summary-icon total">
@@ -422,6 +487,7 @@ const Purchase = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="purchase-tabs">
@@ -446,11 +512,18 @@ const Purchase = () => {
       <div className="tab-content">
         {activeTab === 'orders' && (
           <div className="orders-tab">
-            <div className="tab-header">
-              <h3>Purchase Orders</h3>
-            </div>
-
             <DataTable
+              headerActions={
+                <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleCreateOrder}
+                  >
+                    <Plus size={20} />
+                    New Purchase Order
+                  </button>
+                </PermissionGate>
+              }
               data={purchaseOrders.map(order => ({
                 ...order,
                 vendorInfo: vendors.find(v => v.id === order.vendorId) || { name: order.vendorName },
@@ -467,10 +540,53 @@ const Purchase = () => {
                   filterable: true,
                   render: (value, row) => (
                     <div>
-                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{value}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontWeight: '600', color: '#1f2937' }}>{value}</span>
+                        {amendmentCounts[row.id] > 0 && (
+                          <span
+                            style={{
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              padding: '0.125rem 0.5rem',
+                              borderRadius: '0.75rem',
+                              fontSize: '0.625rem',
+                              fontWeight: '600',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                            title={`${amendmentCounts[row.id]} amendment${amendmentCounts[row.id] > 1 ? 's' : ''}`}
+                          >
+                            🔄 {amendmentCounts[row.id]}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{formatDate(row.orderDate)}</div>
                     </div>
                   )
+                },
+                {
+                  key: 'source_type',
+                  header: 'Source',
+                  sortable: true,
+                  filterable: true,
+                  render: (value, row) => {
+                    if (value === 'wcn_auto') {
+                      return (
+                        <span className="source-type-badge wcn-auto" title={`Auto-generated from WCN ${row.wcn_number || ''}`}>
+                          <Truck size={12} />
+                          AUTO
+                        </span>
+                      );
+                    } else {
+                      return (
+                        <span className="source-type-badge manual" title={row.collection_order_id ? `Linked to WCN ${row.wcn_number || ''}` : 'Manually created'}>
+                          <Edit3 size={12} />
+                          MANUAL
+                        </span>
+                      );
+                    }
+                  }
                 },
                 {
                   key: 'vendorName',
@@ -529,11 +645,11 @@ const Purchase = () => {
                       </PermissionGate>
                       
                       <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
-                        <button 
+                        <button
                           className="btn btn-outline btn-sm"
                           onClick={() => handleEditOrder(row)}
-                          title="Edit"
-                          disabled={row.status === 'received' || row.status === 'completed'}
+                          title={row.status === 'draft' ? 'Edit' : 'Only draft orders can be edited directly'}
+                          disabled={row.status !== 'draft'}
                         >
                           <Edit size={14} />
                         </button>
@@ -553,7 +669,7 @@ const Purchase = () => {
 
                       <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
                         {(row.status === 'received' || row.status === 'completed') && (
-                          <button 
+                          <button
                             className="btn btn-info btn-sm"
                             onClick={() => handleAddExpense(row)}
                             title="Add Purchase Expenses"
@@ -562,6 +678,32 @@ const Purchase = () => {
                           </button>
                         )}
                       </PermissionGate>
+
+                      {/* Sprint 4: Invoices button */}
+                      <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
+                        {(row.status === 'received' || row.status === 'completed') && (
+                          <button
+                            className="btn btn-success btn-sm"
+                            onClick={() => handleShowInvoices(row)}
+                            title="Manage Invoices"
+                          >
+                            <Receipt size={14} />
+                          </button>
+                        )}
+                      </PermissionGate>
+
+                      {/* Sprint 4: Amendments button - hidden for WCN auto-generated POs */}
+                      {row.source_type !== 'wcn_auto' && (
+                        <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => handleShowAmendments(row)}
+                            title="View Amendment History"
+                          >
+                            <FileText size={14} />
+                          </button>
+                        </PermissionGate>
+                      )}
                     </div>
                   )
                 }
@@ -660,7 +802,7 @@ const Purchase = () => {
               ]}
               title="Purchase Expenses"
               subtitle={`${purchaseExpenses.length} expenses • ${formatCurrency(summary.totalExpenses)} total`}
-              loading={false}
+              loading={loading}
               searchable={true}
               filterable={true}
               sortable={true}
@@ -669,6 +811,12 @@ const Purchase = () => {
               emptyMessage="No purchase expenses found"
               className="purchase-expenses-table"
             />
+          </div>
+        )}
+
+        {activeTab === 'collections' && (
+          <div className="collections-tab">
+            <CalloutManager />
           </div>
         )}
 
@@ -791,6 +939,48 @@ const Purchase = () => {
         <StorageLocationManager
           isOpen={showLocationManager}
           onClose={() => setShowLocationManager(false)}
+        />
+      )}
+
+      {/* Sprint 4.5: Enhanced Purchase Order View Modal */}
+      <PurchaseOrderViewModal
+        isOpen={!!viewingOrder}
+        onClose={() => setViewingOrder(null)}
+        orderData={viewingOrder}
+        onEdit={(order) => {
+          setSelectedOrder(order)
+          setShowEditForm(true)
+          setViewingOrder(null)
+        }}
+        onRefresh={loadPurchaseData}
+        t={(key) => key}
+      />
+
+      {/* Sprint 4: Invoice Modal */}
+      {showInvoiceModal && (
+        <PurchaseInvoiceModal
+          isOpen={showInvoiceModal}
+          onClose={() => {
+            setShowInvoiceModal(false)
+            setSelectedOrderForModal(null)
+          }}
+          purchaseOrder={selectedOrderForModal}
+          onSuccess={handleInvoiceSuccess}
+        />
+      )}
+
+      {/* Sprint 4: Amendment Modal */}
+      {showAmendmentModal && (
+        <PurchaseOrderAmendmentModal
+          isOpen={showAmendmentModal}
+          onClose={() => {
+            setShowAmendmentModal(false)
+            setSelectedOrderForModal(null)
+          }}
+          purchaseOrder={selectedOrderForModal}
+          vendors={vendors}
+          materials={materials}
+          onSuccess={loadPurchaseData}
         />
       )}
     </div>

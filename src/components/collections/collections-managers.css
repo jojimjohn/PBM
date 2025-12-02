@@ -67,6 +67,82 @@
   --radius-lg: 0.5rem;
 }
 
+/* Statistics Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  flex-shrink: 0;
+}
+
+.stat-card-blue .stat-icon {
+  background: var(--blue-100);
+  color: var(--blue-600);
+}
+
+.stat-card-orange .stat-icon {
+  background: var(--orange-100);
+  color: var(--orange-600);
+}
+
+.stat-card-green .stat-icon {
+  background: var(--green-100);
+  color: var(--green-600);
+}
+
+.stat-card-purple .stat-icon {
+  background: var(--purple-100);
+  color: var(--purple-600);
+}
+
+.stat-details {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.stat-value {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+  line-height: 1;
+}
+
 /* Common Manager Styles */
 .manager-header {
   display: flex;
@@ -93,13 +169,20 @@
   margin: 0;
 }
 
+.header-subtitle {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin: 0.25rem 0 0 0;
+  font-weight: 400;
+}
+
 .header-actions {
   display: flex;
   gap: 0.75rem;
   align-items: center;
 }
 
-.filter-btn, .add-btn {
+.filter-btn, .add-btn, .btn-primary, .btn-secondary {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -114,44 +197,55 @@
   color: var(--gray-700);
 }
 
-.filter-btn:hover {
+.filter-btn:hover, .btn-secondary:hover {
   background: var(--gray-50);
   border-color: var(--gray-400);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-.add-btn {
+.add-btn, .btn-primary {
   background: var(--primary-600);
   color: white;
   border-color: var(--primary-600);
 }
 
-.add-btn:hover {
+.add-btn:hover, .btn-primary:hover {
   background: var(--primary-700);
   border-color: var(--primary-700);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
+.btn-secondary {
+  background: white;
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+}
+
 /* Search and Filters Section */
 .search-and-filters {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   background: white;
   border-radius: 0.75rem;
   border: 1px solid var(--gray-200);
   margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
 }
 
-.search-bar {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.search-input {
+.search-input-wrapper {
   position: relative;
+  flex: 1;
   max-width: 400px;
+}
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .search-filters {
@@ -234,20 +328,57 @@
 /* Remove old filters styling - now handled in search-filters */
 
 .filter-select {
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 2rem 0.625rem 0.875rem;
   border: 1px solid var(--gray-300);
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
+  font-weight: 500;
   background: white;
   color: var(--gray-700);
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.filter-select:hover {
+  border-color: var(--gray-400);
+  background: var(--gray-50);
 }
 
 .filter-select:focus {
   outline: none;
   border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Table Container - Prevent Horizontal Scroll */
+.callouts-table {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  overflow: visible;
+}
+
+.callouts-table table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 1200px) {
+  .search-and-filters {
+    flex-wrap: wrap;
+  }
+
+  .search-input-wrapper {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .filters-row {
+    flex: 1 1 auto;
+  }
 }
 
 /* Collection Statistics Cards */

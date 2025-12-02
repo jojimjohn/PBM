@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { BarChart3, TrendingUp, PieChart as PieChartIcon, Activity } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from 'recharts'
+import { BarChart3, TrendingUp, PieChart as PieChartIcon, Activity, Layers } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/Card'
 import { useLocalization } from '../context/LocalizationContext'
+import { fadeUpVariants } from '../config/animations'
 import './StockChart.css'
 
 const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400, fieldLabels }) => {
@@ -42,22 +45,57 @@ const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400,
     reorderLevel: item.reorderLevel || 0
   }))
 
-  // Colors for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C']
+  // Modern color palette matching design system
+  const COLORS = {
+    primary: '#3B82F6',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    purple: '#8B5CF6',
+    cyan: '#06B6D4',
+    pink: '#EC4899',
+    indigo: '#6366F1'
+  }
 
+  const PIE_COLORS = [
+    COLORS.primary,
+    COLORS.success,
+    COLORS.warning,
+    COLORS.purple,
+    COLORS.cyan,
+    COLORS.pink,
+    COLORS.error,
+    COLORS.indigo
+  ]
+
+  // Enhanced tooltip with modern styling
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="custom-tooltip">
-          <p className="tooltip-label">{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} className="tooltip-entry" style={{ color: entry.color }}>
-              {entry.dataKey === 'totalValue' 
-                ? `${entry.name}: OMR ${entry.value?.toFixed(2)}` 
-                : `${entry.name}: ${entry.value}`}
-            </p>
-          ))}
-        </div>
+        <motion.div
+          className="custom-tooltip-modern"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.15 }}
+        >
+          <p className="tooltip-label-modern">{label}</p>
+          <div className="tooltip-entries">
+            {payload.map((entry, index) => (
+              <div key={index} className="tooltip-entry-modern">
+                <span
+                  className="tooltip-indicator"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="tooltip-name">{entry.name}:</span>
+                <span className="tooltip-value">
+                  {entry.dataKey === 'totalValue'
+                    ? `OMR ${entry.value?.toFixed(2)}`
+                    : entry.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       )
     }
     return null
@@ -65,31 +103,111 @@ const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400,
 
   const renderBarChart = () => (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-        <YAxis />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend />
-        <Bar dataKey="currentStock" fill="#0088FE" name={labels.currentStock} />
-        <Bar dataKey="openingStock" fill="#00C49F" name={labels.openingStock} />
-        <Bar dataKey="reorderLevel" fill="#FF8042" name={labels.reorderLevel} />
+      <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+        <XAxis
+          dataKey="name"
+          angle={-45}
+          textAnchor="end"
+          height={80}
+          tick={{ fill: '#6B7280', fontSize: 12 }}
+        />
+        <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
+        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+        <Bar dataKey="currentStock" fill={COLORS.primary} name={labels.currentStock} radius={[8, 8, 0, 0]} />
+        <Bar dataKey="openingStock" fill={COLORS.success} name={labels.openingStock} radius={[8, 8, 0, 0]} />
+        <Bar dataKey="reorderLevel" fill={COLORS.warning} name={labels.reorderLevel} radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
 
   const renderLineChart = () => (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-        <YAxis />
+      <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+        <XAxis
+          dataKey="name"
+          angle={-45}
+          textAnchor="end"
+          height={80}
+          tick={{ fill: '#6B7280', fontSize: 12 }}
+        />
+        <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} />
         <Tooltip content={<CustomTooltip />} />
-        <Legend />
-        <Line type="monotone" dataKey="currentStock" stroke="#0088FE" name={labels.currentStock} strokeWidth={2} />
-        <Line type="monotone" dataKey="openingStock" stroke="#00C49F" name={labels.openingStock} strokeWidth={2} />
-        <Line type="monotone" dataKey="reorderLevel" stroke="#FF8042" name={labels.reorderLevel} strokeWidth={2} strokeDasharray="5 5" />
+        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+        <Line
+          type="monotone"
+          dataKey="currentStock"
+          stroke={COLORS.primary}
+          name={labels.currentStock}
+          strokeWidth={3}
+          dot={{ r: 5, fill: COLORS.primary }}
+          activeDot={{ r: 7 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="openingStock"
+          stroke={COLORS.success}
+          name={labels.openingStock}
+          strokeWidth={3}
+          dot={{ r: 5, fill: COLORS.success }}
+          activeDot={{ r: 7 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="reorderLevel"
+          stroke={COLORS.warning}
+          name={labels.reorderLevel}
+          strokeWidth={2}
+          strokeDasharray="5 5"
+          dot={{ r: 4, fill: COLORS.warning }}
+        />
       </LineChart>
+    </ResponsiveContainer>
+  )
+
+  const renderAreaChart = () => (
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
+        <defs>
+          <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.8} />
+            <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0.1} />
+          </linearGradient>
+          <linearGradient id="colorOpening" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.8} />
+            <stop offset="95%" stopColor={COLORS.success} stopOpacity={0.1} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+        <XAxis
+          dataKey="name"
+          angle={-45}
+          textAnchor="end"
+          height={80}
+          tick={{ fill: '#6B7280', fontSize: 12 }}
+        />
+        <YAxis tick={{ fill: '#6B7280', fontSize: 12 }} />
+        <Tooltip content={<CustomTooltip />} />
+        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+        <Area
+          type="monotone"
+          dataKey="currentStock"
+          stroke={COLORS.primary}
+          fillOpacity={1}
+          fill="url(#colorCurrent)"
+          name={labels.currentStock}
+        />
+        <Area
+          type="monotone"
+          dataKey="openingStock"
+          stroke={COLORS.success}
+          fillOpacity={1}
+          fill="url(#colorOpening)"
+          name={labels.openingStock}
+        />
+      </AreaChart>
     </ResponsiveContainer>
   )
 
@@ -101,13 +219,13 @@ const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400,
           cx="50%"
           cy="50%"
           labelLine={false}
-          label={({ name, value }) => `${name}: ${value}`}
-          outerRadius={80}
+          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          outerRadius={100}
           fill="#8884d8"
           dataKey="totalValue"
         >
           {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip content={<CustomTooltip />} />
@@ -117,40 +235,66 @@ const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400,
   )
 
   return (
-    <div className="stock-chart-container">
-      <div className="chart-header">
-        <h3>{title}</h3>
-        <div className="chart-controls">
+    <Card variant="elevated" className="stock-chart-card-modern">
+      <CardHeader className="chart-header-modern">
+        <div className="chart-title-wrapper">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>
+            {chartType === 'bar' && 'Bar comparison view'}
+            {chartType === 'line' && 'Trend line view'}
+            {chartType === 'area' && 'Area comparison view'}
+            {chartType === 'pie' && 'Distribution view'}
+          </CardDescription>
+        </div>
+        <div className="chart-controls-modern">
           <button
-            className={`chart-type-btn ${chartType === 'bar' ? 'active' : ''}`}
+            className={`chart-type-btn-modern ${chartType === 'bar' ? 'active' : ''}`}
             onClick={() => setChartType('bar')}
             title={t('barChart', 'Bar Chart')}
           >
-            <BarChart3 size={16} />
+            <BarChart3 size={18} />
           </button>
           <button
-            className={`chart-type-btn ${chartType === 'line' ? 'active' : ''}`}
+            className={`chart-type-btn-modern ${chartType === 'line' ? 'active' : ''}`}
             onClick={() => setChartType('line')}
             title={t('lineChart', 'Line Chart')}
           >
-            <TrendingUp size={16} />
+            <TrendingUp size={18} />
           </button>
           <button
-            className={`chart-type-btn ${chartType === 'pie' ? 'active' : ''}`}
+            className={`chart-type-btn-modern ${chartType === 'area' ? 'active' : ''}`}
+            onClick={() => setChartType('area')}
+            title="Area Chart"
+          >
+            <Layers size={18} />
+          </button>
+          <button
+            className={`chart-type-btn-modern ${chartType === 'pie' ? 'active' : ''}`}
             onClick={() => setChartType('pie')}
             title={t('pieChart', 'Pie Chart')}
           >
-            <PieChartIcon size={16} />
+            <PieChartIcon size={18} />
           </button>
         </div>
-      </div>
-      
-      <div className="chart-content">
-        {chartType === 'bar' && renderBarChart()}
-        {chartType === 'line' && renderLineChart()}
-        {chartType === 'pie' && renderPieChart()}
-      </div>
-    </div>
+      </CardHeader>
+
+      <CardContent className="chart-content-modern">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={chartType}
+            variants={fadeUpVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            {chartType === 'bar' && renderBarChart()}
+            {chartType === 'line' && renderLineChart()}
+            {chartType === 'area' && renderAreaChart()}
+            {chartType === 'pie' && renderPieChart()}
+          </motion.div>
+        </AnimatePresence>
+      </CardContent>
+    </Card>
   )
 }
 

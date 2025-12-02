@@ -1,0 +1,421 @@
+/* Sales Order View Modal - Professional Design */
+
+.sales-order-details-modal .order-view-professional {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Header Section */
+.order-view-professional .order-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.order-view-professional .order-icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.order-view-professional .order-header-info {
+  flex: 1;
+}
+
+.order-view-professional .order-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #1f2937;
+}
+
+.order-view-professional .order-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-view-professional .status-badge-large {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+}
+
+.order-view-professional .status-badge-large.draft {
+  background-color: #6b7280;
+}
+
+.order-view-professional .status-badge-large.confirmed {
+  background-color: #3b82f6;
+}
+
+.order-view-professional .status-badge-large.processing {
+  background-color: #f59e0b;
+}
+
+.order-view-professional .status-badge-large.delivered {
+  background-color: #10b981;
+}
+
+.order-view-professional .status-badge-large.cancelled {
+  background-color: #ef4444;
+}
+
+.order-view-professional .invoice-badge {
+  padding: 6px 12px;
+  background-color: #d1fae5;
+  color: #059669;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Alert Section */
+.order-view-professional .alert-success {
+  padding: 14px 16px;
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #065f46;
+}
+
+.order-view-professional .alert-success svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.order-view-professional .alert-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  color: #047857;
+}
+
+/* Information Cards Grid */
+.order-view-professional .info-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .order-view-professional .info-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.order-view-professional .info-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.order-view-professional .info-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-view-professional .info-card-header svg {
+  color: #6b7280;
+}
+
+.order-view-professional .info-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #374151;
+}
+
+.order-view-professional .info-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-view-professional .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-view-professional .info-label {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.order-view-professional .info-value {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 14px;
+  text-align: right;
+}
+
+.order-view-professional .info-value.strong {
+  font-weight: 600;
+}
+
+/* Items Card */
+.order-view-professional .items-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.order-view-professional .items-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-view-professional .items-card-header svg {
+  color: #6b7280;
+}
+
+.order-view-professional .items-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #374151;
+}
+
+.order-view-professional .items-table-container {
+  overflow-x: auto;
+}
+
+.order-view-professional .professional-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.order-view-professional .professional-table thead {
+  background-color: #f9fafb;
+}
+
+.order-view-professional .professional-table th {
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.order-view-professional .professional-table td {
+  padding: 14px 20px;
+  font-size: 14px;
+  color: #1f2937;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.order-view-professional .professional-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.order-view-professional .professional-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.order-view-professional .professional-table .text-center {
+  text-align: center;
+}
+
+.order-view-professional .professional-table .text-right {
+  text-align: right;
+}
+
+.order-view-professional .professional-table .strong {
+  font-weight: 600;
+}
+
+.order-view-professional .material-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-view-professional .material-unit {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+/* Financial Card */
+.order-view-professional .financial-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  max-width: 500px;
+  margin-left: auto;
+}
+
+.order-view-professional .financial-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-view-professional .financial-card-header svg {
+  color: #6b7280;
+}
+
+.order-view-professional .financial-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #374151;
+}
+
+.order-view-professional .financial-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-view-professional .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+}
+
+.order-view-professional .summary-row.total {
+  padding-top: 14px;
+  border-top: 2px solid #e5e7eb;
+  margin-top: 6px;
+}
+
+.order-view-professional .summary-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.order-view-professional .summary-value {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.order-view-professional .summary-value.discount {
+  color: #dc2626;
+}
+
+.order-view-professional .summary-label.strong,
+.order-view-professional .summary-value.strong {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+/* Notes Card */
+.order-view-professional .notes-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.order-view-professional .notes-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-view-professional .notes-card-header svg {
+  color: #6b7280;
+}
+
+.order-view-professional .notes-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #374151;
+}
+
+.order-view-professional .notes-card-body {
+  padding: 20px;
+  background-color: #f9fafb;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Action Buttons */
+.order-view-professional .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 24px;
+}
+
+.order-view-professional .btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.order-view-professional .btn-secondary {
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.order-view-professional .btn-secondary:hover {
+  background-color: #f9fafb;
+}
+
+.order-view-professional .btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.order-view-professional .btn-primary:hover {
+  background-color: #2563eb;
+}

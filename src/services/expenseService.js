@@ -25,13 +25,8 @@ class ExpenseService {
 
       const queryString = params.toString();
       const url = `${API_BASE_URL}/expenses${queryString ? `?${queryString}` : ''}`;
-      
-      const response = await authService.makeAuthenticatedRequest(url);
-      const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expenses');
-      }
+      const data = await authService.makeAuthenticatedRequest(url);
 
       return {
         success: true,
@@ -92,12 +87,7 @@ class ExpenseService {
    */
   async getById(expenseId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/${expenseId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expense');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/${expenseId}`);
 
       return {
         success: true,
@@ -119,19 +109,10 @@ class ExpenseService {
    */
   async create(expenseData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(expenseData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create expenses');
-      }
 
       return {
         success: true,
@@ -178,19 +159,10 @@ class ExpenseService {
    */
   async update(expenseId, expenseData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/${expenseId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/${expenseId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(expenseData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update expense');
-      }
 
       return {
         success: true,
@@ -211,15 +183,9 @@ class ExpenseService {
    */
   async delete(expenseId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/${expenseId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/${expenseId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete expense');
-      }
 
       return {
         success: true,
@@ -239,12 +205,7 @@ class ExpenseService {
    */
   async getCategories() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/meta/categories`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expense categories');
-      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/expenses/meta/categories`);
 
       return {
         success: true,
@@ -299,14 +260,9 @@ class ExpenseService {
       if (period) params.append('period', period);
       if (expenseType) params.append('expenseType', expenseType);
 
-      const response = await authService.makeAuthenticatedRequest(
+      const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/expenses/analytics/summary?${params.toString()}`
       );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch expense analytics');
-      }
 
       return {
         success: true,

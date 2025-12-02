@@ -13,18 +13,8 @@ class MaterialService {
    */
   async getAll() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch materials');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials`);
+      return data;
     } catch (error) {
       console.error('Error fetching materials:', error);
       return {
@@ -40,18 +30,8 @@ class MaterialService {
    */
   async getById(materialId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}`);
+      return data;
     } catch (error) {
       console.error('Error fetching material:', error);
       return {
@@ -67,25 +47,14 @@ class MaterialService {
    */
   async create(materialData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(materialData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create material');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Material created successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error creating material:', error);
       return {
@@ -100,25 +69,14 @@ class MaterialService {
    */
   async update(materialId, materialData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(materialData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update material');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Material updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating material:', error);
       return {
@@ -133,20 +91,10 @@ class MaterialService {
    */
   async delete(materialId) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}`, {
         method: 'DELETE',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete material');
-      }
-
-      return {
-        success: true,
-        message: data.message || 'Material deleted successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error deleting material:', error);
       return {
@@ -167,18 +115,8 @@ class MaterialService {
       if (filters.category) params.append('category', filters.category);
       if (filters.status) params.append('status', filters.status);
 
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to search materials');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/search?${params.toString()}`);
+      return data;
     } catch (error) {
       console.error('Error searching materials:', error);
       return {
@@ -194,18 +132,8 @@ class MaterialService {
    */
   async getByCategory(category) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/category/${category}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch materials by category');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/category/${category}`);
+      return data;
     } catch (error) {
       console.error('Error fetching materials by category:', error);
       return {
@@ -221,18 +149,8 @@ class MaterialService {
    */
   async getByType(type) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/type/${type}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch materials by type');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/type/${type}`);
+      return data;
     } catch (error) {
       console.error('Error fetching materials by type:', error);
       return {
@@ -248,18 +166,8 @@ class MaterialService {
    */
   async getCategories() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/categories`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material categories');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/categories`);
+      return data;
     } catch (error) {
       console.error('Error fetching material categories:', error);
       return {
@@ -275,18 +183,8 @@ class MaterialService {
    */
   async getTypes() {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/types`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material types');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/types`);
+      return data;
     } catch (error) {
       console.error('Error fetching material types:', error);
       return {
@@ -302,25 +200,14 @@ class MaterialService {
    */
   async updatePricing(materialId, pricingData) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}/pricing`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}/pricing`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(pricingData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update material pricing');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Material pricing updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating material pricing:', error);
       return {
@@ -335,20 +222,10 @@ class MaterialService {
    */
   async getPriceHistory(materialId, period = '30') {
     try {
-      const response = await authService.makeAuthenticatedRequest(
+      const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/materials/${materialId}/price-history?period=${period}`
       );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material price history');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      return data;
     } catch (error) {
       console.error('Error fetching material price history:', error);
       return {
@@ -364,25 +241,14 @@ class MaterialService {
    */
   async updateStatus(materialId, isActive) {
     try {
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}/status`, {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/${materialId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ isActive }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update material status');
-      }
-
-      return {
-        success: true,
-        data: data.data,
-        message: data.message || 'Material status updated successfully'
-      };
+      return data;
     } catch (error) {
       console.error('Error updating material status:', error);
       return {
@@ -398,18 +264,8 @@ class MaterialService {
   async getCategories(params = {}) {
     try {
       const queryParams = new URLSearchParams(params);
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/material-categories?${queryParams}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch material categories');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/material-categories?${queryParams}`);
+      return data;
     } catch (error) {
       console.error('Error fetching material categories:', error);
       return {
@@ -426,18 +282,8 @@ class MaterialService {
   async getRegions(params = {}) {
     try {
       const queryParams = new URLSearchParams(params);
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/regions?${queryParams}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch regions');
-      }
-
-      return {
-        success: true,
-        data: data.data || [],
-        message: data.message
-      };
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/regions?${queryParams}`);
+      return data;
     } catch (error) {
       console.error('Error fetching regions:', error);
       return {
