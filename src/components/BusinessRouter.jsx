@@ -23,10 +23,14 @@ import ScrapMaterialsSales from '../modules/scrap-materials/pages/Sales'
 import ScrapMaterialsPurchase from '../modules/scrap-materials/pages/Purchase'
 import ScrapMaterialsCollections from '../modules/scrap-materials/pages/Collections'
 import ScrapMaterialsWastage from '../modules/scrap-materials/pages/Wastage'
+import ScrapMaterialsPettyCash from '../modules/scrap-materials/pages/PettyCash'
+import ScrapMaterialsSettings from '../modules/scrap-materials/pages/Settings'
 
 // Shared components (used by both businesses)
-import Settings from '../pages/Settings'
-import PettyCash from '../pages/PettyCash'
+import Reports from '../pages/Reports'
+import Banking from '../pages/Banking'
+import UserManagement from '../pages/UserManagement'
+import RoleManagement from '../pages/RoleManagement'
 
 const BusinessRouter = () => {
   const { selectedCompany } = useAuth()
@@ -47,7 +51,11 @@ const BusinessRouter = () => {
         <Route path="/collections" element={<Navigate to="/purchase" replace />} />
         <Route path="/wastage" element={<OilTradingWastage />} />
         <Route path="/petty-cash" element={<OilTradingPettyCash />} />
+        <Route path="/banking" element={<Banking />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<OilTradingSettings />} />
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/roles" element={<RoleManagement />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )
@@ -63,8 +71,12 @@ const BusinessRouter = () => {
         <Route path="/purchase" element={<ScrapMaterialsPurchase />} />
         <Route path="/collections" element={<ScrapMaterialsCollections />} />
         <Route path="/wastage" element={<ScrapMaterialsWastage />} />
-        <Route path="/petty-cash" element={<PettyCash />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/petty-cash" element={<ScrapMaterialsPettyCash />} />
+        <Route path="/banking" element={<Banking />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/settings" element={<ScrapMaterialsSettings />} />
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/roles" element={<RoleManagement />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )

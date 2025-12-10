@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
@@ -17,16 +18,21 @@ import PurchaseOrderViewModal from '../../../components/PurchaseOrderViewModal'
 import CalloutManager from '../../../components/collections/CalloutManager'
 import DocumentUpload from '../../../components/DocumentUpload'
 import WorkflowStepper from '../../../components/purchase/WorkflowStepper'
+import GroupedBillsTable from '../../../components/bills/GroupedBillsTable'
+import VendorBillModal from '../../../components/bills/VendorBillModal'
+import ExpenseViewModal from '../../../components/expenses/ExpenseViewModal'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import purchaseOrderAmendmentService from '../../../services/purchaseOrderAmendmentService'
+import purchaseInvoiceService from '../../../services/purchaseInvoiceService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import expenseService from '../../../services/expenseService'
+import purchaseOrderExpenseService from '../../../services/purchaseOrderExpenseService'
 import {
   Plus, Search, Filter, Eye, Edit, Edit3, Truck, Package,
   CheckCircle, Clock, AlertTriangle, FileText, Download,
   DollarSign, MapPin, Building, Calculator, Receipt,
-  Users, Settings
+  Users, Settings, Paperclip, Image, Trash2
 } from 'lucide-react'
 import '../styles/Purchase.css'
 
@@ -34,18 +40,32 @@ const Purchase = () => {
   const { selectedCompany } = useAuth()
   const { hasPermission } = usePermissions()
   const { formatDate, formatCurrency } = useSystemSettings()
-  
-  // Tab management
-  const [activeTab, setActiveTab] = useState('orders')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Tab management - read from URL params or default to 'collections'
+  const initialTab = searchParams.get('tab') || 'collections'
+  const [activeTab, setActiveTab] = useState(initialTab)
+
+  // Sync URL params when tab changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab')
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab)
+    }
+  }, [searchParams])
   
   // Data states
   const [purchaseOrders, setPurchaseOrders] = useState([])
   const [purchaseExpenses, setPurchaseExpenses] = useState([])
+  const [bills, setBills] = useState([])
+  const [billTypeFilter, setBillTypeFilter] = useState('all') // 'all', 'company', 'vendor'
+  const [billPaymentFilter, setBillPaymentFilter] = useState('all') // 'all', 'unpaid', 'partial', 'paid', 'overdue'
   const [amendmentCounts, setAmendmentCounts] = useState({}) // Map of orderId -> amendment count
   const [vendors, setVendors] = useState([])
   const [materials, setMaterials] = useState([])
   const [orderStatuses, setOrderStatuses] = useState({})
   const [loading, setLoading] = useState(true)
+  const [billsLoading, setBillsLoading] = useState(false)
   
   // Modal states
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -63,6 +83,17 @@ const Purchase = () => {
   const [showAmendmentModal, setShowAmendmentModal] = useState(false)
   const [selectedOrderForModal, setSelectedOrderForModal] = useState(null)
   const [message, setMessage] = useState({ type: '', text: '' })
+
+  // Phase 1.5: Bills modal states
+  const [showVendorBillModal, setShowVendorBillModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showBillDetailsModal, setShowBillDetailsModal] = useState(false)
+  const [selectedBill, setSelectedBill] = useState(null)
+  const [editingVendorBill, setEditingVendorBill] = useState(null)
+
+  // Expense view modal states
+  const [showExpenseViewModal, setShowExpenseViewModal] = useState(false)
+  const [selectedExpense, setSelectedExpense] = useState(null)
 
   useEffect(() => {
     loadPurchaseData()
@@ -87,16 +118,15 @@ const Purchase = () => {
         setPurchaseExpenses([])
       }
 
-      // Sprint 4: Load amendment counts for each purchase order
+      // Sprint 4: Load amendment counts for all purchase orders in a single request
+      // Uses bulk endpoint to avoid N+1 query problem (was making 100+ API calls)
       try {
-        const counts = {}
-        for (const order of companyOrders) {
-          const amendmentsResult = await purchaseOrderAmendmentService.getAll(order.id)
-          if (amendmentsResult.success && amendmentsResult.data) {
-            counts[order.id] = amendmentsResult.data.length
-          }
+        const countsResult = await purchaseOrderAmendmentService.getAllCounts()
+        if (countsResult.success && countsResult.data) {
+          setAmendmentCounts(countsResult.data)
+        } else {
+          setAmendmentCounts({})
         }
-        setAmendmentCounts(counts)
       } catch (error) {
         console.error('Error loading amendment counts:', error)
         setAmendmentCounts({})
@@ -141,6 +171,234 @@ const Purchase = () => {
       console.error('Error loading purchase data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Phase 1.5: Load bills when switching to bills tab
+  const loadBills = async () => {
+    try {
+      setBillsLoading(true)
+
+      // Build filters
+      const filters = {}
+      if (billTypeFilter !== 'all') {
+        filters.billType = billTypeFilter
+      }
+      if (billPaymentFilter !== 'all') {
+        filters.paymentStatus = billPaymentFilter
+      }
+
+      const result = await purchaseInvoiceService.getAll(filters)
+      if (result.success) {
+        setBills(result.data || [])
+      } else {
+        console.error('Error loading bills:', result.error)
+        setBills([])
+      }
+    } catch (error) {
+      console.error('Error loading bills:', error)
+      setBills([])
+    } finally {
+      setBillsLoading(false)
+    }
+  }
+
+  // Reload purchase orders when orders tab becomes active (for fresh data after WCN finalization)
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      loadPurchaseData()
+    }
+  }, [activeTab])
+
+  // Load bills when bills tab is active or filters change
+  useEffect(() => {
+    if (activeTab === 'bills') {
+      loadBills()
+    }
+  }, [activeTab, billTypeFilter, billPaymentFilter])
+
+  // Calculate bill summary
+  const calculateBillSummary = () => {
+    const summary = {
+      total: bills.length,
+      companyBills: bills.filter(b => b.bill_type === 'company').length,
+      vendorBills: bills.filter(b => b.bill_type === 'vendor').length,
+      unpaid: bills.filter(b => b.payment_status === 'unpaid').length,
+      overdue: bills.filter(b => b.payment_status === 'overdue').length,
+      totalAmount: bills.reduce((sum, b) => sum + (parseFloat(b.invoice_amount) || 0), 0),
+      paidAmount: bills.reduce((sum, b) => sum + (parseFloat(b.paid_amount) || 0), 0),
+      balanceDue: bills.reduce((sum, b) => sum + (parseFloat(b.balance_due) || 0), 0)
+    }
+    return summary
+  }
+
+  /**
+   * Group bills for hierarchical display
+   * - Vendor bills become parent rows with nested company bills
+   * - Orphan company bills (not linked to vendor bill) shown separately
+   * - Calculates reconciliation metrics for each vendor bill
+   *
+   * New Workflow (covers_company_bills):
+   * - Vendor bills link directly to company bills via covers_company_bills array
+   *
+   * Legacy Workflow (covers_purchase_orders):
+   * - Vendor bills link to POs, we find company bills by PO ID
+   * - Kept for backward compatibility during migration
+   */
+  const groupBillsForDisplay = () => {
+    const vendorBills = bills.filter(b => b.bill_type === 'vendor')
+    const companyBills = bills.filter(b => b.bill_type === 'company')
+
+    // Map company bills by ID for direct lookup (new workflow)
+    const companyBillsById = {}
+    companyBills.forEach(cb => {
+      companyBillsById[cb.id] = cb
+    })
+
+    // Map company bills by PO ID for legacy lookup
+    const companyBillsByPO = {}
+    companyBills.forEach(cb => {
+      if (cb.purchase_order_id) {
+        companyBillsByPO[cb.purchase_order_id] = cb
+      }
+    })
+
+    // Track which company bills are linked to vendor bills
+    const linkedCompanyBillIds = new Set()
+
+    // Group vendor bills with their linked company bills
+    const groupedBills = vendorBills.map(vb => {
+      let linkedCompanyBills = []
+
+      // New workflow: Use covers_company_bills (direct company bill IDs)
+      if (vb.covers_company_bills && vb.covers_company_bills.length > 0) {
+        linkedCompanyBills = vb.covers_company_bills
+          .map(cbId => companyBillsById[cbId])
+          .filter(Boolean)
+      }
+      // Legacy workflow: Use covers_purchase_orders (PO IDs → company bills)
+      else if (vb.covers_purchase_orders && vb.covers_purchase_orders.length > 0) {
+        linkedCompanyBills = vb.covers_purchase_orders
+          .map(poId => companyBillsByPO[poId])
+          .filter(Boolean)
+      }
+
+      // Mark these company bills as linked
+      linkedCompanyBills.forEach(cb => linkedCompanyBillIds.add(cb.id))
+
+      // Calculate reconciliation metrics
+      const companyTotal = linkedCompanyBills.reduce(
+        (sum, cb) => sum + parseFloat(cb.invoice_amount || 0), 0
+      )
+      const vendorAmount = parseFloat(vb.invoice_amount || 0)
+      const difference = vendorAmount - companyTotal
+
+      // Count covered items (use company bills count or PO count for legacy)
+      const coveredCount = vb.covers_company_bills?.length ||
+        vb.covers_purchase_orders?.length || 0
+
+      return {
+        ...vb,
+        childBills: linkedCompanyBills,
+        isExpanded: false, // Will be managed in component state
+        reconciliation: {
+          companyTotal,
+          vendorAmount,
+          difference,
+          isMatched: Math.abs(difference) < 0.01,
+          coveredPOs: coveredCount,
+          linkedBills: linkedCompanyBills.length,
+          missingBills: coveredCount - linkedCompanyBills.length
+        }
+      }
+    })
+
+    // Find orphan company bills (not linked to any vendor bill)
+    const orphanBills = companyBills.filter(cb => !linkedCompanyBillIds.has(cb.id))
+
+    return { groupedBills, orphanBills }
+  }
+
+  // Handle bill payment modal
+  const handleRecordPayment = (bill) => {
+    setSelectedBill(bill)
+    setShowPaymentModal(true)
+  }
+
+  // Handle payment submission
+  const handlePaymentSubmit = async (paymentData) => {
+    if (!selectedBill) return
+
+    try {
+      const result = await purchaseInvoiceService.recordPayment(selectedBill.id, paymentData)
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Payment recorded successfully' })
+        setShowPaymentModal(false)
+        setSelectedBill(null)
+        loadBills() // Reload bills
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to record payment' })
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to record payment' })
+    }
+  }
+
+  // Handle vendor bill creation
+  const handleCreateVendorBill = async (vendorBillData) => {
+    try {
+      const result = await purchaseInvoiceService.createVendorBill(vendorBillData)
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Vendor bill created successfully' })
+        setShowVendorBillModal(false)
+        setEditingVendorBill(null)
+        loadBills() // Reload bills to show new vendor bill
+      } else {
+        throw new Error(result.error || 'Failed to create vendor bill')
+      }
+    } catch (error) {
+      console.error('Error creating vendor bill:', error)
+      throw error // Re-throw to let modal handle the error
+    }
+  }
+
+  // Handle vendor bill editing
+  const handleEditVendorBill = (bill) => {
+    setEditingVendorBill(bill)
+    setShowVendorBillModal(true)
+  }
+
+  // Handle vendor bill update
+  const handleUpdateVendorBill = async (billId, updateData) => {
+    try {
+      const result = await purchaseInvoiceService.update(billId, updateData)
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Vendor bill updated successfully' })
+        setShowVendorBillModal(false)
+        setEditingVendorBill(null)
+        loadBills() // Reload bills to show updated data
+      } else {
+        throw new Error(result.error || 'Failed to update vendor bill')
+      }
+    } catch (error) {
+      console.error('Error updating vendor bill:', error)
+      throw error // Re-throw to let modal handle the error
+    }
+  }
+
+  // Handle marking a company bill as "sent" (new workflow)
+  const handleMarkAsSent = async (bill) => {
+    try {
+      const result = await purchaseInvoiceService.updateCompanyBillStatus(bill.id, 'sent')
+      if (result.success) {
+        setMessage({ type: 'success', text: `Company bill ${bill.invoice_number} marked as sent` })
+        loadBills() // Reload bills to show updated status
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to update bill status' })
+      }
+    } catch (error) {
+      console.error('Error marking bill as sent:', error)
+      setMessage({ type: 'error', text: 'Failed to update bill status' })
     }
   }
 
@@ -282,28 +540,130 @@ const Purchase = () => {
 
   const handleSaveExpense = async (expenseData) => {
     try {
-      // Mock expense saving - replace with actual API call
-      const newExpense = {
-        ...expenseData,
-        id: Math.max(...purchaseExpenses.map(e => e.id), 0) + 1,
-        orderNumber: selectedOrder.orderNumber,
-        status: 'pending'
+      // Handle multiple expenses if provided
+      const expenses = expenseData.expenses || [expenseData]
+      const savedExpenses = []
+
+      for (const expense of expenses) {
+        const result = await purchaseOrderExpenseService.createExpense(selectedOrder.id, {
+          category: expense.category,
+          description: expense.description,
+          amount: parseFloat(expense.amount),
+          expenseDate: expense.expenseDate || new Date().toISOString().split('T')[0],
+          vendor: expense.vendor || '',
+          referenceNumber: expense.receiptNumber || expense.referenceNumber || '',
+          notes: expense.notes || '',
+          receiptPhoto: expense.receiptPhoto || null
+        })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create expense')
+        }
+        savedExpenses.push({
+          ...result.data,
+          orderNumber: selectedOrder.orderNumber
+        })
       }
-      
-      setPurchaseExpenses(prev => [...prev, ...newExpense.expenses.map((exp, index) => ({
-        ...exp,
-        id: newExpense.id + index,
-        purchaseOrderId: newExpense.purchaseOrderId,
-        orderNumber: selectedOrder.orderNumber,
-        status: 'pending'
-      }))])
-      
+
+      // Add to local state for immediate display
+      setPurchaseExpenses(prev => [...prev, ...savedExpenses])
+
       setShowExpenseForm(false)
       setSelectedOrder(null)
       alert('Purchase expenses added successfully!')
     } catch (error) {
       console.error('Error saving expense:', error)
-      alert('Failed to save expense. Please try again.')
+      alert(`Failed to save expense: ${error.message}`)
+    }
+  }
+
+  // Delete expense handler
+  const handleDeleteExpense = async (expenseId) => {
+    if (!window.confirm('Are you sure you want to delete this expense?')) return
+
+    try {
+      const result = await purchaseOrderExpenseService.deleteExpense(expenseId)
+      if (result.success) {
+        setPurchaseExpenses(prev => prev.filter(e => e.id !== expenseId))
+        alert('Expense deleted successfully!')
+      } else {
+        throw new Error(result.error || 'Failed to delete expense')
+      }
+    } catch (error) {
+      console.error('Error deleting expense:', error)
+      alert(`Failed to delete expense: ${error.message}`)
+    }
+  }
+
+  // Upload receipt handler for expense
+  const handleUploadExpenseReceipt = async (expenseId, receiptData) => {
+    try {
+      const expense = purchaseExpenses.find(e => e.id === expenseId)
+      if (!expense) throw new Error('Expense not found')
+
+      const result = await purchaseOrderExpenseService.updateExpense(expenseId, {
+        category: expense.category,
+        description: expense.description,
+        amount: expense.amount,
+        expenseDate: expense.expenseDate,
+        vendor: expense.vendor || '',
+        referenceNumber: expense.receiptNumber || '',
+        notes: expense.notes || '',
+        receiptPhoto: receiptData
+      })
+
+      if (result.success) {
+        // Update local state
+        setPurchaseExpenses(prev => prev.map(e =>
+          e.id === expenseId ? { ...e, receiptPhoto: receiptData } : e
+        ))
+        // Update selected expense if viewing
+        if (selectedExpense?.id === expenseId) {
+          setSelectedExpense(prev => ({ ...prev, receiptPhoto: receiptData }))
+        }
+        alert('Receipt uploaded successfully!')
+      } else {
+        throw new Error(result.error || 'Failed to upload receipt')
+      }
+    } catch (error) {
+      console.error('Error uploading receipt:', error)
+      throw error
+    }
+  }
+
+  // Remove receipt handler for expense
+  const handleRemoveExpenseReceipt = async (expenseId) => {
+    try {
+      const expense = purchaseExpenses.find(e => e.id === expenseId)
+      if (!expense) throw new Error('Expense not found')
+
+      const result = await purchaseOrderExpenseService.updateExpense(expenseId, {
+        category: expense.category,
+        description: expense.description,
+        amount: expense.amount,
+        expenseDate: expense.expenseDate,
+        vendor: expense.vendor || '',
+        referenceNumber: expense.receiptNumber || '',
+        notes: expense.notes || '',
+        receiptPhoto: null
+      })
+
+      if (result.success) {
+        // Update local state
+        setPurchaseExpenses(prev => prev.map(e =>
+          e.id === expenseId ? { ...e, receiptPhoto: null } : e
+        ))
+        // Update selected expense if viewing
+        if (selectedExpense?.id === expenseId) {
+          setSelectedExpense(prev => ({ ...prev, receiptPhoto: null }))
+        }
+        alert('Receipt removed successfully!')
+      } else {
+        throw new Error(result.error || 'Failed to remove receipt')
+      }
+    } catch (error) {
+      console.error('Error removing receipt:', error)
+      throw error
     }
   }
 
@@ -375,9 +735,11 @@ const Purchase = () => {
   const calculateOrderSummary = () => {
     const summary = {
       total: purchaseOrders.length,
-      pending: purchaseOrders.filter(o => o.status === 'pending').length,
-      approved: purchaseOrders.filter(o => o.status === 'approved').length,
-      delivered: purchaseOrders.filter(o => o.status === 'delivered').length,
+      // Draft orders are pending approval
+      pending: purchaseOrders.filter(o => o.status === 'draft' || o.status === 'pending').length,
+      approved: purchaseOrders.filter(o => o.status === 'approved' || o.status === 'sent').length,
+      // Received/completed orders are delivered
+      delivered: purchaseOrders.filter(o => o.status === 'received' || o.status === 'completed').length,
       totalValue: purchaseOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
       totalExpenses: purchaseExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0)
     }
@@ -404,14 +766,18 @@ const Purchase = () => {
 
   const summary = calculateOrderSummary()
 
+  // Tabs ordered by workflow: Collections → PO → Bills → Expenses → Vendors → Locations → Analytics
   const tabs = [
-    { id: 'orders', name: 'Purchase Orders', icon: FileText },
-    { id: 'expenses', name: 'Purchase Expenses', icon: DollarSign },
     { id: 'collections', name: 'Collections', icon: Package },
+    { id: 'orders', name: 'Purchase Orders', icon: FileText },
+    { id: 'bills', name: 'Bills', icon: Receipt },
+    { id: 'expenses', name: 'Purchase Expenses', icon: DollarSign },
     { id: 'vendors', name: 'Vendor Management', icon: Users },
     { id: 'locations', name: 'Storage Locations', icon: Building },
     { id: 'analytics', name: 'Analytics', icon: Calculator }
   ]
+
+  const billSummary = calculateBillSummary()
 
   if (loading && purchaseOrders.length === 0) {
     return (
@@ -433,6 +799,18 @@ const Purchase = () => {
           <p>Complete vendor procurement and expense tracking for {selectedCompany?.name}</p>
         </div>
       </div>
+
+      {/* Message Toast */}
+      {message.text && (
+        <div
+          className={`message-toast ${message.type}`}
+          onClick={() => setMessage({ type: '', text: '' })}
+        >
+          {message.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+          <span>{message.text}</span>
+          <button className="toast-close">×</button>
+        </div>
+      )}
 
       {/* Workflow Guidance - Shows purchase workflow progression */}
       <WorkflowStepper
@@ -592,7 +970,10 @@ const Purchase = () => {
                   key: 'vendorName',
                   header: 'Vendor',
                   sortable: true,
-                  filterable: true
+                  filterable: true,
+                  render: (value, row) => (
+                    <span>{row.vendorInfo?.name || row.vendorName || row.supplierName || '-'}</span>
+                  )
                 },
                 {
                   key: 'status',
@@ -723,6 +1104,130 @@ const Purchase = () => {
           </div>
         )}
 
+        {/* Phase 1.5: Bills Tab */}
+        {activeTab === 'bills' && (
+          <div className="bills-tab">
+            <div className="tab-header">
+              <h3>Bills & Invoices</h3>
+              <p>Manage company bills from WCN and vendor bills from suppliers</p>
+            </div>
+
+            {/* Bills Summary Cards */}
+            <div className="bills-summary-cards">
+              <div className="summary-card">
+                <div className="card-icon company-bill">
+                  <FileText size={24} />
+                </div>
+                <div className="card-content">
+                  <span className="card-label">Company Bills</span>
+                  <span className="card-value">{billSummary.companyBills}</span>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="card-icon vendor-bill">
+                  <Receipt size={24} />
+                </div>
+                <div className="card-content">
+                  <span className="card-label">Vendor Bills</span>
+                  <span className="card-value">{billSummary.vendorBills}</span>
+                </div>
+              </div>
+              <div className="summary-card warning">
+                <div className="card-icon unpaid">
+                  <Clock size={24} />
+                </div>
+                <div className="card-content">
+                  <span className="card-label">Unpaid</span>
+                  <span className="card-value">{billSummary.unpaid}</span>
+                </div>
+              </div>
+              <div className="summary-card danger">
+                <div className="card-icon overdue">
+                  <AlertTriangle size={24} />
+                </div>
+                <div className="card-content">
+                  <span className="card-label">Overdue</span>
+                  <span className="card-value">{billSummary.overdue}</span>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="card-icon balance">
+                  <DollarSign size={24} />
+                </div>
+                <div className="card-content">
+                  <span className="card-label">Balance Due</span>
+                  <span className="card-value">{formatCurrency(billSummary.balanceDue)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bills Filters */}
+            <div className="bills-filters">
+              <div className="filter-group">
+                <label>Bill Type:</label>
+                <select
+                  value={billTypeFilter}
+                  onChange={(e) => setBillTypeFilter(e.target.value)}
+                >
+                  <option value="all">All Bills</option>
+                  <option value="company">Company Bills</option>
+                  <option value="vendor">Vendor Bills</option>
+                </select>
+              </div>
+              <div className="filter-group">
+                <label>Payment Status:</label>
+                <select
+                  value={billPaymentFilter}
+                  onChange={(e) => setBillPaymentFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="unpaid">Unpaid</option>
+                  <option value="partial">Partially Paid</option>
+                  <option value="paid">Paid</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingVendorBill(null)
+                  setShowVendorBillModal(true)
+                }}
+              >
+                <Plus size={16} />
+                Create Vendor Bill
+              </button>
+            </div>
+
+            {/* Grouped Bills Table */}
+            {billsLoading ? (
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Loading bills...</p>
+              </div>
+            ) : (
+              (() => {
+                const { groupedBills, orphanBills } = groupBillsForDisplay()
+                return (
+                  <GroupedBillsTable
+                    groupedBills={groupedBills}
+                    orphanBills={orphanBills}
+                    onViewDetails={(bill) => {
+                      setSelectedBill(bill)
+                      setShowBillDetailsModal(true)
+                    }}
+                    onRecordPayment={handleRecordPayment}
+                    onEditVendorBill={handleEditVendorBill}
+                    onMarkAsSent={handleMarkAsSent}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                  />
+                )
+              })()
+            )}
+          </div>
+        )}
+
         {activeTab === 'expenses' && (
           <div className="expenses-tab">
             <div className="tab-header">
@@ -734,13 +1239,19 @@ const Purchase = () => {
               data={purchaseExpenses}
               columns={[
                 {
-                  key: 'orderNumber',
-                  header: 'Order Number',
+                  key: 'referenceId',
+                  header: 'PO Number',
                   sortable: true,
                   filterable: true,
-                  render: (value) => (
-                    <span style={{ fontWeight: '600', color: '#1f2937' }}>{value}</span>
-                  )
+                  render: (value, row) => {
+                    // Look up the PO number from the purchase orders list
+                    const po = purchaseOrders.find(p => p.id === value)
+                    return (
+                      <span style={{ fontWeight: '600', color: '#1f2937' }}>
+                        {po?.orderNumber || `PO #${value}` || '-'}
+                      </span>
+                    )
+                  }
                 },
                 {
                   key: 'category',
@@ -770,7 +1281,10 @@ const Purchase = () => {
                   key: 'vendor',
                   header: 'Service Provider',
                   sortable: true,
-                  filterable: true
+                  filterable: true,
+                  render: (value, row) => (
+                    <span>{value || row.vendorName || row.supplierName || '-'}</span>
+                  )
                 },
                 {
                   key: 'amount',
@@ -793,10 +1307,127 @@ const Purchase = () => {
                   header: 'Status',
                   sortable: true,
                   filterable: true,
-                  render: (value) => (
-                    <span className={`status-badge ${value}`}>
-                      {value === 'approved' ? 'Approved' : value === 'pending' ? 'Pending' : 'Rejected'}
-                    </span>
+                  render: (value, row) => {
+                    // PO expenses in unified_expenses don't have a status field - they are auto-recorded
+                    // If referenceType is 'purchase_order', show as "Recorded" since they're auto-approved
+                    const displayStatus = value || (row.referenceType === 'purchase_order' ? 'recorded' : 'pending')
+                    const statusColors = {
+                      approved: { bg: '#dcfce7', color: '#166534' },
+                      recorded: { bg: '#dbeafe', color: '#1e40af' },
+                      pending: { bg: '#fef3c7', color: '#92400e' },
+                      rejected: { bg: '#fee2e2', color: '#991b1b' }
+                    }
+                    const colors = statusColors[displayStatus] || statusColors.pending
+                    return (
+                      <span style={{
+                        backgroundColor: colors.bg,
+                        color: colors.color,
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '0.375rem',
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        textTransform: 'capitalize'
+                      }}>
+                        {displayStatus === 'recorded' ? 'Recorded' :
+                         displayStatus === 'approved' ? 'Approved' :
+                         displayStatus === 'pending' ? 'Pending' : 'Rejected'}
+                      </span>
+                    )
+                  }
+                },
+                {
+                  key: 'receiptPhoto',
+                  header: 'Receipt',
+                  sortable: false,
+                  render: (value, row) => {
+                    if (value) {
+                      return (
+                        <button
+                          onClick={() => window.open(value, '_blank')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            backgroundColor: '#dcfce7',
+                            color: '#166534',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            cursor: 'pointer'
+                          }}
+                          title="View Receipt"
+                        >
+                          <Image size={12} />
+                          View
+                        </button>
+                      )
+                    }
+                    return (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        color: '#9ca3af',
+                        fontSize: '11px'
+                      }}>
+                        <Paperclip size={12} />
+                        None
+                      </span>
+                    )
+                  }
+                },
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  sortable: false,
+                  render: (value, row) => (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedExpense(row)
+                          setShowExpenseViewModal(true)
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          backgroundColor: '#dbeafe',
+                          color: '#1e40af',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                        title="View Details"
+                      >
+                        <Eye size={14} />
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExpense(row.id)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          backgroundColor: '#fee2e2',
+                          color: '#dc2626',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer'
+                        }}
+                        title="Delete Expense"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
                   )
                 }
               ]}
@@ -983,6 +1614,369 @@ const Purchase = () => {
           onSuccess={loadPurchaseData}
         />
       )}
+
+      {/* Phase 1.5: Payment Recording Modal */}
+      {showPaymentModal && selectedBill && (
+        <Modal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false)
+            setSelectedBill(null)
+          }}
+          title={`Record Payment - ${selectedBill.invoice_number}`}
+          size="md"
+        >
+          <PaymentForm
+            bill={selectedBill}
+            onSubmit={handlePaymentSubmit}
+            onCancel={() => {
+              setShowPaymentModal(false)
+              setSelectedBill(null)
+            }}
+            formatCurrency={formatCurrency}
+          />
+        </Modal>
+      )}
+
+      {/* Phase 1.5: Bill Details Modal */}
+      {showBillDetailsModal && selectedBill && (
+        <Modal
+          isOpen={showBillDetailsModal}
+          onClose={() => {
+            setShowBillDetailsModal(false)
+            setSelectedBill(null)
+          }}
+          title={`Bill Details - ${selectedBill.invoice_number}`}
+          size="lg"
+        >
+          <BillDetailsView
+            bill={selectedBill}
+            onRecordPayment={() => {
+              setShowBillDetailsModal(false)
+              setShowPaymentModal(true)
+            }}
+            onClose={() => {
+              setShowBillDetailsModal(false)
+              setSelectedBill(null)
+            }}
+            formatCurrency={formatCurrency}
+            formatDate={formatDate}
+          />
+        </Modal>
+      )}
+
+      {/* Create/Edit Vendor Bill Modal - Only render when bills tab is active and modal is requested */}
+      {activeTab === 'bills' && showVendorBillModal && (
+        <VendorBillModal
+          isOpen={showVendorBillModal}
+          onClose={() => {
+            setShowVendorBillModal(false)
+            setEditingVendorBill(null)
+          }}
+          onSave={handleCreateVendorBill}
+          onUpdate={handleUpdateVendorBill}
+          companyBills={bills.filter(b => b.bill_type === 'company')}
+          purchaseOrders={purchaseOrders}
+          suppliers={vendors}
+          existingBills={bills}
+          editingBill={editingVendorBill}
+          formatCurrency={formatCurrency}
+        />
+      )}
+
+      {/* Expense View Modal */}
+      {showExpenseViewModal && selectedExpense && (
+        <ExpenseViewModal
+          isOpen={showExpenseViewModal}
+          onClose={() => {
+            setShowExpenseViewModal(false)
+            setSelectedExpense(null)
+          }}
+          expense={selectedExpense}
+          purchaseOrder={purchaseOrders.find(po => po.id === selectedExpense.referenceId)}
+          onUploadReceipt={handleUploadExpenseReceipt}
+          onRemoveReceipt={handleRemoveExpenseReceipt}
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
+      )}
+    </div>
+  )
+}
+
+// Payment Form Component (inline)
+const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer')
+  const [paymentReference, setPaymentReference] = useState('')
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0])
+  const [notes, setNotes] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const balanceDue = parseFloat(bill.balance_due) || 0
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const amount = parseFloat(paymentAmount)
+
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid payment amount')
+      return
+    }
+
+    if (amount > balanceDue) {
+      alert(`Payment amount cannot exceed balance due (${formatCurrency(balanceDue)})`)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await onSubmit({
+        amount,
+        paymentMethod,
+        reference: paymentReference,  // API expects 'reference'
+        paymentDate,
+        notes
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="payment-form">
+      <div className="payment-summary">
+        <div className="summary-row">
+          <span className="label">Invoice Amount:</span>
+          <span className="value">{formatCurrency(bill.invoice_amount)}</span>
+        </div>
+        <div className="summary-row">
+          <span className="label">Already Paid:</span>
+          <span className="value paid">{formatCurrency(bill.paid_amount)}</span>
+        </div>
+        <div className="summary-row highlight">
+          <span className="label">Balance Due:</span>
+          <span className="value due">{formatCurrency(balanceDue)}</span>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="paymentAmount">Payment Amount *</label>
+        <input
+          type="number"
+          id="paymentAmount"
+          value={paymentAmount}
+          onChange={(e) => setPaymentAmount(e.target.value)}
+          placeholder={`Max: ${formatCurrency(balanceDue)}`}
+          step="0.001"
+          min="0"
+          max={balanceDue}
+          required
+          className="form-input"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="paymentDate">Payment Date *</label>
+        <input
+          type="date"
+          id="paymentDate"
+          value={paymentDate}
+          onChange={(e) => setPaymentDate(e.target.value)}
+          required
+          className="form-input"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="paymentMethod">Payment Method *</label>
+        <select
+          id="paymentMethod"
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          required
+          className="form-select"
+        >
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="cash">Cash</option>
+          <option value="cheque">Cheque</option>
+          <option value="card">Card Payment</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="paymentReference">Reference / Transaction ID</label>
+        <input
+          type="text"
+          id="paymentReference"
+          value={paymentReference}
+          onChange={(e) => setPaymentReference(e.target.value)}
+          placeholder="e.g., Bank transaction reference"
+          className="form-input"
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="notes">Notes</label>
+        <textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional payment notes..."
+          rows={2}
+          className="form-textarea"
+        />
+      </div>
+
+      <div className="form-actions">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="btn btn-outline"
+          disabled={submitting}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={submitting || !paymentAmount}
+        >
+          {submitting ? 'Recording...' : 'Record Payment'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// Bill Details View Component (inline)
+const BillDetailsView = ({ bill, onRecordPayment, onClose, formatCurrency, formatDate }) => {
+  const isPaid = bill.payment_status === 'paid'
+  const isVendorBill = bill.bill_type === 'vendor'
+  const balanceDue = parseFloat(bill.balance_due) || 0
+
+  return (
+    <div className="bill-details-view">
+      {/* Bill Header */}
+      <div className="bill-header-section">
+        <div className="bill-type-indicator">
+          <span className={`bill-type-badge ${bill.bill_type}`}>
+            {isVendorBill ? 'Vendor Bill' : 'Company Bill'}
+          </span>
+          <span
+            className={`status-badge ${bill.payment_status}`}
+            style={{
+              backgroundColor: bill.payment_status === 'paid' ? '#d1fae5' :
+                              bill.payment_status === 'overdue' ? '#fee2e2' :
+                              bill.payment_status === 'partial' ? '#dbeafe' : '#fef3c7',
+              color: bill.payment_status === 'paid' ? '#059669' :
+                     bill.payment_status === 'overdue' ? '#dc2626' :
+                     bill.payment_status === 'partial' ? '#2563eb' : '#d97706'
+            }}
+          >
+            {bill.payment_status === 'unpaid' ? 'Unpaid' :
+             bill.payment_status === 'partial' ? 'Partially Paid' :
+             bill.payment_status === 'paid' ? 'Paid' : 'Overdue'}
+          </span>
+        </div>
+      </div>
+
+      {/* Bill Information Grid */}
+      <div className="bill-info-grid">
+        <div className="info-section">
+          <h4>Bill Information</h4>
+          <div className="info-row">
+            <span className="info-label">Bill Number</span>
+            <span className="info-value">{bill.invoice_number}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Supplier</span>
+            <span className="info-value">{bill.supplierName || 'N/A'}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Invoice Date</span>
+            <span className="info-value">{formatDate(bill.invoice_date)}</span>
+          </div>
+          {bill.due_date && (
+            <div className="info-row">
+              <span className="info-label">Due Date</span>
+              <span className="info-value">{formatDate(bill.due_date)}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="info-section">
+          <h4>Payment Details</h4>
+          <div className="info-row">
+            <span className="info-label">Invoice Amount</span>
+            <span className="info-value amount">{formatCurrency(bill.invoice_amount)}</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Paid Amount</span>
+            <span className="info-value paid">{formatCurrency(bill.paid_amount)}</span>
+          </div>
+          <div className="info-row highlight">
+            <span className="info-label">Balance Due</span>
+            <span className={`info-value ${balanceDue > 0 ? 'due' : 'paid'}`}>
+              {formatCurrency(balanceDue)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Purchase Order Information */}
+      <div className="po-section">
+        <h4>Related Purchase Orders</h4>
+        {isVendorBill && bill.covers_purchase_orders && bill.covers_purchase_orders.length > 0 ? (
+          <div className="po-list">
+            <div className="po-count">
+              This vendor bill covers <strong>{bill.covers_purchase_orders.length}</strong> purchase order(s)
+            </div>
+            <div className="po-ids">
+              {bill.covers_purchase_orders.map((poId, index) => (
+                <span key={poId} className="po-id-badge">
+                  PO #{poId}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : bill.purchase_order_id ? (
+          <div className="po-list">
+            <span className="po-id-badge">
+              {bill.orderNumber || `PO #${bill.purchase_order_id}`}
+            </span>
+          </div>
+        ) : (
+          <p className="no-po">No purchase orders linked to this bill</p>
+        )}
+      </div>
+
+      {/* Notes */}
+      {bill.notes && (
+        <div className="notes-section">
+          <h4>Notes</h4>
+          <p>{bill.notes}</p>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="bill-actions">
+        <button className="btn btn-outline" onClick={onClose}>
+          Close
+        </button>
+        {!isPaid && isVendorBill && (
+          <button className="btn btn-primary" onClick={onRecordPayment}>
+            <DollarSign size={16} />
+            Record Payment
+          </button>
+        )}
+        {!isPaid && !isVendorBill && (
+          <div className="payment-info-message">
+            <AlertTriangle size={16} />
+            <span>Company bills are paid via their linked vendor bill</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,27 +1,156 @@
 /**
- * Secure Authentication Service
- * Replaces the hardcoded authentication system with JWT-based security
+ * Secure Authentication Service (Cookie-Based)
+ *
+ * SECURITY: Tokens are stored in HttpOnly cookies, not accessible to JavaScript.
+ * This prevents XSS attacks from stealing authentication tokens.
+ *
+ * Key changes from header-based auth:
+ * - No token storage in localStorage (XSS vulnerability)
+ * - All requests use credentials: 'include' for cookie transmission
+ * - Authentication state inferred from user data, not token existence
  */
 
 import { API_BASE_URL } from '../config/api.js';
 
 class AuthService {
   constructor() {
-    this.token = null;
-    this.refreshToken = null;
     this.user = null;
-    
-    // Load stored auth data on initialization
-    this.loadStoredAuth();
+    this.isInitialized = false;
+
+    // Initialize auth state
+    this.initialize();
+  }
+
+  /**
+   * Initialize authentication state
+   * Handles migration from localStorage tokens to cookie-based auth
+   */
+  async initialize() {
+    try {
+      // Check for legacy localStorage auth data
+      const legacyAuth = this.getLegacyAuth();
+
+      if (legacyAuth?.token) {
+        // Attempt to migrate to cookie-based auth
+        await this.migrateTokensToCookies(legacyAuth.token);
+      } else {
+        // No legacy tokens, try to restore session from cookies
+        await this.validateSession();
+      }
+    } catch (error) {
+      console.warn('Auth initialization warning:', error.message);
+      this.user = null;
+    } finally {
+      this.isInitialized = true;
+    }
+  }
+
+  /**
+   * Get legacy auth data from localStorage (for migration)
+   */
+  getLegacyAuth() {
+    try {
+      const stored = localStorage.getItem('petroleum_auth');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.warn('Failed to read legacy auth:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Clear legacy localStorage auth data
+   */
+  clearLegacyAuth() {
+    try {
+      localStorage.removeItem('petroleum_auth');
+    } catch (error) {
+      console.warn('Failed to clear legacy auth:', error);
+    }
+  }
+
+  /**
+   * Migrate header-based tokens to cookie-based auth
+   */
+  async migrateTokensToCookies(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/migrate-to-cookies`, {
+        method: 'POST',
+        credentials: 'include', // Essential for cookies
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Migration successful - store user data and clear legacy storage
+        if (data.data?.user) {
+          this.user = data.data.user;
+        }
+        this.clearLegacyAuth();
+        console.log('Auth migrated to secure cookies');
+        return true;
+      } else {
+        // Migration failed - clear legacy data and require re-login
+        this.clearLegacyAuth();
+        this.user = null;
+        return false;
+      }
+    } catch (error) {
+      console.error('Token migration failed:', error);
+      this.clearLegacyAuth();
+      this.user = null;
+      return false;
+    }
+  }
+
+  /**
+   * Validate current session by making a test request
+   * Uses cookies automatically via credentials: 'include'
+   */
+  async validateSession() {
+    try {
+      // Try to get current user info to validate session
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.user) {
+          this.user = data.data.user;
+          return true;
+        }
+      }
+
+      this.user = null;
+      return false;
+    } catch (error) {
+      console.warn('Session validation failed:', error);
+      this.user = null;
+      return false;
+    }
   }
 
   /**
    * Login with email and password
+   * If MFA is enabled, returns requiresMfa: true and login must be completed with verifyMfa()
+   * Tokens are set as HttpOnly cookies by the server (after MFA verification if enabled)
    */
   async login(email, password, companyId) {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
+        credentials: 'include', // Essential for receiving cookies
         headers: {
           'Content-Type': 'application/json',
         },
@@ -35,16 +164,31 @@ class AuthService {
       }
 
       if (data.success) {
-        // Store authentication data
-        this.token = data.data.accessToken;
-        this.refreshToken = data.data.refreshToken;
+        // Check if MFA is required
+        if (data.requiresMfa) {
+          // MFA required - don't set user yet, return partial data for MFA step
+          return {
+            success: true,
+            requiresMfa: true,
+            mfaData: {
+              userId: data.data.userId,
+              companyId: data.data.companyId,
+              email: data.data.email,
+              firstName: data.data.firstName
+            },
+            message: data.message
+          };
+        }
+
+        // No MFA - login complete, store user data
         this.user = data.data.user;
 
-        // Store in localStorage (encrypted in production)
-        this.storeAuth();
+        // Clear any legacy localStorage data
+        this.clearLegacyAuth();
 
         return {
           success: true,
+          requiresMfa: false,
           user: this.user,
           message: data.message
         };
@@ -58,34 +202,77 @@ class AuthService {
   }
 
   /**
-   * Logout and clear stored data
+   * Verify MFA code to complete login (second step after password)
+   * @param {number} userId - User ID from login response
+   * @param {string} companyId - Company ID from login response
+   * @param {string} code - TOTP code or backup code
+   * @param {boolean} isBackupCode - Whether the code is a backup code
+   */
+  async verifyMfa(userId, companyId, code, isBackupCode = false) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/mfa/verify`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, companyId, code, isBackupCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'MFA verification failed');
+      }
+
+      if (data.success) {
+        // MFA verified - store user data
+        this.user = data.data.user;
+        this.clearLegacyAuth();
+
+        return {
+          success: true,
+          user: this.user,
+          message: data.message
+        };
+      } else {
+        throw new Error(data.error || 'MFA verification failed');
+      }
+    } catch (error) {
+      console.error('MFA verification error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Logout and clear session
+   * Server clears HttpOnly cookies and blacklists tokens
    */
   async logout() {
     try {
-      // Call logout endpoint if token exists
-      if (this.token) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include', // Send cookies to be cleared
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     } catch (error) {
       // Logout endpoint error is not critical
       console.warn('Logout API call failed:', error);
     } finally {
-      // Always clear local data
-      this.clearAuth();
+      // Always clear local state
+      this.user = null;
+      this.clearLegacyAuth();
     }
   }
 
   /**
    * Check if user is authenticated
+   * Based on user data presence (tokens are in HttpOnly cookies)
    */
   isAuthenticated() {
-    return !!this.token && !!this.user;
+    return !!this.user;
   }
 
   /**
@@ -96,27 +283,28 @@ class AuthService {
   }
 
   /**
-   * Get access token
+   * Get access token - DEPRECATED
+   * Tokens are now in HttpOnly cookies, not accessible to JavaScript
+   * This method is kept for backward compatibility during migration
    */
   getToken() {
-    return this.token;
+    // Check legacy storage for migration scenarios
+    const legacy = this.getLegacyAuth();
+    return legacy?.token || null;
   }
 
   /**
    * Refresh access token
+   * Server handles token rotation via cookies
    */
   async refreshAccessToken() {
-    if (!this.refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
+        credentials: 'include', // Refresh token is in HttpOnly cookie
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken: this.refreshToken }),
       });
 
       const data = await response.json();
@@ -125,43 +313,77 @@ class AuthService {
         throw new Error(data.error || 'Token refresh failed');
       }
 
-      if (data.success) {
-        this.token = data.data.accessToken;
-        this.refreshToken = data.data.refreshToken;
-        this.storeAuth();
-        return this.token;
+      if (data.success && data.data?.user) {
+        // Update user data with fresh information
+        this.user = data.data.user;
+        return true;
       } else {
         throw new Error(data.error || 'Token refresh failed');
       }
     } catch (error) {
       console.error('Token refresh error:', error);
-      this.clearAuth();
+      this.user = null;
       throw error;
     }
   }
 
   /**
    * Make authenticated API request
+   * Uses HttpOnly cookies automatically via credentials: 'include'
+   * Automatically includes CSRF token for state-changing methods (POST, PUT, PATCH, DELETE)
    */
   async makeAuthenticatedRequest(url, options = {}) {
-    const token = this.getToken();
-    
-    if (!token) {
-      throw new Error('No authentication token available');
+    // Check if user is authenticated
+    if (!this.user) {
+      throw new Error('Not authenticated');
+    }
+
+    // Determine if this is a state-changing request that needs CSRF protection
+    const method = (options.method || 'GET').toUpperCase();
+    const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+    // Build headers with CSRF token for state-changing requests
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Add CSRF token for state-changing methods
+    if (needsCsrf) {
+      const csrfToken = this.getCsrfToken();
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+      }
     }
 
     const defaultOptions = {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      credentials: 'include', // Essential for sending cookies
+      headers,
     };
 
-    try {
-      
-      const response = await fetch(url, { ...options, headers: defaultOptions.headers });
+    // Remove Authorization header if present (no longer needed with cookies)
+    if (defaultOptions.headers.Authorization) {
+      delete defaultOptions.headers.Authorization;
+    }
 
+    try {
+      const response = await fetch(url, {
+        ...options,
+        ...defaultOptions,
+        headers: { ...options.headers, ...defaultOptions.headers }
+      });
+
+      // Handle CSRF validation failure
+      if (response.status === 403) {
+        const data = await response.json();
+        if (data.code?.startsWith('CSRF_')) {
+          // CSRF token mismatch - likely stale token, refresh page
+          console.warn('CSRF validation failed:', data.code);
+          throw new Error(data.message || 'Security validation failed. Please refresh the page and try again.');
+        }
+        // Other 403 errors (permission denied, etc.)
+        throw new Error(data.error || 'Access denied');
+      }
 
       // Handle token expiry
       if (response.status === 401) {
@@ -169,20 +391,26 @@ class AuthService {
           // Try to refresh token
           await this.refreshAccessToken();
 
-          // Retry request with new token
-          const newToken = this.getToken();
+          // Get fresh CSRF token after refresh (cookie may have changed)
+          const freshHeaders = { ...headers };
+          if (needsCsrf) {
+            const freshCsrfToken = this.getCsrfToken();
+            if (freshCsrfToken) {
+              freshHeaders['X-CSRF-Token'] = freshCsrfToken;
+            }
+          }
+
+          // Retry request with fresh CSRF token
           const retryResponse = await fetch(url, {
             ...options,
-            headers: {
-              ...defaultOptions.headers,
-              'Authorization': `Bearer ${newToken}`,
-            },
+            credentials: 'include',
+            headers: { ...options.headers, ...freshHeaders }
           });
 
           return await retryResponse.json();
         } catch (refreshError) {
           // Refresh failed, redirect to login
-          this.clearAuth();
+          this.user = null;
           window.location.href = '/login';
           throw new Error('Session expired. Please login again.');
         }
@@ -223,84 +451,291 @@ class AuthService {
       return false;
     }
     // Super admin has access to all companies
-    if (this.user.role === 'super-admin') {
+    if (this.user.role === 'SUPER_ADMIN' || this.user.role === 'super-admin') {
       return true;
     }
     return this.user.companyId === companyId;
   }
 
   /**
-   * Store authentication data
+   * Update stored user data (for profile updates, etc.)
    */
-  storeAuth() {
-    try {
-      const authData = {
-        token: this.token,
-        refreshToken: this.refreshToken,
-        user: this.user,
-        timestamp: new Date().getTime()
-      };
-
-      // In production, encrypt this data
-      localStorage.setItem('petroleum_auth', JSON.stringify(authData));
-    } catch (error) {
-      console.error('Failed to store auth data:', error);
+  updateUser(userData) {
+    if (this.user) {
+      this.user = { ...this.user, ...userData };
     }
   }
 
   /**
-   * Load stored authentication data
+   * Get CSRF token from cookie (for state-changing requests)
+   * Note: csrf-token cookie is NOT HttpOnly, so JS can read it
    */
-  loadStoredAuth() {
+  getCsrfToken() {
     try {
-      const storedAuth = localStorage.getItem('petroleum_auth');
-      
-      if (storedAuth) {
-        const authData = JSON.parse(storedAuth);
-        
-        // Check if auth data is not too old (7 days)
-        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-        const age = new Date().getTime() - authData.timestamp;
-        
-        if (age < maxAge) {
-          this.token = authData.token;
-          this.refreshToken = authData.refreshToken;
-          this.user = authData.user;
-        } else {
-          // Auth data is too old, clear it
-          this.clearAuth();
-        }
+      const match = document.cookie.match(/csrf-token=([^;]+)/);
+      return match ? match[1] : null;
+    } catch (error) {
+      console.warn('Failed to get CSRF token:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Make request with CSRF protection (for POST/PUT/DELETE)
+   */
+  async makeSecureRequest(url, options = {}) {
+    const csrfToken = this.getCsrfToken();
+
+    return this.makeAuthenticatedRequest(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+      },
+    });
+  }
+
+  // ============================================================================
+  // MFA Management Methods
+  // ============================================================================
+
+  /**
+   * Get MFA status for current user
+   */
+  async getMfaStatus() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/mfa/status`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get MFA status');
       }
+
+      return data.data;
     } catch (error) {
-      console.error('Failed to load stored auth:', error);
-      this.clearAuth();
+      console.error('MFA status error:', error);
+      throw error;
     }
   }
 
   /**
-   * Clear all authentication data
+   * Start MFA setup - returns QR code and secret
    */
-  clearAuth() {
-    this.token = null;
-    this.refreshToken = null;
-    this.user = null;
-    
+  async setupMfa() {
     try {
-      localStorage.removeItem('petroleum_auth');
+      const response = await fetch(`${API_BASE_URL}/auth/mfa/setup`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to initiate MFA setup');
+      }
+
+      return data.data;
     } catch (error) {
-      console.error('Failed to clear auth data:', error);
+      console.error('MFA setup error:', error);
+      throw error;
     }
   }
 
   /**
-   * Validate token format (basic check)
+   * Complete MFA setup by verifying code
+   * @param {string} code - 6-digit TOTP code
+   * @returns {Object} - Contains backup codes on success
    */
-  isValidTokenFormat(token) {
-    if (!token || typeof token !== 'string') return false;
-    
-    // JWT tokens have 3 parts separated by dots
-    const parts = token.split('.');
-    return parts.length === 3;
+  async verifyMfaSetup(code) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/mfa/verify-setup`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'MFA verification failed');
+      }
+
+      // Update user's MFA status
+      if (this.user) {
+        this.user.mfaEnabled = true;
+      }
+
+      return {
+        success: true,
+        backupCodes: data.data.backupCodes,
+        warning: data.data.warning
+      };
+    } catch (error) {
+      console.error('MFA verify setup error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Disable MFA for current user
+   * @param {string} password - Current password OR
+   * @param {string} code - MFA code
+   */
+  async disableMfa(password, code) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/mfa`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password, code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to disable MFA');
+      }
+
+      // Update user's MFA status
+      if (this.user) {
+        this.user.mfaEnabled = false;
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('MFA disable error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Regenerate backup codes
+   * @param {string} code - Current MFA code to authorize regeneration
+   * @returns {Object} - Contains new backup codes
+   */
+  async regenerateBackupCodes(code) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/mfa/regenerate-backup-codes`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to regenerate backup codes');
+      }
+
+      return {
+        success: true,
+        backupCodes: data.data.backupCodes,
+        warning: data.data.warning
+      };
+    } catch (error) {
+      console.error('Backup codes regeneration error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Change password (self-service)
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise<object>} Result with success/error
+   */
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Failed to change password'
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Password changed successfully'
+      };
+    } catch (error) {
+      console.error('Password change error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to change password'
+      };
+    }
+  }
+
+  /**
+   * Update user profile (first name, last name)
+   * Self-service profile update for authenticated users
+   */
+  async updateProfile(profileData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Failed to update profile'
+        };
+      }
+
+      // Update local user data
+      if (data.user) {
+        this.user = { ...this.user, ...data.user };
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Profile updated successfully',
+        user: data.user
+      };
+    } catch (error) {
+      console.error('Profile update error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to update profile'
+      };
+    }
   }
 }
 

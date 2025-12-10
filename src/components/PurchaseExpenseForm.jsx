@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import Modal from './ui/Modal'
 import { useSystemSettings } from '../context/SystemSettingsContext'
-import { 
+import {
   Plus, Trash2, Save, Calculator, Truck, FileText,
-  Package, DollarSign, MapPin, Calendar 
+  Package, DollarSign, MapPin, Calendar, Upload, X, Image
 } from 'lucide-react'
 import './PurchaseExpenseForm.css'
 
@@ -31,16 +31,46 @@ const PurchaseExpenseForm = ({
   
   const [formData, setFormData] = useState({
     purchaseOrderId: '',
-    expenses: [{ 
+    expenses: [{
       category: 'transportation',
       description: '',
       amount: 0,
       vendor: '',
       receiptNumber: '',
       expenseDate: getInputDate(),
-      notes: ''
+      notes: '',
+      receiptPhoto: null
     }]
   })
+
+  // Handle receipt photo upload - converts to base64
+  const handleReceiptUpload = async (index, file) => {
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload an image (JPEG, PNG, GIF) or PDF file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB')
+      return
+    }
+
+    // Convert to base64
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      handleExpenseChange(index, 'receiptPhoto', e.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeReceiptPhoto = (index) => {
+    handleExpenseChange(index, 'receiptPhoto', null)
+  }
 
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
@@ -60,7 +90,8 @@ const PurchaseExpenseForm = ({
             vendor: '',
             receiptNumber: '',
             expenseDate: getInputDate(),
-            notes: ''
+            notes: '',
+            receiptPhoto: null
           }]
         }))
       }
@@ -92,7 +123,8 @@ const PurchaseExpenseForm = ({
         vendor: '',
         receiptNumber: '',
         expenseDate: getInputDate(),
-        notes: ''
+        notes: '',
+        receiptPhoto: null
       }]
     }))
   }
@@ -300,6 +332,53 @@ const PurchaseExpenseForm = ({
                       rows="2"
                       placeholder="Additional notes about this expense"
                     />
+                  </div>
+
+                  {/* Receipt Photo Upload */}
+                  <div className="field-group full-width">
+                    <label>Receipt/Document</label>
+                    {expense.receiptPhoto ? (
+                      <div className="receipt-preview-container">
+                        <div className="receipt-preview">
+                          {expense.receiptPhoto.startsWith('data:image') ? (
+                            <img
+                              src={expense.receiptPhoto}
+                              alt="Receipt"
+                              className="receipt-thumbnail"
+                              onClick={() => window.open(expense.receiptPhoto, '_blank')}
+                            />
+                          ) : (
+                            <div className="receipt-file-indicator">
+                              <FileText size={24} />
+                              <span>PDF Document</span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm btn-danger remove-receipt-btn"
+                          onClick={() => removeReceiptPhoto(index)}
+                        >
+                          <X size={14} />
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="receipt-upload-zone">
+                        <input
+                          type="file"
+                          id={`receipt-${index}`}
+                          accept="image/jpeg,image/png,image/gif,application/pdf"
+                          onChange={(e) => handleReceiptUpload(index, e.target.files[0])}
+                          className="receipt-input"
+                        />
+                        <label htmlFor={`receipt-${index}`} className="receipt-upload-label">
+                          <Upload size={20} />
+                          <span>Upload Receipt</span>
+                          <span className="upload-hint">JPEG, PNG, GIF or PDF (max 5MB)</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

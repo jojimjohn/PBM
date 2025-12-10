@@ -23,7 +23,7 @@ const Purchase = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('orders') // 'orders', 'collections', 'expenses', or 'vendors'
+  const [activeTab, setActiveTab] = useState('collections') // Workflow order: 'collections', 'orders', 'expenses', or 'vendors'
   const [purchaseOrders, setPurchaseOrders] = useState([])
   const [collectionOrders, setCollectionOrders] = useState([])
   const [suppliers, setSuppliers] = useState([])
@@ -316,8 +316,16 @@ const Purchase = () => {
       />
 
       <div className="purchase-content">
+        {/* Tabs ordered by workflow: Collections first → Purchase Orders → Expenses → Vendors */}
         <div className="tab-navigation">
-          <button 
+          <button
+            className={`tab-btn ${activeTab === 'collections' ? 'active' : ''}`}
+            onClick={() => setActiveTab('collections')}
+          >
+            <MapPin className="w-4 h-4" />
+            Collections
+          </button>
+          <button
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
           >
@@ -336,13 +344,6 @@ const Purchase = () => {
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
             Expenses
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'collections' ? 'active' : ''}`}
-            onClick={() => setActiveTab('collections')}
-          >
-            <MapPin className="w-4 h-4" />
-            Collections
           </button>
           <button
             className={`tab-btn ${activeTab === 'vendors' ? 'active' : ''}`}

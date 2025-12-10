@@ -44,6 +44,10 @@ export const Icons = {
   dollarSign: LucideIcons.DollarSign,
   shoppingCart: LucideIcons.ShoppingCart,
   userPlus: LucideIcons.UserPlus,
+  // MFA/Security icons
+  shield: LucideIcons.Shield,
+  key: LucideIcons.Key,
+  smartphone: LucideIcons.Smartphone,
 }
 
 // Business-specific custom icons

@@ -1,0 +1,443 @@
+/* ============================================
+   VendorBillModal Component Styles
+   ============================================ */
+
+.vendor-bill-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Form Error */
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Form Section */
+.form-section {
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.section-title svg {
+  color: #6b7280;
+}
+
+.section-title .po-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #3b82f6;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.calculated-total {
+  padding: 0.625rem 0.875rem;
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0369a1;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Auto-generated field */
+.auto-generated-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.625rem 0.875rem;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1px solid #86efac;
+  border-radius: 0.5rem;
+}
+
+.auto-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auto-hint {
+  font-size: 0.8125rem;
+  color: #047857;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Readonly field (for edit mode) */
+.readonly-field {
+  padding: 0.625rem 0.875rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.invoice-number-display {
+  font-weight: 600;
+  color: #1e293b;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Field hint */
+.field-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+/* PO Placeholder */
+.po-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.po-placeholder svg {
+  margin-bottom: 0.75rem;
+  opacity: 0.5;
+}
+
+.po-placeholder p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.po-placeholder.warning {
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 0.5rem;
+}
+
+.po-placeholder.warning svg {
+  color: #f59e0b;
+  opacity: 1;
+}
+
+.po-placeholder .hint {
+  font-size: 0.75rem;
+  color: #78716c;
+  margin-top: 0.5rem;
+}
+
+/* PO Actions */
+.po-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.po-actions .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* PO List */
+.po-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.po-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.po-item:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.po-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.po-checkbox {
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.po-checkbox .checked {
+  color: #3b82f6;
+}
+
+.po-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.po-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.po-number {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+.po-status {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.125rem 0.5rem;
+  background: #d1fae5;
+  color: #059669;
+  border-radius: 9999px;
+}
+
+/* Bill Status Badges (for company bills: draft/sent) */
+.bill-status-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.bill-status-badge.draft {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.bill-status-badge.sent {
+  background: #d1fae5;
+  color: #059669;
+}
+
+/* PO Reference styling */
+.po-ref {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+/* Badge for currently linked POs in edit mode */
+.linked-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.125rem 0.5rem;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 9999px;
+}
+
+/* Highlight currently linked POs */
+.po-item.currently-linked {
+  border-left: 3px solid #6366f1;
+}
+
+.po-item.currently-linked .po-number {
+  color: #4338ca;
+}
+
+.po-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.po-amount {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+/* Amount Comparison */
+.amount-comparison {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.amount-comparison svg {
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+.comparison-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+}
+
+.comparison-details span {
+  color: #4b5563;
+}
+
+.comparison-details .diff-positive {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.comparison-details .diff-negative {
+  color: #d97706;
+  font-weight: 600;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Button overrides */
+.vendor-bill-form .btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vendor-bill-form .btn-outline {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.vendor-bill-form .btn-outline:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.vendor-bill-form .btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: none;
+  color: white;
+}
+
+.vendor-bill-form .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.vendor-bill-form .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .po-item {
+    flex-wrap: wrap;
+  }
+
+  .po-amount {
+    width: 100%;
+    text-align: right;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+}

@@ -18,6 +18,8 @@ class PurchaseInvoiceService {
       if (filters.supplierId) params.append('supplierId', filters.supplierId);
       if (filters.purchaseOrderId) params.append('purchaseOrderId', filters.purchaseOrderId);
       if (filters.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
+      if (filters.billStatus) params.append('billStatus', filters.billStatus);  // For company bills: draft/sent
+      if (filters.billType) params.append('billType', filters.billType);
       if (filters.fromDate) params.append('fromDate', filters.fromDate);
       if (filters.toDate) params.append('toDate', filters.toDate);
       if (filters.page) params.append('page', filters.page);
@@ -32,6 +34,117 @@ class PurchaseInvoiceService {
         success: false,
         error: error.message || 'Failed to fetch purchase invoices',
         data: []
+      };
+    }
+  }
+
+  /**
+   * Get company bills only
+   */
+  async getCompanyBills(filters = {}) {
+    return this.getAll({ ...filters, billType: 'company' });
+  }
+
+  /**
+   * Get vendor bills only
+   */
+  async getVendorBills(filters = {}) {
+    return this.getAll({ ...filters, billType: 'vendor' });
+  }
+
+  /**
+   * Get bill type display name
+   */
+  getBillTypeName(billType) {
+    const typeNames = {
+      company: 'Company Bill',
+      vendor: 'Vendor Bill'
+    };
+    return typeNames[billType] || billType;
+  }
+
+  /**
+   * Get bill type color for UI
+   */
+  getBillTypeColor(billType) {
+    const typeColors = {
+      company: '#3b82f6',  // blue
+      vendor: '#8b5cf6'    // purple
+    };
+    return typeColors[billType] || '#6b7280';
+  }
+
+  /**
+   * Get bill status display name (for company bills: draft/sent workflow)
+   */
+  getBillStatusName(status) {
+    const statusNames = {
+      draft: 'Draft',
+      sent: 'Sent'
+    };
+    return statusNames[status] || status;
+  }
+
+  /**
+   * Get bill status color for UI (for company bills)
+   */
+  getBillStatusColor(status) {
+    const statusColors = {
+      draft: '#f59e0b',   // amber - needs action
+      sent: '#10b981'     // green - finalized
+    };
+    return statusColors[status] || '#6b7280';
+  }
+
+  /**
+   * Get company bills that are not linked to any vendor bill
+   * @param {number} supplierId - Filter by supplier
+   * @param {string} status - Filter by bill_status (draft/sent)
+   * @returns {Promise<Object>} Available company bills for linking
+   */
+  async getUnlinkedCompanyBills(supplierId = null, status = null) {
+    try {
+      const params = new URLSearchParams();
+      if (supplierId) params.append('supplierId', supplierId);
+      if (status) params.append('status', status);
+
+      const url = `${API_BASE_URL}/purchase-invoices/unlinked-company-bills${params.toString() ? '?' + params.toString() : ''}`;
+      const data = await authService.makeAuthenticatedRequest(url);
+      return data;
+    } catch (error) {
+      console.error('Error fetching unlinked company bills:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch unlinked company bills',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Update company bill status (draft → sent)
+   * @param {number} billId - Company bill ID
+   * @param {string} status - New status ('draft' or 'sent')
+   * @returns {Promise<Object>} API response
+   */
+  async updateCompanyBillStatus(billId, status) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-invoices/${billId}/status`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error updating company bill status:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to update company bill status'
       };
     }
   }
@@ -109,8 +222,10 @@ class PurchaseInvoiceService {
   }
 
   /**
-   * Create a vendor bill covering multiple purchase orders
-   * @param {Object} vendorBillData - Vendor bill data with coversPurchaseOrders array
+   * Create a vendor bill covering multiple company bills
+   * @param {Object} vendorBillData - Vendor bill data with coversCompanyBills array
+   *   - coversCompanyBills: Array of company bill IDs (new workflow)
+   *   - coversPurchaseOrders: Array of PO IDs (legacy, deprecated)
    * @returns {Promise<Object>} API response
    */
   async createVendorBill(vendorBillData) {
@@ -139,6 +254,22 @@ class PurchaseInvoiceService {
         error: error.message || 'Failed to create vendor bill'
       };
     }
+  }
+
+  /**
+   * Get draft company bills (convenience method)
+   * Used to show company bills that need to be marked as sent
+   */
+  async getDraftCompanyBills(filters = {}) {
+    return this.getCompanyBills({ ...filters, billStatus: 'draft' });
+  }
+
+  /**
+   * Get sent company bills (convenience method)
+   * Used for vendor bill linking - only sent bills can be linked
+   */
+  async getSentCompanyBills(filters = {}) {
+    return this.getCompanyBills({ ...filters, billStatus: 'sent' });
   }
 
   /**
@@ -273,6 +404,102 @@ class PurchaseInvoiceService {
       overdue: 'Overdue'
     };
     return statusNames[status] || status;
+  }
+
+  /**
+   * Sync payment status for all invoices
+   * Fixes data inconsistencies where balance=0 but status!='paid'
+   * @returns {Promise<Object>} Sync result with count of fixed invoices
+   */
+  async syncPaymentStatus() {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-invoices/sync-status`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error syncing payment status:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to sync payment status'
+      };
+    }
+  }
+
+  /**
+   * Sync invoice number prefixes
+   * Adds CB-/VB- prefix to invoices that don't have them
+   * @returns {Promise<Object>} Sync result with count of updated invoices
+   */
+  async syncInvoicePrefixes() {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-invoices/sync-prefixes`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error syncing invoice prefixes:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to sync invoice prefixes'
+      };
+    }
+  }
+
+  /**
+   * Reset payments on orphan company bills
+   * Company bills without vendor bills should not have been paid directly
+   * @returns {Promise<Object>} Reset result with count of affected bills
+   */
+  async resetOrphanPayments() {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-invoices/reset-orphan-payments`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error resetting orphan payments:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to reset orphan payments'
+      };
+    }
+  }
+
+  /**
+   * Run all data sync operations
+   * @returns {Promise<Object>} Combined sync results
+   */
+  async runAllSync() {
+    const results = {
+      statusSync: null,
+      prefixSync: null,
+      orphanReset: null
+    };
+
+    results.statusSync = await this.syncPaymentStatus();
+    results.prefixSync = await this.syncInvoicePrefixes();
+    results.orphanReset = await this.resetOrphanPayments();
+
+    return results;
   }
 }
 

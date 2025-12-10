@@ -578,6 +578,96 @@
   background-color: #2563eb;
 }
 
+/* Expenses Card - Linked Expenses Section */
+.order-view-professional .expenses-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.order-view-professional .expenses-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background-color: #fef3c7;
+  border-bottom: 1px solid #fcd34d;
+}
+
+.order-view-professional .expenses-card-header svg {
+  color: #92400e;
+}
+
+.order-view-professional .expenses-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #92400e;
+}
+
+.order-view-professional .expenses-table-container {
+  overflow-x: auto;
+}
+
+.order-view-professional .expenses-card .professional-table tfoot {
+  background-color: #fef3c7;
+}
+
+.order-view-professional .expenses-card .professional-table tfoot td {
+  padding: 12px 20px;
+  font-weight: 600;
+  border-top: 2px solid #fcd34d;
+}
+
+.order-view-professional .expenses-loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.order-view-professional .expenses-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-view-professional .expenses-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Financial Summary - Expenses Row */
+.order-view-professional .summary-row.expenses-row {
+  padding-top: 10px;
+  border-top: 1px dashed #fcd34d;
+  margin-top: 6px;
+}
+
+.order-view-professional .summary-row.expenses-row .summary-label {
+  color: #92400e;
+}
+
+/* Grand Total Row */
+.order-view-professional .summary-row.grand-total {
+  background-color: #f0fdf4;
+  margin: 14px -20px -20px;
+  padding: 16px 20px;
+  border-radius: 0 0 8px 8px;
+}
+
+.order-view-professional .summary-row.grand-total .summary-label,
+.order-view-professional .summary-row.grand-total .summary-value {
+  color: #166534;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .order-view-professional .order-title {
@@ -599,5 +689,11 @@
 
   .order-view-professional .financial-card {
     max-width: 100%;
+  }
+
+  .order-view-professional .expenses-card .professional-table th,
+  .order-view-professional .expenses-card .professional-table td {
+    padding: 10px 12px;
+    font-size: 13px;
   }
 }

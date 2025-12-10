@@ -130,8 +130,12 @@ const PettyCash = () => {
     }
   }
 
-  const formatCurrency = (amount) => `OMR ${parseFloat(amount).toFixed(3)}`
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-GB')
+  const formatCurrency = (amount) => `OMR ${parseFloat(amount || 0).toFixed(3)}`
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    const date = new Date(dateString)
+    return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-GB')
+  }
 
   // Statistics calculation
   const calculateStats = () => {
@@ -234,20 +238,13 @@ const PettyCash = () => {
   const handleApproveExpense = async (expenseId, newStatus) => {
     try {
       setLoading(true)
-      
-      let result
-      if (newStatus === 'approved') {
-        result = await pettyCashService.approveExpense(expenseId, {
-          approvedBy: 'current_user',
-          approvalNotes: 'Approved via UI'
-        })
-      } else if (newStatus === 'rejected') {
-        result = await pettyCashService.rejectExpense(expenseId, {
-          rejectedBy: 'current_user',
-          rejectionReason: 'Rejected via UI'
-        })
-      }
-      
+
+      // Backend expects: { status: 'approved'|'rejected', approvalNotes?: string }
+      const result = await pettyCashService.approveExpense(expenseId, {
+        status: newStatus,
+        approvalNotes: newStatus === 'approved' ? 'Approved via UI' : 'Rejected via UI'
+      })
+
       if (result && result.success) {
         // Reload data to reflect changes
         await loadPettyCashData()
@@ -255,7 +252,7 @@ const PettyCash = () => {
       } else {
         throw new Error(result?.error || `Failed to ${newStatus} expense`)
       }
-      
+
     } catch (error) {
       console.error('Error updating expense status:', error)
       setError(error.message)
@@ -329,11 +326,24 @@ const PettyCash = () => {
     }
   }
 
-  const handleSaveExpense = async (expenseData) => {
+  const handleSaveExpense = async (formData) => {
     try {
       setLoading(true)
-      const result = await pettyCashService.createExpense(expenseData)
-      
+
+      // Map frontend field names to backend schema
+      const expensePayload = {
+        cardId: parseInt(formData.cardId),
+        category: formData.expenseType, // Frontend: expenseType → Backend: category
+        description: formData.description,
+        amount: parseFloat(formData.amount),
+        expenseDate: formData.transactionDate, // Frontend: transactionDate → Backend: expenseDate
+        vendor: formData.merchant || null, // Frontend: merchant → Backend: vendor
+        receiptNumber: formData.receiptNumber || null,
+        notes: formData.notes || null // Convert empty string to null
+      }
+
+      const result = await pettyCashService.createExpense(expensePayload)
+
       if (result.success) {
         await loadPettyCashData()
         setShowExpenseModal(false)
@@ -469,40 +479,46 @@ const PettyCash = () => {
   // Expense table columns
   const expenseColumns = [
     {
-      key: 'transactionDate',
+      key: 'expenseDate', // Backend returns 'expenseDate', not 'transactionDate'
       header: t('date', 'Date'),
       sortable: true,
       render: (value) => (
         <div className="date-info">
           <Calendar size={14} />
-          <span>{formatDate(value)}</span>
+          <span>{value ? formatDate(value) : 'N/A'}</span>
         </div>
       )
     },
     {
-      key: 'staffMember.name',
+      key: 'staffName',
       header: t('staff', 'Staff'),
       sortable: true,
-      render: (value, row) => (
-        <div className="staff-expense-info">
-          <User size={14} />
-          <div>
-            <div>{row.staffMember.name}</div>
-            <div className="card-ref">{cards.find(c => c.id === row.cardId)?.cardNumber}</div>
+      render: (value, row) => {
+        // Backend returns staffName from card, or submittedByName/submittedByLastName from user
+        const staffName = row.staffName ||
+          `${row.submittedByName || ''} ${row.submittedByLastName || ''}`.trim() ||
+          'Unknown';
+        return (
+          <div className="staff-expense-info">
+            <User size={14} />
+            <div>
+              <div>{staffName}</div>
+              <div className="card-ref">{row.cardNumber || cards.find(c => c.id === row.cardId)?.cardNumber}</div>
+            </div>
           </div>
-        </div>
-      )
+        );
+      }
     },
     {
-      key: 'expenseType',
+      key: 'category', // Backend returns 'category', not 'expenseType'
       header: t('expenseType', 'Expense Type'),
       sortable: true,
       render: (value) => {
         const expenseType = expenseTypes.find(type => type.id === value)
         return (
           <div className="expense-type">
-            <span className={`expense-category ${expenseType?.category}`}>
-              {expenseType?.name || value}
+            <span className={`expense-category ${expenseType?.category || ''}`}>
+              {expenseType?.name || value || 'Unknown'}
             </span>
           </div>
         )
@@ -543,6 +559,13 @@ const PettyCash = () => {
           <button
             className="action-btn view"
             title={t('viewReceipt', 'View Receipt')}
+            onClick={() => {
+              if (row.receiptPhoto) {
+                window.open(row.receiptPhoto, '_blank')
+              } else {
+                alert(t('noReceipt', 'No Receipt Attached'))
+              }
+            }}
           >
             <Receipt size={14} />
           </button>
@@ -744,6 +767,7 @@ const PettyCash = () => {
         <ExpenseFormModal
           isOpen={showExpenseModal}
           onClose={() => setShowExpenseModal(false)}
+          onSave={handleSaveExpense}
           selectedCard={selectedCard}
           cards={cards}
           expenseTypes={expenseTypes}
@@ -758,6 +782,7 @@ const PettyCash = () => {
         <CardReloadModal
           isOpen={showReloadModal}
           onClose={() => setShowReloadModal(false)}
+          onSubmit={handleReloadCardBalance}
           card={selectedCard}
           formData={reloadForm}
           setFormData={setReloadForm}
@@ -921,12 +946,26 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
 }
 
 // Expense Form Modal Component
-const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
-  const handleSubmit = (e) => {
+const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState(null)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle expense creation
-    console.log('Expense form submitted:', formData)
-    onClose()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      if (typeof onSave !== 'function') {
+        throw new Error('onSave handler not provided')
+      }
+      await onSave(formData)
+      // onSave will handle closing the modal on success
+    } catch (err) {
+      setError(err.message || 'Failed to save expense')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -1066,12 +1105,18 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
           />
         </div>
 
+        {error && (
+          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+            {error}
+          </div>
+        )}
+
         <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
             {t('cancel', 'Cancel')}
           </button>
-          <button type="submit" className="btn btn-primary">
-            {t('submitExpense', 'Submit Expense')}
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? t('submitting', 'Submitting...') : t('submitExpense', 'Submit Expense')}
           </button>
         </div>
       </form>
@@ -1079,13 +1124,27 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
   )
 }
 
-// Card Reload Modal Component  
-const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) => {
-  const handleSubmit = (e) => {
+// Card Reload Modal Component
+const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, t }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState(null)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle card reload
-    console.log('Card reload submitted:', formData)
-    onClose()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      if (typeof onSubmit !== 'function') {
+        throw new Error('onSubmit handler not provided')
+      }
+      await onSubmit(formData)
+      // onSubmit will handle closing the modal on success
+    } catch (err) {
+      setError(err.message || 'Failed to reload card')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (!card) return null
@@ -1101,8 +1160,8 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
       <form onSubmit={handleSubmit} className="reload-form">
         <div className="card-info-display">
           <h3>{card.cardName}</h3>
-          <p>{t('assignedTo', 'Assigned to')}: {card.assignedStaff.name}</p>
-          <p>{t('currentBalance', 'Current Balance')}: OMR {card.currentBalance.toFixed(3)}</p>
+          <p>{t('assignedTo', 'Assigned to')}: {card.assignedStaff?.name || 'N/A'}</p>
+          <p>{t('currentBalance', 'Current Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</p>
         </div>
 
         <div className="form-group">
@@ -1141,7 +1200,7 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
         <div className="balance-preview">
           <div className="preview-item">
             <span>{t('currentBalance', 'Current Balance')}:</span>
-            <span>OMR {card.currentBalance.toFixed(3)}</span>
+            <span>OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</span>
           </div>
           <div className="preview-item">
             <span>{t('reloadAmount', 'Reload Amount')}:</span>
@@ -1149,17 +1208,23 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
           </div>
           <div className="preview-item total">
             <span>{t('newBalance', 'New Balance')}:</span>
-            <span>OMR {(card.currentBalance + (parseFloat(formData.amount) || 0)).toFixed(3)}</span>
+            <span>OMR {(parseFloat(card.currentBalance || 0) + (parseFloat(formData.amount) || 0)).toFixed(3)}</span>
           </div>
         </div>
 
+        {error && (
+          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+            {error}
+          </div>
+        )}
+
         <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
             {t('cancel', 'Cancel')}
           </button>
-          <button type="submit" className="btn btn-success">
+          <button type="submit" className="btn btn-success" disabled={isSubmitting}>
             <RefreshCw size={16} />
-            {t('reloadCard', 'Reload Card')}
+            {isSubmitting ? t('reloading', 'Reloading...') : t('reloadCard', 'Reload Card')}
           </button>
         </div>
       </form>

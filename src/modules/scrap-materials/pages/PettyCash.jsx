@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
-import { useLocalization } from '../context/LocalizationContext'
-import { usePermissions } from '../hooks/usePermissions'
-import LoadingSpinner from '../components/LoadingSpinner'
-import Modal from '../components/ui/Modal'
-import DataTable from '../components/ui/DataTable'
-import StockChart from '../components/StockChart'
-import ImageUpload from '../components/ui/ImageUpload'
-import FileUpload from '../components/ui/FileUpload'
-import pettyCashService from '../services/pettyCashService'
-import uploadService from '../services/uploadService'
-import userService from '../services/userService'
+import { useAuth } from '../../../context/AuthContext'
+import { useLocalization } from '../../../context/LocalizationContext'
+import { usePermissions } from '../../../hooks/usePermissions'
+import LoadingSpinner from '../../../components/LoadingSpinner'
+import Modal from '../../../components/ui/Modal'
+import DataTable from '../../../components/ui/DataTable'
+import StockChart from '../../../components/StockChart'
+import ImageUpload from '../../../components/ui/ImageUpload'
+import FileUpload from '../../../components/ui/FileUpload'
+import pettyCashService from '../../../services/pettyCashService'
+import uploadService from '../../../services/uploadService'
+import userService from '../../../services/userService'
 import {
   CreditCard,
   Plus,
@@ -32,7 +32,7 @@ import {
   Lock,
   FileText
 } from 'lucide-react'
-import './PettyCash.css'
+import '../../../pages/PettyCash.css'
 
 const PettyCash = () => {
   const { selectedCompany } = useAuth()
@@ -744,6 +744,7 @@ const PettyCash = () => {
         <ExpenseFormModal
           isOpen={showExpenseModal}
           onClose={() => setShowExpenseModal(false)}
+          onSave={handleSaveExpense}
           selectedCard={selectedCard}
           cards={cards}
           expenseTypes={expenseTypes}
@@ -758,6 +759,7 @@ const PettyCash = () => {
         <CardReloadModal
           isOpen={showReloadModal}
           onClose={() => setShowReloadModal(false)}
+          onSubmit={handleReloadCardBalance}
           card={selectedCard}
           formData={reloadForm}
           setFormData={setReloadForm}
@@ -921,12 +923,23 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
 }
 
 // Expense Form Modal Component
-const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
-  const handleSubmit = (e) => {
+const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState(null)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle expense creation
-    console.log('Expense form submitted:', formData)
-    onClose()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      await onSave(formData)
+      // onSave will handle closing the modal on success
+    } catch (err) {
+      setError(err.message || 'Failed to save expense')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -1066,12 +1079,18 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
           />
         </div>
 
+        {error && (
+          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+            {error}
+          </div>
+        )}
+
         <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
             {t('cancel', 'Cancel')}
           </button>
-          <button type="submit" className="btn btn-primary">
-            {t('submitExpense', 'Submit Expense')}
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? t('submitting', 'Submitting...') : t('submitExpense', 'Submit Expense')}
           </button>
         </div>
       </form>
@@ -1079,13 +1098,24 @@ const ExpenseFormModal = ({ isOpen, onClose, selectedCard, cards, expenseTypes, 
   )
 }
 
-// Card Reload Modal Component  
-const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) => {
-  const handleSubmit = (e) => {
+// Card Reload Modal Component
+const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, t }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState(null)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle card reload
-    console.log('Card reload submitted:', formData)
-    onClose()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      await onSubmit(formData)
+      // onSubmit will handle closing the modal on success
+    } catch (err) {
+      setError(err.message || 'Failed to reload card')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (!card) return null
@@ -1101,8 +1131,8 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
       <form onSubmit={handleSubmit} className="reload-form">
         <div className="card-info-display">
           <h3>{card.cardName}</h3>
-          <p>{t('assignedTo', 'Assigned to')}: {card.assignedStaff.name}</p>
-          <p>{t('currentBalance', 'Current Balance')}: OMR {card.currentBalance.toFixed(3)}</p>
+          <p>{t('assignedTo', 'Assigned to')}: {card.assignedStaff?.name || 'N/A'}</p>
+          <p>{t('currentBalance', 'Current Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</p>
         </div>
 
         <div className="form-group">
@@ -1141,7 +1171,7 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
         <div className="balance-preview">
           <div className="preview-item">
             <span>{t('currentBalance', 'Current Balance')}:</span>
-            <span>OMR {card.currentBalance.toFixed(3)}</span>
+            <span>OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</span>
           </div>
           <div className="preview-item">
             <span>{t('reloadAmount', 'Reload Amount')}:</span>
@@ -1149,17 +1179,23 @@ const CardReloadModal = ({ isOpen, onClose, card, formData, setFormData, t }) =>
           </div>
           <div className="preview-item total">
             <span>{t('newBalance', 'New Balance')}:</span>
-            <span>OMR {(card.currentBalance + (parseFloat(formData.amount) || 0)).toFixed(3)}</span>
+            <span>OMR {(parseFloat(card.currentBalance || 0) + (parseFloat(formData.amount) || 0)).toFixed(3)}</span>
           </div>
         </div>
 
+        {error && (
+          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+            {error}
+          </div>
+        )}
+
         <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
             {t('cancel', 'Cancel')}
           </button>
-          <button type="submit" className="btn btn-success">
+          <button type="submit" className="btn btn-success" disabled={isSubmitting}>
             <RefreshCw size={16} />
-            {t('reloadCard', 'Reload Card')}
+            {isSubmitting ? t('reloading', 'Reloading...') : t('reloadCard', 'Reload Card')}
           </button>
         </div>
       </form>

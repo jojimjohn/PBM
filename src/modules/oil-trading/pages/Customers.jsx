@@ -7,6 +7,7 @@ import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import customerService from '../../../services/customerService'
 import typesService from '../../../services/typesService'
+import materialService from '../../../services/materialService'
 import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle, Trash } from 'lucide-react'
 import '../styles/Customers.css'
 
@@ -961,13 +962,11 @@ const ContractDetailsModal = ({ customer, onClose, onEdit }) => {
         setLoading(true)
         setError(null)
         
-        const response = await fetch('/data/materials.json')
-        if (!response.ok) {
-          throw new Error(`Failed to fetch materials: ${response.status} ${response.statusText}`)
+        const result = await materialService.getAll()
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch materials')
         }
-        const data = await response.json()
-        console.log('Materials data structure:', Object.keys(data))
-        const companyMaterials = data.materials?.alramrami || []
+        const companyMaterials = result.data || []
         console.log('Materials loaded:', companyMaterials.length, 'items')
         console.log('Contract rates available for:', Object.keys(contract?.rates || {}))
         setMaterials(companyMaterials)
@@ -1224,9 +1223,8 @@ const ContractEditModal = ({ customer, onClose, onSave }) => {
   useEffect(() => {
     const loadMaterials = async () => {
       try {
-        const response = await fetch('/data/materials.json')
-        const data = await response.json()
-        const companyMaterials = data.materials?.alramrami || []
+        const result = await materialService.getAll()
+        const companyMaterials = result.success ? (result.data || []) : []
         setMaterials(companyMaterials)
       } catch (error) {
         console.error('Error loading materials:', error)

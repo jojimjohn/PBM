@@ -6,19 +6,42 @@
 class FinancialService {
   constructor() {
     this.transactions = []
-    this.loadTransactions()
+    this._loaded = false
+    // NOTE: Don't load transactions in constructor - user may not be authenticated yet
+    // Transactions are loaded lazily when first needed via ensureLoaded()
+  }
+
+  /**
+   * Ensure transactions are loaded (lazy loading)
+   * Call this before any operation that needs transaction data
+   */
+  async ensureLoaded() {
+    if (!this._loaded) {
+      await this.loadTransactions()
+    }
+    return this.transactions
   }
 
   async loadTransactions() {
     try {
-      // Use API service to load transactions
+      // Check if user is authenticated before making request
       const authService = await import('./authService')
+      if (!authService.default.isAuthenticated()) {
+        // Not authenticated yet, silently skip loading
+        console.debug('FinancialService: Skipping load - user not authenticated')
+        return []
+      }
+
       const { API_BASE_URL } = await import('../config/api')
       const response = await authService.default.makeAuthenticatedRequest(`${API_BASE_URL}/transactions`)
       this.transactions = response.data || []
+      this._loaded = true
       return this.transactions
     } catch (error) {
-      console.error('Error loading transactions:', error)
+      // Don't log auth errors during initial app load
+      if (!error.message?.includes('Not authenticated')) {
+        console.error('Error loading transactions:', error)
+      }
       this.transactions = []
       return []
     }

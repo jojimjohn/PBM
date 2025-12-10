@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import supplierService from '../../../services/supplierService'
 import Modal from '../../../components/ui/Modal'
 import ImageUpload from '../../../components/ui/ImageUpload'
 import { 
@@ -71,9 +72,8 @@ const MaterialEntryForm = ({
   const loadSuppliers = async () => {
     try {
       setLoadingSuppliers(true)
-      const response = await fetch('/data/suppliers.json')
-      const data = await response.json()
-      const companySuppliers = data.suppliers[selectedCompany?.id] || []
+      const result = await supplierService.getAll()
+      const companySuppliers = result.success ? (result.data || []) : []
       setSuppliers(companySuppliers)
     } catch (error) {
       console.error('Error loading suppliers:', error)

@@ -64,6 +64,9 @@
   border-radius: 12px;
   padding: 20px;
   transition: all 0.2s;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .workflow-stats-grid .stat-card:hover {
@@ -76,6 +79,7 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 .workflow-stats-grid .stat-icon {
@@ -110,12 +114,16 @@
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .workflow-stats-grid .stat-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .workflow-stats-grid .stat-number {
@@ -128,8 +136,10 @@
 .workflow-stats-grid .stat-detail {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   font-size: 13px;
+  min-width: 0;
 }
 
 .workflow-stats-grid .stat-highlight {
@@ -594,4 +604,407 @@
   align-items: center;
   justify-content: center;
   min-height: 400px;
+}
+
+/* ============================================
+   NOTIFICATIONS PANEL
+   ============================================ */
+.notifications-panel {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom: 1px solid #fcd34d;
+}
+
+.notifications-panel:has(.notification-item.error) .notifications-header {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-bottom: 1px solid #f87171;
+}
+
+.notifications-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.notifications-title .urgent {
+  color: #dc2626;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.notifications-toggle {
+  padding: 6px 14px;
+  background: white;
+  border: 1px solid #d97706;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #92400e;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notifications-toggle:hover {
+  background: #fef3c7;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: #fafbfc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item.error {
+  background: #fef2f2;
+  border-left: 3px solid #dc2626;
+}
+
+.notification-item.error:hover {
+  background: #fee2e2;
+}
+
+.notification-item.warning {
+  background: #fffbeb;
+  border-left: 3px solid #d97706;
+}
+
+.notification-item.warning:hover {
+  background: #fef3c7;
+}
+
+.notification-item.info {
+  border-left: 3px solid #3b82f6;
+}
+
+.notification-icon.error { color: #dc2626; }
+.notification-icon.warning { color: #d97706; }
+.notification-icon.info { color: #3b82f6; }
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.notification-message {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.notification-arrow {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   SECONDARY STATS GRID (Mini Cards)
+   ============================================ */
+.workflow-stats-grid.secondary {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.workflow-stats-grid .stat-card.mini {
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.workflow-stats-grid .stat-card.mini:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+}
+
+.workflow-stats-grid .stat-card.mini .stat-header {
+  margin-bottom: 10px;
+}
+
+.workflow-stats-grid .stat-card.mini .stat-icon {
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.workflow-stats-grid .stat-card.mini .stat-label {
+  font-size: 11px;
+}
+
+.workflow-stats-grid .stat-card.mini .stat-number {
+  font-size: 24px;
+}
+
+.workflow-stats-grid .stat-card.mini .stat-detail {
+  font-size: 11px;
+}
+
+.workflow-stats-grid .stat-card.mini .stat-highlight {
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
+/* Additional stat icon colors */
+.workflow-stats-grid .stat-icon.contracts {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.workflow-stats-grid .stat-icon.inventory {
+  color: #059669;
+  background: #d1fae5;
+}
+
+.workflow-stats-grid .stat-icon.petty-cash {
+  color: #7c3aed;
+  background: #f3e8ff;
+}
+
+.workflow-stats-grid .stat-icon.wastage {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.workflow-stats-grid .stat-icon.sales {
+  color: #0284c7;
+  background: #e0f2fe;
+}
+
+.workflow-stats-grid .stat-icon.banking {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+/* Additional action icon colors */
+.action-icon.inventory {
+  color: #059669;
+}
+
+.action-icon.petty-cash,
+.action-icon.expense {
+  color: #7c3aed;
+}
+
+.action-icon.wastage {
+  color: #dc2626;
+}
+
+.action-icon.sales {
+  color: #0284c7;
+}
+
+.action-icon.banking {
+  color: #0369a1;
+}
+
+/* Additional activity icon colors */
+.activity-icon.wastage {
+  color: #dc2626;
+}
+
+.activity-icon.expense {
+  color: #7c3aed;
+}
+
+.activity-icon.sales {
+  color: #0284c7;
+}
+
+.activity-icon.banking {
+  color: #0369a1;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS FOR NEW SECTIONS
+   ============================================ */
+@media (max-width: 1200px) {
+  .workflow-stats-grid.secondary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-stats-grid.secondary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .notifications-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .notification-item {
+    flex-wrap: wrap;
+  }
+}
+
+/* ============================================
+   SKELETON LOADING ANIMATIONS
+   ============================================ */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Base skeleton styles */
+.skeleton-icon,
+.skeleton-text,
+.skeleton-number,
+.skeleton-badge,
+.skeleton-button {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 25%,
+    #f1f5f9 50%,
+    #e2e8f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeleton-icon.small {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.skeleton-text {
+  height: 14px;
+}
+
+.skeleton-text.tiny {
+  width: 30px;
+  height: 12px;
+}
+
+.skeleton-text.short {
+  width: 80px;
+}
+
+.skeleton-text.medium {
+  width: 150px;
+}
+
+.skeleton-text.long {
+  width: 220px;
+}
+
+.skeleton-number {
+  width: 60px;
+  height: 32px;
+  border-radius: 6px;
+}
+
+.skeleton-badge {
+  width: 70px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.skeleton-button {
+  width: 100px;
+  height: 34px;
+  border-radius: 6px;
+}
+
+/* Skeleton stat card */
+.stat-card.skeleton {
+  pointer-events: none;
+}
+
+.stat-card.skeleton .stat-body {
+  gap: 12px;
+}
+
+.stat-card.skeleton.mini .skeleton-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.stat-card.skeleton.mini .skeleton-number {
+  width: 40px;
+  height: 24px;
+}
+
+.stat-card.skeleton.mini .stat-detail {
+  gap: 6px;
+}
+
+/* Skeleton task item */
+.task-item.skeleton {
+  pointer-events: none;
+  border-left: 3px solid #e2e8f0;
+}
+
+.task-item.skeleton .task-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Skeleton activity item */
+.activity-item.skeleton {
+  pointer-events: none;
+}
+
+.activity-item.skeleton .activity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Skeleton section header */
+.task-section .section-header .skeleton-icon {
+  width: 16px;
+  height: 16px;
 }

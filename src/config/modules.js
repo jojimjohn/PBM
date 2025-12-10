@@ -102,6 +102,21 @@ export const MODULE_PERMISSIONS = {
     reload: ['RELOAD_CARD'],
     reports: ['VIEW_EXPENSE_REPORTS'],
     requiredPermissions: ['VIEW_PETTY_CASH']
+  },
+  'banking': {
+    view: ['VIEW_FINANCIALS'],
+    manage: ['MANAGE_SETTINGS'],
+    create: ['MANAGE_SETTINGS'],
+    reconcile: ['MANAGE_SETTINGS'],
+    requiredPermissions: ['VIEW_FINANCIALS']
+  },
+  'users': {
+    view: ['VIEW_USERS'],
+    manage: ['MANAGE_USERS'],
+    create: ['MANAGE_USERS'],
+    delete: ['MANAGE_USERS'],
+    assignRoles: ['ASSIGN_ROLES'],
+    requiredPermissions: ['VIEW_USERS', 'MANAGE_USERS']
   }
 }
 
@@ -122,7 +137,9 @@ export const DEFAULT_MODULE_LABELS = {
   'invoices': 'Invoices',
   'settings': 'Settings',
   'wastage': 'Wastage',
-  'collections': 'Collections'
+  'collections': 'Collections',
+  'banking': 'Banking',
+  'users': 'User Management'
 }
 
 // Icon SVG paths for modules (to be used in JSX components)
@@ -236,6 +253,26 @@ export const MODULE_ICON_PATHS = {
       "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2",
       "M15 2v4H9V2",
       "M9 14l2 2 4-4"
+    ]
+  },
+  'banking': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"
+    ]
+  },
+  'users': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
+      "M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+      "M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+    ]
+  },
+  'roles': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
     ]
   }
 }

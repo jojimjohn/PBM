@@ -17,6 +17,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
   const [items, setItems] = useState([]);
   const [compositePreview, setCompositePreview] = useState([]);
   const [hasQuantityChanges, setHasQuantityChanges] = useState(false);
+  const [hasQualityChanges, setHasQualityChanges] = useState(false);
 
   // State for adding new materials
   const [availableMaterials, setAvailableMaterials] = useState([]);
@@ -60,17 +61,24 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
       setLoading(true);
       setError('');
       setHasQuantityChanges(false);
+      setHasQualityChanges(false);
 
       // Get collection order details with items
       const response = await collectionOrderService.getCollectionOrder(collectionOrder.id);
 
       if (response.success) {
         const orderData = response.data || response;
-        // Store original quantities for comparison and add verifiedQuantity field
+        // Store original quantities and quality for comparison
         const itemsWithVerification = (orderData.items || []).map(item => ({
           ...item,
           originalQuantity: item.availableQuantity || item.collectedQuantity || 0,
           verifiedQuantity: item.collectedQuantity || item.availableQuantity || 0,
+          // Quality verification fields
+          expectedQualityGrade: item.qualityGrade || 'A',
+          verifiedQualityGrade: item.qualityGrade || 'A',
+          qualityVerified: item.qualityVerified || false,
+          expectedCondition: item.materialCondition || 'good',
+          actualCondition: item.materialCondition || 'good',
           isNewItem: false // Mark existing items
         }));
         setItems(itemsWithVerification);
@@ -129,7 +137,13 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
       originalQuantity: 0, // New items have 0 original quantity
       verifiedQuantity: parseFloat(newMaterial.quantity),
       agreedRate: parseFloat(newMaterial.rate) || 0,
-      isNewItem: true // Flag to identify newly added items
+      isNewItem: true, // Flag to identify newly added items
+      // Quality verification defaults for new items
+      expectedQualityGrade: null, // No expected grade for new items
+      verifiedQualityGrade: 'A', // Default to A
+      qualityVerified: false,
+      expectedCondition: null,
+      actualCondition: 'good'
     };
 
     setItems(prev => [...prev, newItem]);
@@ -180,6 +194,71 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
 
       return updatedItems;
     });
+  };
+
+  // Handle quality grade change for verification
+  const handleQualityGradeChange = (index, newGrade) => {
+    setItems(prevItems => {
+      const updatedItems = prevItems.map((item, i) => {
+        if (i === index) {
+          return {
+            ...item,
+            verifiedQualityGrade: newGrade,
+            qualityVerified: true // Auto-mark as verified when grade is changed
+          };
+        }
+        return item;
+      });
+
+      // Check if any quality grades have changed from expected
+      const changed = updatedItems.some(item =>
+        item.verifiedQualityGrade !== item.expectedQualityGrade
+      );
+      setHasQualityChanges(changed);
+
+      return updatedItems;
+    });
+  };
+
+  // Handle quality verification checkbox toggle
+  const handleQualityVerifiedToggle = (index) => {
+    setItems(prevItems => {
+      const updatedItems = prevItems.map((item, i) => {
+        if (i === index) {
+          return { ...item, qualityVerified: !item.qualityVerified };
+        }
+        return item;
+      });
+      return updatedItems;
+    });
+  };
+
+  // Handle condition change
+  const handleConditionChange = (index, newCondition) => {
+    setItems(prevItems => {
+      const updatedItems = prevItems.map((item, i) => {
+        if (i === index) {
+          return { ...item, actualCondition: newCondition };
+        }
+        return item;
+      });
+      return updatedItems;
+    });
+  };
+
+  // Quality grade options
+  const qualityGrades = ['A', 'B', 'C', 'Reject'];
+  const conditionOptions = ['excellent', 'good', 'fair', 'poor', 'mixed'];
+
+  // Get quality badge color
+  const getQualityBadgeClass = (grade) => {
+    switch (grade) {
+      case 'A': return 'quality-a';
+      case 'B': return 'quality-b';
+      case 'C': return 'quality-c';
+      case 'Reject': return 'quality-reject';
+      default: return '';
+    }
   };
 
   const buildCompositePreview = async (collectionItems) => {
@@ -259,11 +338,11 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
       setFinalizationMessage('Preparing WCN data...');
       await new Promise(r => setTimeout(r, 300));
 
-      // Prepare WCN data with verified quantities
+      // Prepare WCN data with verified quantities and quality
       const wcnData = {
         wcnDate: wcnDate,
         notes: notes,
-        // Include verified quantities for each item (existing and new)
+        // Include verified quantities and quality for each item (existing and new)
         items: items.map(item => ({
           id: item.id, // null for new items
           materialId: item.materialId,
@@ -272,9 +351,28 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
           originalQuantity: item.originalQuantity,
           unit: item.unit,
           agreedRate: item.agreedRate || item.contractRate || 0,
-          isNewItem: item.isNewItem || false // Flag for backend to handle new materials
+          isNewItem: item.isNewItem || false, // Flag for backend to handle new materials
+          // Quality verification fields
+          expectedQualityGrade: item.expectedQualityGrade,
+          verifiedQualityGrade: item.verifiedQualityGrade,
+          qualityVerified: item.qualityVerified || false,
+          actualCondition: item.actualCondition
         }))
       };
+
+      // DEBUG: Log the WCN data being sent
+      console.log('=== WCN FINALIZATION DEBUG ===');
+      console.log('Collection Order ID:', collectionOrder.id);
+      console.log('Items state before mapping:', items);
+      console.log('WCN Data being sent:', JSON.stringify(wcnData, null, 2));
+      console.log('Items with quantities:', wcnData.items.map(i => ({
+        materialId: i.materialId,
+        materialName: i.materialName,
+        verifiedQuantity: i.verifiedQuantity,
+        verifiedQuantityType: typeof i.verifiedQuantity,
+        isNewItem: i.isNewItem
+      })));
+      console.log('=== END DEBUG ===');
 
       // Step 3: Finalize WCN
       setFinalizationStep(3);
@@ -449,11 +547,17 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
               <div className="section-header-with-action">
                 <h3 className="section-title">
                   <Package size={20} />
-                  Verify Collected Materials ({items.length})
+                  {t('verifyMaterials', 'Verify Collected Materials')} ({items.length})
                   {hasQuantityChanges && (
                     <span className="quantity-changed-badge">
                       <Edit3 size={14} />
-                      Modified
+                      {t('quantityModified', 'Qty Modified')}
+                    </span>
+                  )}
+                  {hasQualityChanges && (
+                    <span className="quality-changed-badge">
+                      <AlertCircle size={14} />
+                      {t('qualityModified', 'Grade Modified')}
                     </span>
                   )}
                 </h3>
@@ -544,13 +648,16 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
               )}
 
               <div className="items-table-container">
-                <table className="items-table">
+                <table className="items-table wcn-verification-table">
                   <thead>
                     <tr>
                       <th>Material</th>
                       <th className="text-center">Expected Qty</th>
                       <th className="text-center">Verified Qty</th>
                       <th>Unit</th>
+                      <th className="text-center">Expected Grade</th>
+                      <th className="text-center">Verified Grade</th>
+                      <th className="text-center">Quality ✓</th>
                       <th className="text-right">Rate</th>
                       <th className="text-right">Amount</th>
                       <th className="text-center" style={{ width: '50px' }}></th>
@@ -558,12 +665,13 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                   </thead>
                   <tbody>
                     {items.map((item, index) => {
-                      const hasChanged = item.verifiedQuantity !== item.originalQuantity || item.isNewItem;
+                      const hasQtyChanged = item.verifiedQuantity !== item.originalQuantity || item.isNewItem;
+                      const hasGradeChanged = item.verifiedQualityGrade !== item.expectedQualityGrade;
                       const rate = parseFloat(item.agreedRate || item.contractRate || 0);
                       const amount = item.verifiedQuantity * rate;
 
                       return (
-                        <tr key={index} className={`${hasChanged ? 'quantity-modified' : ''} ${item.isNewItem ? 'new-item-row' : ''}`}>
+                        <tr key={index} className={`${hasQtyChanged ? 'quantity-modified' : ''} ${hasGradeChanged ? 'quality-modified' : ''} ${item.isNewItem ? 'new-item-row' : ''}`}>
                           <td>
                             <strong>{item.materialName}</strong>
                             {item.materialCode && <small> ({item.materialCode})</small>}
@@ -577,14 +685,14 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                           <td className="text-center">
                             <input
                               type="number"
-                              className={`quantity-input ${hasChanged ? 'changed' : ''}`}
+                              className={`quantity-input ${hasQtyChanged ? 'changed' : ''}`}
                               value={item.verifiedQuantity}
                               onChange={(e) => handleQuantityChange(index, e.target.value)}
                               min="0"
                               step="0.001"
                               disabled={processing}
                             />
-                            {hasChanged && !item.isNewItem && (
+                            {hasQtyChanged && !item.isNewItem && (
                               <span className={`quantity-diff ${item.verifiedQuantity > item.originalQuantity ? 'increase' : 'decrease'}`}>
                                 {item.verifiedQuantity > item.originalQuantity ? '+' : ''}
                                 {(item.verifiedQuantity - item.originalQuantity).toFixed(3)}
@@ -592,11 +700,47 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                             )}
                           </td>
                           <td>{item.unit || 'KG'}</td>
+                          <td className="text-center">
+                            {item.isNewItem ? (
+                              <span className="no-expected">-</span>
+                            ) : (
+                              <span className={`quality-badge ${getQualityBadgeClass(item.expectedQualityGrade)}`}>
+                                {item.expectedQualityGrade}
+                              </span>
+                            )}
+                          </td>
+                          <td className="text-center">
+                            <select
+                              className={`quality-select ${hasGradeChanged ? 'changed' : ''}`}
+                              value={item.verifiedQualityGrade}
+                              onChange={(e) => handleQualityGradeChange(index, e.target.value)}
+                              disabled={processing}
+                            >
+                              {qualityGrades.map(grade => (
+                                <option key={grade} value={grade}>{grade}</option>
+                              ))}
+                            </select>
+                            {hasGradeChanged && !item.isNewItem && (
+                              <span className="quality-change-indicator">
+                                {item.expectedQualityGrade} → {item.verifiedQualityGrade}
+                              </span>
+                            )}
+                          </td>
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              className="quality-verified-checkbox"
+                              checked={item.qualityVerified || false}
+                              onChange={() => handleQualityVerifiedToggle(index)}
+                              disabled={processing}
+                              title={item.qualityVerified ? t('qualityVerified', 'Quality Verified') : t('verifyQuality', 'Click to verify quality')}
+                            />
+                          </td>
                           <td className="text-right">
                             OMR {rate.toFixed(3)}
                           </td>
                           <td className="text-right">
-                            <strong className={hasChanged ? 'amount-changed' : ''}>
+                            <strong className={hasQtyChanged ? 'amount-changed' : ''}>
                               OMR {amount.toFixed(2)}
                             </strong>
                           </td>
@@ -619,7 +763,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td colSpan="5" className="text-right"><strong>Total Value:</strong></td>
+                      <td colSpan="8" className="text-right"><strong>Total Value:</strong></td>
                       <td className="text-right">
                         <strong className="total-amount">
                           OMR {items.reduce((sum, item) =>

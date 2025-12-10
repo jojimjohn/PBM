@@ -29,7 +29,7 @@ const systemSettingsService = {
     try {
       const url = `${API_BASE_URL}/system-settings/${key}`
       const data = await authService.makeAuthenticatedRequest(url)
-      return response
+      return data
     } catch (error) {
       console.error(`Error fetching setting ${key}:`, error)
       return {

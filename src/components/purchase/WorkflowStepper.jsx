@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Phone, Truck, ShoppingCart, Receipt } from 'lucide-react';
+import { FileText, Phone, Truck, ShoppingCart, Receipt, DollarSign } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import '../../styles/WorkflowStepper.css';
 
@@ -7,9 +7,9 @@ import '../../styles/WorkflowStepper.css';
  * WorkflowStepper Component
  *
  * Visual guide showing the purchase workflow progression:
- * Contracts → Callouts → WCN/Collection → PO → Bill
+ * Contracts → Callouts → WCN/Collection → PO → Expenses → Bill
  *
- * @param {string} activeTab - Current active tab ('orders', 'collections', 'expenses', 'vendors')
+ * @param {string} activeTab - Current active tab ('orders', 'collections', 'expenses', 'bills', 'vendors')
  * @param {function} onStepClick - Callback when a step is clicked
  */
 const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
@@ -19,7 +19,7 @@ const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
     {
       id: 'contracts',
       label: t('contracts'),
-      icon: <FileText size={20} />,
+      icon: <FileText size={14} />,
       description: t('workflowContractsDesc'),
       tab: null, // External - redirects to /contracts
       href: '/contracts',
@@ -28,7 +28,7 @@ const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
     {
       id: 'callouts',
       label: t('callouts'),
-      icon: <Phone size={20} />,
+      icon: <Phone size={14} />,
       description: t('workflowCalloutsDesc'),
       tab: 'collections', // Part of collections workflow
       position: 2
@@ -36,7 +36,7 @@ const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
     {
       id: 'wcn',
       label: t('wcnCollection'),
-      icon: <Truck size={20} />,
+      icon: <Truck size={14} />,
       description: t('workflowWcnDesc'),
       tab: 'collections',
       position: 3
@@ -44,18 +44,26 @@ const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
     {
       id: 'po',
       label: t('purchaseOrders'),
-      icon: <ShoppingCart size={20} />,
+      icon: <ShoppingCart size={14} />,
       description: t('workflowPoDesc'),
       tab: 'orders',
       position: 4
     },
     {
+      id: 'expenses',
+      label: t('expenses', 'Expenses'),
+      icon: <DollarSign size={14} />,
+      description: t('workflowExpensesDesc', 'Track transportation, customs, and other purchase costs'),
+      tab: 'expenses',
+      position: 5
+    },
+    {
       id: 'bill',
       label: t('bills'),
-      icon: <Receipt size={20} />,
+      icon: <Receipt size={14} />,
       description: t('workflowBillDesc'),
-      tab: 'orders', // Bills are managed within orders
-      position: 5
+      tab: 'bills', // Bills tab
+      position: 6
     }
   ];
 

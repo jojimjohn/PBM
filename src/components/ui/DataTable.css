@@ -49,6 +49,31 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.toolbar-right .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Icon-only toolbar buttons */
+.toolbar-right .btn.btn-icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-right .btn.btn-icon-only.btn-sm {
+  width: 32px;
+  height: 32px;
+}
+
+.toolbar-right .btn.btn-icon-only svg {
+  flex-shrink: 0;
 }
 
 /* Search */
@@ -196,6 +221,43 @@
 .btn-primary:hover:not(:disabled) {
   background: #1d4ed8;
   border-color: #1d4ed8;
+}
+
+/* Info button variant - ensure high specificity */
+.btn.btn-info,
+.data-table .btn.btn-info,
+.data-table-container .btn.btn-info {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  color: white !important;
+  border-color: #0ea5e9 !important;
+}
+
+.btn.btn-info:hover:not(:disabled),
+.data-table .btn.btn-info:hover:not(:disabled),
+.data-table-container .btn.btn-info:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border-color: #0284c7 !important;
+}
+
+.btn.btn-info svg,
+.data-table .btn.btn-info svg,
+.data-table-container .btn.btn-info svg {
+  color: white !important;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  border-color: #059669;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  border-color: #047857;
+}
+
+.btn-success svg {
+  color: white;
 }
 
 /* Table */
@@ -1435,4 +1497,192 @@
 
 [data-theme="dark"] .mobile-field-value {
   color: #d1d5db;
+}
+
+/* ============================================
+   Print Styles - Clean DataTable-only output
+   ============================================ */
+@media print {
+  /* Hide non-essential elements */
+  header,
+  nav,
+  .navbar,
+  .sidebar,
+  .page-header,
+  .tab-buttons,
+  .purchase-tabs,
+  .purchase-summary,
+  .workflow-stepper,
+  .data-table-toolbar,
+  .data-table-pagination,
+  .pagination-controls,
+  .pagination-info,
+  .toolbar-left,
+  .toolbar-right,
+  .search-box,
+  .filters-container,
+  .export-buttons,
+  .column-toggle,
+  .bulk-actions,
+  .advanced-filters-panel,
+  .advanced-filters-backdrop,
+  .action-buttons,
+  .table-actions,
+  .summary-cards,
+  .bills-summary-cards,
+  .bills-filters,
+  .bills-export-toolbar,
+  .tab-header,
+  .data-table-header-actions,
+  .message-toast,
+  footer,
+  .modal-overlay,
+  .modal {
+    display: none !important;
+  }
+
+  /* Reset body and page layout for print */
+  * {
+    visibility: hidden;
+  }
+
+  .data-table-container,
+  .data-table-container * {
+    visibility: visible;
+  }
+
+  .data-table-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Show only header and title */
+  .data-table-header {
+    display: block !important;
+    visibility: visible !important;
+    background: white !important;
+    border: none !important;
+    padding: 0 0 0.5rem 0 !important;
+    margin-bottom: 0.5rem !important;
+    border-bottom: 2px solid #374151 !important;
+  }
+
+  .data-table-title {
+    font-size: 14pt !important;
+    margin: 0 !important;
+    color: #000 !important;
+    visibility: visible !important;
+  }
+
+  .data-table-subtitle {
+    font-size: 10pt !important;
+    color: #666 !important;
+    margin: 0.25rem 0 0 0 !important;
+    visibility: visible !important;
+  }
+
+  /* Table styling for print */
+  .table-wrapper {
+    overflow: visible !important;
+    max-height: none !important;
+    visibility: visible !important;
+  }
+
+  .data-table {
+    width: 100% !important;
+    font-size: 9pt !important;
+    border-collapse: collapse !important;
+    background: white !important;
+    visibility: visible !important;
+  }
+
+  .data-table thead {
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    display: table-header-group !important;
+  }
+
+  .data-table th {
+    background: #f3f4f6 !important;
+    color: #000 !important;
+    font-weight: 600 !important;
+    padding: 6px 8px !important;
+    font-size: 8pt !important;
+    text-transform: uppercase !important;
+    border-bottom: 2px solid #374151 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
+  }
+
+  .data-table td {
+    padding: 4px 8px !important;
+    font-size: 9pt !important;
+    color: #000 !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: white !important;
+    visibility: visible !important;
+  }
+
+  .data-table tbody tr:nth-child(even) td {
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .data-table tbody tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Status badges for print */
+  .status-badge {
+    padding: 2px 6px !important;
+    font-size: 8pt !important;
+    border-radius: 2px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure proper margins for PDF */
+  @page {
+    size: A4 landscape;
+    margin: 1cm;
+  }
+}
+
+/* Export buttons container */
+.export-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.export-buttons .btn.btn-icon-only {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.export-buttons .btn.btn-icon-only.btn-sm {
+  width: 28px;
+  height: 28px;
 }

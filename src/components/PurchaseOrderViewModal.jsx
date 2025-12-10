@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './ui/Modal';
 import {
   FileText, Calendar, User, Package, DollarSign,
   CheckCircle, AlertTriangle, Truck, Edit3, Link2,
-  MapPin, Clock
+  MapPin, Clock, Receipt
 } from 'lucide-react';
 import './PurchaseOrderViewModal.css';
 import purchaseOrderService from '../services/purchaseOrderService';
+import purchaseOrderExpenseService from '../services/purchaseOrderExpenseService';
 
 const PurchaseOrderViewModal = ({
   isOpen,
@@ -16,6 +17,31 @@ const PurchaseOrderViewModal = ({
   onRefresh,
   t
 }) => {
+  const [expenses, setExpenses] = useState([]);
+  const [loadingExpenses, setLoadingExpenses] = useState(false);
+
+  // Load expenses when modal opens
+  useEffect(() => {
+    const loadExpenses = async () => {
+      if (isOpen && orderData?.id) {
+        setLoadingExpenses(true);
+        try {
+          const result = await purchaseOrderExpenseService.getExpenses(orderData.id);
+          if (result.success) {
+            setExpenses(result.data?.expenses || []);
+          }
+        } catch (error) {
+          console.error('Error loading PO expenses:', error);
+        } finally {
+          setLoadingExpenses(false);
+        }
+      }
+    };
+    loadExpenses();
+  }, [isOpen, orderData?.id]);
+
+  // Calculate total expenses
+  const totalExpenses = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
   const [linking, setLinking] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [linkFormData, setLinkFormData] = useState({
@@ -341,6 +367,65 @@ const PurchaseOrderViewModal = ({
           </div>
         </div>
 
+        {/* Linked Expenses Section */}
+        <div className="expenses-card">
+          <div className="expenses-card-header">
+            <Receipt size={18} />
+            <h3>Linked Expenses ({expenses.length})</h3>
+          </div>
+          {loadingExpenses ? (
+            <div className="expenses-loading">Loading expenses...</div>
+          ) : expenses.length > 0 ? (
+            <div className="expenses-table-container">
+              <table className="professional-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Vendor</th>
+                    <th className="text-right">Amount</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((expense, index) => (
+                    <tr key={expense.id || index}>
+                      <td>
+                        <span style={{
+                          backgroundColor: '#e0f2fe',
+                          color: '#0369a1',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.75rem',
+                          textTransform: 'capitalize'
+                        }}>
+                          {(expense.category || '').replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>{expense.description || '-'}</td>
+                      <td>{expense.vendor || '-'}</td>
+                      <td className="text-right strong">{formatCurrency(expense.amount)}</td>
+                      <td>{formatDate(expense.expenseDate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan="3" className="text-right strong">Total Expenses:</td>
+                    <td className="text-right strong" style={{ color: '#dc2626' }}>{formatCurrency(totalExpenses)}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <div className="expenses-empty">
+              <Receipt size={24} style={{ opacity: 0.5, marginBottom: '0.5rem' }} />
+              <p>No expenses linked to this purchase order</p>
+            </div>
+          )}
+        </div>
+
         {/* Financial Summary Card */}
         <div className="financial-card">
           <div className="financial-card-header">
@@ -349,7 +434,7 @@ const PurchaseOrderViewModal = ({
           </div>
           <div className="financial-card-body">
             <div className="summary-row">
-              <span className="summary-label">Subtotal</span>
+              <span className="summary-label">Subtotal (Items)</span>
               <span className="summary-value">{formatCurrency(orderData.subtotal)}</span>
             </div>
             {parseFloat(orderData.taxAmount) > 0 && (
@@ -364,9 +449,19 @@ const PurchaseOrderViewModal = ({
                 <span className="summary-value">{formatCurrency(orderData.shippingCost)}</span>
               </div>
             )}
-            <div className="summary-row total">
-              <span className="summary-label strong">Total Amount</span>
-              <span className="summary-value strong">{formatCurrency(orderData.totalAmount)}</span>
+            <div className="summary-row">
+              <span className="summary-label">Order Total</span>
+              <span className="summary-value">{formatCurrency(orderData.totalAmount)}</span>
+            </div>
+            {totalExpenses > 0 && (
+              <div className="summary-row expenses-row">
+                <span className="summary-label">+ Linked Expenses</span>
+                <span className="summary-value" style={{ color: '#dc2626' }}>{formatCurrency(totalExpenses)}</span>
+              </div>
+            )}
+            <div className="summary-row total grand-total">
+              <span className="summary-label strong">Grand Total (with expenses)</span>
+              <span className="summary-value strong">{formatCurrency((parseFloat(orderData.totalAmount) || 0) + totalExpenses)}</span>
             </div>
           </div>
         </div>

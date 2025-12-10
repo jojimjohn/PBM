@@ -258,35 +258,34 @@ const CalloutManager = () => {
       key: 'actions',
       header: t('actions'),
       render: (value, row) => (
-        <div className="flex space-x-2">
+        <div className="table-actions">
           <button
             onClick={() => handleViewCallout(row)}
-            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+            className="btn btn-outline btn-sm"
             title={t('viewDetails')}
           >
-            <Eye className="w-4 h-4" />
+            <Eye size={14} />
           </button>
 
           {/* WCN Finalization - Sprint 4.5: Only for completed but NOT finalized orders */}
           {row.status === 'completed' && !row.is_finalized && (
             <button
               onClick={() => handleFinalizeWCN(row)}
-              className="p-1 text-green-600 hover:bg-green-50 rounded"
+              className="btn btn-success btn-sm"
               title={t('finalizeWCN')}
             >
-              <FileCheck className="w-4 h-4" />
+              <FileCheck size={14} />
             </button>
           )}
 
           {/* WCN Rectification - Sprint 4.5: Only for finalized orders */}
-          {/* Note: Use Boolean() or !! to avoid rendering 0 when is_finalized is 0 */}
           {!!row.is_finalized && (
             <button
               onClick={() => handleRectifyWCN(row)}
-              className="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+              className="btn btn-outline btn-sm"
               title={t('rectifyWCN')}
             >
-              <FileEdit className="w-4 h-4" />
+              <FileEdit size={14} />
             </button>
           )}
 
@@ -294,10 +293,10 @@ const CalloutManager = () => {
           {(row.status === 'scheduled' || row.status === 'in_transit' || row.status === 'collecting') && (
             <button
               onClick={() => handleAssignDriver(row)}
-              className="p-1 text-purple-600 hover:bg-purple-50 rounded"
+              className="btn btn-outline btn-sm"
               title={t('assignDriver')}
             >
-              <Truck className="w-4 h-4" />
+              <Truck size={14} />
             </button>
           )}
 
@@ -305,10 +304,10 @@ const CalloutManager = () => {
           {(row.status === 'scheduled' || row.status === 'in_transit' || row.status === 'collecting' || row.status === 'failed') && (
             <button
               onClick={() => handleUpdateStatus(row)}
-              className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+              className="btn btn-warning btn-sm"
               title={t('updateStatus')}
             >
-              <Play className="w-4 h-4" />
+              <Play size={14} />
             </button>
           )}
 
@@ -317,17 +316,17 @@ const CalloutManager = () => {
             <>
               <button
                 onClick={() => handleEditCallout(row)}
-                className="p-1 text-green-600 hover:bg-green-50 rounded"
+                className="btn btn-outline btn-sm"
                 title={t('edit')}
               >
-                <Edit className="w-4 h-4" />
+                <Edit size={14} />
               </button>
               <button
                 onClick={() => handleDeleteCallout(row.id)}
-                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                className="btn btn-danger btn-sm"
                 title={t('delete')}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 size={14} />
               </button>
             </>
           )}

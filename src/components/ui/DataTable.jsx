@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { 
-  ChevronUp, 
-  ChevronDown, 
-  Search, 
-  Filter, 
-  Download, 
+import {
+  ChevronUp,
+  ChevronDown,
+  Search,
+  Filter,
+  Download,
   Eye,
   EyeOff,
   ChevronLeft,
@@ -15,6 +15,7 @@ import {
   Calendar,
   FileSpreadsheet,
   FileText,
+  Printer,
   X
 } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
@@ -500,11 +501,11 @@ const DataTable = ({
           {enableColumnToggle && (
             <div className="column-toggle">
               <button
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-sm btn-icon-only"
                 onClick={() => setShowColumnToggle(!showColumnToggle)}
+                title={t('columns')}
               >
                 <Eye size={16} />
-                {t('columns')}
               </button>
               {showColumnToggle && (
                 <div className="column-toggle-dropdown">
@@ -528,12 +529,12 @@ const DataTable = ({
 
           {/* Advanced Filters */}
           {filterable && (
-            <button 
-              className="btn btn-outline btn-sm"
+            <button
+              className="btn btn-outline btn-sm btn-icon-only"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              title={t('advancedFilters')}
             >
               <Filter size={16} />
-              {t('advancedFilters')}
               {Object.values(advancedFilters).some(f => f.enabled) && (
                 <span className="filter-count">
                   {Object.values(advancedFilters).filter(f => f.enabled).length}
@@ -544,16 +545,35 @@ const DataTable = ({
 
           {/* Export */}
           {exportable && (
-            <div className="export-dropdown">
-              <button 
-                className="btn btn-outline btn-sm"
+            <div className="export-buttons">
+              <button
+                className="btn btn-outline btn-sm btn-icon-only"
                 onClick={() => {
                   const filename = `${title || 'data'}_${new Date().toISOString().split('T')[0]}.csv`
                   exportToCSV(sortedData, activeColumns, filename)
                 }}
+                title={t('exportCSV') || 'Export to CSV'}
               >
                 <FileSpreadsheet size={16} />
-                {t('exportCSV')}
+              </button>
+              <button
+                className="btn btn-outline btn-sm btn-icon-only"
+                onClick={() => {
+                  // Add print class to container for targeted print styles
+                  if (tableRef.current) {
+                    tableRef.current.closest('.data-table-container')?.classList.add('printing')
+                  }
+                  window.print()
+                  // Remove class after print dialog closes
+                  setTimeout(() => {
+                    if (tableRef.current) {
+                      tableRef.current.closest('.data-table-container')?.classList.remove('printing')
+                    }
+                  }, 100)
+                }}
+                title={t('print') || 'Print / Save as PDF'}
+              >
+                <Printer size={16} />
               </button>
             </div>
           )}

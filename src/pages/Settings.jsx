@@ -6,6 +6,7 @@ import { usePermissions } from '../hooks/usePermissions'
 import { PERMISSIONS } from '../config/roles'
 import systemSettingsService from '../services/systemSettingsService'
 import branchService from '../services/branchService'
+import MFASetup from '../components/MFASetup'
 import {
   Settings as SettingsIcon,
   Globe,
@@ -27,7 +28,8 @@ import {
   Edit,
   Trash2,
   X,
-  MapPin
+  MapPin,
+  Lock
 } from 'lucide-react'
 import './Settings.css'
 
@@ -302,6 +304,7 @@ const Settings = () => {
   const tabs = [
     { id: 'localization', label: t('localizationSettings'), icon: Globe },
     { id: 'system', label: t('generalSettings'), icon: SettingsIcon },
+    { id: 'security', label: t('securitySettings', 'Security'), icon: Lock },
     { id: 'branches', label: t('branchManagement', 'Branch Management'), icon: Building },
     { id: 'appearance', label: t('appearanceSettings'), icon: Palette },
     { id: 'notifications', label: t('notificationSettings'), icon: Bell }
@@ -422,15 +425,15 @@ const Settings = () => {
                 </div>
 
                 <div className="setting-group">
-                  <label htmlFor="firstDayOfWeek">First Day of Week</label>
+                  <label htmlFor="firstDayOfWeek">{t('firstDayOfWeek')}</label>
                   <select
                     id="firstDayOfWeek"
                     value={formData.firstDayOfWeek}
                     onChange={(e) => handleInputChange('firstDayOfWeek', parseInt(e.target.value))}
                   >
-                    <option value={0}>Sunday</option>
-                    <option value={1}>Monday</option>
-                    <option value={6}>Saturday</option>
+                    <option value={0}>{t('sunday')}</option>
+                    <option value={1}>{t('monday')}</option>
+                    <option value={6}>{t('saturday')}</option>
                   </select>
                 </div>
               </div>
@@ -538,6 +541,21 @@ const Settings = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security Settings */}
+          {activeTab === 'security' && (
+            <div className="settings-section">
+              <div className="section-header">
+                <Lock size={20} />
+                <h2>{t('securitySettings', 'Security Settings')}</h2>
+                <p>{t('manageAccountSecurity', 'Manage your account security and two-factor authentication')}</p>
+              </div>
+
+              <div className="security-content">
+                <MFASetup />
               </div>
             </div>
           )}

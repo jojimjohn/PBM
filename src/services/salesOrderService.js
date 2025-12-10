@@ -50,11 +50,11 @@ class SalesOrderService {
       const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders`);
 
       // Transform decimal fields if data exists
-      if (response.success && response.data) {
-        response.data = this.transformDecimalFields(response.data);
+      if (data.success && data.data) {
+        data.data = this.transformDecimalFields(data.data);
       }
 
-      return response;
+      return data;
     } catch (error) {
       console.error('Error fetching sales orders:', error);
       return {
@@ -73,11 +73,11 @@ class SalesOrderService {
       const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}`);
 
       // Transform decimal fields if data exists
-      if (response.success && response.data) {
-        response.data = this.transformDecimalFields(response.data);
+      if (data.success && data.data) {
+        data.data = this.transformDecimalFields(data.data);
       }
 
-      return response;
+      return data;
     } catch (error) {
       console.error('Error fetching sales order:', error);
       return {
@@ -102,11 +102,11 @@ class SalesOrderService {
       });
 
       // Transform decimal fields if data exists
-      if (response.success && response.data) {
-        response.data = this.transformDecimalFields(response.data);
+      if (data.success && data.data) {
+        data.data = this.transformDecimalFields(data.data);
       }
 
-      return response;
+      return data;
     } catch (error) {
       console.error('Error creating sales order:', error);
       return {
@@ -346,11 +346,11 @@ class SalesOrderService {
       const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/today-summary`);
 
       // Transform decimal fields if data exists
-      if (response.success && response.data) {
-        response.data = this.transformDecimalFields(response.data);
+      if (data.success && data.data) {
+        data.data = this.transformDecimalFields(data.data);
       }
 
-      return response;
+      return data;
     } catch (error) {
       console.error('Error fetching today\'s sales summary:', error);
       return {

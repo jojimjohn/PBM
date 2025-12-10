@@ -1,26 +1,38 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSystemSettings } from '../context/SystemSettingsContext'
 import { useLocalization } from '../context/LocalizationContext'
 import { usePermissions } from '../hooks/usePermissions'
+import { useSessionTimeout } from '../hooks/useSessionTimeout'
 import { PERMISSIONS } from '../config/roles'
 import { getModuleIconPaths } from '../config/modules'
 import PermissionGate from './PermissionGate'
 import BusinessRouter from './BusinessRouter'
 import CommandPalette from './ui/CommandPalette'
 import NotificationPanel from './ui/NotificationPanel'
+import SessionTimeoutWarning from './SessionTimeoutWarning'
+import ProfileModal from './ProfileModal'
+import workflowService from '../services/workflowService'
 import { Menu, X } from 'lucide-react'
 import './MainLayout.css'
 
 const MainLayout = () => {
-  const { user, selectedCompany, logout } = useAuth()
+  const { user, selectedCompany, logout, isAuthenticated } = useAuth()
   const { theme, toggleTheme } = useSystemSettings()
   const { t, currentLanguage, changeLanguage, getSupportedLanguages } = useLocalization()
   const { getAccessibleModules, hasPermission } = usePermissions()
   const location = useLocation()
   const navigate = useNavigate()
   const isOilBusiness = selectedCompany?.businessType === 'oil'
+
+  // Session timeout monitoring
+  const {
+    showWarning: showSessionWarning,
+    remainingMinutes,
+    extendSession,
+    isExtending
+  } = useSessionTimeout(isAuthenticated)
   
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -29,33 +41,48 @@ const MainLayout = () => {
   // Command Palette state
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
 
-  // Sample notifications (replace with real data later)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'info',
-      title: 'New Purchase Order',
-      message: 'PO-2025-0123 has been created successfully',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false
-    },
-    {
-      id: 2,
-      type: 'warning',
-      title: 'Low Stock Alert',
-      message: 'Engine Oil inventory below minimum threshold',
-      timestamp: new Date(Date.now() - 7200000),
-      read: false
-    },
-    {
-      id: 3,
-      type: 'success',
-      title: 'Invoice Approved',
-      message: 'Invoice INV-2025-0156 has been approved',
-      timestamp: new Date(Date.now() - 86400000),
-      read: true
+  // Profile Modal state
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  // Live notifications from workflow API
+  const [notifications, setNotifications] = useState([])
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
+
+  // Load live notifications from API
+  const loadNotifications = useCallback(async () => {
+    if (!user || !selectedCompany) return
+
+    setNotificationsLoading(true)
+    try {
+      const result = await workflowService.getNotifications(10)
+      if (result.success && result.data?.notifications) {
+        // Transform API notifications to UI format
+        const transformedNotifications = result.data.notifications.map((notif, index) => ({
+          id: `notif-${index}-${Date.now()}`,
+          type: notif.severity === 'error' ? 'error' : notif.severity === 'warning' ? 'warning' : 'info',
+          title: notif.title,
+          message: notif.message,
+          timestamp: new Date(),
+          read: false,
+          route: notif.route,
+          count: notif.count
+        }))
+        setNotifications(transformedNotifications)
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error)
+    } finally {
+      setNotificationsLoading(false)
     }
-  ])
+  }, [user, selectedCompany])
+
+  // Load notifications on mount and when company changes
+  useEffect(() => {
+    loadNotifications()
+    // Refresh notifications every 2 minutes
+    const interval = setInterval(loadNotifications, 120000)
+    return () => clearInterval(interval)
+  }, [loadNotifications])
 
   // Keyboard shortcut for Command Palette (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -164,8 +191,11 @@ const MainLayout = () => {
         'reports': '/reports',
         'expenses': '/expenses',
         'petty-cash': '/petty-cash',
+        'banking': '/banking',
         'invoices': '/invoices',
-        'settings': '/settings'
+        'settings': '/settings',
+        'users': '/users',
+        'roles': '/roles'
       }
       
       // Map module IDs to translation keys
@@ -179,11 +209,16 @@ const MainLayout = () => {
         'sales': 'sales',
         'purchase': 'purchase',
         'contracts': 'contracts',
+        'collections': 'collections',
+        'wastage': 'wastage',
         'reports': 'reports',
         'expenses': 'expense',
         'petty-cash': 'cash',
+        'banking': 'banking',
         'invoices': 'invoice',
-        'settings': 'settings'
+        'settings': 'settings',
+        'users': 'userManagement',
+        'roles': 'roleManagement'
       }
       
       const iconData = getModuleIconPaths(moduleId)
@@ -317,20 +352,20 @@ const MainLayout = () => {
                   </svg>
                 </button>
                 <div className="user-dropdown">
-                  <a href="#" className="dropdown-item">
+                  <button className="dropdown-item" onClick={() => setIsProfileOpen(true)}>
                     <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
                     {t('profile')}
-                  </a>
-                  <a href="#" className="dropdown-item" onClick={() => navigate('/settings')}>
+                  </button>
+                  <button className="dropdown-item" onClick={() => navigate('/settings')}>
                     <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="3" />
                       <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" />
                     </svg>
                     {t('settings')}
-                  </a>
+                  </button>
                   <hr className="dropdown-divider" />
                   <button onClick={logout} className="dropdown-item logout-item">
                     <svg className="dropdown-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -497,6 +532,21 @@ const MainLayout = () => {
         commands={getCommandPaletteCommands()}
         onExecute={handleCommandExecute}
         recentCommands={[]}
+      />
+
+      {/* Session Timeout Warning */}
+      <SessionTimeoutWarning
+        show={showSessionWarning}
+        remainingMinutes={remainingMinutes}
+        onExtend={extendSession}
+        onLogout={logout}
+        isExtending={isExtending}
+      />
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
       />
 
     </div>

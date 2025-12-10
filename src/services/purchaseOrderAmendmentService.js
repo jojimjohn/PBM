@@ -29,6 +29,27 @@ class PurchaseOrderAmendmentService {
   }
 
   /**
+   * Get amendment counts for all purchase orders in a single request
+   * Returns a map of orderId -> count
+   * This avoids N+1 queries when loading the PO list
+   */
+  async getAllCounts() {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-order-amendments/counts`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching amendment counts:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch amendment counts',
+        data: {}
+      };
+    }
+  }
+
+  /**
    * Get a specific amendment by ID
    */
   async getById(amendmentId) {
