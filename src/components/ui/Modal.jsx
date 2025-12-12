@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { modalVariants, backdropVariants } from '../../config/animations';
+import { useTourBroadcast } from '../../context/TourContext';
 import './Modal.css';
 
 /**
@@ -23,6 +24,7 @@ import './Modal.css';
  * @param {boolean} showCloseButton - Show X button in header (default: true)
  * @param {boolean} preventScroll - Prevent body scroll when open (default: true)
  * @param {string} className - Additional CSS classes
+ * @param {string} tourId - Optional ID for product tour context detection
  */
 const Modal = ({
   isOpen,
@@ -37,9 +39,22 @@ const Modal = ({
   showCloseButton = true,
   preventScroll = true,
   className = '',
+  tourId = null,
 }) => {
   const modalRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const { broadcast } = useTourBroadcast();
+
+  // Broadcast modal state to tour context
+  useEffect(() => {
+    if (tourId) {
+      if (isOpen) {
+        broadcast({ currentModal: tourId, modalProps: { title } });
+      } else {
+        broadcast({ currentModal: null, modalProps: {} });
+      }
+    }
+  }, [isOpen, tourId, title, broadcast]);
 
   // Handle ESC key press
   useEffect(() => {

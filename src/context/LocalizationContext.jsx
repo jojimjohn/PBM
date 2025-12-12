@@ -1473,6 +1473,18 @@ const translations = {
     security: 'Security',
     securitySettings: 'Security Settings',
     manageAccountSecurity: 'Manage your account security and two-factor authentication',
+
+    // Product Tour
+    tourGotIt: "Got it, I'll do it",
+    tourSkip: 'Skip Tour',
+    tourActionHint: 'Perform this action to continue...',
+
+    // Help Menu
+    helpAndTraining: 'Help & Training',
+    workflowGuides: 'Workflow Guides',
+    workflowGuidesDescription: 'Step-by-step guides to complete business processes',
+    featureTours: 'Feature Tours',
+    featureToursDescription: 'Quick tours of individual features and modules',
   },
 
   ar: {
@@ -3017,6 +3029,18 @@ const translations = {
     security: 'الأمان',
     securitySettings: 'إعدادات الأمان',
     manageAccountSecurity: 'إدارة أمان حسابك والمصادقة الثنائية',
+
+    // Product Tour
+    tourGotIt: 'فهمت، سأفعل',
+    tourSkip: 'تخطي الجولة',
+    tourActionHint: 'قم بهذا الإجراء للمتابعة...',
+
+    // Help Menu
+    helpAndTraining: 'المساعدة والتدريب',
+    workflowGuides: 'أدلة سير العمل',
+    workflowGuidesDescription: 'أدلة خطوة بخطوة لإكمال العمليات التجارية',
+    featureTours: 'جولات الميزات',
+    featureToursDescription: 'جولات سريعة للميزات والوحدات الفردية',
   }
 }
 

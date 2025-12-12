@@ -5,6 +5,7 @@ import DatePicker from '../../../components/ui/DatePicker'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import { useTourBroadcast } from '../../../context/TourContext'
 import systemSettingsService from '../../../services/systemSettingsService'
 import branchService from '../../../services/branchService'
 import uploadService from '../../../services/uploadService'
@@ -45,6 +46,9 @@ const PurchaseOrderForm = ({
   const [branches, setBranches] = useState([])
   const [loadingBranches, setLoadingBranches] = useState(false)
   const [errors, setErrors] = useState({})
+
+  // Tour context broadcast
+  const { broadcast, isTourActive } = useTourBroadcast()
 
   // Helper function to format date from ISO to yyyy-MM-dd
   const formatDateForInput = (dateValue) => {
@@ -143,19 +147,36 @@ const PurchaseOrderForm = ({
     calculateTotals()
   }, [formData.items, formData.taxPercent])
 
+  // Broadcast form state to tour context when tour is active
+  useEffect(() => {
+    if (isTourActive && isOpen) {
+      // Count items that have at least a material selected
+      const validItemCount = formData.items.filter(item => item.materialId).length
+      // Count items that are complete (material, quantity, rate)
+      const completeItemCount = formData.items.filter(
+        item => item.materialId && item.quantity && item.rate
+      ).length
+
+      broadcast({
+        formState: {
+          hasSupplier: !!formData.supplierId,
+          hasBranch: !!formData.branch_id,
+          hasOrderDate: !!formData.orderDate,
+          hasDeliveryDate: !!formData.expectedDeliveryDate,
+          itemCount: validItemCount,
+          completeItemCount: completeItemCount,
+          hasNotes: !!formData.notes,
+          isDraft: formData.status === 'draft',
+          isEdit: isEdit
+        }
+      })
+    }
+  }, [formData, isTourActive, isOpen, isEdit, broadcast])
+
   const calculateTotals = () => {
     const subtotal = formData.items.reduce((sum, item) => sum + (item.amount || 0), 0)
     const taxAmount = (subtotal * (formData.taxPercent || 0)) / 100
     const totalAmount = subtotal + taxAmount
-
-    console.log('💰 Calculating totals:', {
-      itemsCount: formData.items.length,
-      itemAmounts: formData.items.map(i => i.amount),
-      subtotal,
-      taxPercent: formData.taxPercent,
-      taxAmount,
-      totalAmount
-    })
 
     setFormData(prev => ({
       ...prev,
@@ -345,6 +366,7 @@ const PurchaseOrderForm = ({
       onClose={onClose}
       className="modal-xxl"
       closeOnOverlayClick={false}
+      tourId="PurchaseOrderForm"
     >
       <form className="purchase-order-form" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}
@@ -385,6 +407,7 @@ const PurchaseOrderForm = ({
               searchable
               required
               error={errors.supplierId}
+              data-tour="po-supplier-select"
             />
 
             <Autocomplete
@@ -401,6 +424,7 @@ const PurchaseOrderForm = ({
               loading={loadingBranches}
               error={errors.branch_id}
               helperText={loadingBranches ? 'Loading branches...' : null}
+              data-tour="po-branch-select"
             />
 
             <DatePicker
@@ -492,7 +516,7 @@ const PurchaseOrderForm = ({
         )}
 
         {/* Order Items */}
-        <div className="form-section">
+        <div className="form-section" data-tour="po-items-section">
           <div className="form-section-title">
             <div className="title-with-action">
               <span>
@@ -703,10 +727,11 @@ const PurchaseOrderForm = ({
           <button type="button" className="btn btn-outline" onClick={onClose}>
             Cancel
           </button>
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             disabled={loading}
+            data-tour="po-submit-button"
           >
             {loading ? (
               <>

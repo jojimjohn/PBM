@@ -13,6 +13,8 @@ import CommandPalette from './ui/CommandPalette'
 import NotificationPanel from './ui/NotificationPanel'
 import SessionTimeoutWarning from './SessionTimeoutWarning'
 import ProfileModal from './ProfileModal'
+import HelpMenu from './tour/HelpMenu'
+import ProductTour from './tour/ProductTour'
 import workflowService from '../services/workflowService'
 import { Menu, X } from 'lucide-react'
 import './MainLayout.css'
@@ -26,13 +28,13 @@ const MainLayout = () => {
   const navigate = useNavigate()
   const isOilBusiness = selectedCompany?.businessType === 'oil'
 
-  // Session timeout monitoring
+  // Session timeout monitoring - pass logout callback for proper 401 handling
   const {
     showWarning: showSessionWarning,
     remainingMinutes,
     extendSession,
     isExtending
-  } = useSessionTimeout(isAuthenticated)
+  } = useSessionTimeout(isAuthenticated, logout)
   
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -244,7 +246,7 @@ const MainLayout = () => {
       <header className="dashboard-header">
         <div className="header-container">
           {/* Left Side - Logo and Company Info */}
-          <div className="header-left">
+          <div className="header-left" data-tour="company-info">
             <div className="logo-section">
               <div className="company-logo">
                 {selectedCompany?.businessType === 'oil' ? (
@@ -293,14 +295,16 @@ const MainLayout = () => {
           <div className="header-right">
             <div className="header-actions">
               {/* Notification Panel */}
-              <NotificationPanel
-                notifications={notifications}
-                onMarkAsRead={handleMarkAsRead}
-                onDelete={handleDeleteNotification}
-                onClearAll={handleClearAllNotifications}
-                onSettingsClick={handleNotificationSettings}
-              />
-              <button onClick={toggleTheme} className="action-btn theme-toggle-btn">
+              <div data-tour="notifications-bell">
+                <NotificationPanel
+                  notifications={notifications}
+                  onMarkAsRead={handleMarkAsRead}
+                  onDelete={handleDeleteNotification}
+                  onClearAll={handleClearAllNotifications}
+                  onSettingsClick={handleNotificationSettings}
+                />
+              </div>
+              <button onClick={toggleTheme} className="action-btn theme-toggle-btn" data-tour="theme-toggle">
                 {theme === 'light' ? (
                   <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -320,8 +324,8 @@ const MainLayout = () => {
                 )}
               </button>
               
-              <div className="language-switcher">
-                <button 
+              <div className="language-switcher" data-tour="language-switcher">
+                <button
                   className="action-btn language-btn"
                   onClick={() => changeLanguage(currentLanguage === 'en' ? 'ar' : 'en')}
                   title={currentLanguage === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
@@ -334,10 +338,12 @@ const MainLayout = () => {
                   <span className="language-code">{currentLanguage.toUpperCase()}</span>
                 </button>
               </div>
-              
+
+              {/* Help Menu for Tours */}
+              <HelpMenu />
             </div>
 
-            <div className="user-profile">
+            <div className="user-profile" data-tour="user-menu">
               <div className="user-avatar">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
@@ -383,7 +389,7 @@ const MainLayout = () => {
       </header>
 
       {/* Desktop Navigation */}
-      <nav className="secondary-nav desktop-only">
+      <nav className="secondary-nav desktop-only" data-tour="main-navigation">
         <div className="secondary-nav-container">
           {getFilteredNavItems().map((navItem) => (
             <button 
@@ -549,6 +555,8 @@ const MainLayout = () => {
         onClose={() => setIsProfileOpen(false)}
       />
 
+      {/* Product Tour - Driver.js overlay */}
+      <ProductTour />
     </div>
   )
 }

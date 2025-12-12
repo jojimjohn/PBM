@@ -5,6 +5,7 @@ import DatePicker from '../../../components/ui/DatePicker'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import { useTourBroadcast } from '../../../context/TourContext'
 import systemSettingsService from '../../../services/systemSettingsService'
 import inventoryService from '../../../services/inventoryService'
 import customerService from '../../../services/customerService'
@@ -47,6 +48,9 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   const [contractTermsExpanded, setContractTermsExpanded] = useState(false)
   const [stockInfo, setStockInfo] = useState({}) // Track current stock levels
   const [defaultVatRate, setDefaultVatRate] = useState(5) // VAT rate from database
+
+  // Tour context broadcast
+  const { broadcast, isTourActive } = useTourBroadcast()
 
   useEffect(() => {
     // Load customers and materials data first
@@ -188,6 +192,31 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     // Recalculate totals when items change
     calculateTotals()
   }, [formData.items, formData.discountPercent])
+
+  // Broadcast form state to tour context when tour is active
+  useEffect(() => {
+    if (isTourActive && isOpen) {
+      const validItemCount = formData.items.filter(item => item.materialId).length
+      const completeItemCount = formData.items.filter(
+        item => item.materialId && item.quantity && item.rate
+      ).length
+
+      broadcast({
+        formState: {
+          hasCustomer: !!formData.customer,
+          hasBranch: !!formData.branch_id,
+          hasOrderDate: !!formData.orderDate,
+          hasDeliveryDate: !!formData.deliveryDate,
+          itemCount: validItemCount,
+          completeItemCount: completeItemCount,
+          hasContractRates: Object.keys(contractRates).length > 0,
+          hasNotes: !!formData.notes,
+          isDraft: formData.status === 'draft',
+          isEdit: !!editingOrder
+        }
+      })
+    }
+  }, [formData, contractRates, isTourActive, isOpen, editingOrder, broadcast])
 
   const loadCustomersAndMaterials = async () => {
     try {
@@ -597,6 +626,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       onClose={onClose}
       className="modal-xxl"
       closeOnOverlayClick={false}
+      tourId="SalesOrderForm"
     >
       <form className="sales-order-form" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}

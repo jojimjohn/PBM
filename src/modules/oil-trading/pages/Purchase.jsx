@@ -112,7 +112,21 @@ const Purchase = () => {
       try {
         const expensesResult = await expenseService.getAll({ expenseType: 'purchase' })
         const expenses = expensesResult.success ? expensesResult.data : []
-        setPurchaseExpenses(expenses)
+        // Normalize expense data for consistent filtering
+        // - Look up PO number from companyOrders for proper filter display
+        // - Ensure vendor field is populated from vendorName/supplierName if empty
+        // - Ensure status field has a value (default based on referenceType)
+        const normalizedExpenses = expenses.map(expense => {
+          // Find the PO to get the actual order number for filtering
+          const po = companyOrders.find(p => p.id === expense.referenceId)
+          return {
+            ...expense,
+            orderNumber: po?.orderNumber || expense.orderNumber || `PO #${expense.referenceId}`,
+            vendor: expense.vendor || expense.vendorName || expense.supplierName || '',
+            status: expense.status || (expense.referenceType === 'purchase_order' ? 'recorded' : 'pending')
+          }
+        })
+        setPurchaseExpenses(normalizedExpenses)
       } catch (error) {
         console.error('Error loading purchase expenses:', error)
         setPurchaseExpenses([])
@@ -872,11 +886,19 @@ const Purchase = () => {
         <div className="tab-buttons">
           {tabs.map(tab => {
             const IconComponent = tab.icon
+            // Map tab IDs to data-tour attributes for workflow guides
+            const tourIdMap = {
+              collections: 'collections-tab',
+              orders: 'purchase-orders-tab',
+              bills: 'bills-tab',
+              expenses: 'expenses-tab'
+            }
             return (
               <button
                 key={tab.id}
                 className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
+                data-tour={tourIdMap[tab.id] || undefined}
               >
                 <IconComponent size={18} />
                 {tab.name}
@@ -896,6 +918,7 @@ const Purchase = () => {
                   <button
                     className="btn btn-primary"
                     onClick={handleCreateOrder}
+                    data-tour="new-po-button"
                   >
                     <Plus size={20} />
                     New Purchase Order
@@ -1239,19 +1262,15 @@ const Purchase = () => {
               data={purchaseExpenses}
               columns={[
                 {
-                  key: 'referenceId',
+                  key: 'orderNumber',
                   header: 'PO Number',
                   sortable: true,
                   filterable: true,
-                  render: (value, row) => {
-                    // Look up the PO number from the purchase orders list
-                    const po = purchaseOrders.find(p => p.id === value)
-                    return (
-                      <span style={{ fontWeight: '600', color: '#1f2937' }}>
-                        {po?.orderNumber || `PO #${value}` || '-'}
-                      </span>
-                    )
-                  }
+                  render: (value) => (
+                    <span style={{ fontWeight: '600', color: '#1f2937' }}>
+                      {value || '-'}
+                    </span>
+                  )
                 },
                 {
                   key: 'category',
@@ -1307,6 +1326,12 @@ const Purchase = () => {
                   header: 'Status',
                   sortable: true,
                   filterable: true,
+                  filterOptions: [
+                    { value: 'recorded', label: 'Recorded' },
+                    { value: 'approved', label: 'Approved' },
+                    { value: 'pending', label: 'Pending' },
+                    { value: 'rejected', label: 'Rejected' }
+                  ],
                   render: (value, row) => {
                     // PO expenses in unified_expenses don't have a status field - they are auto-recorded
                     // If referenceType is 'purchase_order', show as "Recorded" since they're auto-approved

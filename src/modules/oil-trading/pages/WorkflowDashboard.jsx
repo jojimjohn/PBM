@@ -210,7 +210,7 @@ const WorkflowDashboard = () => {
   return (
     <div className="workflow-dashboard-page">
       {/* Welcome Header */}
-      <div className="page-header">
+      <div className="page-header" data-tour="page-header">
         <div className="header-content">
           <h1>{t('workflowDashboard')}</h1>
           <p className="welcome-message">
@@ -225,7 +225,7 @@ const WorkflowDashboard = () => {
 
       {/* Notifications Panel */}
       {notifications.total > 0 && (
-        <div className="notifications-panel">
+        <div className="notifications-panel" data-tour="notifications-panel">
           <div className="notifications-header">
             <div className="notifications-title">
               <Bell size={18} className={notifications.hasUrgent ? 'urgent' : ''} />
@@ -260,7 +260,7 @@ const WorkflowDashboard = () => {
       )}
 
       {/* Quick Stats Row - Primary */}
-      <div className="workflow-stats-grid">
+      <div className="workflow-stats-grid" data-tour="primary-stats">
         {loading ? (
           <>
             <SkeletonStatCard />
@@ -338,7 +338,7 @@ const WorkflowDashboard = () => {
       </div>
 
       {/* Quick Stats Row - Secondary (All Modules) */}
-      <div className="workflow-stats-grid secondary">
+      <div className="workflow-stats-grid secondary" data-tour="secondary-stats">
         {loading ? (
           <>
             <SkeletonStatCard mini />
@@ -464,7 +464,7 @@ const WorkflowDashboard = () => {
       {/* Main Content Grid */}
       <div className="dashboard-content-grid">
         {/* Pending Actions Panel (Left - 60%) */}
-        <div className="pending-actions-panel">
+        <div className="pending-actions-panel" data-tour="pending-tasks">
           <div className="panel-header">
             <h2>
               <Bell size={20} />
@@ -601,7 +601,7 @@ const WorkflowDashboard = () => {
         </div>
 
         {/* Activity Feed Panel (Right - 40%) */}
-        <div className="activity-feed-panel">
+        <div className="activity-feed-panel" data-tour="activity-feed">
           <div className="panel-header">
             <h2>
               <Activity size={20} />

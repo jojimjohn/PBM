@@ -53,6 +53,29 @@ class ContractService {
   }
 
   /**
+   * Get the next auto-generated contract number
+   * Used to pre-populate the form when creating a new contract
+   */
+  async getNextContractNumber() {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/contracts/next-number`);
+
+      return {
+        success: true,
+        data: data.data,
+        contractNumber: data.data?.contractNumber
+      };
+    } catch (error) {
+      console.error('Error fetching next contract number:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch next contract number',
+        contractNumber: null
+      };
+    }
+  }
+
+  /**
    * Create a new contract
    */
   async create(contractData) {

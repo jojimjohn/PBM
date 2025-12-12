@@ -1,0 +1,524 @@
+/* ===================================================================
+   Product Tour Styles - Driver.js Customization
+   PBM Theme: Purple gradient (#667eea → #764ba2)
+   =================================================================== */
+
+/* Override Driver.js default styles */
+.driver-popover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4) !important;
+  max-width: 400px !important;
+  min-width: 300px !important;
+  padding: 0 !important;
+  z-index: 100001 !important;
+  pointer-events: auto !important;
+  /* DO NOT use position: relative - it breaks Driver.js positioning */
+  isolation: isolate !important;
+  /* Smooth fade transition for hide/show during user interaction */
+  transition: opacity 0.3s ease-in-out !important;
+}
+
+/* Popover arrow */
+.driver-popover-arrow {
+  border-color: #667eea transparent transparent transparent !important;
+}
+
+.driver-popover-arrow-side-left {
+  border-color: transparent #667eea transparent transparent !important;
+}
+
+.driver-popover-arrow-side-right {
+  border-color: transparent transparent transparent #667eea !important;
+}
+
+.driver-popover-arrow-side-bottom {
+  border-color: transparent transparent #764ba2 transparent !important;
+}
+
+/* Title */
+.driver-popover-title {
+  color: #ffffff !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  padding: 20px 20px 8px 20px !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Description */
+.driver-popover-description {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  padding: 0 20px 16px 20px !important;
+}
+
+/* Progress text */
+.driver-popover-progress-text {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 12px !important;
+  padding: 0 20px !important;
+}
+
+/* Footer with buttons */
+.driver-popover-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 20px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-radius: 0 0 12px 12px !important;
+}
+
+/* Navigation buttons */
+.driver-popover-navigation-btns {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+/* Button base styles */
+.driver-popover-prev-btn,
+.driver-popover-next-btn {
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Previous button */
+.driver-popover-prev-btn {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.driver-popover-prev-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Next/Done button */
+.driver-popover-next-btn {
+  background: #ffffff !important;
+  color: #667eea !important;
+  border: none !important;
+}
+
+.driver-popover-next-btn:hover {
+  background: #f0f0f0 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Close button - make it more prominent */
+.driver-popover-close-btn {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  z-index: 10 !important;
+}
+
+.driver-popover-close-btn:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  transform: scale(1.05) !important;
+}
+
+/* Skip Tour link in footer */
+.driver-popover-footer .skip-tour-link {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 12px !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  background: none !important;
+  border: none !important;
+  padding: 4px 8px !important;
+  transition: color 0.2s ease !important;
+}
+
+.driver-popover-footer .skip-tour-link:hover {
+  color: #ffffff !important;
+}
+
+/* Overlay - allow scroll events to pass through */
+.driver-overlay {
+  background: rgba(0, 0, 0, 0.4) !important;
+  z-index: 100000 !important;
+  pointer-events: none !important;
+  /* Smooth fade transition when hiding for user interaction */
+  transition: opacity 0.3s ease-in-out !important;
+}
+
+/* ===================================================================
+   Interaction Mode - Legacy (kept for compatibility)
+   NOTE: The main pause/resume approach now destroys driver.js completely
+   These styles are fallback for edge cases only
+   =================================================================== */
+
+/* Minimal fallback - body class for any edge case cleanup */
+body.driver-interaction-mode {
+  pointer-events: auto !important;
+}
+
+/* ===================================================================
+   Modal Scrolling During Tour - Critical for workflow guides
+   =================================================================== */
+
+/* Allow scrolling on modal content during tour */
+.driver-active-element,
+.driver-active-element * {
+  overflow: visible !important;
+}
+
+/* Ensure modals can be scrolled during tour */
+body.driver-active .modal,
+body.driver-active .modal-content,
+body.driver-active .modal-body,
+body.driver-active .modal-dialog,
+body.driver-active [class*="modal"],
+body.driver-active [class*="Modal"] {
+  pointer-events: auto !important;
+}
+
+/* Preserve scroll behavior on modal bodies - don't override overflow */
+body.driver-active .modal-body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Scrollable containers inside modals should remain scrollable */
+body.driver-active .modal-body > *,
+body.driver-active .modal-content > *,
+body.driver-active [class*="FormSection"],
+body.driver-active [class*="form-section"],
+body.driver-active .form-container,
+body.driver-active .scrollable {
+  pointer-events: auto !important;
+}
+
+/* Allow scroll wheel events on the entire page during tour */
+body.driver-active {
+  overflow: auto !important;
+}
+
+/* Ensure scroll containers maintain their scroll behavior */
+body.driver-active [style*="overflow: auto"],
+body.driver-active [style*="overflow-y: auto"],
+body.driver-active [style*="overflow: scroll"],
+body.driver-active [style*="overflow-y: scroll"] {
+  pointer-events: auto !important;
+}
+
+/* The stage wrapper needs to allow pointer events through for scrolling */
+.driver-active-element-stage {
+  pointer-events: none !important;
+}
+
+/* Highlighted element should allow all interactions including scroll */
+.driver-highlighted-element {
+  pointer-events: auto !important;
+}
+
+/* Highlighted element's scrollable parents should work */
+.driver-highlighted-element .modal-body,
+.driver-highlighted-element [class*="scroll"] {
+  pointer-events: auto !important;
+}
+
+/* Stage (highlighted element area) - DO NOT change background, let content show through */
+.driver-active-element {
+  pointer-events: auto !important;
+  /* NO background override - let the actual element content be visible */
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.6),
+              0 0 20px rgba(102, 126, 234, 0.3) !important;
+  border-radius: 8px !important;
+  position: relative !important;
+  z-index: 100001 !important;
+}
+
+/* Ensure all driver popover elements are clickable */
+.driver-popover * {
+  pointer-events: auto !important;
+}
+
+/* Footer buttons must be clickable */
+.driver-popover-footer {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.driver-popover-navigation-btns {
+  pointer-events: auto !important;
+}
+
+.driver-popover-prev-btn,
+.driver-popover-next-btn,
+.driver-popover-close-btn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* ===================================================================
+   RTL Support
+   =================================================================== */
+
+.pbm-tour-popover.rtl .driver-popover-title,
+.pbm-tour-popover.rtl .driver-popover-description,
+.pbm-tour-popover.rtl .driver-popover-progress-text {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.pbm-tour-popover.rtl .driver-popover-footer {
+  flex-direction: row-reverse !important;
+}
+
+.pbm-tour-popover.rtl .driver-popover-navigation-btns {
+  flex-direction: row-reverse !important;
+}
+
+.pbm-tour-popover.rtl .driver-popover-close-btn {
+  right: auto !important;
+  left: 12px !important;
+}
+
+/* ===================================================================
+   Responsive Adjustments
+   =================================================================== */
+
+@media (max-width: 768px) {
+  .driver-popover {
+    max-width: calc(100vw - 32px) !important;
+    margin: 0 16px !important;
+  }
+
+  .driver-popover-title {
+    font-size: 16px !important;
+    padding: 16px 16px 6px 16px !important;
+  }
+
+  .driver-popover-description {
+    font-size: 13px !important;
+    padding: 0 16px 12px 16px !important;
+  }
+
+  .driver-popover-footer {
+    padding: 12px 16px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .driver-popover-navigation-btns {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .driver-popover-prev-btn,
+  .driver-popover-next-btn {
+    flex: 1 !important;
+    text-align: center !important;
+  }
+}
+
+/* ===================================================================
+   Reduced Motion Support
+   =================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-popover,
+  .driver-popover-prev-btn,
+  .driver-popover-next-btn,
+  .driver-popover-close-btn {
+    transition: none !important;
+  }
+}
+
+/* ===================================================================
+   Print Styles
+   =================================================================== */
+
+@media print {
+  .driver-popover,
+  .driver-overlay {
+    display: none !important;
+  }
+}
+
+/* ===================================================================
+   Enhanced Positioning (Closer to elements)
+   =================================================================== */
+
+/* Position-specific margins for closer popover placement */
+.pbm-tour-popover.position-top {
+  margin-bottom: 8px !important;
+}
+
+.pbm-tour-popover.position-bottom {
+  margin-top: 8px !important;
+}
+
+.pbm-tour-popover.position-left {
+  margin-right: 8px !important;
+}
+
+.pbm-tour-popover.position-right {
+  margin-left: 8px !important;
+}
+
+/* ===================================================================
+   Modal-Specific Styling
+   =================================================================== */
+
+/* When tour is inside a modal, ensure popover is above modal backdrop */
+.pbm-tour-popover.in-modal {
+  z-index: 100010 !important;
+}
+
+/* Modal overlay should be slightly transparent during tour */
+.driver-overlay.in-modal {
+  z-index: 100005 !important;
+}
+
+/* ===================================================================
+   Compact Mode (For form fields in modals)
+   =================================================================== */
+
+.pbm-tour-popover.compact {
+  max-width: 320px !important;
+}
+
+.pbm-tour-popover.compact .driver-popover-title {
+  font-size: 15px !important;
+  padding: 14px 16px 6px 16px !important;
+}
+
+.pbm-tour-popover.compact .driver-popover-description {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  padding: 0 16px 12px 16px !important;
+}
+
+.pbm-tour-popover.compact .driver-popover-footer {
+  padding: 10px 16px !important;
+}
+
+.pbm-tour-popover.compact .driver-popover-prev-btn,
+.pbm-tour-popover.compact .driver-popover-next-btn {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+}
+
+/* ===================================================================
+   Workflow Guide Category Indicators
+   =================================================================== */
+
+/* Purchase workflow - blue accent */
+.pbm-tour-popover.workflow-purchase::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #3b82f6;
+  border-radius: 12px 12px 0 0;
+}
+
+/* Sales workflow - green accent */
+.pbm-tour-popover.workflow-sales::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #10b981;
+  border-radius: 12px 12px 0 0;
+}
+
+/* Admin workflow - amber accent */
+.pbm-tour-popover.workflow-admin::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #f59e0b;
+  border-radius: 12px 12px 0 0;
+}
+
+/* ===================================================================
+   Step Number Badge
+   =================================================================== */
+
+.pbm-tour-popover .step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.pbm-tour-popover.rtl .step-badge {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+/* ===================================================================
+   Action Indicator (for steps that wait for user action)
+   =================================================================== */
+
+.pbm-tour-popover .action-required {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pbm-tour-popover .action-required svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Pulsing animation for action indicator */
+.pbm-tour-popover .action-required.pulse {
+  animation: actionPulse 2s ease-in-out infinite;
+}
+
+@keyframes actionPulse {
+  0%, 100% {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}

@@ -5,6 +5,7 @@ import DatePicker from '../../../components/ui/DatePicker'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import { useTourBroadcast } from '../../../context/TourContext'
 import systemSettingsService from '../../../services/systemSettingsService'
 import branchService from '../../../services/branchService'
 import uploadService from '../../../services/uploadService'
@@ -45,6 +46,9 @@ const PurchaseOrderForm = ({
   const [branches, setBranches] = useState([])
   const [loadingBranches, setLoadingBranches] = useState(false)
   const [errors, setErrors] = useState({})
+
+  // Tour context broadcast
+  const { broadcast, isTourActive } = useTourBroadcast()
 
   // Helper function to format date from ISO to yyyy-MM-dd
   const formatDateForInput = (dateValue) => {
@@ -142,6 +146,30 @@ const PurchaseOrderForm = ({
   useEffect(() => {
     calculateTotals()
   }, [formData.items, formData.taxPercent])
+
+  // Broadcast form state to tour context when tour is active
+  useEffect(() => {
+    if (isTourActive && isOpen) {
+      const validItemCount = formData.items.filter(item => item.materialId).length
+      const completeItemCount = formData.items.filter(
+        item => item.materialId && item.quantity && item.rate
+      ).length
+
+      broadcast({
+        formState: {
+          hasSupplier: !!formData.supplierId,
+          hasBranch: !!formData.branch_id,
+          hasOrderDate: !!formData.orderDate,
+          hasDeliveryDate: !!formData.expectedDeliveryDate,
+          itemCount: validItemCount,
+          completeItemCount: completeItemCount,
+          hasNotes: !!formData.notes,
+          isDraft: formData.status === 'draft',
+          isEdit: isEdit
+        }
+      })
+    }
+  }, [formData, isTourActive, isOpen, isEdit, broadcast])
 
   const calculateTotals = () => {
     const subtotal = formData.items.reduce((sum, item) => sum + (item.amount || 0), 0)
@@ -345,6 +373,7 @@ const PurchaseOrderForm = ({
       onClose={onClose}
       className="modal-xxl"
       closeOnOverlayClick={false}
+      tourId="PurchaseOrderForm"
     >
       <form className="purchase-order-form" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}

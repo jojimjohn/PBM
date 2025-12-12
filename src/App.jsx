@@ -3,6 +3,7 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { SystemSettingsProvider } from './context/SystemSettingsContext'
 import { LocalizationProvider } from './context/LocalizationContext'
+import { TourProvider } from './context/TourContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './components/MainLayout'
 import './App.css'
@@ -15,9 +16,11 @@ function App() {
       <AuthProvider>
         <LocalizationProvider>
           <SystemSettingsProvider>
-            <ProtectedRoute>
-              <MainLayout />
-            </ProtectedRoute>
+            <TourProvider>
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            </TourProvider>
           </SystemSettingsProvider>
         </LocalizationProvider>
       </AuthProvider>

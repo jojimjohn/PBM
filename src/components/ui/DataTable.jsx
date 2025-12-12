@@ -347,11 +347,17 @@ const DataTable = ({
   }
 
   // Get column filter options
+  // Supports custom filterOptions on column definition, falls back to auto-generated from data
   const columnFilterOptions = useMemo(() => {
     const options = {}
     activeColumns.forEach(col => {
       if (col.filterable !== false && col.key !== 'actions') {
-        options[col.key] = getFilterOptions(col.key)
+        // Use custom filterOptions if provided on the column, otherwise auto-generate
+        if (col.filterOptions && Array.isArray(col.filterOptions)) {
+          options[col.key] = col.filterOptions
+        } else {
+          options[col.key] = getFilterOptions(col.key)
+        }
       }
     })
     return options

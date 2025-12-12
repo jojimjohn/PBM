@@ -4,8 +4,12 @@
  * Monitors session activity and provides warning before timeout.
  * Shows a modal 5 minutes before session expires with option to extend.
  *
+ * SECURITY: Properly handles 401 responses by:
+ * 1. Calling the provided logout callback
+ * 2. Redirecting to login page
+ *
  * Usage:
- * const { showWarning, remainingMinutes, extendSession } = useSessionTimeout();
+ * const { showWarning, remainingMinutes, extendSession } = useSessionTimeout(isAuthenticated, logout);
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -16,7 +20,7 @@ const WARNING_THRESHOLD_MINUTES = 5; // Show warning 5 minutes before timeout
 const CHECK_INTERVAL_MS = 60 * 1000; // Check session status every minute
 const ACTIVITY_DEBOUNCE_MS = 30 * 1000; // Debounce activity detection (30 seconds)
 
-export const useSessionTimeout = (isAuthenticated) => {
+export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
   const [sessionStatus, setSessionStatus] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
   const [isExtending, setIsExtending] = useState(false);
@@ -52,15 +56,27 @@ export const useSessionTimeout = (isAuthenticated) => {
           setShowWarning(remainingMinutes <= WARNING_THRESHOLD_MINUTES && remainingMinutes > 0);
         }
       } else if (response.status === 401) {
-        // Session expired or invalid
+        // Session expired or invalid - MUST trigger logout and redirect
+        console.log('[Session] Session expired (401) - triggering logout');
         setSessionStatus(null);
         setShowWarning(false);
-        // Redirect to login will be handled by auth service
+
+        // Call the logout callback if provided
+        if (onSessionExpired) {
+          try {
+            await onSessionExpired();
+          } catch (e) {
+            console.warn('[Session] Logout callback error:', e);
+          }
+        }
+
+        // Redirect to login page
+        window.location.href = '/login';
       }
     } catch (error) {
       console.warn('Failed to fetch session status:', error);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, onSessionExpired]);
 
   /**
    * Extend session (called when user clicks "Stay logged in")
