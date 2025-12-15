@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supplier Contracts - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link">Inventory</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link active">Supplier Contracts</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales Orders</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Module</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link">Wastage</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports</a></li>
+          <li class="nav-item"><a href="banking.html" class="nav-link">Banking</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Supplier Contracts</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Supplier Contracts</h1>
+        <p class="lead">
+          Manage supplier contracts that define material rates, payment terms, and collection agreements.
+          Contracts are location-specific and control how purchase orders are priced.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Can Access</div>
+            <p style="margin:0;">Contract management requires <span class="role-badge purchase">Purchase Staff</span>, <span class="role-badge manager">Manager</span>, or <span class="role-badge admin">Admin</span> role.</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <section>
+          <h2>Accessing Contracts</h2>
+          <p>Navigate to <strong>Contracts</strong> from the main sidebar menu. This is a top-level navigation item.</p>
+        </section>
+
+        <!-- Contract List -->
+        <section>
+          <h2>Contract List</h2>
+          <p>The contracts list displays all supplier contracts with the following columns:</p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Contract Number</strong></td>
+                  <td>Unique contract identifier</td>
+                </tr>
+                <tr>
+                  <td><strong>Supplier Name</strong></td>
+                  <td>The supplier this contract is with</td>
+                </tr>
+                <tr>
+                  <td><strong>Start Date - End Date</strong></td>
+                  <td>Contract validity period</td>
+                </tr>
+                <tr>
+                  <td><strong>Status</strong></td>
+                  <td>Draft, Active, Expired, Terminated, Pending</td>
+                </tr>
+                <tr>
+                  <td><strong>Locations Count</strong></td>
+                  <td>Number of supplier locations covered</td>
+                </tr>
+                <tr>
+                  <td><strong>Total Value</strong></td>
+                  <td>Estimated contract value</td>
+                </tr>
+                <tr>
+                  <td><strong>Actions</strong></td>
+                  <td>View, Edit, Delete</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Rate Types -->
+        <section>
+          <h2>Contract Rate Types</h2>
+          <p>PBM supports multiple types of pricing arrangements with suppliers:</p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rate Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Fixed Rate</strong></td>
+                  <td>Agreed price per unit that remains constant during the contract period</td>
+                </tr>
+                <tr>
+                  <td><strong>Discount Percentage</strong></td>
+                  <td>A percentage discount off the standard market price</td>
+                </tr>
+                <tr>
+                  <td><strong>Minimum Price Guarantee</strong></td>
+                  <td>Whichever is lower: contract rate or current market price applies</td>
+                </tr>
+                <tr>
+                  <td><strong>Free</strong></td>
+                  <td>Materials collected at no cost to your company</td>
+                </tr>
+                <tr>
+                  <td><strong>We Pay</strong></td>
+                  <td>Your company pays the supplier for the materials</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Creating Contract -->
+        <section>
+          <h2>Creating a Contract</h2>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click New Contract</div>
+              <div class="step-content">
+                <p>Click the <strong>+ New Contract</strong> button in the top-right corner.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Supplier</div>
+              <div class="step-content">
+                <p>Choose the supplier from the dropdown. The supplier's locations will be loaded automatically.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Contract Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Contract Number</strong> - Auto-generated if not provided</li>
+                  <li><strong>Title</strong> - Optional, auto-generated based on supplier</li>
+                  <li><strong>Start Date *</strong> - When the contract becomes active</li>
+                  <li><strong>End Date *</strong> - When the contract expires</li>
+                  <li><strong>Status</strong> - Draft, Active, Pending, etc.</li>
+                  <li><strong>Terms</strong> - Contract terms and conditions</li>
+                  <li><strong>Notes</strong> - Additional notes</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Locations and Material Rates</div>
+              <div class="step-content">
+                <p>For each supplier location, configure material rates:</p>
+                <ol>
+                  <li>Click <strong>+ Add Location</strong></li>
+                  <li>Select the supplier location</li>
+                  <li>Add materials with their specific rates</li>
+                </ol>
+                <p>For each material, specify:</p>
+                <ul>
+                  <li><strong>Material</strong> - Select from materials list</li>
+                  <li><strong>Rate Type</strong> - Fixed rate, discount, etc.</li>
+                  <li><strong>Contract Rate</strong> - Price per unit</li>
+                  <li><strong>Discount Percentage</strong> - If applicable</li>
+                  <li><strong>Minimum Price</strong> - For minimum guarantee type</li>
+                  <li><strong>Payment Direction</strong> - We receive or we pay</li>
+                  <li><strong>Unit</strong> - kg, L, pcs, etc.</li>
+                  <li><strong>Minimum/Maximum Quantity</strong> - Optional limits</li>
+                  <li><strong>Description</strong> - Optional notes</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save Contract</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong> to create the contract.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Viewing Contract -->
+        <section>
+          <h2>Viewing Contract Details</h2>
+          <p>Click on any contract to view its details. The view modal displays:</p>
+
+          <ul>
+            <li>Contract basics (number, supplier, dates, status)</li>
+            <li>Terms and notes</li>
+            <li>Location-Material rates table showing:
+              <ul>
+                <li>Location name and code</li>
+                <li>Material name</li>
+                <li>Rate type (with visual badge)</li>
+                <li>Contract rate</li>
+                <li>Unit</li>
+                <li>Quantity limits</li>
+                <li>Description</li>
+              </ul>
+            </li>
+            <li>Expiry warnings (color-coded by urgency)</li>
+          </ul>
+        </section>
+
+        <!-- Contract Statuses -->
+        <section>
+          <h2>Contract Statuses</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:4px;">Draft</span></td>
+                  <td>Contract created but not yet activated</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Pending</span></td>
+                  <td>Contract awaiting approval or activation</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Active</span></td>
+                  <td>Contract is currently in effect</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Expired</span></td>
+                  <td>Contract has passed its end date</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#1e293b;color:#f8fafc;padding:2px 8px;border-radius:4px;">Terminated</span></td>
+                  <td>Contract was manually ended before expiry</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- How Contracts Apply -->
+        <section>
+          <h2>How Contract Rates Apply</h2>
+          <p>When contract rates are set up, they automatically apply in the following scenarios:</p>
+
+          <ul>
+            <li><strong>Collections:</strong> When collecting materials from a supplier location with a contract, the contract rates are used</li>
+            <li><strong>Purchase Orders:</strong> Auto-generated POs from WCN finalization use contract rates</li>
+            <li><strong>Manual POs:</strong> When creating POs for contracted suppliers, rates are pre-populated</li>
+          </ul>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="suppliers.html" class="quick-link">Supplier Management</a>
+            <a href="purchase.html" class="quick-link">Purchase Module</a>
+            <a href="../workflows/create-po.html" class="quick-link">Creating Purchase Orders</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

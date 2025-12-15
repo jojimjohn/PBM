@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, CheckCircle, AlertCircle, FileText, Truck, Calendar, AlertTriangle, Edit3, Plus, Trash2, Loader } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import { collectionOrderService } from '../../services/collectionService';
 import materialService from '../../services/materialService';
 import LoadingSpinner from '../LoadingSpinner';
@@ -9,6 +10,7 @@ import './WCNFinalizationModal.css';
 
 const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) => {
   const { t } = useLocalization();
+  const { formatDate } = useSystemSettings();
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -497,7 +499,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                 </div>
                 <div className="info-item">
                   <label>Collection Date:</label>
-                  <span>{new Date(collectionOrder.scheduledDate).toLocaleDateString()}</span>
+                  <span>{formatDate(collectionOrder.scheduledDate)}</span>
                 </div>
                 <div className="info-item">
                   <label>Status:</label>

@@ -8,7 +8,7 @@ import DataTable from '../../../components/ui/DataTable'
 import customerService from '../../../services/customerService'
 import typesService from '../../../services/typesService'
 import materialService from '../../../services/materialService'
-import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle, Trash } from 'lucide-react'
+import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle, Trash, RotateCcw } from 'lucide-react'
 import '../styles/Customers.css'
 
 const OilTradingCustomers = () => {
@@ -120,7 +120,7 @@ const OilTradingCustomers = () => {
       try {
         setLoading(true)
         const result = await customerService.delete(customerId)
-        
+
         if (result.success) {
           // Refresh customer list
           const listResult = await customerService.getAll()
@@ -129,7 +129,25 @@ const OilTradingCustomers = () => {
           }
         } else {
           console.error('Error deleting customer:', result.error)
-          alert('Error deleting customer: ' + result.error)
+
+          // Check if the error is about existing orders - offer to deactivate instead
+          const errorMessage = result.error || ''
+          if (errorMessage.toLowerCase().includes('existing orders') ||
+              errorMessage.toLowerCase().includes('deactivate instead')) {
+            // Offer to deactivate instead
+            const shouldDeactivate = window.confirm(
+              'This customer has existing orders and cannot be deleted.\n\n' +
+              'Would you like to deactivate this customer instead?\n\n' +
+              'Deactivated customers will not appear in active lists but their order history will be preserved.'
+            )
+
+            if (shouldDeactivate) {
+              // Use the existing toggle status function to deactivate
+              await handleToggleStatus(customerId)
+            }
+          } else {
+            alert('Error deleting customer: ' + result.error)
+          }
         }
       } catch (error) {
         console.error('Error deleting customer:', error)
@@ -142,20 +160,25 @@ const OilTradingCustomers = () => {
 
   const handleToggleStatus = async (customerId) => {
     try {
+      setLoading(true)
       const customer = customers.find(c => c.id === customerId)
       const result = await customerService.updateStatus(customerId, !customer.isActive)
+
       if (result.success) {
-        const updatedCustomers = customers.map(c => 
-          c.id === customerId ? result.data : c
-        )
-        setCustomers(updatedCustomers)
+        // Refresh customer list to get properly transformed data
+        const listResult = await customerService.getAll()
+        if (listResult.success) {
+          setCustomers(listResult.data || [])
+        }
       } else {
         console.error('Error updating customer status:', result.error)
-        // Show error message to user
+        alert('Error updating customer status: ' + result.error)
       }
     } catch (error) {
       console.error('Error updating customer status:', error)
-      // Show error message to user
+      alert('Error updating customer status: ' + error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -204,6 +227,13 @@ const OilTradingCustomers = () => {
       header: t('type'),
       sortable: true,
       filterable: true,
+      // Explicit filter options for all customer types (ensures all show even if no customers of that type exist)
+      filterOptions: [
+        { value: 'individual', label: 'Individual' },
+        { value: 'business', label: 'Business' },
+        { value: 'project', label: 'Project' },
+        { value: 'contract', label: 'Contract' }
+      ],
       render: (value, row) => {
         const typeObj = customerTypes.find(t => t.code === value)
         return (
@@ -272,20 +302,20 @@ const OilTradingCustomers = () => {
       sortable: false,
       width: '200px',
       render: (value, row) => (
-        <div className="table-actions">
-          <button 
-            className="btn-icon" 
+        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-outline btn-sm"
             onClick={(e) => {
               e.stopPropagation();
               handleViewDetails(row);
             }}
             title={t('viewDetails')}
           >
-            <Eye size={16} />
+            <Eye size={14} />
           </button>
-          
-          <button 
-            className="btn-icon primary" 
+
+          <button
+            className="btn btn-primary btn-sm"
             onClick={(e) => {
               e.stopPropagation();
               handleCreateOrder(row);
@@ -293,45 +323,61 @@ const OilTradingCustomers = () => {
             disabled={!row.isActive}
             title={t('createOrder')}
           >
-            <ShoppingCart size={16} />
+            <ShoppingCart size={14} />
           </button>
 
           {row.type === 'contract' && row.contractDetails && (
-            <button 
-              className="btn-icon secondary" 
+            <button
+              className="btn btn-outline btn-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewContract(row);
               }}
               title={t('viewContract')}
             >
-              <FileText size={16} />
+              <FileText size={14} />
             </button>
           )}
 
           {canEdit('customers') && (
-            <button 
-              className="btn-icon" 
+            <button
+              className="btn btn-outline btn-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 setEditingCustomer(row);
               }}
               title={t('edit')}
             >
-              <Edit size={16} />
+              <Edit size={14} />
             </button>
           )}
 
-          {canDelete('customers') && (
-            <button 
-              className="btn-icon danger" 
+          {canDelete('customers') && row.isActive && (
+            <button
+              className="btn btn-danger btn-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteCustomer(row.id);
               }}
               title={t('delete')}
             >
-              <Trash size={16} />
+              <Trash size={14} />
+            </button>
+          )}
+
+          {/* Reactivate button for inactive customers */}
+          {canEdit('customers') && !row.isActive && (
+            <button
+              className="btn btn-success btn-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`Reactivate customer "${row.name}"?`)) {
+                  handleToggleStatus(row.id);
+                }
+              }}
+              title="Reactivate Customer"
+            >
+              <RotateCcw size={14} />
             </button>
           )}
         </div>
@@ -463,7 +509,7 @@ const OilTradingCustomers = () => {
 const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => {
   const [formData, setFormData] = useState({
     name: customer?.name || '',
-    type: customer?.type || 'walk_in',
+    type: customer?.type || 'individual',
     contactPerson: customer?.contactPerson || '',
     phone: customer?.contact?.phone || customer?.phone || '',
     email: customer?.contact?.email || customer?.email || '',
@@ -481,18 +527,13 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    // Map frontend customer type codes to backend ENUM values
-    const typeMapping = {
-      'individual': 'walk-in',
-      'business': 'walk-in',  // Business customers also use walk-in type
-      'project': 'project-based',
-      'contract': 'contract'
-    }
+    // Customer types are now standardized: individual, business, project, contract
+    // These values are used consistently across frontend, backend, and database
 
     // Map frontend form data to backend API format
     const customerData = {
       name: formData.name,
-      customerType: typeMapping[formData.type] || 'walk-in',
+      customerType: formData.type || 'individual',
       contactPerson: formData.contactPerson,
       phone: formData.phone,
       email: formData.email,
@@ -525,8 +566,9 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
       title={customer ? 'Edit Customer' : 'Add New Customer'}
       onClose={onCancel}
       closeOnOverlayClick={false}
+      className="modal-xl"
     >
-      <form onSubmit={handleSubmit} className="customer-form">
+      <form onSubmit={handleSubmit} className="customer-form wide-form">
         {/* Basic Information Section */}
         <div className="form-section">
           <div className="form-section-title">
@@ -537,6 +579,29 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
             Basic Information
           </div>
           <div className="form-grid">
+            {/* Customer ID - Auto-generated, read-only */}
+            <div className="form-group">
+              <label>Customer ID</label>
+              <div className="input-with-icon">
+                <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+                  <line x1="7" y1="8" x2="17" y2="8" />
+                  <line x1="7" y1="12" x2="17" y2="12" />
+                  <line x1="7" y1="16" x2="13" y2="16" />
+                </svg>
+                <input
+                  type="text"
+                  value={customer ? customer.code : 'AR-CUST-XXX (Auto-generated)'}
+                  disabled
+                  className="readonly-input"
+                  style={{ backgroundColor: '#f5f5f5', color: '#666', cursor: 'not-allowed' }}
+                />
+              </div>
+              <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                {customer ? 'Customer code assigned at creation' : 'Will be assigned automatically when customer is created'}
+              </small>
+            </div>
+
             <div className="form-group">
               <label>Customer Name *</label>
               <div className="input-with-icon">
@@ -782,156 +847,282 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
   )
 }
 
-// Customer Details Modal Component
+// Customer Details Modal Component - Tabbed Interface
 const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) => {
+  const [activeTab, setActiveTab] = useState('overview')
+
+  // Tab configuration
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: <User size={16} /> },
+    { id: 'contact', label: 'Contact', icon: <Phone size={16} /> },
+    { id: 'business', label: 'Business', icon: <DollarSign size={16} /> },
+    { id: 'sales', label: 'Sales', icon: <ShoppingCart size={16} /> },
+    ...(customer.type === 'contract' && customer.contractDetails
+      ? [{ id: 'contract', label: 'Contract', icon: <FileText size={16} /> }]
+      : [])
+  ]
+
   return (
     <Modal
       isOpen={true}
-      title={`Customer Details - ${customer.name}`}
+      title=""
       onClose={onClose}
       className="modal-xl"
       closeOnOverlayClick={false}
     >
-      <div className="view-modal-content">
-        <div className="form-section">
-          <div className="form-section-title">
-            Basic Information
-            <span className={`badge ${customer.isActive ? 'active' : 'inactive'}`}>
-              {customer.isActive ? 'Active' : 'Inactive'}
-            </span>
+      <div className="customer-details-tabbed">
+        {/* Compact Header with Key Info */}
+        <div className="customer-details-header">
+          <div className="customer-avatar-large">
+            {customer.name.split(' ').map(word => word[0]).join('').substring(0, 2).toUpperCase()}
           </div>
-          <div className="details-grid two-col">
-            <div className="detail-item">
-              <label>Customer Name</label>
-              <span>{customer.name}</span>
-            </div>
-            <div className="detail-item">
-              <label>Customer Code</label>
-              <span>{customer.code}</span>
-            </div>
-            <div className="detail-item">
-              <label>Customer Type</label>
-              <span className="badge">{customer.type ? customer.type.replace('_', ' ').toUpperCase() : 'N/A'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="form-section">
-          <div className="form-section-title">Contact Information</div>
-          <div className="details-grid two-col">
-            <div className="detail-item">
-              <label>Contact Person</label>
-              <span>{customer.contactPerson || 'N/A'}</span>
-            </div>
-            <div className="detail-item">
-              <label>Phone</label>
-              <span>{customer.contact?.phone || 'N/A'}</span>
-            </div>
-            <div className="detail-item full-width">
-              <label>Email</label>
-              <span>{customer.contact?.email || 'N/A'}</span>
-            </div>
-            <div className="detail-item full-width">
-              <label>{t('vatRegistrationNumber')}</label>
-              <span>{customer.contact?.vatRegistrationNumber || 'N/A'}</span>
-            </div>
-            <div className="detail-item full-width">
-              <label>Address</label>
-              <span>
-                {customer.contact?.address ? 
-                  `${customer.contact.address.street}, ${customer.contact.address.city}, ${customer.contact.address.region}` 
-                  : 'N/A'
-                }
+          <div className="customer-header-info">
+            <h2>{customer.name}</h2>
+            <div className="customer-meta">
+              <span className="customer-code">{customer.code}</span>
+              <span className={`customer-type-badge ${customer.type}`}>
+                {customer.type ? customer.type.replace(/[-_]/g, ' ').toUpperCase() : 'N/A'}
+              </span>
+              <span className={`status-pill ${customer.isActive ? 'active' : 'inactive'}`}>
+                {customer.isActive ? '● Active' : '○ Inactive'}
               </span>
             </div>
           </div>
-        </div>
-
-        <div className="form-section">
-          <div className="form-section-title">Business Terms</div>
-          <div className="details-grid two-col">
-            <div className="detail-item">
-              <label>Credit Limit</label>
-              <span className="highlight">OMR {customer.creditLimit?.toFixed(2) || '0.00'}</span>
-            </div>
-            <div className="detail-item">
-              <label>Payment Terms</label>
-              <span>{customer.paymentTerms || 0} days</span>
-            </div>
-            <div className="detail-item">
-              <label>Tax Status</label>
-              <span className={`badge ${customer.is_taxable !== false ? 'success' : 'secondary'}`}>
-                {customer.is_taxable !== false ? '✓ Taxable (VAT Applied)' : '✗ Non-Taxable (No VAT)'}
-              </span>
-            </div>
+          <div className="customer-header-actions">
+            <button className="btn-icon-action secondary" onClick={onEdit} title="Edit Customer">
+              <Edit size={18} />
+            </button>
+            <button className="btn-icon-action primary" onClick={onCreateOrder} title="Create Order">
+              <ShoppingCart size={18} />
+            </button>
           </div>
         </div>
 
-        {customer.salesHistory && (
-          <div className="form-section">
-            <div className="form-section-title">Sales History</div>
-            <div className="details-grid three-col">
-              <div className="detail-item text-center">
-                <label>Total Orders</label>
-                <span className="highlight large">{customer.salesHistory.totalOrders}</span>
-              </div>
-              <div className="detail-item text-center">
-                <label>Total Value</label>
-                <span className="highlight large">OMR {customer.salesHistory.totalValue?.toFixed(2) || '0.00'}</span>
-              </div>
-              <div className="detail-item text-center">
-                <label>Last Order Date</label>
-                <span>
-                  {customer.salesHistory.lastOrderDate ? 
-                    new Date(customer.salesHistory.lastOrderDate).toLocaleDateString() 
-                    : 'No orders yet'
-                  }
-                </span>
+        {/* Tab Navigation */}
+        <div className="customer-tabs">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`customer-tab ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="customer-tab-content">
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <div className="tab-panel">
+              <div className="overview-grid">
+                <div className="overview-card">
+                  <div className="overview-icon"><User size={24} /></div>
+                  <div className="overview-info">
+                    <label>Contact Person</label>
+                    <span>{customer.contactPerson || 'Not specified'}</span>
+                  </div>
+                </div>
+                <div className="overview-card">
+                  <div className="overview-icon"><Phone size={24} /></div>
+                  <div className="overview-info">
+                    <label>Phone</label>
+                    <span>{customer.contact?.phone || 'Not specified'}</span>
+                  </div>
+                </div>
+                <div className="overview-card">
+                  <div className="overview-icon"><Mail size={24} /></div>
+                  <div className="overview-info">
+                    <label>Email</label>
+                    <span>{customer.contact?.email || 'Not specified'}</span>
+                  </div>
+                </div>
+                <div className="overview-card">
+                  <div className="overview-icon"><DollarSign size={24} /></div>
+                  <div className="overview-info">
+                    <label>Credit Limit</label>
+                    <span className="highlight">OMR {parseFloat(customer.creditLimit || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="overview-card">
+                  <div className="overview-icon"><Calendar size={24} /></div>
+                  <div className="overview-info">
+                    <label>Payment Terms</label>
+                    <span>{customer.paymentTerms || 0} days</span>
+                  </div>
+                </div>
+                <div className="overview-card">
+                  <div className="overview-icon">
+                    {customer.is_taxable !== false ?
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> :
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    }
+                  </div>
+                  <div className="overview-info">
+                    <label>Tax Status</label>
+                    <span className={customer.is_taxable !== false ? 'text-success' : 'text-muted'}>
+                      {customer.is_taxable !== false ? 'VAT Applied' : 'Non-Taxable'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {customer.type === 'contract' && customer.contractDetails && (
-          <div className="form-section contract-section">
-            <div className="form-section-title">Contract Information</div>
-            <div className="details-grid two-col">
-              <div className="detail-item">
-                <label>Contract ID</label>
-                <span>{customer.contractDetails.contractId}</span>
+          {/* Contact Tab */}
+          {activeTab === 'contact' && (
+            <div className="tab-panel">
+              <div className="contact-details-grid">
+                <div className="contact-card">
+                  <h4><User size={18} /> Contact Person</h4>
+                  <p className="contact-value">{customer.contactPerson || 'Not specified'}</p>
+                </div>
+                <div className="contact-card">
+                  <h4><Phone size={18} /> Phone Number</h4>
+                  <p className="contact-value">{customer.contact?.phone || 'Not specified'}</p>
+                </div>
+                <div className="contact-card">
+                  <h4><Mail size={18} /> Email Address</h4>
+                  <p className="contact-value">{customer.contact?.email || 'Not specified'}</p>
+                </div>
+                <div className="contact-card">
+                  <h4><FileText size={18} /> {t('vatRegistrationNumber')}</h4>
+                  <p className="contact-value">{customer.contact?.vatRegistrationNumber || 'Not registered'}</p>
+                </div>
+                <div className="contact-card full-width">
+                  <h4>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Address
+                  </h4>
+                  <p className="contact-value">
+                    {customer.contact?.address ?
+                      `${customer.contact.address.street || ''}, ${customer.contact.address.city || ''}, ${customer.contact.address.region || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',') || 'Not specified'
+                      : 'Not specified'
+                    }
+                  </p>
+                </div>
               </div>
-              <div className="detail-item">
-                <label>Contract Status</label>
-                <span className={`badge ${customer.contractDetails.status}`}>
-                  {customer.contractDetails.status.toUpperCase()}
-                </span>
+            </div>
+          )}
+
+          {/* Business Tab */}
+          {activeTab === 'business' && (
+            <div className="tab-panel">
+              <div className="business-details-grid">
+                <div className="business-card highlight-card">
+                  <div className="business-value">OMR {parseFloat(customer.creditLimit || 0).toFixed(2)}</div>
+                  <div className="business-label">Credit Limit</div>
+                </div>
+                <div className="business-card">
+                  <div className="business-value">{customer.paymentTerms || 0} days</div>
+                  <div className="business-label">Payment Terms</div>
+                </div>
+                <div className="business-card">
+                  <div className={`business-value ${customer.is_taxable !== false ? 'text-success' : 'text-muted'}`}>
+                    {customer.is_taxable !== false ? '✓ Taxable' : '✗ Non-Taxable'}
+                  </div>
+                  <div className="business-label">VAT Status</div>
+                </div>
+                <div className="business-card">
+                  <div className="business-value">{customer.type?.replace(/[-_]/g, ' ').toUpperCase() || 'N/A'}</div>
+                  <div className="business-label">Customer Type</div>
+                </div>
               </div>
-              <div className="detail-item full-width">
-                <label>Contract Period</label>
-                <span>
-                  {new Date(customer.contractDetails.startDate).toLocaleDateString()} - 
-                  {new Date(customer.contractDetails.endDate).toLocaleDateString()}
-                </span>
+            </div>
+          )}
+
+          {/* Sales Tab */}
+          {activeTab === 'sales' && (
+            <div className="tab-panel">
+              <div className="sales-stats-grid">
+                <div className="sales-stat-card primary">
+                  <div className="stat-icon"><ShoppingCart size={32} /></div>
+                  <div className="stat-content">
+                    <div className="stat-value">{customer.salesHistory?.totalOrders || 0}</div>
+                    <div className="stat-label">Total Orders</div>
+                  </div>
+                </div>
+                <div className="sales-stat-card success">
+                  <div className="stat-icon"><DollarSign size={32} /></div>
+                  <div className="stat-content">
+                    <div className="stat-value">OMR {customer.salesHistory?.totalValue?.toFixed(2) || '0.00'}</div>
+                    <div className="stat-label">Total Revenue</div>
+                  </div>
+                </div>
+                <div className="sales-stat-card info">
+                  <div className="stat-icon"><Calendar size={32} /></div>
+                  <div className="stat-content">
+                    <div className="stat-value">
+                      {customer.salesHistory?.lastOrderDate ?
+                        new Date(customer.salesHistory.lastOrderDate).toLocaleDateString()
+                        : 'No orders yet'
+                      }
+                    </div>
+                    <div className="stat-label">Last Order Date</div>
+                  </div>
+                </div>
               </div>
-              {customer.contractDetails.specialTerms && (
-                <div className="detail-item full-width">
-                  <label>Special Terms</label>
-                  <p className="terms-text">{customer.contractDetails.specialTerms}</p>
+              {(!customer.salesHistory || customer.salesHistory.totalOrders === 0) && (
+                <div className="empty-state">
+                  <ShoppingCart size={48} />
+                  <h3>No Orders Yet</h3>
+                  <p>This customer hasn't placed any orders yet.</p>
+                  <button className="btn btn-primary" onClick={onCreateOrder}>
+                    Create First Order
+                  </button>
                 </div>
               )}
             </div>
-          </div>
-        )}
-        
-        <div className="form-actions">
+          )}
+
+          {/* Contract Tab */}
+          {activeTab === 'contract' && customer.contractDetails && (
+            <div className="tab-panel">
+              <div className="contract-summary-grid">
+                <div className="contract-info-card">
+                  <label>Contract ID</label>
+                  <span className="contract-id">{customer.contractDetails.contractId}</span>
+                </div>
+                <div className="contract-info-card">
+                  <label>Status</label>
+                  <span className={`status-badge ${customer.contractDetails.status}`}>
+                    {customer.contractDetails.status.toUpperCase()}
+                  </span>
+                </div>
+                <div className="contract-info-card">
+                  <label>Start Date</label>
+                  <span>{new Date(customer.contractDetails.startDate).toLocaleDateString()}</span>
+                </div>
+                <div className="contract-info-card">
+                  <label>End Date</label>
+                  <span>{new Date(customer.contractDetails.endDate).toLocaleDateString()}</span>
+                </div>
+                <div className="contract-info-card highlight">
+                  <label>Days Remaining</label>
+                  <span className="days-remaining">
+                    {Math.max(0, Math.ceil((new Date(customer.contractDetails.endDate) - new Date()) / (1000 * 60 * 60 * 24)))} days
+                  </span>
+                </div>
+              </div>
+              {customer.contractDetails.specialTerms && (
+                <div className="contract-terms-box">
+                  <h4>Special Terms & Conditions</h4>
+                  <p>{customer.contractDetails.specialTerms}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="customer-details-footer">
           <button className="btn btn-outline" onClick={onClose}>
             Close
-          </button>
-          <button className="btn btn-secondary" onClick={onEdit}>
-            Edit Customer
-          </button>
-          <button className="btn btn-primary" onClick={onCreateOrder}>
-            Create Order
           </button>
         </div>
       </div>

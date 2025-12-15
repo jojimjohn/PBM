@@ -11,9 +11,12 @@ class CustomerService {
    * Transform backend customer data to frontend format
    */
   transformCustomer(backendCustomer) {
+    // Parse address components from the combined string
+    const addressParts = this.parseAddress(backendCustomer.address || '');
+
     return {
       id: backendCustomer.id,
-      code: `AL-${String(backendCustomer.id).padStart(3, '0')}`, // Generate code from ID
+      code: `AR-CUST-${String(backendCustomer.id).padStart(3, '0')}`, // Generate code from ID
       name: backendCustomer.name,
       type: this.mapCustomerType(backendCustomer.customerType),
       contactPerson: backendCustomer.contactPerson,
@@ -22,9 +25,9 @@ class CustomerService {
         email: backendCustomer.email,
         vatRegistrationNumber: backendCustomer.vatRegistration,
         address: {
-          street: backendCustomer.address || '',
-          city: this.extractCity(backendCustomer.address || ''),
-          region: this.extractRegion(backendCustomer.address || ''),
+          street: addressParts.street,
+          city: addressParts.city,
+          region: addressParts.region,
           country: 'Oman'
         }
       },
@@ -45,32 +48,80 @@ class CustomerService {
 
   /**
    * Map backend customer types to frontend types
+   * Standard types: individual, business, project, contract
+   * Handles legacy values for backwards compatibility
    */
   mapCustomerType(backendType) {
-    const typeMap = {
-      'contract': 'contract',
-      'project-based': 'project',
-      'walk-in': 'walk_in'
+    // Map legacy values to new standardized values
+    const legacyMapping = {
+      'walk-in': 'individual',
+      'walk_in': 'individual',
+      'project-based': 'project'
     };
-    return typeMap[backendType] || 'walk_in';
+
+    // Return mapped value if legacy, otherwise return as-is
+    // Valid values: 'individual', 'business', 'project', 'contract'
+    return legacyMapping[backendType] || backendType || 'individual';
   }
 
   /**
-   * Extract city from address string
+   * Parse address string into components (street, city, region)
+   *
+   * Backend stores address as a combined comma-separated string:
+   * - Format: "Street, City, Region" or "Street, City" or just "Street"
+   *
+   * Examples:
+   * - "123 Main St, Muscat, North" → { street: "123 Main St", city: "Muscat", region: "North" }
+   * - "456 Side Rd, Sohar" → { street: "456 Side Rd", city: "Sohar", region: "" }
+   * - "789 Only Street" → { street: "789 Only Street", city: "", region: "" }
+   */
+  parseAddress(address) {
+    if (!address || typeof address !== 'string') {
+      return { street: '', city: '', region: '' };
+    }
+
+    const parts = address.split(',').map(part => part.trim()).filter(part => part);
+
+    if (parts.length === 0) {
+      return { street: '', city: '', region: '' };
+    }
+
+    if (parts.length === 1) {
+      // Only street
+      return { street: parts[0], city: '', region: '' };
+    }
+
+    if (parts.length === 2) {
+      // Street and city
+      return { street: parts[0], city: parts[1], region: '' };
+    }
+
+    // 3 or more parts: first part is street, second-to-last is city, last is region
+    // If more than 3 parts, combine everything except last 2 into street
+    if (parts.length === 3) {
+      return { street: parts[0], city: parts[1], region: parts[2] };
+    }
+
+    // More than 3 parts: combine all but last 2 into street
+    const street = parts.slice(0, -2).join(', ');
+    const city = parts[parts.length - 2];
+    const region = parts[parts.length - 1];
+
+    return { street, city, region };
+  }
+
+  /**
+   * Extract city from address string (kept for backward compatibility)
    */
   extractCity(address) {
-    // Simple extraction - in production, this would be more sophisticated
-    const parts = address.split(',');
-    return parts.length > 1 ? parts[parts.length - 2].trim() : '';
+    return this.parseAddress(address).city;
   }
 
   /**
-   * Extract region from address string
+   * Extract region from address string (kept for backward compatibility)
    */
   extractRegion(address) {
-    // Simple extraction - in production, this would be more sophisticated
-    const parts = address.split(',');
-    return parts.length > 2 ? parts[parts.length - 3].trim() : '';
+    return this.parseAddress(address).region;
   }
 
   /**

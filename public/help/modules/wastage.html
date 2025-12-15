@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wastage Management - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link">Inventory Management</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link">Contract Rate System</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales & Invoicing</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Orders</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash System</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link active">Wastage Management</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports & Analytics</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Wastage Management</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Wastage Management</h1>
+        <p class="lead">
+          Track and manage material wastage throughout your operations. The Wastage module helps you
+          record losses, maintain accurate inventory, and analyze wastage patterns for improvement.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Can Access</div>
+            <p style="margin:0;"><span class="role-badge purchase">Purchase Staff</span> can record wastage. <span class="role-badge manager">Managers</span> approve wastage. <span class="role-badge admin">Admins</span> have full access.</p>
+          </div>
+        </div>
+
+        <!-- Understanding Wastage -->
+        <section>
+          <h2>Understanding Wastage</h2>
+          <p>Wastage in oil trading can occur due to various reasons:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Spillage</h4>
+              <p>Accidental spills during collection, transfer, or storage of oil products.</p>
+            </div>
+
+            <div class="card">
+              <h4>Evaporation</h4>
+              <p>Natural loss of volatile products over time, especially in hot storage conditions.</p>
+            </div>
+
+            <div class="card">
+              <h4>Contamination</h4>
+              <p>Materials rendered unusable due to mixing or exposure to contaminants.</p>
+            </div>
+
+            <div class="card">
+              <h4>Damage</h4>
+              <p>Container damage leading to product loss (leaking drums, punctured tanks).</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recording Wastage -->
+        <section>
+          <h2>Recording Wastage</h2>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Navigate to Wastage</div>
+              <div class="step-content">
+                <p>Go to <strong>Inventory → Wastage</strong> and click <strong>+ Record Wastage</strong>.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Material</div>
+              <div class="step-content">
+                <p>Choose the material that was wasted from the dropdown.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Quantity</div>
+              <div class="step-content">
+                <p>Enter the exact quantity lost. The system will show the value based on cost price.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Wastage Type</div>
+              <div class="step-content">
+                <p>Choose the reason for wastage:</p>
+                <ul>
+                  <li>Spillage</li>
+                  <li>Evaporation</li>
+                  <li>Contamination</li>
+                  <li>Damage</li>
+                  <li>Expired</li>
+                  <li>Other (specify)</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Date:</strong> When the wastage occurred</li>
+                  <li><strong>Location:</strong> Where it happened</li>
+                  <li><strong>Description:</strong> Detailed explanation of what happened</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Submit for Approval</div>
+              <div class="step-content">
+                <p>Click <strong>Submit</strong>. The wastage record goes to manager for approval before affecting inventory.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Approval Process -->
+        <section>
+          <h2>Wastage Approval Process</h2>
+          <p>All wastage records require manager approval before inventory is adjusted.</p>
+
+          <h3>For Managers</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">View Pending Approvals</div>
+              <div class="step-content">
+                <p>Go to <strong>Wastage → Pending Approvals</strong> tab.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Details</div>
+              <div class="step-content">
+                <p>Examine the wastage record: material, quantity, reason, and supporting documentation.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Approve or Reject</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Approve:</strong> Inventory is deducted; wastage is recorded in reports</li>
+                  <li><strong>Reject:</strong> Provide reason; record is sent back for correction</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Important</div>
+              <p style="margin:0;">Approved wastage permanently reduces inventory. Ensure the record is accurate before approving.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Wastage Statuses -->
+        <section>
+          <h2>Wastage Record Statuses</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Pending</span></td>
+                  <td>Awaiting manager approval</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Approved</span></td>
+                  <td>Approved and deducted from inventory</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Rejected</span></td>
+                  <td>Rejected with reason - needs correction or removal</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Wastage Analytics -->
+        <section>
+          <h2>Wastage Analytics</h2>
+          <p>Track wastage patterns to identify improvement opportunities:</p>
+
+          <div class="card">
+            <h3>Available Reports</h3>
+            <ul>
+              <li><strong>Wastage by Material:</strong> See which products have highest wastage</li>
+              <li><strong>Wastage by Type:</strong> Understand common causes (spillage vs evaporation)</li>
+              <li><strong>Monthly Trends:</strong> Track wastage over time</li>
+              <li><strong>Cost Impact:</strong> Financial impact of wastage on operations</li>
+            </ul>
+          </div>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Use Analytics</div>
+              <p style="margin:0;">Regular review of wastage analytics can help identify handling issues, storage problems, or training needs.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Record immediately:</strong> Log wastage as soon as it happens while details are fresh</li>
+              <li><strong>Be accurate:</strong> Measure quantities precisely - estimates lead to inventory discrepancies</li>
+              <li><strong>Document thoroughly:</strong> Include photos or documentation when possible</li>
+              <li><strong>Identify root causes:</strong> Use the wastage type to track patterns</li>
+              <li><strong>Review regularly:</strong> Monthly wastage review helps identify issues early</li>
+              <li><strong>Train staff:</strong> Proper handling training reduces spillage and damage</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="inventory.html" class="quick-link">Inventory Management</a>
+            <a href="reports.html" class="quick-link">Reports & Analytics</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Overview - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="login.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <polyline points="10 17 15 12 10 7"/>
+                <line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+              Login & Authentication
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="dashboard.html" class="nav-link active">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9"/>
+                <rect x="14" y="3" width="7" height="5"/>
+                <rect x="14" y="12" width="7" height="9"/>
+                <rect x="3" y="16" width="7" height="5"/>
+              </svg>
+              Dashboard Overview
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="navigation.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              System Navigation
+            </a>
+          </li>
+        </ul>
+
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../modules/customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="../modules/suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="../modules/inventory.html" class="nav-link">Inventory Management</a></li>
+          <li class="nav-item"><a href="../modules/contracts.html" class="nav-link">Contract Rate System</a></li>
+          <li class="nav-item"><a href="../modules/sales.html" class="nav-link">Sales & Invoicing</a></li>
+          <li class="nav-item"><a href="../modules/purchase.html" class="nav-link">Purchase Orders</a></li>
+          <li class="nav-item"><a href="../modules/petty-cash.html" class="nav-link">Petty Cash System</a></li>
+          <li class="nav-item"><a href="../modules/wastage.html" class="nav-link">Wastage Management</a></li>
+          <li class="nav-item"><a href="../modules/reports.html" class="nav-link">Reports & Analytics</a></li>
+        </ul>
+
+        <div class="nav-section-title">Role Guides</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../roles/admin.html" class="nav-link">Administrator Guide</a></li>
+          <li class="nav-item"><a href="../roles/manager.html" class="nav-link">Manager Guide</a></li>
+          <li class="nav-item"><a href="../roles/sales-staff.html" class="nav-link">Sales Staff Guide</a></li>
+          <li class="nav-item"><a href="../roles/purchase-staff.html" class="nav-link">Purchase Staff Guide</a></li>
+          <li class="nav-item"><a href="../roles/accounts-staff.html" class="nav-link">Accounts Staff Guide</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Getting Started</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Dashboard Overview</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Dashboard Overview</h1>
+        <p class="lead">
+          Your dashboard is a workflow-based hub for monitoring business activities, tracking tasks,
+          and quickly accessing all modules. This guide explains each section of the dashboard.
+        </p>
+
+        <!-- Dashboard Layout -->
+        <section>
+          <h2>Understanding Your Dashboard</h2>
+          <p>
+            After logging in, you'll land on your personalized dashboard. The dashboard is organized
+            into five main sections designed to give you a complete overview of your work and business status.
+          </p>
+        </section>
+
+        <!-- Notifications Panel -->
+        <section>
+          <h2>Notifications Panel</h2>
+          <p>The Notifications Panel appears at the top of your dashboard and shows important alerts requiring your attention.</p>
+
+          <ul>
+            <li><strong>Action Required:</strong> Items needing immediate attention (approvals, overdue tasks)</li>
+            <li><strong>System Alerts:</strong> Important system messages and updates</li>
+            <li><strong>Reminders:</strong> Upcoming deadlines and scheduled items</li>
+          </ul>
+
+          <div class="callout note">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Notification Badge</div>
+              <p style="margin:0;">A badge on the notification icon indicates unread alerts. Click to expand and view all notifications.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Key Metrics -->
+        <section>
+          <h2>Key Metrics</h2>
+          <p>These cards show your most important business metrics at a glance:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"/>
+                    <circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="card-title" style="margin:0;">Collections</h4>
+                </div>
+              </div>
+              <p>Number of active and pending material collections from suppliers.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="card-title" style="margin:0;">Purchase Orders</h4>
+                </div>
+              </div>
+              <p>Count of purchase orders and their current status.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="card-title" style="margin:0;">Invoices</h4>
+                </div>
+              </div>
+              <p>Invoice status including pending, paid, and overdue counts.</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="card-title" style="margin:0;">Pending Actions</h4>
+                </div>
+              </div>
+              <p>Items requiring your attention or approval.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Module Overview -->
+        <section>
+          <h2>Module Overview</h2>
+          <p>
+            Quick access to all modules with their current status. Each module card shows a summary
+            of activity within that module.
+          </p>
+
+          <ul>
+            <li>Click any module card to navigate directly to that module</li>
+            <li>Each card displays a status indicator showing recent activity</li>
+            <li>Module availability depends on your role and permissions</li>
+          </ul>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Quick Navigation</div>
+              <p style="margin:0;">The Module Overview provides the fastest way to jump to any section of the system without using the sidebar menu.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Your Tasks -->
+        <section>
+          <h2>Your Tasks</h2>
+          <p>
+            View and manage your pending tasks organized by priority. This section helps you stay
+            on top of your workload.
+          </p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Priority Level</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="color: #ef4444; font-weight: bold;">High Priority</span></td>
+                  <td>Urgent tasks that appear first - approvals, overdue items, critical actions</td>
+                </tr>
+                <tr>
+                  <td><span style="color: #22c55e; font-weight: bold;">Normal Priority</span></td>
+                  <td>Standard tasks with no immediate deadline</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Click on any task to view details or take action directly from the dashboard.</p>
+        </section>
+
+        <!-- Recent Activity -->
+        <section>
+          <h2>Recent Activity</h2>
+          <p>
+            Track recent actions across the system. This activity feed shows what's happening
+            in real-time across all modules you have access to.
+          </p>
+
+          <ul>
+            <li>Shows actions from all users in your company</li>
+            <li>Includes order creation, approvals, status changes, and more</li>
+            <li>Click any activity item to see full details</li>
+            <li>Filter by activity type or time period</li>
+          </ul>
+        </section>
+
+        <!-- Dashboard Interaction -->
+        <section>
+          <h2>Using the Dashboard</h2>
+          <p>The dashboard is interactive and designed for quick access:</p>
+
+          <ul>
+            <li><strong>Click metric cards:</strong> Navigate to related modules for details</li>
+            <li><strong>Click module cards:</strong> Jump directly to any module</li>
+            <li><strong>Click tasks:</strong> Open task details and take action</li>
+            <li><strong>Click activity items:</strong> View the full record</li>
+            <li><strong>Refresh:</strong> Data updates automatically, or click refresh to manually update</li>
+          </ul>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Next Steps</h4>
+          <div class="quick-links-grid">
+            <a href="navigation.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              Learn System Navigation
+            </a>
+            <a href="../modules/sales.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              Explore Sales Module
+            </a>
+            <a href="../modules/purchase.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"/>
+                <circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72"/>
+              </svg>
+              Purchase Module
+            </a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+          <p>Need additional help? Contact your system administrator.</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

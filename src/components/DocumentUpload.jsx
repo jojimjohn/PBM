@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, FileText, Image, AlertCircle, Download, Eye } from 'lucide-react';
+import { useSystemSettings } from '../context/SystemSettingsContext';
 import './DocumentUpload.css';
 
 const DocumentUpload = ({
@@ -12,6 +13,7 @@ const DocumentUpload = ({
   disabled = false,
   label = 'Attachments'
 }) => {
+  const { formatDate } = useSystemSettings();
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -187,7 +189,7 @@ const DocumentUpload = ({
                   <p className="document-upload-item-meta">
                     {attachment.size ? formatFileSize(attachment.size) : 'Unknown size'}
                     {attachment.uploadedAt && (
-                      <span> • {new Date(attachment.uploadedAt).toLocaleDateString()}</span>
+                      <span> • {formatDate(attachment.uploadedAt)}</span>
                     )}
                   </p>
                 </div>

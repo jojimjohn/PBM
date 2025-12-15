@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../getting-started/login.html" class="nav-link">Login & Authentication</a></li>
+          <li class="nav-item"><a href="../getting-started/dashboard.html" class="nav-link">Dashboard Overview</a></li>
+          <li class="nav-item"><a href="../getting-started/navigation.html" class="nav-link">System Navigation</a></li>
+        </ul>
+
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link active">Inventory Management</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link">Contract Rate System</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales & Invoicing</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Orders</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash System</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link">Wastage Management</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports & Analytics</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Inventory Management</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Inventory Management</h1>
+        <p class="lead">
+          Track materials, monitor stock levels, and manage inventory movements. The Inventory module
+          provides real-time visibility into your oil products and ensures you never run out of stock.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Can Access</div>
+            <p style="margin:0;">Inventory is viewable by <span class="role-badge all">All Staff</span>. Edit permissions require <span class="role-badge manager">Manager</span> or <span class="role-badge admin">Admin</span> role.</p>
+          </div>
+        </div>
+
+        <!-- Materials Overview -->
+        <section>
+          <h2>Materials in PBM</h2>
+          <p>Al Ramrami Trading deals with various petroleum products. Common materials include:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Oil Products</h4>
+              <ul>
+                <li>Engine Oil</li>
+                <li>Transformer Oil</li>
+                <li>Lubricant Oil</li>
+                <li>Cooking Oil</li>
+                <li>Diesel</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Containers</h4>
+              <ul>
+                <li>Empty Drums</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Composite Materials</h4>
+              <p>Some materials auto-split during collection:</p>
+              <ul>
+                <li>"Engine Oil with Drums" → Engine Oil + Empty Drums</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Inventory Dashboard -->
+        <section>
+          <h2>Inventory Dashboard</h2>
+          <p>Navigate to <strong>Inventory → Stock</strong> to view your inventory dashboard.</p>
+
+          <h3>Stock Level Indicators</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Color</th>
+                  <th>Status</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="display:inline-block;width:20px;height:20px;background:#22c55e;border-radius:4px;"></span></td>
+                  <td><strong>Healthy</strong></td>
+                  <td>Stock above reorder point</td>
+                </tr>
+                <tr>
+                  <td><span style="display:inline-block;width:20px;height:20px;background:#f59e0b;border-radius:4px;"></span></td>
+                  <td><strong>Low</strong></td>
+                  <td>Stock at or below reorder point</td>
+                </tr>
+                <tr>
+                  <td><span style="display:inline-block;width:20px;height:20px;background:#ef4444;border-radius:4px;"></span></td>
+                  <td><strong>Critical</strong></td>
+                  <td>Stock below minimum threshold</td>
+                </tr>
+                <tr>
+                  <td><span style="display:inline-block;width:20px;height:20px;background:#94a3b8;border-radius:4px;"></span></td>
+                  <td><strong>Out of Stock</strong></td>
+                  <td>Zero quantity available</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Viewing Stock -->
+        <section>
+          <h2>Viewing Stock Levels</h2>
+          <p>The inventory list shows all materials with their current quantities:</p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Material Code</strong></td>
+                  <td>Unique identifier (e.g., MAT-001)</td>
+                </tr>
+                <tr>
+                  <td><strong>Material Name</strong></td>
+                  <td>Product description</td>
+                </tr>
+                <tr>
+                  <td><strong>Category</strong></td>
+                  <td>Product category (Oil, Container, etc.)</td>
+                </tr>
+                <tr>
+                  <td><strong>Current Stock</strong></td>
+                  <td>Available quantity</td>
+                </tr>
+                <tr>
+                  <td><strong>Unit</strong></td>
+                  <td>Measurement unit (Liters, Pieces, etc.)</td>
+                </tr>
+                <tr>
+                  <td><strong>Reorder Point</strong></td>
+                  <td>Level triggering reorder alert</td>
+                </tr>
+                <tr>
+                  <td><strong>Market Price</strong></td>
+                  <td>Current selling price per unit</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Filtering Stock</h3>
+          <ul>
+            <li><strong>By Category:</strong> Filter to show only specific product types</li>
+            <li><strong>By Status:</strong> Show only low stock or out of stock items</li>
+            <li><strong>Search:</strong> Find specific materials by name or code</li>
+          </ul>
+        </section>
+
+        <!-- Stock Movements -->
+        <section>
+          <h2>Stock Movements</h2>
+          <p>Stock levels change through various transactions:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Stock In (Increases)</h4>
+              <ul>
+                <li>WCN Finalization (collections)</li>
+                <li>Purchase Order receipt</li>
+                <li>Manual adjustment</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Stock Out (Decreases)</h4>
+              <ul>
+                <li>Sales orders</li>
+                <li>Wastage records</li>
+                <li>Manual adjustment</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Movement History</h3>
+          <p>To view movement history for a material:</p>
+          <ol>
+            <li>Click on the material row</li>
+            <li>Go to the <strong>History</strong> or <strong>Movements</strong> tab</li>
+            <li>View all transactions affecting this material</li>
+          </ol>
+        </section>
+
+        <!-- Material Details -->
+        <section>
+          <h2>Material Details</h2>
+          <p>Click on any material to view its complete information:</p>
+
+          <div class="card">
+            <h3>Material Profile Includes:</h3>
+            <ul>
+              <li><strong>Basic Info:</strong> Name, code, category, unit of measure</li>
+              <li><strong>Pricing:</strong> Current market price, cost price</li>
+              <li><strong>Stock Info:</strong> Current level, minimum, reorder point</li>
+              <li><strong>Movement History:</strong> All stock changes with dates</li>
+              <li><strong>Related Orders:</strong> Recent sales and purchases</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Low Stock Alerts -->
+        <section>
+          <h2>Low Stock Alerts</h2>
+          <p>The system automatically alerts you when stock reaches critical levels:</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Dashboard Widget</div>
+              <div class="step-content">
+                <p>Low stock items appear on the main dashboard with red/yellow indicators.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Notifications</div>
+              <div class="step-content">
+                <p>Bell icon shows alerts for items below reorder point.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Take Action</div>
+              <div class="step-content">
+                <p>Create purchase orders or schedule collections to replenish stock.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Proactive Management</div>
+              <p style="margin:0;">Review the Low Stock report weekly to plan collections and avoid stockouts.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Stock Chart -->
+        <section>
+          <h2>Stock Visualization</h2>
+          <p>The inventory dashboard includes visual charts showing:</p>
+
+          <ul>
+            <li><strong>Stock Distribution:</strong> Pie chart of stock by category</li>
+            <li><strong>Stock Trends:</strong> Line chart showing level changes over time</li>
+            <li><strong>Value Summary:</strong> Total inventory value by category</li>
+          </ul>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Regular reviews:</strong> Check stock levels daily</li>
+              <li><strong>Set appropriate thresholds:</strong> Configure reorder points based on lead times</li>
+              <li><strong>Document wastage:</strong> Record all losses through the Wastage module</li>
+              <li><strong>Verify movements:</strong> Cross-check physical counts periodically</li>
+              <li><strong>Plan collections:</strong> Schedule based on stock needs and supplier availability</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="wastage.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7"/>
+              </svg>
+              Wastage Management
+            </a>
+            <a href="purchase.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"/>
+              </svg>
+              Purchase Orders
+            </a>
+            <a href="sales.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+              </svg>
+              Sales & Invoicing
+            </a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -12,15 +12,32 @@ class PettyCashService {
 
   /**
    * Transform backend card data to frontend format
+   * Prioritizes petty cash user info over legacy system user assignments
    */
   transformCard(backendCard) {
+    // Determine the assigned staff name - prioritize petty cash user
+    const systemUserName = `${backendCard.assignedUserFirstName || ''} ${backendCard.assignedUserLastName || ''}`.trim();
+    const staffName = backendCard.pettyCashUserName || systemUserName || backendCard.staffName || 'Unassigned';
+
+    // Determine role/department - prioritize petty cash user department
+    const role = backendCard.pettyCashUserDepartment || backendCard.assignedUserRole || backendCard.department || 'N/A';
+
     return {
       ...backendCard,
       assignedStaff: {
-        name: `${backendCard.assignedUserFirstName || ''} ${backendCard.assignedUserLastName || ''}`.trim() || backendCard.staffName || 'Unknown',
-        role: backendCard.assignedUserRole || backendCard.department || 'N/A',
+        name: staffName,
+        role: role,
         email: backendCard.assignedUserEmail || ''
       },
+      // Include petty cash user details for direct access
+      pettyCashUser: backendCard.pettyCashUserId ? {
+        id: backendCard.pettyCashUserId,
+        name: backendCard.pettyCashUserName,
+        phone: backendCard.pettyCashUserPhone,
+        department: backendCard.pettyCashUserDepartment,
+        employeeId: backendCard.pettyCashUserEmployeeId,
+        isActive: backendCard.pettyCashUserIsActive
+      } : null,
       createdBy: {
         name: `${backendCard.createdByFirstName || ''} ${backendCard.createdByLastName || ''}`.trim() || 'System'
       }

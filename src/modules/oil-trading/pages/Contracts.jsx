@@ -284,8 +284,8 @@ const Contracts = () => {
               minimumPrice: parseFloat(material.minimumPrice) || 0,
               paymentDirection: material.paymentDirection || 'we_receive',
               unit: material.unit || materialData?.unit || 'kg',
-              minimumQuantity: parseFloat(material.minQuantity) || 0,
-              maximumQuantity: parseFloat(material.maxQuantity) || 0,
+              minimumQuantity: parseFloat(material.minimumQuantity) || 0,
+              maximumQuantity: parseFloat(material.maximumQuantity) || 0,
               description: material.description || ''
             }
           })

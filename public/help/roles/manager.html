@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Guide - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Role Guides</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="admin.html" class="nav-link">Administrator Guide</a></li>
+          <li class="nav-item"><a href="manager.html" class="nav-link active">Manager Guide</a></li>
+          <li class="nav-item"><a href="sales-staff.html" class="nav-link">Sales Staff Guide</a></li>
+          <li class="nav-item"><a href="purchase-staff.html" class="nav-link">Purchase Staff Guide</a></li>
+          <li class="nav-item"><a href="accounts-staff.html" class="nav-link">Accounts Staff Guide</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Role Guides</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Manager</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Manager Guide</h1>
+        <p class="lead">
+          As a Manager, you oversee operations, approve requests, and monitor business performance.
+          This guide covers your approval workflows and management responsibilities.
+        </p>
+
+        <span class="role-badge manager" style="font-size: 1rem; padding: 8px 16px;">Manager Role</span>
+
+        <!-- Your Responsibilities -->
+        <section>
+          <h2>Your Responsibilities</h2>
+          <div class="card-grid">
+            <div class="card">
+              <h4>Approvals</h4>
+              <ul>
+                <li>Approve/reject expenses</li>
+                <li>Approve wastage records</li>
+                <li>Review purchase orders</li>
+                <li>Validate collection orders</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Oversight</h4>
+              <ul>
+                <li>Monitor team activities</li>
+                <li>Review sales performance</li>
+                <li>Track purchase costs</li>
+                <li>Ensure compliance</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Reporting</h4>
+              <ul>
+                <li>Generate performance reports</li>
+                <li>Analyze trends</li>
+                <li>Track KPIs</li>
+                <li>Present to leadership</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Decision Making</h4>
+              <ul>
+                <li>Contract negotiations</li>
+                <li>Pricing decisions</li>
+                <li>Resource allocation</li>
+                <li>Process improvements</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Approval Dashboard -->
+        <section>
+          <h2>Your Approval Queue</h2>
+          <p>Your dashboard shows pending items requiring your attention:</p>
+
+          <div class="callout note">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Check Daily</div>
+              <p style="margin:0;">Review your approval queue at least once daily. Pending items block staff from completing their work.</p>
+            </div>
+          </div>
+
+          <h3>Types of Approvals</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Item Type</th>
+                  <th>Submitted By</th>
+                  <th>What to Review</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Expenses</strong></td>
+                  <td>All staff via petty cash</td>
+                  <td>Amount, category, receipt, justification</td>
+                </tr>
+                <tr>
+                  <td><strong>Wastage</strong></td>
+                  <td>Purchase staff</td>
+                  <td>Quantity, reason, supporting documentation</td>
+                </tr>
+                <tr>
+                  <td><strong>Purchase Orders</strong></td>
+                  <td>Purchase staff</td>
+                  <td>Supplier, amounts, terms</td>
+                </tr>
+                <tr>
+                  <td><strong>PO Amendments</strong></td>
+                  <td>Purchase staff</td>
+                  <td>Changes from original, justification</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Expense Approvals -->
+        <section>
+          <h2>Processing Expense Approvals</h2>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Access Pending Expenses</div>
+              <div class="step-content">
+                <p>Go to <strong>Petty Cash → Approvals</strong> tab, or click the notification badge.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Each Expense</div>
+              <div class="step-content">
+                <p>Click to view details:</p>
+                <ul>
+                  <li>Is the amount reasonable?</li>
+                  <li>Is the category appropriate?</li>
+                  <li>Is the receipt attached and legible?</li>
+                  <li>Does the description justify the expense?</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Approve or Reject</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Approve:</strong> Click "Approve" - amount is deducted from card</li>
+                  <li><strong>Reject:</strong> Click "Reject" and provide a clear reason</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Approval Best Practice</div>
+              <p style="margin:0;">When rejecting, always provide a specific, actionable reason so the submitter can correct and resubmit if appropriate.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Wastage Approvals -->
+        <section>
+          <h2>Processing Wastage Approvals</h2>
+          <p>Wastage records require careful review as they affect inventory and profitability.</p>
+
+          <div class="card">
+            <h3>What to Check</h3>
+            <ul>
+              <li><strong>Quantity:</strong> Is this a realistic amount for the reported incident?</li>
+              <li><strong>Type:</strong> Does the wastage type match the description?</li>
+              <li><strong>Timing:</strong> Was this reported promptly after the incident?</li>
+              <li><strong>Pattern:</strong> Is this a recurring issue that needs investigation?</li>
+            </ul>
+          </div>
+
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Important</div>
+              <p style="margin:0;">Approved wastage permanently reduces inventory. Verify the accuracy before approving, especially for large amounts.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reports -->
+        <section>
+          <h2>Key Reports for Managers</h2>
+          <p>Focus on these reports for effective oversight:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Daily Review</h4>
+              <ul>
+                <li>Pending approvals count</li>
+                <li>Today's sales summary</li>
+                <li>Today's collections</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Weekly Review</h4>
+              <ul>
+                <li>Sales vs. target</li>
+                <li>Expense summary</li>
+                <li>Inventory levels</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Monthly Review</h4>
+              <ul>
+                <li>Profit & Loss</li>
+                <li>Contract utilization</li>
+                <li>Wastage analysis</li>
+                <li>Petty cash reconciliation</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Daily Checklist -->
+        <section>
+          <h2>Manager Daily Checklist</h2>
+          <div class="card">
+            <ul>
+              <li>☐ Review and process pending expense approvals</li>
+              <li>☐ Review and process pending wastage approvals</li>
+              <li>☐ Check sales order status and deliveries</li>
+              <li>☐ Review purchase order status</li>
+              <li>☐ Check low stock alerts</li>
+              <li>☐ Review expiring contracts (within 30 days)</li>
+              <li>☐ Address any escalated issues</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../workflows/approve-expense.html" class="quick-link">Expense Approval Workflow</a>
+            <a href="../modules/petty-cash.html" class="quick-link">Petty Cash System</a>
+            <a href="../modules/wastage.html" class="quick-link">Wastage Management</a>
+            <a href="../modules/reports.html" class="quick-link">Reports & Analytics</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

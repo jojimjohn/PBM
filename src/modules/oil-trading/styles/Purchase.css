@@ -578,7 +578,7 @@
 .tab-content {
   background: white;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--gray-200);
+  border: 0;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }

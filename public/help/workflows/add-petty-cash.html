@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adding Petty Cash Cards - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="track-expenses.html" class="nav-link">Tracking Expenses</a></li>
+          <li class="nav-item"><a href="add-petty-cash.html" class="nav-link active">Adding Petty Cash Cards</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link">Expense Approval Workflow</a></li>
+          <li class="nav-item"><a href="contract-rates.html" class="nav-link">Using Contract Rates</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Adding Petty Cash Cards</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Adding Petty Cash Cards</h1>
+        <p class="lead">
+          This guide walks you through creating and configuring petty cash cards,
+          setting up PC Users, and managing card operations.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Required Role</div>
+            <p style="margin:0;"><span class="role-badge accounts">Accounts Staff</span> or <span class="role-badge admin">Administrator</span></p>
+          </div>
+        </div>
+
+        <!-- Creating a Card -->
+        <section>
+          <h2>Creating a New Petty Cash Card</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Navigate to Petty Cash</div>
+              <div class="step-content">
+                <p>Go to <strong>Finance → Petty Cash</strong> and ensure you're on the <strong>Cards</strong> tab.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click Add Card</div>
+              <div class="step-content">
+                <p>Click the <strong>+ Add Card</strong> button in the top-right corner.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Card Details</div>
+              <div class="step-content">
+                <p>Fill in the required information:</p>
+                <ul>
+                  <li><strong>Card Name *</strong> - Descriptive name (e.g., "Operations Petty Cash", "Sales Team Card")</li>
+                  <li><strong>Card Number *</strong> - Unique identifier (e.g., "PC-001")</li>
+                  <li><strong>Department</strong> - Which department uses this card</li>
+                  <li><strong>Initial Balance *</strong> - Starting amount on the card</li>
+                  <li><strong>Monthly Limit</strong> - Maximum spending per month (optional)</li>
+                </ul>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Naming Convention</div>
+                    <p style="margin:0;">Use clear, descriptive names that identify the card's purpose. This helps with reporting and reconciliation.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Notes (Optional)</div>
+              <div class="step-content">
+                <p>Add any notes about how this card should be used or any restrictions.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save the Card</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong>. The card is now active and ready for use.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Adding PC Users -->
+        <section>
+          <h2>Adding PC Users to a Card</h2>
+          <p>PC Users can submit expenses via the mobile portal.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Go to Users Tab</div>
+              <div class="step-content">
+                <p>In Petty Cash, click on the <strong>Users</strong> tab.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click Add PC User</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add PC User</strong>.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter User Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Name *</strong> - Full name of the user</li>
+                  <li><strong>Email</strong> - Contact email</li>
+                  <li><strong>Phone *</strong> - Mobile number</li>
+                  <li><strong>Assigned Card *</strong> - Select the petty cash card they'll use</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save and Get Credentials</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong>. The system generates:</p>
+                <ul>
+                  <li><strong>QR Code</strong> - For portal access</li>
+                  <li><strong>4-Digit PIN</strong> - For authentication</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Share Credentials Securely</div>
+              <div class="step-content">
+                <p>Provide the QR code and PIN to the user through a secure method:</p>
+                <ul>
+                  <li>In person (recommended)</li>
+                  <li>Encrypted message</li>
+                  <li>NOT via regular email</li>
+                </ul>
+                <div class="callout warning">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Security</div>
+                    <p style="margin:0;">Remind users to keep their PIN secret and report if compromised.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Reloading Cards -->
+        <section>
+          <h2>Reloading a Card</h2>
+          <p>When a card's balance runs low:</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Open Card Details</div>
+              <div class="step-content">
+                <p>Click on the card you want to reload in the Cards tab.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click Reload Card</div>
+              <div class="step-content">
+                <p>Click the <strong>Reload Card</strong> button.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Amount</div>
+              <div class="step-content">
+                <p>Enter the amount to add to the card balance.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Note</div>
+              <div class="step-content">
+                <p>Add a note explaining the reload (e.g., "Monthly replenishment").</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Confirm</div>
+              <div class="step-content">
+                <p>Click <strong>Confirm</strong>. The balance is updated immediately.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Managing Cards -->
+        <section>
+          <h2>Other Card Operations</h2>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Suspending a Card</h4>
+              <p>Temporarily disable a card:</p>
+              <ol>
+                <li>Open card details</li>
+                <li>Click <strong>Suspend Card</strong></li>
+                <li>Card becomes inactive</li>
+                <li>Can reactivate later</li>
+              </ol>
+            </div>
+
+            <div class="card">
+              <h4>Viewing History</h4>
+              <p>See all card transactions:</p>
+              <ol>
+                <li>Open card details</li>
+                <li>Go to <strong>History</strong> tab</li>
+                <li>View all expenses and reloads</li>
+                <li>Export if needed</li>
+              </ol>
+            </div>
+
+            <div class="card">
+              <h4>Closing a Card</h4>
+              <p>Permanently deactivate:</p>
+              <ol>
+                <li>Open card details</li>
+                <li>Click <strong>Close Card</strong></li>
+                <li>Confirm the action</li>
+                <li>Card is archived (not deleted)</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Use meaningful names:</strong> Card names should clearly identify purpose</li>
+              <li><strong>Set appropriate limits:</strong> Monthly limits prevent overspending</li>
+              <li><strong>Regular monitoring:</strong> Check card balances weekly</li>
+              <li><strong>Timely reloads:</strong> Don't let cards run empty</li>
+              <li><strong>Secure credentials:</strong> Share QR/PIN securely, not via email</li>
+              <li><strong>Monthly reconciliation:</strong> Compare system to physical cash</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/petty-cash.html" class="quick-link">Petty Cash System</a>
+            <a href="track-expenses.html" class="quick-link">Tracking Expenses</a>
+            <a href="approve-expense.html" class="quick-link">Expense Approval</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

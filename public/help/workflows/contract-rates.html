@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Using Contract Rates - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="track-expenses.html" class="nav-link">Tracking Expenses</a></li>
+          <li class="nav-item"><a href="add-petty-cash.html" class="nav-link">Adding Petty Cash Cards</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link">Expense Approval Workflow</a></li>
+          <li class="nav-item"><a href="contract-rates.html" class="nav-link active">Using Contract Rates</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Using Contract Rates</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Using Contract Rates</h1>
+        <p class="lead">
+          Learn how contract rates work in sales orders. This guide explains automatic rate application,
+          understanding rate indicators, and handling expired contracts.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Uses This</div>
+            <p style="margin:0;"><span class="role-badge sales">Sales Staff</span> creating sales orders for customers with contracts.</p>
+          </div>
+        </div>
+
+        <!-- Understanding Contract Rates -->
+        <section>
+          <h2>Understanding Contract Rates</h2>
+          <p>Contract rates are special prices negotiated with customers. When active, they override market prices.</p>
+
+          <h3>Rate Types</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Fixed Rate</strong></td>
+                  <td>Set price regardless of market</td>
+                  <td>OMR 24.00/L (even if market is OMR 28/L)</td>
+                </tr>
+                <tr>
+                  <td><strong>Discount %</strong></td>
+                  <td>Percentage off market price</td>
+                  <td>10% off → OMR 25.20/L when market is OMR 28/L</td>
+                </tr>
+                <tr>
+                  <td><strong>Minimum Guarantee</strong></td>
+                  <td>Customer pays lower of contract or market</td>
+                  <td>Max OMR 26/L - pays less if market drops</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- How It Works -->
+        <section>
+          <h2>How Contract Rates Apply in Sales Orders</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Select Customer</div>
+              <div class="step-content">
+                <p>When you select a customer, the system checks for active contracts.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Delivery Location</div>
+              <div class="step-content">
+                <p>Contract rates are location-specific. Selecting the delivery location determines which rates apply.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Materials</div>
+              <div class="step-content">
+                <p>For each material added:</p>
+                <ol>
+                  <li>System checks if material has a contract rate for this location</li>
+                  <li>If yes, contract rate is applied automatically</li>
+                  <li>If no, market rate is used</li>
+                </ol>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Rate Indicators</div>
+              <div class="step-content">
+                <p>Look for visual indicators showing which rate is applied.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Rate Indicators -->
+        <section>
+          <h2>Understanding Rate Indicators</h2>
+          <p>The sales order form shows colored indicators to help you understand pricing:</p>
+
+          <div class="card-grid">
+            <div class="card" style="border-left: 4px solid #22c55e;">
+              <h4 style="color:#16a34a;">Green - Contract Rate Active</h4>
+              <p>Contract rate is lower than market. Customer is getting a deal.</p>
+              <p><strong>Shows:</strong> "Contract Rate: OMR 24.00 (Market: OMR 28.00)"</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #f59e0b;">
+              <h4 style="color:#ca8a04;">Yellow - Contract Expiring Soon</h4>
+              <p>Contract expires within 30 days. Consider renewal discussion.</p>
+              <p><strong>Shows:</strong> "Contract expires in X days"</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #ef4444;">
+              <h4 style="color:#dc2626;">Red - Contract Expired</h4>
+              <p>Contract has expired. Market rate will apply.</p>
+              <p><strong>Shows:</strong> "Contract expired on [date]"</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #94a3b8;">
+              <h4 style="color:#64748b;">Gray - No Contract</h4>
+              <p>No contract exists for this customer/location/material. Market rate applies.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Creating an Order -->
+        <section>
+          <h2>Creating an Order with Contract Rates</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Go to Sales Orders</div>
+              <div class="step-content">
+                <p>Navigate to <strong>Sales → Sales Orders</strong> and click <strong>+ New Order</strong>.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Customer</div>
+              <div class="step-content">
+                <p>Choose the customer. If they have an active contract, you'll see a <span style="background:#dcfce7;color:#16a34a;padding:2px 6px;border-radius:4px;">Contract Active</span> badge.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Location</div>
+              <div class="step-content">
+                <p>Choose the delivery location. Rates are specific to each location.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Materials</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Item</strong> and select materials. Watch for:</p>
+                <ul>
+                  <li>Contract rate automatically applied</li>
+                  <li>Comparison with market rate shown</li>
+                  <li>Total savings calculated</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Order Total</div>
+              <div class="step-content">
+                <p>The order summary shows total value with contract rates applied.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Complete and Submit</div>
+              <div class="step-content">
+                <p>Add delivery date and payment terms, then submit the order.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Handling Expired Contracts -->
+        <section>
+          <h2>Handling Expired Contracts</h2>
+          <p>When a customer's contract has expired:</p>
+
+          <div class="card">
+            <h3>Options</h3>
+            <ol>
+              <li><strong>Use market rate:</strong> Proceed with order at current market prices</li>
+              <li><strong>Contact customer:</strong> Discuss contract renewal before order</li>
+              <li><strong>Escalate to manager:</strong> For important customers, get guidance</li>
+            </ol>
+          </div>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Proactive Approach</div>
+              <p style="margin:0;">Check the "Expiring Contracts" report weekly. Contact customers 30 days before expiry to discuss renewal.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Verify rates:</strong> Double-check contract rates match expectations</li>
+              <li><strong>Watch for warnings:</strong> Pay attention to yellow/red indicators</li>
+              <li><strong>Communicate proactively:</strong> Notify customers of expiring contracts</li>
+              <li><strong>Document discussions:</strong> Note any pricing discussions with customers</li>
+              <li><strong>Know your contracts:</strong> Familiarize yourself with key customer contracts</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/contracts.html" class="quick-link">Contract Rate System</a>
+            <a href="../modules/sales.html" class="quick-link">Sales & Invoicing</a>
+            <a href="../modules/customers.html" class="quick-link">Customer Management</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

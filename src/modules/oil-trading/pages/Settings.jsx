@@ -38,7 +38,7 @@ const Settings = () => {
   const { t, currentLanguage, changeLanguage, getSupportedLanguages, isRTL } = useLocalization()
   const { settings, updateSettings, resetToDefaults, getSettingsInfo } = useSystemSettings()
   const { hasPermission } = usePermissions()
-  
+
   const [activeTab, setActiveTab] = useState('localization')
   const [formData, setFormData] = useState({})
   const [loading, setLoading] = useState(false)
@@ -46,6 +46,11 @@ const Settings = () => {
   const [vatRate, setVatRate] = useState(5)
   const [editingVat, setEditingVat] = useState(false)
   const [savingVat, setSavingVat] = useState(false)
+
+  // Session timeout state
+  const [sessionTimeout, setSessionTimeout] = useState(30)
+  const [editingSessionTimeout, setEditingSessionTimeout] = useState(false)
+  const [savingSessionTimeout, setSavingSessionTimeout] = useState(false)
 
   // Branch management state
   const [branches, setBranches] = useState([])
@@ -89,6 +94,9 @@ const Settings = () => {
     // Load VAT rate from database
     loadVatRate()
 
+    // Load session timeout setting
+    loadSessionTimeout()
+
     // Load branches
     loadBranches()
   }, [settings, currentLanguage, canManageSettings, t])
@@ -99,6 +107,32 @@ const Settings = () => {
       setVatRate(rate)
     } catch (error) {
       console.error('Error loading VAT rate:', error)
+    }
+  }
+
+  const loadSessionTimeout = async () => {
+    try {
+      const response = await systemSettingsService.getSessionTimeout()
+      if (response && response.sessionTimeoutMinutes) {
+        setSessionTimeout(response.sessionTimeoutMinutes)
+      }
+    } catch (error) {
+      console.error('Error loading session timeout:', error)
+    }
+  }
+
+  const handleSaveSessionTimeout = async () => {
+    try {
+      setSavingSessionTimeout(true)
+      await systemSettingsService.updateSessionTimeout(sessionTimeout)
+      setMessage({ type: 'success', text: t('sessionTimeoutUpdated', 'Session timeout updated successfully') })
+      setEditingSessionTimeout(false)
+      setTimeout(() => setMessage(null), 3000)
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || t('failedToUpdateSessionTimeout', 'Failed to update session timeout') })
+      setTimeout(() => setMessage(null), 3000)
+    } finally {
+      setSavingSessionTimeout(false)
     }
   }
 
@@ -554,7 +588,96 @@ const Settings = () => {
                 <p>{t('manageAccountSecurity', 'Manage your account security and two-factor authentication')}</p>
               </div>
 
-              <div className="security-content">
+              <div className="settings-grid">
+                {/* Session Timeout Setting */}
+                <div className="setting-group">
+                  <label htmlFor="sessionTimeout">
+                    <Clock size={16} style={{ display: 'inline', marginRight: '4px' }} />
+                    {t('sessionTimeout', 'Session Timeout')} ({t('minutes', 'minutes')})
+                    <span style={{
+                      marginLeft: '8px',
+                      padding: '2px 8px',
+                      background: '#e3f2fd',
+                      color: '#1565c0',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'normal'
+                    }}>
+                      {t('globalSetting', 'Global Setting')}
+                    </span>
+                  </label>
+                  {editingSessionTimeout ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        id="sessionTimeout"
+                        min="10"
+                        max="120"
+                        step="5"
+                        value={sessionTimeout}
+                        onChange={(e) => setSessionTimeout(parseInt(e.target.value) || 30)}
+                        style={{ flex: 1 }}
+                        disabled={savingSessionTimeout}
+                      />
+                      <button
+                        onClick={handleSaveSessionTimeout}
+                        disabled={savingSessionTimeout}
+                        className="btn btn-primary btn-small"
+                      >
+                        {savingSessionTimeout ? t('saving', 'Saving...') : t('save', 'Save')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingSessionTimeout(false)
+                          loadSessionTimeout()
+                        }}
+                        disabled={savingSessionTimeout}
+                        className="btn btn-outline btn-small"
+                      >
+                        {t('cancel', 'Cancel')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span style={{ padding: '8px 12px', background: '#f0f0f0', borderRadius: '4px', flex: 1 }}>
+                        {sessionTimeout} {t('minutes', 'minutes')}
+                      </span>
+                      <button
+                        onClick={() => setEditingSessionTimeout(true)}
+                        className="btn btn-outline btn-small"
+                      >
+                        {t('edit', 'Edit')}
+                      </button>
+                    </div>
+                  )}
+                  <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                    {t('sessionTimeoutDescription', 'Automatically log out users after this period of inactivity. Valid range: 10-120 minutes.')}
+                  </small>
+                  <small style={{ color: '#1565c0', display: 'block', marginTop: '4px' }}>
+                    <Users size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                    {t('sessionTimeoutAffectsAll', 'This setting affects all users in the company.')}
+                  </small>
+                </div>
+              </div>
+
+              <div className="security-content" style={{ marginTop: '2rem' }}>
+                <h3 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: '600' }}>
+                  {t('twoFactorAuth', 'Two-Factor Authentication')}
+                  <span style={{
+                    marginLeft: '8px',
+                    padding: '2px 8px',
+                    background: '#e8f5e9',
+                    color: '#2e7d32',
+                    borderRadius: '12px',
+                    fontSize: '0.75rem',
+                    fontWeight: 'normal'
+                  }}>
+                    {t('personalSetting', 'Personal Setting')}
+                  </span>
+                </h3>
+                <small style={{ color: '#666', display: 'block', marginBottom: '1rem' }}>
+                  {t('mfaPersonalDescription', 'MFA is configured individually for each user account.')}
+                </small>
                 <MFASetup />
               </div>
             </div>

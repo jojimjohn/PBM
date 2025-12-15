@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Management - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link active">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link">Inventory</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link">Supplier Contracts</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales Orders</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Module</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link">Wastage</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports</a></li>
+          <li class="nav-item"><a href="banking.html" class="nav-link">Banking</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Customer Management</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Customer Management</h1>
+        <p class="lead">
+          Manage your customer database including contact information, credit settings, and customer history.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Module Availability</div>
+            <p style="margin:0;">This module is available for <strong>Al Ramrami Trading Enterprises</strong> (Oil Trading) only.</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <section>
+          <h2>Accessing Customers</h2>
+          <p>Navigate to <strong>Customers</strong> from the main sidebar menu. This is a top-level navigation item appearing after Dashboard.</p>
+        </section>
+
+        <!-- Data Table -->
+        <section>
+          <h2>Customer List</h2>
+          <p>The customer list displays all customers with the following columns:</p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Customer</strong></td>
+                  <td>Customer name and code with avatar icon</td>
+                </tr>
+                <tr>
+                  <td><strong>Contact Person</strong></td>
+                  <td>Primary contact name</td>
+                </tr>
+                <tr>
+                  <td><strong>Phone</strong></td>
+                  <td>Contact phone number</td>
+                </tr>
+                <tr>
+                  <td><strong>Email</strong></td>
+                  <td>Contact email address</td>
+                </tr>
+                <tr>
+                  <td><strong>Outstanding Balance</strong></td>
+                  <td>Current amount owed by customer</td>
+                </tr>
+                <tr>
+                  <td><strong>Credit Status</strong></td>
+                  <td>Status badge (Good, Warning, On Hold)</td>
+                </tr>
+                <tr>
+                  <td><strong>Actions</strong></td>
+                  <td>View, Edit, Create Order, View Contract, Delete</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- View Customer -->
+        <section>
+          <h2>Viewing Customer Details</h2>
+          <p>Click the <strong>View</strong> button or customer row to open the details view. The customer details are organized into sections:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Basic Information</h4>
+              <ul>
+                <li>Customer Name</li>
+                <li>Customer Code</li>
+                <li>Customer Type</li>
+                <li>Status (Active/Inactive)</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Contact Information</h4>
+              <ul>
+                <li>Contact Person</li>
+                <li>Phone Number</li>
+                <li>Email Address</li>
+                <li>Address</li>
+                <li>City/Region</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Business Terms</h4>
+              <ul>
+                <li>Credit Limit (OMR)</li>
+                <li>Payment Terms (days)</li>
+                <li>Outstanding Balance</li>
+                <li>Credit Status</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Add Customer -->
+        <section>
+          <h2>Adding a New Customer</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Add Customer</div>
+              <div class="step-content">
+                <p>Click the <strong>+ Add Customer</strong> button in the top-right corner.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Customer Information</div>
+              <div class="step-content">
+                <p>Fill in the required fields:</p>
+                <ul>
+                  <li><strong>Customer Name *</strong> - Company or individual name</li>
+                  <li><strong>Customer Code</strong> - Auto-generated (AR-CUST-XXX)</li>
+                  <li><strong>Customer Type *</strong> - Select from dropdown</li>
+                  <li><strong>Contact Person</strong> - Primary contact name</li>
+                  <li><strong>Phone *</strong> - Contact number</li>
+                  <li><strong>Email</strong> - Contact email</li>
+                  <li><strong>Address</strong> - Street address</li>
+                  <li><strong>City/Region</strong> - Location</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Set Credit Terms</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Credit Limit</strong> - Maximum credit allowed (OMR)</li>
+                  <li><strong>Payment Terms</strong> - Days allowed for payment</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Notes (Optional)</div>
+              <div class="step-content">
+                <p>Add any additional notes about the customer.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong> to create the customer record.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Edit Customer -->
+        <section>
+          <h2>Editing a Customer</h2>
+          <ol>
+            <li>Find the customer in the list</li>
+            <li>Click the <strong>Edit</strong> button (pencil icon)</li>
+            <li>Modify the required fields</li>
+            <li>Click <strong>Save</strong> to update</li>
+          </ol>
+        </section>
+
+        <!-- Quick Actions -->
+        <section>
+          <h2>Quick Actions</h2>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Create Order</h4>
+              <p>Click <strong>Create Order</strong> to navigate directly to Sales with this customer pre-selected. The customer is stored temporarily and auto-filled in the sales order form.</p>
+            </div>
+
+            <div class="card">
+              <h4>View Contract</h4>
+              <p>Click <strong>View Contract</strong> to see the customer's contract details (if they have an active contract).</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Delete Customer -->
+        <section>
+          <h2>Deleting a Customer</h2>
+          <ol>
+            <li>Click the <strong>Delete</strong> button (trash icon)</li>
+            <li>Confirm the deletion in the popup</li>
+          </ol>
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Note</div>
+              <p style="margin:0;">Customers with existing orders or transactions cannot be deleted. Consider marking them as inactive instead.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="sales.html" class="quick-link">Sales Orders</a>
+            <a href="contracts.html" class="quick-link">Supplier Contracts</a>
+            <a href="reports.html" class="quick-link">Reports</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

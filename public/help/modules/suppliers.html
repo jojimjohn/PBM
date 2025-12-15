@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supplier Management - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link active">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link">Inventory</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link">Supplier Contracts</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales Orders</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Module</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link">Wastage</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports</a></li>
+          <li class="nav-item"><a href="banking.html" class="nav-link">Banking</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Supplier Management</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Supplier Management</h1>
+        <p class="lead">
+          Manage your supplier relationships and their collection locations. Suppliers are essential
+          for the collections workflow and purchase order processing.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Can Access</div>
+            <p style="margin:0;">Supplier Management is available to <span class="role-badge purchase">Purchase Staff</span>, <span class="role-badge manager">Managers</span>, and <span class="role-badge admin">Administrators</span>.</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <section>
+          <h2>Accessing Suppliers</h2>
+          <p>Navigate to <strong>Suppliers</strong> from the main sidebar menu. This is a top-level navigation item appearing after Customers.</p>
+        </section>
+
+        <!-- Supplier List -->
+        <section>
+          <h2>Supplier List</h2>
+          <p>The supplier list displays all suppliers with the following columns:</p>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Supplier</strong></td>
+                  <td>Supplier name, code, and type</td>
+                </tr>
+                <tr>
+                  <td><strong>Contact</strong></td>
+                  <td>Contact person and phone number</td>
+                </tr>
+                <tr>
+                  <td><strong>Specialization/Region</strong></td>
+                  <td>Business specialization and location</td>
+                </tr>
+                <tr>
+                  <td><strong>Rating</strong></td>
+                  <td>Supplier rating</td>
+                </tr>
+                <tr>
+                  <td><strong>Payment Terms</strong></td>
+                  <td>Payment terms (days)</td>
+                </tr>
+                <tr>
+                  <td><strong>Status</strong></td>
+                  <td>Active or Inactive badge</td>
+                </tr>
+                <tr>
+                  <td><strong>Actions</strong></td>
+                  <td>View, Edit, Location Manager, Delete</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Adding Supplier -->
+        <section>
+          <h2>Adding a New Supplier</h2>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Add Supplier</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Supplier</strong> in the page header.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Company Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Supplier Code</strong> - Auto-generated</li>
+                  <li><strong>Name *</strong> - Official business name</li>
+                  <li><strong>Type</strong> - Business or Individual</li>
+                  <li><strong>Contact Person *</strong> - Primary contact</li>
+                  <li><strong>Phone *</strong> - Contact number</li>
+                  <li><strong>Email</strong> - Contact email</li>
+                  <li><strong>VAT Registration</strong> - VAT number if applicable</li>
+                  <li><strong>Address</strong> - Business address</li>
+                  <li><strong>City</strong> - City name</li>
+                  <li><strong>Region</strong> - Select from dropdown</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Configure Payment and Specialization</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Payment Terms</strong> - Days for payment (e.g., 30 days)</li>
+                  <li><strong>Specialization</strong> - Multi-select checkboxes for material types</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Banking Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Bank Name</strong></li>
+                  <li><strong>Account Number</strong></li>
+                  <li><strong>IBAN</strong></li>
+                  <li><strong>Tax Number</strong></li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Notes and Save</div>
+              <div class="step-content">
+                <p>Add any notes and click <strong>Save</strong>.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Viewing Supplier -->
+        <section>
+          <h2>Viewing Supplier Details</h2>
+          <p>Click the <strong>View</strong> button to open the supplier details modal with the following sections:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Overview</h4>
+              <ul>
+                <li>Name and code</li>
+                <li>Type</li>
+                <li>Contact person</li>
+                <li>Phone and email</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Address</h4>
+              <ul>
+                <li>Street address</li>
+                <li>City</li>
+                <li>Region</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Banking</h4>
+              <ul>
+                <li>Bank name</li>
+                <li>Account number</li>
+                <li>IBAN</li>
+                <li>Tax number</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Terms</h4>
+              <ul>
+                <li>Payment terms</li>
+                <li>Specialization</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Supplier Locations -->
+        <section>
+          <h2>Managing Supplier Locations</h2>
+          <p>Each supplier can have multiple collection locations. Access the Location Manager by clicking the <strong>Locations</strong> button in the actions column.</p>
+
+          <h3>Adding a Location</h3>
+          <ol>
+            <li>Click <strong>Locations</strong> button for the supplier</li>
+            <li>Click <strong>+ Add Location</strong></li>
+            <li>Enter location details:
+              <ul>
+                <li><strong>Location Name</strong> - Descriptive name (e.g., "Main Factory")</li>
+                <li><strong>Location Code</strong> - Short code for reference</li>
+                <li><strong>Address</strong> - Full physical address</li>
+                <li><strong>Contact</strong> - Site-specific contact person</li>
+                <li><strong>Instructions</strong> - Special notes for collectors/drivers</li>
+              </ul>
+            </li>
+            <li>Click <strong>Save</strong></li>
+          </ol>
+
+          <div class="callout note">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Locations and Contracts</div>
+              <p style="margin:0;">Supplier locations are used in contracts to define location-specific material rates. Add all locations before creating contracts.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="contracts.html" class="quick-link">Supplier Contracts</a>
+            <a href="purchase.html" class="quick-link">Purchase Module</a>
+            <a href="../workflows/create-po.html" class="quick-link">Creating Purchase Orders</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

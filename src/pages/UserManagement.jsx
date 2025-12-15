@@ -14,11 +14,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLocalization } from '../context/LocalizationContext'
+import { useSystemSettings } from '../context/SystemSettingsContext'
 import { usePermissions } from '../hooks/usePermissions'
 import { PERMISSIONS, getRoleDisplayName, getRoleColor } from '../config/roles'
 import userService from '../services/userService'
 import roleService from '../services/roleService'
 import DataTable from '../components/ui/DataTable'
+import RoleManagement from './RoleManagement'
 import Modal from '../components/ui/Modal'
 import { Badge } from '../components/ui/Badge'
 import {
@@ -174,7 +176,11 @@ const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
 const UserManagement = () => {
   const { user } = useAuth()
   const { t } = useLocalization()
+  const { formatDate: systemFormatDate, formatDateTime: systemFormatDateTime } = useSystemSettings()
   const { hasPermission, canManageUser, userRole } = usePermissions()
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState('users')
 
   // Data state
   const [users, setUsers] = useState([])
@@ -406,8 +412,15 @@ const UserManagement = () => {
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'Never'
-    return new Date(dateString).toLocaleString()
+    if (!dateString) return t('never', 'Never')
+    return systemFormatDate ? systemFormatDate(dateString) : new Date(dateString).toLocaleDateString()
+  }
+
+  // Format date with time for display (for last login - includes seconds)
+  const formatDateTime = (dateString) => {
+    if (!dateString) return t('never', 'Never')
+    // Pass includeSeconds=true for last login to show full timestamp
+    return systemFormatDateTime ? systemFormatDateTime(dateString, undefined, undefined, true) : new Date(dateString).toLocaleString()
   }
 
   // Check if current user can manage target user
@@ -459,6 +472,10 @@ const UserManagement = () => {
       key: 'isActive',
       header: t('status', 'Status'),
       filterable: true,
+      filterOptions: [
+        { value: '1', label: t('active', 'Active') },
+        { value: '0', label: t('inactive', 'Inactive') }
+      ],
       render: (value) => (
         <span className={`status-badge ${value ? 'active' : 'inactive'}`}>
           {value ? (
@@ -498,11 +515,11 @@ const UserManagement = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (_, row) => (
-        <div className="action-buttons">
+        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {canManageTargetUser(row) && (
             <>
               <button
-                className="btn-icon"
+                className="btn btn-outline btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   setSelectedUser(row)
@@ -510,52 +527,52 @@ const UserManagement = () => {
                 }}
                 title={t('edit', 'Edit')}
               >
-                <Edit size={16} />
+                <Edit size={14} />
               </button>
 
               <button
-                className="btn-icon"
+                className="btn btn-warning btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleResetPassword(row)
                 }}
                 title={t('resetPassword', 'Reset Password')}
               >
-                <Key size={16} />
+                <Key size={14} />
               </button>
 
               <button
-                className="btn-icon"
+                className="btn btn-outline btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleForceLogout(row)
                 }}
                 title={t('forceLogout', 'Force Logout')}
               >
-                <LogOut size={16} />
+                <LogOut size={14} />
               </button>
 
               {row.isActive ? (
                 <button
-                  className="btn-icon danger"
+                  className="btn btn-danger btn-sm"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleDeactivate(row)
                   }}
                   title={t('deactivate', 'Deactivate')}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
                 </button>
               ) : (
                 <button
-                  className="btn-icon success"
+                  className="btn btn-success btn-sm"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleReactivate(row)
                   }}
                   title={t('reactivate', 'Reactivate')}
                 >
-                  <RefreshCw size={16} />
+                  <RefreshCw size={14} />
                 </button>
               )}
             </>
@@ -608,19 +625,45 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Error state */}
-      {error && (
-        <div className="error-banner">
-          <AlertTriangle size={20} />
-          <span>{error}</span>
-          <button onClick={loadUsers} className="btn btn-outline btn-sm">
-            <RefreshCw size={14} /> Retry
+      {/* Tab Navigation */}
+      <div className="tabs-container">
+        <div className="tabs-nav">
+          <button
+            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            <Users size={18} />
+            {t('users', 'Users')}
+            <span className="tab-badge">{users.length}</span>
           </button>
+          {(hasPermission(PERMISSIONS.VIEW_ROLES) || hasPermission(PERMISSIONS.MANAGE_USERS)) && (
+            <button
+              className={`tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
+              onClick={() => setActiveTab('roles')}
+            >
+              <Shield size={18} />
+              {t('roles', 'Roles')}
+            </button>
+          )}
         </div>
-      )}
 
-      {/* User Table */}
-      <DataTable
+        <div className="tabs-content">
+          {/* Users Tab */}
+          {activeTab === 'users' && (
+            <>
+              {/* Error state */}
+              {error && (
+                <div className="error-banner">
+                  <AlertTriangle size={20} />
+                  <span>{error}</span>
+                  <button onClick={loadUsers} className="btn btn-outline btn-sm">
+                    <RefreshCw size={14} /> Retry
+                  </button>
+                </div>
+              )}
+
+              {/* User Table */}
+              <DataTable
         data={users}
         columns={columns}
         loading={loading}
@@ -653,6 +696,15 @@ const UserManagement = () => {
           </div>
         }
       />
+            </>
+          )}
+
+          {/* Roles Tab */}
+          {activeTab === 'roles' && (hasPermission(PERMISSIONS.VIEW_ROLES) || hasPermission(PERMISSIONS.MANAGE_USERS)) && (
+            <RoleManagement embedded={true} />
+          )}
+        </div>
+      </div>
 
       {/* Create User Modal */}
       <CreateUserModal
@@ -678,6 +730,8 @@ const UserManagement = () => {
         currentUserRole={userRole}
         availableRoles={availableRoles}
         t={t}
+        formatDate={systemFormatDate}
+        formatDateTime={systemFormatDateTime}
       />
 
       {/* Temp Password Modal - Persistent */}
@@ -933,7 +987,7 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
  * Edit User Modal (Task 51)
  * Updated to use API-loaded roles instead of hardcoded roles
  */
-const EditUserModal = ({ isOpen, onClose, onSubmit, user, loading, currentUserRole, availableRoles = [], t }) => {
+const EditUserModal = ({ isOpen, onClose, onSubmit, user, loading, currentUserRole, availableRoles = [], t, formatDate, formatDateTime }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -1036,8 +1090,8 @@ const EditUserModal = ({ isOpen, onClose, onSubmit, user, loading, currentUserRo
             <strong>{user.firstName} {user.lastName}</strong>
             <span>{user.email}</span>
             <span className="user-meta">
-              {t('created', 'Created')}: {new Date(user.createdAt).toLocaleDateString()}
-              {user.lastLoginAt && ` • ${t('lastLogin', 'Last login')}: ${new Date(user.lastLoginAt).toLocaleDateString()}`}
+              {t('created', 'Created')}: {formatDate(user.createdAt)}
+              {user.lastLoginAt && ` • ${t('lastLogin', 'Last login')}: ${formatDateTime(user.lastLoginAt)}`}
             </span>
           </div>
         </div>

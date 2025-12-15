@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creating Purchase Orders - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link active">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="track-expenses.html" class="nav-link">Tracking Expenses</a></li>
+          <li class="nav-item"><a href="add-petty-cash.html" class="nav-link">Adding Petty Cash Cards</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link">Expense Approval Workflow</a></li>
+          <li class="nav-item"><a href="contract-rates.html" class="nav-link">Using Contract Rates</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Creating Purchase Orders</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Creating Purchase Orders</h1>
+        <p class="lead">
+          This step-by-step guide walks you through creating purchase orders, from the collections
+          workflow for contract suppliers to manual PO creation for one-off purchases.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Required Role</div>
+            <p style="margin:0;"><span class="role-badge purchase">Purchase Staff</span> or higher</p>
+          </div>
+        </div>
+
+        <!-- Two Methods -->
+        <section>
+          <h2>Two Ways to Create Purchase Orders</h2>
+          <div class="card-grid">
+            <div class="card">
+              <h4>Method 1: Collections Workflow</h4>
+              <p>For <strong>contract suppliers</strong> - the recommended approach:</p>
+              <ul>
+                <li>PO is auto-generated from WCN finalization</li>
+                <li>Contract rates applied automatically</li>
+                <li>Full traceability from callout to payment</li>
+              </ul>
+              <p><a href="#collections-workflow">Go to Collections Workflow →</a></p>
+            </div>
+
+            <div class="card">
+              <h4>Method 2: Manual PO</h4>
+              <p>For <strong>non-contract suppliers</strong> or one-off purchases:</p>
+              <ul>
+                <li>Create PO directly</li>
+                <li>Enter prices manually</li>
+                <li>Requires manager approval</li>
+              </ul>
+              <p><a href="#manual-po">Go to Manual PO Creation →</a></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Collections Workflow -->
+        <section id="collections-workflow">
+          <h2>Method 1: Collections Workflow (Recommended)</h2>
+          <p>For suppliers with contracts, follow this workflow to automatically generate purchase orders.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Step 1: Create a Callout</div>
+              <div class="step-content">
+                <p><strong>Navigate to:</strong> Purchase → Callouts</p>
+                <ol>
+                  <li>Click <strong>+ New Callout</strong></li>
+                  <li>Select the <strong>Supplier</strong></li>
+                  <li>Select the <strong>Collection Location</strong></li>
+                  <li>Set the <strong>Scheduled Date/Time</strong></li>
+                  <li>Add any notes about expected materials</li>
+                  <li>Click <strong>Save</strong></li>
+                </ol>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Tip</div>
+                    <p style="margin:0;">Schedule callouts based on inventory needs and supplier availability. Check the low stock report first.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 2: Execute the Collection</div>
+              <div class="step-content">
+                <p>When the collection occurs, create a Collection Order:</p>
+                <ol>
+                  <li>Open the Callout you scheduled</li>
+                  <li>Click <strong>Create Collection Order</strong></li>
+                  <li>Enter the <strong>actual materials collected</strong></li>
+                  <li>Enter <strong>actual quantities</strong> (may differ from expected)</li>
+                  <li>Record any issues or notes</li>
+                  <li>Click <strong>Save</strong></li>
+                </ol>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 3: Finalize the WCN</div>
+              <div class="step-content">
+                <p>The Waste Consignment Note (WCN) must be finalized to complete the process:</p>
+                <ol>
+                  <li>Open the Collection Order</li>
+                  <li>Review all materials and quantities</li>
+                  <li>Click <strong>Finalize WCN</strong></li>
+                  <li>Confirm the action</li>
+                </ol>
+                <p><strong>What happens automatically:</strong></p>
+                <ul>
+                  <li>Inventory is updated with collected materials</li>
+                  <li>A Purchase Order is generated with contract rates</li>
+                  <li>Composite materials are split into components</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 4: Review the Auto-Generated PO</div>
+              <div class="step-content">
+                <p><strong>Navigate to:</strong> Purchase → Purchase Orders</p>
+                <ol>
+                  <li>Find the auto-generated PO (source: WCN)</li>
+                  <li>Review materials and quantities</li>
+                  <li>Verify contract rates were applied correctly</li>
+                  <li>PO is ready for processing/payment</li>
+                </ol>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Manual PO -->
+        <section id="manual-po">
+          <h2>Method 2: Manual PO Creation</h2>
+          <p>For non-contract suppliers or one-off purchases:</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Step 1: Start New PO</div>
+              <div class="step-content">
+                <p><strong>Navigate to:</strong> Purchase → Purchase Orders</p>
+                <p>Click <strong>+ New PO</strong></p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 2: Select Supplier</div>
+              <div class="step-content">
+                <p>Choose the supplier from the dropdown list.</p>
+                <div class="callout note">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">New Supplier?</div>
+                    <p style="margin:0;">If the supplier doesn't exist, create them first in Supplier Management.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 3: Add Materials</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Item</strong> for each material:</p>
+                <ul>
+                  <li><strong>Material:</strong> Select from material list</li>
+                  <li><strong>Quantity:</strong> Enter amount to purchase</li>
+                  <li><strong>Unit Price:</strong> Enter negotiated price</li>
+                </ul>
+                <p>Add multiple items as needed.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 4: Set Terms</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Payment Terms:</strong> Cash, Credit, Net 30, etc.</li>
+                  <li><strong>Expected Delivery:</strong> When materials will arrive</li>
+                  <li><strong>Notes:</strong> Special instructions</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 5: Submit for Approval</div>
+              <div class="step-content">
+                <p>Click <strong>Submit</strong> to send the PO for manager approval.</p>
+                <p>The PO status changes to "Pending Approval".</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 6: After Approval</div>
+              <div class="step-content">
+                <p>Once approved by manager:</p>
+                <ol>
+                  <li>Send PO to supplier</li>
+                  <li>Receive materials when delivered</li>
+                  <li>Update received quantities</li>
+                  <li>Process for payment</li>
+                </ol>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Common Issues -->
+        <section>
+          <h2>Common Issues & Solutions</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Issue</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Supplier not in dropdown</td>
+                  <td>Create the supplier first in Supplier Management</td>
+                </tr>
+                <tr>
+                  <td>Wrong rates on auto-generated PO</td>
+                  <td>Check supplier contract - may be expired or missing location rates</td>
+                </tr>
+                <tr>
+                  <td>Can't finalize WCN</td>
+                  <td>Ensure all required fields are filled in the Collection Order</td>
+                </tr>
+                <tr>
+                  <td>PO stuck in pending approval</td>
+                  <td>Follow up with manager to process approval queue</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/purchase.html" class="quick-link">Purchase Orders Module</a>
+            <a href="../modules/suppliers.html" class="quick-link">Supplier Management</a>
+            <a href="../roles/purchase-staff.html" class="quick-link">Purchase Staff Guide</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Staff Guide - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Role Guides</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="admin.html" class="nav-link">Administrator Guide</a></li>
+          <li class="nav-item"><a href="manager.html" class="nav-link">Manager Guide</a></li>
+          <li class="nav-item"><a href="sales-staff.html" class="nav-link active">Sales Staff Guide</a></li>
+          <li class="nav-item"><a href="purchase-staff.html" class="nav-link">Purchase Staff Guide</a></li>
+          <li class="nav-item"><a href="accounts-staff.html" class="nav-link">Accounts Staff Guide</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Role Guides</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Sales Staff</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Sales Staff Guide</h1>
+        <p class="lead">
+          As Sales Staff, you manage customer relationships, create sales orders, and generate invoices.
+          This guide covers your daily tasks and best practices for sales operations.
+        </p>
+
+        <span class="role-badge sales" style="font-size: 1rem; padding: 8px 16px;">Sales Staff Role</span>
+
+        <!-- Your Access -->
+        <section>
+          <h2>Your System Access</h2>
+          <div class="card-grid">
+            <div class="card">
+              <h4>Full Access</h4>
+              <ul>
+                <li>Customer Management</li>
+                <li>Customer Contracts</li>
+                <li>Sales Orders</li>
+                <li>Invoices</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>View Only</h4>
+              <ul>
+                <li>Inventory levels</li>
+                <li>Material prices</li>
+                <li>Your sales reports</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>No Access</h4>
+              <ul>
+                <li>Purchase orders</li>
+                <li>Supplier management</li>
+                <li>System settings</li>
+                <li>User management</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Daily Workflow -->
+        <section>
+          <h2>Your Daily Workflow</h2>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Check Dashboard</div>
+              <div class="step-content">
+                <p>Start by reviewing:</p>
+                <ul>
+                  <li>Pending orders requiring action</li>
+                  <li>Today's deliveries</li>
+                  <li>Customer inquiries</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Process Customer Orders</div>
+              <div class="step-content">
+                <p>Create sales orders for customer requests. Check inventory before promising delivery dates.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Generate Invoices</div>
+              <div class="step-content">
+                <p>Generate invoices for completed deliveries and send to customers.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Update Customer Records</div>
+              <div class="step-content">
+                <p>Keep customer contact information current. Note any special requirements.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Key Tasks -->
+        <section>
+          <h2>Key Tasks</h2>
+
+          <h3>Creating a Sales Order</h3>
+          <ol>
+            <li>Go to <strong>Sales → Sales Orders</strong></li>
+            <li>Click <strong>+ New Order</strong></li>
+            <li>Select customer and delivery location</li>
+            <li>Add materials with quantities (contract rates apply automatically)</li>
+            <li>Set delivery date and payment terms</li>
+            <li>Submit the order</li>
+          </ol>
+          <p>See <a href="../modules/sales.html">Sales Module</a> for detailed instructions.</p>
+
+          <h3>Using Contract Rates</h3>
+          <p>When creating orders for customers with active contracts:</p>
+          <ul>
+            <li>Contract rates apply automatically when you select material</li>
+            <li><span style="color:#22c55e;">Green indicator</span> = Contract rate is lower than market</li>
+            <li><span style="color:#f59e0b;">Yellow warning</span> = Contract expiring soon</li>
+            <li>Alert customer if their contract is about to expire</li>
+          </ul>
+          <p>See <a href="../workflows/contract-rates.html">Using Contract Rates</a> for more details.</p>
+
+          <h3>Managing Customers</h3>
+          <ul>
+            <li>Add new customers with complete contact information</li>
+            <li>Configure all delivery locations</li>
+            <li>Keep contact details updated</li>
+            <li>Monitor contract expiration dates</li>
+          </ul>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Sales Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Verify inventory:</strong> Always check stock availability before confirming orders</li>
+              <li><strong>Confirm pricing:</strong> Double-check contract rates before quoting customers</li>
+              <li><strong>Complete orders:</strong> Don't leave orders in draft status</li>
+              <li><strong>Timely invoicing:</strong> Generate invoices immediately after delivery</li>
+              <li><strong>Document everything:</strong> Add notes to orders for special instructions</li>
+              <li><strong>Proactive communication:</strong> Notify customers of expiring contracts</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Daily Checklist -->
+        <section>
+          <h2>Sales Staff Daily Checklist</h2>
+          <div class="card">
+            <ul>
+              <li>☐ Review pending sales orders</li>
+              <li>☐ Check today's scheduled deliveries</li>
+              <li>☐ Generate invoices for completed deliveries</li>
+              <li>☐ Follow up on customer inquiries</li>
+              <li>☐ Check for contracts expiring this month</li>
+              <li>☐ Update any changed customer information</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/customers.html" class="quick-link">Customer Management</a>
+            <a href="../modules/sales.html" class="quick-link">Sales & Invoicing</a>
+            <a href="../modules/contracts.html" class="quick-link">Contract Rate System</a>
+            <a href="../workflows/contract-rates.html" class="quick-link">Using Contract Rates</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

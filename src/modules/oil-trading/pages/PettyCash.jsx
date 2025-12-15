@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
@@ -11,12 +12,15 @@ import FileUpload from '../../../components/ui/FileUpload'
 import pettyCashService from '../../../services/pettyCashService'
 import uploadService from '../../../services/uploadService'
 import userService from '../../../services/userService'
+import pettyCashUsersService from '../../../services/pettyCashUsersService'
+import PettyCashUsersSection from '../../../components/petty-cash/PettyCashUsersSection'
 import {
   CreditCard,
   Plus,
   DollarSign,
   TrendingUp,
   User,
+  Users,
   Calendar,
   Receipt,
   Eye,
@@ -37,6 +41,7 @@ import '../../../pages/PettyCash.css'
 const PettyCash = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { formatDate: systemFormatDate } = useSystemSettings()
   const { hasPermission } = usePermissions()
   
   const [loading, setLoading] = useState(true)
@@ -60,6 +65,9 @@ const PettyCash = () => {
   const [expenseForm, setExpenseForm] = useState({})
   const [reloadForm, setReloadForm] = useState({})
   
+  // Tab state
+  const [activeTab, setActiveTab] = useState('cards')
+
   // Filter states
   const [cardFilter, setCardFilter] = useState('all')
   const [expenseFilter, setExpenseFilter] = useState('all')
@@ -131,10 +139,13 @@ const PettyCash = () => {
   }
 
   const formatCurrency = (amount) => `OMR ${parseFloat(amount || 0).toFixed(3)}`
+  // Use system settings for date formatting
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
-    return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-GB')
+    if (isNaN(date.getTime())) return 'N/A'
+    // Use the system formatDate function which respects user settings
+    return systemFormatDate ? systemFormatDate(date) : date.toLocaleDateString('en-GB')
   }
 
   // Statistics calculation
@@ -159,8 +170,7 @@ const PettyCash = () => {
   const handleAddCard = () => {
     const today = new Date().toISOString().split('T')[0]
     setCardForm({
-      assignedTo: '',
-      staffName: '',
+      cardName: '',
       department: '',
       initialBalance: '',
       monthlyLimit: '',
@@ -194,8 +204,7 @@ const PettyCash = () => {
     }
 
     setCardForm({
-      assignedTo: card.assignedTo?.toString() || '',
-      staffName: card.staffName || '',
+      cardName: card.cardName || '',
       department: card.department || '',
       initialBalance: card.initialBalance || '',
       monthlyLimit: card.monthlyLimit || '',
@@ -230,7 +239,8 @@ const PettyCash = () => {
       receiptPhotos: [],
       hasReceipt: false,
       tags: '',
-      notes: ''
+      notes: '',
+      submittedByPcUser: '' // PC User assignment (optional)
     })
     setShowExpenseModal(true)
   }
@@ -269,9 +279,9 @@ const PettyCash = () => {
       setLoading(true)
 
       // Map form data to backend schema
+      // Note: assignedTo/staffName are now optional - user assignment is handled via Petty Cash Users
       const cardData = {
-        assignedTo: parseInt(cardForm.assignedTo),
-        staffName: cardForm.staffName,
+        cardName: cardForm.cardName || null,
         department: cardForm.department || null,
         initialBalance: parseFloat(cardForm.initialBalance),
         monthlyLimit: parseFloat(cardForm.monthlyLimit) || null,
@@ -339,7 +349,9 @@ const PettyCash = () => {
         expenseDate: formData.transactionDate, // Frontend: transactionDate → Backend: expenseDate
         vendor: formData.merchant || null, // Frontend: merchant → Backend: vendor
         receiptNumber: formData.receiptNumber || null,
-        notes: formData.notes || null // Convert empty string to null
+        notes: formData.notes || null, // Convert empty string to null
+        // Include PC User assignment if specified
+        submittedByPcUser: formData.submittedByPcUser ? parseInt(formData.submittedByPcUser) : null
       }
 
       const result = await pettyCashService.createExpense(expensePayload)
@@ -425,14 +437,14 @@ const PettyCash = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (value, row) => (
-        <div className="table-actions">
+        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
           <button
             onClick={(e) => {
               e.stopPropagation()
               setSelectedCard(row)
               setShowViewModal(true)
             }}
-            className="action-btn view"
+            className="btn btn-outline btn-sm"
             title={t('viewDetails', 'View Details')}
           >
             <Eye size={14} />
@@ -444,7 +456,7 @@ const PettyCash = () => {
                   e.stopPropagation()
                   handleEditCard(row)
                 }}
-                className="action-btn edit"
+                className="btn btn-outline btn-sm"
                 title={t('edit', 'Edit')}
               >
                 <Edit size={14} />
@@ -454,7 +466,7 @@ const PettyCash = () => {
                   e.stopPropagation()
                   handleReloadCard(row)
                 }}
-                className="action-btn reload"
+                className="btn btn-success btn-sm"
                 title={t('reloadCard', 'Reload Card')}
               >
                 <RefreshCw size={14} />
@@ -464,7 +476,7 @@ const PettyCash = () => {
                   e.stopPropagation()
                   handleAddExpense(row)
                 }}
-                className="action-btn expense"
+                className="btn btn-primary btn-sm"
                 title={t('addExpense', 'Add Expense')}
               >
                 <Receipt size={14} />
@@ -555,9 +567,9 @@ const PettyCash = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (value, row) => (
-        <div className="table-actions">
+        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
           <button
-            className="action-btn view"
+            className="btn btn-outline btn-sm"
             title={t('viewReceipt', 'View Receipt')}
             onClick={() => {
               if (row.receiptPhoto) {
@@ -572,14 +584,14 @@ const PettyCash = () => {
           {row.status === 'pending' && hasPermission('APPROVE_EXPENSE') && (
             <>
               <button
-                className="action-btn approve"
+                className="btn btn-success btn-sm"
                 title={t('approveExpense', 'Approve Expense')}
                 onClick={() => handleApproveExpense(row.id, 'approved')}
               >
                 <CheckCircle size={14} />
               </button>
               <button
-                className="action-btn reject"
+                className="btn btn-danger btn-sm"
                 title={t('rejectExpense', 'Reject Expense')}
                 onClick={() => handleApproveExpense(row.id, 'rejected')}
               >
@@ -681,68 +693,124 @@ const PettyCash = () => {
         </div>
       )}
 
-      {/* Cards Section */}
-      <div className="section">
-        <div className="section-header">
-          <h2>{t('pettyCashCards', 'Petty Cash Cards')}</h2>
-          <div className="section-filters">
-            <select 
-              value={cardFilter} 
-              onChange={(e) => setCardFilter(e.target.value)}
-              className="filter-select"
+      {/* Tab Navigation */}
+      <div className="tabs-container">
+        <div className="tabs-nav">
+          <button
+            className={`tab-btn ${activeTab === 'cards' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cards')}
+          >
+            <CreditCard size={18} />
+            {t('pettyCashCards', 'Petty Cash Cards')}
+            <span className="tab-badge">{cards.length}</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`}
+            onClick={() => setActiveTab('expenses')}
+          >
+            <Receipt size={18} />
+            {t('expenses', 'Expenses')}
+            <span className="tab-badge">{expenses.length}</span>
+          </button>
+          {hasPermission('MANAGE_PETTY_CASH') && (
+            <button
+              className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+              onClick={() => setActiveTab('users')}
             >
-              <option value="all">{t('allCards', 'All Cards')}</option>
-              <option value="active">{t('active', 'Active')}</option>
-              <option value="inactive">{t('inactive', 'Inactive')}</option>
-              <option value="blocked">{t('blocked', 'Blocked')}</option>
-            </select>
-          </div>
+              <Users size={18} />
+              {t('pettyCashUsers', 'Petty Cash Users')}
+            </button>
+          )}
         </div>
 
-        <DataTable
-          data={cards.filter(card => cardFilter === 'all' || card.status === cardFilter)}
-          columns={cardColumns}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
-          loading={loading}
-          emptyMessage={t('noCardsFound', 'No cards found')}
-          className="cards-table"
-        />
-      </div>
+        {/* Tab Content */}
+        <div className="tabs-content">
+          {/* Cards Tab */}
+          {activeTab === 'cards' && (
+            <div className="section">
+              <div className="section-header">
+                <h2>{t('pettyCashCards', 'Petty Cash Cards')}</h2>
+                <div className="section-filters">
+                  <select
+                    value={cardFilter}
+                    onChange={(e) => setCardFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">{t('allCards', 'All Cards')}</option>
+                    <option value="active">{t('active', 'Active')}</option>
+                    <option value="inactive">{t('inactive', 'Inactive')}</option>
+                    <option value="blocked">{t('blocked', 'Blocked')}</option>
+                  </select>
+                </div>
+              </div>
 
-      {/* Recent Expenses Section */}
-      <div className="section">
-        <div className="section-header">
-          <h2>{t('recentExpenses', 'Recent Expenses')}</h2>
-          <div className="section-filters">
-            <select 
-              value={expenseFilter} 
-              onChange={(e) => setExpenseFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">{t('allExpenses', 'All Expenses')}</option>
-              <option value="approved">{t('approved', 'Approved')}</option>
-              <option value="pending">{t('pending', 'Pending')}</option>
-              <option value="rejected">{t('rejected', 'Rejected')}</option>
-            </select>
-          </div>
+              <DataTable
+                data={cards.filter(card => cardFilter === 'all' || card.status === cardFilter)}
+                columns={cardColumns}
+                searchable={true}
+                filterable={true}
+                sortable={true}
+                paginated={true}
+                exportable={true}
+                loading={loading}
+                emptyMessage={t('noCardsFound', 'No cards found')}
+                className="cards-table"
+              />
+            </div>
+          )}
+
+          {/* Expenses Tab */}
+          {activeTab === 'expenses' && (
+            <div className="section">
+              <div className="section-header">
+                <h2>{t('recentExpenses', 'Recent Expenses')}</h2>
+                <div className="section-filters">
+                  <select
+                    value={expenseFilter}
+                    onChange={(e) => setExpenseFilter(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">{t('allExpenses', 'All Expenses')}</option>
+                    <option value="approved">{t('approved', 'Approved')}</option>
+                    <option value="pending">{t('pending', 'Pending')}</option>
+                    <option value="rejected">{t('rejected', 'Rejected')}</option>
+                  </select>
+                  {hasPermission('MANAGE_PETTY_CASH') && (
+                    <button className="btn btn-primary" onClick={() => handleAddExpense()}>
+                      <Plus size={16} />
+                      {t('addExpense', 'Add Expense')}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <DataTable
+                data={expenses.filter(expense => expenseFilter === 'all' || expense.status === expenseFilter)}
+                columns={expenseColumns}
+                searchable={true}
+                filterable={true}
+                sortable={true}
+                paginated={true}
+                exportable={true}
+                loading={loading}
+                emptyMessage={t('noExpensesFound', 'No expenses found')}
+                className="expenses-table"
+              />
+            </div>
+          )}
+
+          {/* Petty Cash Users Tab */}
+          {activeTab === 'users' && hasPermission('MANAGE_PETTY_CASH') && (
+            <PettyCashUsersSection
+              cards={cards}
+              loading={loading}
+              t={t}
+              hasPermission={hasPermission}
+              formatCurrency={formatCurrency}
+              onRefresh={loadPettyCashData}
+            />
+          )}
         </div>
-
-        <DataTable
-          data={expenses.filter(expense => expenseFilter === 'all' || expense.status === expenseFilter)}
-          columns={expenseColumns}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
-          loading={loading}
-          emptyMessage={t('noExpensesFound', 'No expenses found')}
-          className="expenses-table"
-        />
       </div>
 
       {/* Card Management Modal */}
@@ -810,18 +878,6 @@ const PettyCash = () => {
 
 // Card Form Modal Component
 const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, users, t }) => {
-  // Handle user selection - auto-populate staffName
-  const handleUserChange = (userId) => {
-    const selectedUser = users.find(u => u.id === parseInt(userId))
-    if (selectedUser) {
-      setFormData(prev => ({
-        ...prev,
-        assignedTo: userId,
-        staffName: selectedUser.fullName
-      }))
-    }
-  }
-
   return (
     <Modal
       isOpen={isOpen}
@@ -832,32 +888,27 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
     >
       <form onSubmit={onSubmit} className="card-form">
         <div className="form-section">
-          <h3>{t('staffAssignment', 'Staff Assignment')}</h3>
+          <h3>{t('cardInformation', 'Card Information')}</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>{t('assignedUser', 'Assigned User')} *</label>
-              <select
-                value={formData.assignedTo}
-                onChange={(e) => handleUserChange(e.target.value)}
-                required
-              >
-                <option value="">{t('selectUser', 'Select User...')}</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.fullName} - {user.role}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>{t('staffName', 'Staff Name')} *</label>
+              <label>{t('cardNumber', 'Card Number')}</label>
               <input
                 type="text"
-                value={formData.staffName}
-                onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
-                required
+                value={card ? (card.cardNumber || '') : t('willBeAutoGenerated', 'Will be auto-generated')}
                 readOnly
+                className="readonly-field"
               />
+              <span className="form-help">{t('cardNumberAutoGenerated', 'Auto-generated unique identifier')}</span>
+            </div>
+            <div className="form-group">
+              <label>{t('cardName', 'Card Name')}</label>
+              <input
+                type="text"
+                value={formData.cardName || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, cardName: e.target.value }))}
+                placeholder={t('cardNamePlaceholder', 'e.g., Main Office, Driver 1')}
+              />
+              <span className="form-help">{t('cardNameDescription', 'Optional descriptive name for this card')}</span>
             </div>
             <div className="form-group">
               <label>{t('department', 'Department')}</label>
@@ -949,6 +1000,35 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
 const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState(null)
+  const [pcUsers, setPcUsers] = React.useState([])
+  const [loadingPcUsers, setLoadingPcUsers] = React.useState(false)
+
+  // Load PC users when card changes
+  React.useEffect(() => {
+    const loadPcUsers = async () => {
+      if (!formData.cardId) {
+        setPcUsers([])
+        return
+      }
+
+      setLoadingPcUsers(true)
+      try {
+        const result = await pettyCashUsersService.getAll({ cardId: formData.cardId, isActive: true })
+        if (result.success) {
+          setPcUsers(result.data || [])
+        } else {
+          setPcUsers([])
+        }
+      } catch (err) {
+        console.error('Error loading PC users:', err)
+        setPcUsers([])
+      } finally {
+        setLoadingPcUsers(false)
+      }
+    }
+
+    loadPcUsers()
+  }, [formData.cardId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -977,23 +1057,82 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="expense-form">
-        <div className="form-grid">
+        {/* Card Selection with Details */}
+        <div className="form-group">
+          <label>{t('selectCard', 'Select Card')} *</label>
+          <select
+            value={formData.cardId}
+            onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value, submittedByPcUser: '' }))}
+            required
+          >
+            <option value="">{t('selectCard', 'Select Card')}</option>
+            {cards.filter(card => card.status === 'active').map(card => (
+              <option key={card.id} value={card.id}>
+                {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Selected Card Info Panel */}
+        {formData.cardId && (() => {
+          const selectedCard = cards.find(c => c.id === parseInt(formData.cardId));
+          if (!selectedCard) return null;
+          return (
+            <div className="selected-card-info" style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.9rem', opacity: 0.9 }}>{selectedCard.cardNumber}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '0.25rem' }}>
+                    {selectedCard.assignedStaff?.name || t('unassigned', 'Unassigned')}
+                  </div>
+                  {selectedCard.pettyCashUser && (
+                    <div style={{ fontSize: '0.8rem', opacity: 0.85, marginTop: '0.25rem' }}>
+                      {selectedCard.pettyCashUser.department || selectedCard.department || 'N/A'}
+                      {selectedCard.pettyCashUser.phone && ` • ${selectedCard.pettyCashUser.phone}`}
+                    </div>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>{t('availableBalance', 'Available Balance')}</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                    OMR {parseFloat(selectedCard.currentBalance || 0).toFixed(3)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* PC User Assignment (optional) */}
+        {formData.cardId && (
           <div className="form-group">
-            <label>{t('selectCard', 'Select Card')} *</label>
+            <label>{t('assignToPcUser', 'Assign to PC User')} ({t('optional', 'Optional')})</label>
             <select
-              value={formData.cardId}
-              onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value }))}
-              required
+              value={formData.submittedByPcUser || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, submittedByPcUser: e.target.value }))}
+              disabled={loadingPcUsers}
             >
-              <option value="">{t('selectCard', 'Select Card')}</option>
-              {cards.map(card => (
-                <option key={card.id} value={card.id}>
-                  {card.cardNumber} - {card.assignedStaff.name}
+              <option value="">{loadingPcUsers ? t('loading', 'Loading...') : t('selectPcUser', 'Select PC User (Optional)')}</option>
+              {pcUsers.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.name} {user.department ? `- ${user.department}` : ''} {user.employee_id ? `(${user.employee_id})` : ''}
                 </option>
               ))}
             </select>
+            <span className="form-help" style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem', display: 'block' }}>
+              {t('pcUserAssignmentHelp', 'Optionally assign this expense to a specific petty cash user on this card')}
+            </span>
           </div>
+        )}
 
+        <div className="form-grid">
           <div className="form-group">
             <label>{t('expenseType', 'Expense Type')} *</label>
             <select
@@ -1412,7 +1551,7 @@ const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t })
                       <div className="expense-meta">
                         <span className="expense-number">{expense.expenseNumber}</span>
                         <span className="separator">•</span>
-                        <span className="expense-date">{formatDate(expense.expenseDate)}</span>
+                        <span className="expense-date">{formatDate(expense.created_at)}</span>
                       </div>
                     </div>
                     <div className="expense-right">

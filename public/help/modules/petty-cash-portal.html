@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Expense Portal - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../getting-started/login.html" class="nav-link">Login & Authentication</a></li>
+          <li class="nav-item"><a href="../getting-started/dashboard.html" class="nav-link">Dashboard Overview</a></li>
+        </ul>
+
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash System</a></li>
+          <li class="nav-item"><a href="petty-cash-portal.html" class="nav-link active">Mobile Expense Portal</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Mobile Expense Portal</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Mobile Expense Portal</h1>
+        <p class="lead">
+          The Mobile Expense Portal allows PC Users to submit expenses from their phone without needing
+          full system access. Use QR code + PIN authentication for quick, secure expense submission.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Uses This</div>
+            <p style="margin:0;">This guide is for <strong>PC Users</strong> - staff members assigned to petty cash cards who submit expenses on the go.</p>
+          </div>
+        </div>
+
+        <!-- Getting Started -->
+        <section>
+          <h2>Getting Started</h2>
+          <p>Before you can use the portal, you need to be set up as a PC User by your administrator.</p>
+
+          <h3>What You'll Receive</h3>
+          <ul>
+            <li><strong>QR Code:</strong> Unique code for scanning to access the portal</li>
+            <li><strong>4-Digit PIN:</strong> Personal identification number for authentication</li>
+            <li><strong>Portal URL:</strong> Direct link to the expense portal</li>
+          </ul>
+
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Keep Your PIN Secret</div>
+              <p style="margin:0;">Never share your PIN with anyone. If you suspect your PIN is compromised, contact your administrator immediately.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Accessing Portal -->
+        <section>
+          <h2>Accessing the Portal</h2>
+          <p>You have two ways to access the expense portal:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Option 1: Scan QR Code</h4>
+              <ol>
+                <li>Open your phone's camera</li>
+                <li>Point at the QR code you received</li>
+                <li>Tap the notification to open the portal</li>
+                <li>Enter your 4-digit PIN</li>
+              </ol>
+            </div>
+
+            <div class="card">
+              <h4>Option 2: Direct URL</h4>
+              <ol>
+                <li>Open your phone's browser</li>
+                <li>Go to the portal URL you received</li>
+                <li>Enter your 4-digit PIN</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Bookmark for Quick Access</div>
+              <p style="margin:0;">Save the portal URL to your phone's home screen for quick access anytime.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Portal Dashboard -->
+        <section>
+          <h2>Portal Dashboard</h2>
+          <p>After logging in, you'll see your personal dashboard showing:</p>
+
+          <ul>
+            <li><strong>Available Balance:</strong> Current balance on your assigned card</li>
+            <li><strong>Recent Expenses:</strong> Your recently submitted expenses</li>
+            <li><strong>Pending Approvals:</strong> How many of your expenses are awaiting approval</li>
+            <li><strong>Quick Submit Button:</strong> Large button to start a new expense submission</li>
+          </ul>
+        </section>
+
+        <!-- Submitting Expense -->
+        <section>
+          <h2>Submitting an Expense</h2>
+          <p>Follow these steps to submit an expense from your phone:</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Tap "Submit Expense"</div>
+              <div class="step-content">
+                <p>On the dashboard, tap the large "Submit Expense" button.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Amount</div>
+              <div class="step-content">
+                <p>Type the expense amount. Use the numeric keypad provided.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Category</div>
+              <div class="step-content">
+                <p>Tap to choose from predefined categories:</p>
+                <ul>
+                  <li>Transportation / Fuel</li>
+                  <li>Office Supplies</li>
+                  <li>Meals & Entertainment</li>
+                  <li>Maintenance & Repairs</li>
+                  <li>Utilities</li>
+                  <li>Miscellaneous</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Description</div>
+              <div class="step-content">
+                <p>Write a brief description of what the expense was for (e.g., "Fuel for delivery truck").</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Take Photo of Receipt</div>
+              <div class="step-content">
+                <p>Tap "Add Receipt" and either:</p>
+                <ul>
+                  <li><strong>Take Photo:</strong> Use your camera to capture the receipt</li>
+                  <li><strong>Choose from Gallery:</strong> Select an existing photo</li>
+                </ul>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Photo Tips</div>
+                    <p style="margin:0;">Ensure the receipt is flat, well-lit, and all text is readable. Include the date and amount on the receipt.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Submit</div>
+              <div class="step-content">
+                <p>Review your entry and tap <strong>Submit Expense</strong>. You'll see a confirmation message.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Viewing History -->
+        <section>
+          <h2>Viewing Your Expense History</h2>
+          <p>Tap "My Expenses" to see all your submitted expenses.</p>
+
+          <h3>Expense Statuses</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>What It Means</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Pending</span></td>
+                  <td>Waiting for manager approval</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Approved</span></td>
+                  <td>Approved and processed</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Rejected</span></td>
+                  <td>Rejected - tap to see the reason</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Tap any expense to view its full details, including receipt and approval notes.</p>
+        </section>
+
+        <!-- Common Issues -->
+        <section>
+          <h2>Troubleshooting</h2>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Problem</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>"Invalid PIN" error</td>
+                  <td>Double-check your PIN. After 3 failed attempts, contact your administrator to reset.</td>
+                </tr>
+                <tr>
+                  <td>QR code won't scan</td>
+                  <td>Ensure good lighting and hold phone steady. Try using the direct URL instead.</td>
+                </tr>
+                <tr>
+                  <td>Receipt photo won't upload</td>
+                  <td>Check your internet connection. Reduce image size if the file is too large.</td>
+                </tr>
+                <tr>
+                  <td>"Insufficient balance"</td>
+                  <td>Your card doesn't have enough funds. Contact accounts staff to reload the card.</td>
+                </tr>
+                <tr>
+                  <td>Can't see my submitted expense</td>
+                  <td>Pull down to refresh the list. Check your internet connection.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Submit immediately:</strong> Record expenses as they happen to avoid forgetting</li>
+              <li><strong>Keep receipts:</strong> Always photograph receipts before they fade</li>
+              <li><strong>Be descriptive:</strong> Clear descriptions help faster approvals</li>
+              <li><strong>Choose correct category:</strong> Accurate categorization helps accounting</li>
+              <li><strong>Check your balance:</strong> Verify available funds before making purchases</li>
+              <li><strong>Monitor approvals:</strong> Follow up on pending expenses if not approved within 2 days</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="petty-cash.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+              </svg>
+              Petty Cash System
+            </a>
+            <a href="../workflows/track-expenses.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+              Tracking Expenses
+            </a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

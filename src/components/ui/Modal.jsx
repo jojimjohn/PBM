@@ -19,8 +19,8 @@ import './Modal.css';
  * @param {React.ReactNode} children - Modal body content
  * @param {React.ReactNode} footer - Optional footer content
  * @param {'sm'|'md'|'lg'|'xl'|'xxl'|'full'} size - Modal size
- * @param {boolean} closeOnOverlayClick - Close when clicking backdrop (default: true)
- * @param {boolean} closeOnEsc - Close when pressing ESC key (default: true)
+ * @param {boolean} closeOnOverlayClick - Close when clicking backdrop (default: false - prevents accidental data loss)
+ * @param {boolean} closeOnEsc - Close when pressing ESC key (default: false - prevents accidental data loss)
  * @param {boolean} showCloseButton - Show X button in header (default: true)
  * @param {boolean} preventScroll - Prevent body scroll when open (default: true)
  * @param {string} className - Additional CSS classes
@@ -34,8 +34,8 @@ const Modal = ({
   children,
   footer,
   size = 'md',
-  closeOnOverlayClick = true,
-  closeOnEsc = true,
+  closeOnOverlayClick = false,
+  closeOnEsc = false,
   showCloseButton = true,
   preventScroll = true,
   className = '',

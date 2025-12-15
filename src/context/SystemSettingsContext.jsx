@@ -214,30 +214,25 @@ export const SystemSettingsProvider = ({ children }) => {
     }
   }
 
-  const formatTime = (date, format = settings.timeFormat) => {
+  const formatTime = (date, format = settings.timeFormat, includeSeconds = false) => {
     if (!date) return ''
-    
+
     const d = new Date(date)
     if (isNaN(d.getTime())) return ''
 
-    if (format === '12h') {
-      return d.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      })
-    } else {
-      return d.toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      })
+    const options = {
+      hour: '2-digit',
+      minute: '2-digit',
+      ...(includeSeconds && { second: '2-digit' }),
+      hour12: format === '12h'
     }
+
+    return d.toLocaleTimeString(format === '12h' ? 'en-US' : 'en-GB', options)
   }
 
-  const formatDateTime = (date, dateFormat = settings.dateFormat, timeFormat = settings.timeFormat) => {
+  const formatDateTime = (date, dateFormat = settings.dateFormat, timeFormat = settings.timeFormat, includeSeconds = false) => {
     const formattedDate = formatDate(date, dateFormat)
-    const formattedTime = formatTime(date, timeFormat)
+    const formattedTime = formatTime(date, timeFormat, includeSeconds)
     return `${formattedDate} ${formattedTime}`
   }
 

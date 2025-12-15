@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banking - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link">Inventory</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link">Supplier Contracts</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales Orders</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Module</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link">Petty Cash</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link">Wastage</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports</a></li>
+          <li class="nav-item"><a href="banking.html" class="nav-link active">Banking</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Banking</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Banking</h1>
+        <p class="lead">
+          Manage bank accounts and track banking transactions. This module provides tools for
+          recording deposits, withdrawals, and reconciling bank statements.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Can Access</div>
+            <p style="margin:0;">Banking is available to <span class="role-badge accounts">Accounts Staff</span>, <span class="role-badge manager">Managers</span>, and <span class="role-badge admin">Administrators</span>.</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <section>
+          <h2>Accessing Banking</h2>
+          <p>Navigate to <strong>Banking</strong> from the main sidebar menu.</p>
+        </section>
+
+        <!-- Module Structure -->
+        <section>
+          <h2>Module Structure</h2>
+          <p>The Banking module has two tabs:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Accounts Tab</h4>
+              <p>Manage your company's bank accounts.</p>
+            </div>
+
+            <div class="card">
+              <h4>Transactions Tab</h4>
+              <p>Record and track banking transactions.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Accounts Tab -->
+        <section>
+          <h2>Accounts Tab</h2>
+
+          <h3>Account List Columns</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Account Number</strong></td>
+                  <td>Bank account number</td>
+                </tr>
+                <tr>
+                  <td><strong>Account Name</strong></td>
+                  <td>Name for the account</td>
+                </tr>
+                <tr>
+                  <td><strong>Bank Name</strong></td>
+                  <td>Name of the bank</td>
+                </tr>
+                <tr>
+                  <td><strong>Branch</strong></td>
+                  <td>Branch name</td>
+                </tr>
+                <tr>
+                  <td><strong>Account Type</strong></td>
+                  <td>Checking or Savings</td>
+                </tr>
+                <tr>
+                  <td><strong>Current Balance</strong></td>
+                  <td>Current account balance</td>
+                </tr>
+                <tr>
+                  <td><strong>Opening Balance</strong></td>
+                  <td>Initial balance when account was added</td>
+                </tr>
+                <tr>
+                  <td><strong>Status</strong></td>
+                  <td>Account status</td>
+                </tr>
+                <tr>
+                  <td><strong>Actions</strong></td>
+                  <td>View, Edit, Delete</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Adding a Bank Account</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Add Account</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Account</strong> button.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Account Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Account Number *</strong></li>
+                  <li><strong>Account Name *</strong></li>
+                  <li><strong>Bank Name *</strong></li>
+                  <li><strong>Branch Name</strong></li>
+                  <li><strong>Branch Code</strong></li>
+                  <li><strong>IBAN</strong></li>
+                  <li><strong>SWIFT Code</strong></li>
+                  <li><strong>Currency</strong> - Default: OMR</li>
+                  <li><strong>Account Type</strong> - Checking or Savings</li>
+                  <li><strong>Opening Balance *</strong></li>
+                  <li><strong>Notes</strong></li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong> to create the account.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Transactions Tab -->
+        <section>
+          <h2>Transactions Tab</h2>
+
+          <h3>Transaction List Columns</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Column</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Date</strong></td>
+                  <td>Transaction date</td>
+                </tr>
+                <tr>
+                  <td><strong>Type</strong></td>
+                  <td>Deposit or Withdrawal</td>
+                </tr>
+                <tr>
+                  <td><strong>Category</strong></td>
+                  <td>Transaction category</td>
+                </tr>
+                <tr>
+                  <td><strong>Amount</strong></td>
+                  <td>Transaction amount</td>
+                </tr>
+                <tr>
+                  <td><strong>Payee/Payer</strong></td>
+                  <td>Who paid or received</td>
+                </tr>
+                <tr>
+                  <td><strong>Reference Number</strong></td>
+                  <td>Reference for the transaction</td>
+                </tr>
+                <tr>
+                  <td><strong>Reconciliation Status</strong></td>
+                  <td>Whether transaction is reconciled</td>
+                </tr>
+                <tr>
+                  <td><strong>Actions</strong></td>
+                  <td>View, Edit, Reconcile, Delete</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Recording a Transaction</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Add Transaction</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Transaction</strong> button.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Transaction Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Account *</strong> - Select bank account</li>
+                  <li><strong>Transaction Date *</strong></li>
+                  <li><strong>Type *</strong> - Deposit or Withdrawal</li>
+                  <li><strong>Category *</strong></li>
+                  <li><strong>Amount *</strong></li>
+                  <li><strong>Reference Number</strong></li>
+                  <li><strong>Payee/Payer Name</strong></li>
+                  <li><strong>Description</strong></li>
+                  <li><strong>Notes</strong></li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong> to record the transaction. The account balance updates automatically.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Filters -->
+        <section>
+          <h2>Filtering Transactions</h2>
+          <p>Use the following filters to find specific transactions:</p>
+          <ul>
+            <li><strong>Account</strong> - Filter by bank account</li>
+            <li><strong>Transaction Type</strong> - Deposit or Withdrawal</li>
+            <li><strong>Category</strong></li>
+            <li><strong>Reconciliation Status</strong></li>
+            <li><strong>Date Range</strong></li>
+            <li><strong>Search</strong> - Search by description or reference</li>
+          </ul>
+        </section>
+
+        <!-- Reconciliation -->
+        <section>
+          <h2>Reconciling Transactions</h2>
+          <p>Mark transactions as reconciled when they match your bank statement:</p>
+          <ol>
+            <li>Find the transaction in the list</li>
+            <li>Click the <strong>Reconcile</strong> button</li>
+            <li>Confirm the reconciliation</li>
+          </ol>
+          <p>Reconciled transactions are marked and help ensure your records match the bank's records.</p>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="petty-cash.html" class="quick-link">Petty Cash</a>
+            <a href="reports.html" class="quick-link">Reports</a>
+            <a href="purchase.html" class="quick-link">Purchase Module</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

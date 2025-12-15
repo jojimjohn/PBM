@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login & Authentication - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation (same as index) -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="login.html" class="nav-link active">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <polyline points="10 17 15 12 10 7"/>
+                <line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+              Login & Authentication
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="dashboard.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9"/>
+                <rect x="14" y="3" width="7" height="5"/>
+                <rect x="14" y="12" width="7" height="9"/>
+                <rect x="3" y="16" width="7" height="5"/>
+              </svg>
+              Dashboard Overview
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="navigation.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              System Navigation
+            </a>
+          </li>
+        </ul>
+
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../modules/customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="../modules/suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="../modules/inventory.html" class="nav-link">Inventory Management</a></li>
+          <li class="nav-item"><a href="../modules/contracts.html" class="nav-link">Contract Rate System</a></li>
+          <li class="nav-item"><a href="../modules/sales.html" class="nav-link">Sales & Invoicing</a></li>
+          <li class="nav-item"><a href="../modules/purchase.html" class="nav-link">Purchase Orders</a></li>
+          <li class="nav-item"><a href="../modules/petty-cash.html" class="nav-link">Petty Cash System</a></li>
+          <li class="nav-item"><a href="../modules/wastage.html" class="nav-link">Wastage Management</a></li>
+          <li class="nav-item"><a href="../modules/reports.html" class="nav-link">Reports & Analytics</a></li>
+        </ul>
+
+        <div class="nav-section-title">Role Guides</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../roles/admin.html" class="nav-link">Administrator Guide</a></li>
+          <li class="nav-item"><a href="../roles/manager.html" class="nav-link">Manager Guide</a></li>
+          <li class="nav-item"><a href="../roles/sales-staff.html" class="nav-link">Sales Staff Guide</a></li>
+          <li class="nav-item"><a href="../roles/purchase-staff.html" class="nav-link">Purchase Staff Guide</a></li>
+          <li class="nav-item"><a href="../roles/accounts-staff.html" class="nav-link">Accounts Staff Guide</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Getting Started</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Login & Authentication</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Login & Authentication</h1>
+        <p class="lead">
+          Learn how to securely access the PBM system, including company selection,
+          password management, and session security features.
+        </p>
+
+        <!-- Login Process -->
+        <section>
+          <h2>Logging Into the System</h2>
+          <p>The PBM system uses a secure login process with company selection to ensure you access the correct business data.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Navigate to the Login Page</div>
+              <div class="step-content">
+                <p>Open your web browser and go to the PBM system URL provided by your administrator. You'll see the login page with the Al Ramrami Trading logo.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Your Company</div>
+              <div class="step-content">
+                <p>Before entering your credentials, select the company you want to access from the dropdown menu:</p>
+                <ul>
+                  <li><strong>Al Ramrami Trading Enterprises</strong> - Oil and petroleum business</li>
+                  <li><strong>Pride Muscat International LLC</strong> - Scrap materials business</li>
+                </ul>
+                <div class="callout note">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="16" x2="12" y2="12"/>
+                      <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Important</div>
+                    <p style="margin:0;">Selecting the correct company is crucial. Each company has separate data, and you can only view information for the company you select.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Your Credentials</div>
+              <div class="step-content">
+                <p>Enter your login credentials:</p>
+                <ul>
+                  <li><strong>Email:</strong> Your work email address (e.g., john@alramrami.com)</li>
+                  <li><strong>Password:</strong> Your secure password</li>
+                </ul>
+                <p>Passwords are case-sensitive. Make sure Caps Lock is not accidentally enabled.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click "Sign In"</div>
+              <div class="step-content">
+                <p>Click the Sign In button to authenticate. If your credentials are correct, you'll be redirected to your dashboard.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Session Timeout -->
+        <section>
+          <h2>Session Security & Timeout</h2>
+          <p>For security purposes, your session will automatically expire after a period of inactivity.</p>
+
+          <div class="card">
+            <h3>How Session Timeout Works</h3>
+            <ul>
+              <li><strong>Default Timeout:</strong> 30 minutes of inactivity</li>
+              <li><strong>Activity Tracking:</strong> Actions like clicking, typing, and submitting forms reset the timer</li>
+              <li><strong>Warning Notification:</strong> You'll see a warning 5 minutes before your session expires</li>
+              <li><strong>Extend Session:</strong> Click "Stay Logged In" in the warning to extend your session</li>
+            </ul>
+
+            <div class="callout warning">
+              <div class="callout-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div class="callout-content">
+                <div class="callout-title">Security Notice</div>
+                <p style="margin:0;">If you leave your workstation, always log out manually or lock your computer. Don't rely solely on session timeout for security.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Password Management -->
+        <section>
+          <h2>Password Management</h2>
+
+          <h3>Password Requirements</h3>
+          <p>For security, passwords must meet these requirements:</p>
+          <ul>
+            <li>Minimum 8 characters</li>
+            <li>At least one uppercase letter (A-Z)</li>
+            <li>At least one lowercase letter (a-z)</li>
+            <li>At least one number (0-9)</li>
+            <li>At least one special character (!@#$%^&*)</li>
+          </ul>
+
+          <h3>Changing Your Password</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Access Settings</div>
+              <div class="step-content">
+                <p>Click on your profile icon in the top-right corner and select "Settings" from the dropdown menu.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-title">Navigate to Security</div>
+              <div class="step-content">
+                <p>In the Settings page, find the "Security" or "Password" section.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-title">Enter Passwords</div>
+              <div class="step-content">
+                <p>Enter your current password, then enter and confirm your new password.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-title">Save Changes</div>
+              <div class="step-content">
+                <p>Click "Update Password" to save. You may be asked to log in again with your new password.</p>
+              </div>
+            </li>
+          </ol>
+
+          <h3>Forgot Your Password?</h3>
+          <p>If you've forgotten your password, contact your system administrator. They can reset your password and provide you with temporary credentials.</p>
+        </section>
+
+        <!-- Logging Out -->
+        <section>
+          <h2>Logging Out</h2>
+          <p>Always log out when you're done using the system, especially on shared computers.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Your Profile</div>
+              <div class="step-content">
+                <p>Click on your name or profile icon in the top-right corner of any page.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-title">Select "Logout"</div>
+              <div class="step-content">
+                <p>Click the "Logout" option from the dropdown menu. You'll be redirected to the login page.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Security Best Practice</div>
+              <p style="margin:0;">If using a shared or public computer, clear your browser history and close all browser windows after logging out.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section>
+          <h2>Troubleshooting Login Issues</h2>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Problem</th>
+                  <th>Possible Cause</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>"Invalid credentials" error</td>
+                  <td>Incorrect email or password</td>
+                  <td>Double-check your email and password. Remember passwords are case-sensitive.</td>
+                </tr>
+                <tr>
+                  <td>Can't see expected data after login</td>
+                  <td>Wrong company selected</td>
+                  <td>Log out and log back in, selecting the correct company.</td>
+                </tr>
+                <tr>
+                  <td>Session keeps timing out</td>
+                  <td>Extended inactivity</td>
+                  <td>The system times out after 30 minutes of inactivity. Stay active or click "Stay Logged In" when warned.</td>
+                </tr>
+                <tr>
+                  <td>Account locked</td>
+                  <td>Too many failed login attempts</td>
+                  <td>Contact your administrator to unlock your account.</td>
+                </tr>
+                <tr>
+                  <td>Page won't load</td>
+                  <td>Network or server issue</td>
+                  <td>Check your internet connection. Try refreshing the page or contact IT support.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Next Steps</h4>
+          <div class="quick-links-grid">
+            <a href="dashboard.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9"/>
+                <rect x="14" y="3" width="7" height="5"/>
+              </svg>
+              Explore Your Dashboard
+            </a>
+            <a href="navigation.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+              Learn System Navigation
+            </a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+          <p>Need additional help? Contact your system administrator.</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -69,13 +69,57 @@ const systemSettingsService = {
         method: 'PUT',
         body: JSON.stringify({ setting_value: value })
       })
-      return response
+      return data
     } catch (error) {
       console.error(`Error updating setting ${key}:`, error)
       return {
         success: false,
         error: error.message || 'Failed to update setting'
       }
+    }
+  },
+
+  // ============================================================================
+  // Session Timeout Settings
+  // ============================================================================
+
+  /**
+   * Get session timeout setting
+   * @returns {Promise<Object>} Response with sessionTimeoutMinutes
+   */
+  async getSessionTimeout() {
+    try {
+      const url = `${API_BASE_URL}/system-settings/security/session-timeout`
+      const data = await authService.makeAuthenticatedRequest(url)
+      if (data.success) {
+        return data.data
+      }
+      return { sessionTimeoutMinutes: 30 } // Default fallback
+    } catch (error) {
+      console.error('Error fetching session timeout:', error)
+      return { sessionTimeoutMinutes: 30 } // Default fallback
+    }
+  },
+
+  /**
+   * Update session timeout setting
+   * @param {number} timeoutMinutes - Session timeout in minutes (10-120)
+   * @returns {Promise<Object>} Response
+   */
+  async updateSessionTimeout(timeoutMinutes) {
+    try {
+      const url = `${API_BASE_URL}/system-settings/security/session-timeout`
+      const data = await authService.makeAuthenticatedRequest(url, {
+        method: 'PUT',
+        body: JSON.stringify({ timeoutMinutes })
+      })
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update session timeout')
+      }
+      return data
+    } catch (error) {
+      console.error('Error updating session timeout:', error)
+      throw error
     }
   }
 }

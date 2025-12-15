@@ -305,37 +305,37 @@ const Sales = () => {
       sortable: false,
       width: '150px',
       render: (value, row) => (
-        <div className="table-actions">
-          <button 
-            className="btn-icon" 
+        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-outline btn-sm"
             title={t('view')}
             onClick={() => handleViewSalesOrder(row)}
           >
-            <Eye size={16} />
+            <Eye size={14} />
           </button>
-          <button 
-            className="btn-icon" 
+          <button
+            className="btn btn-outline btn-sm"
             title={t('edit')}
             onClick={() => handleEditSalesOrder(row)}
           >
-            <Edit size={16} />
+            <Edit size={14} />
           </button>
           {(row.status === 'confirmed' || row.status === 'delivered') && (
             row.invoiceNumber ? (
               <button
-                className="btn-icon success"
+                className="btn btn-success btn-sm"
                 title={`Invoice: ${row.invoiceNumber} - Download invoice functionality coming soon`}
                 disabled
               >
-                <FileText size={16} />
+                <FileText size={14} />
               </button>
             ) : (
               <button
-                className="btn-icon primary"
+                className="btn btn-primary btn-sm"
                 title={t('generateInvoice')}
                 onClick={() => handleGenerateInvoice(row)}
               >
-                <FileText size={16} />
+                <FileText size={14} />
               </button>
             )
           )}
@@ -541,20 +541,20 @@ const Sales = () => {
                   sortable: false,
                   width: '120px',
                   render: (value, row) => (
-                    <div className="table-actions">
+                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                       <button
-                        className="btn-icon"
+                        className="btn btn-outline btn-sm"
                         title={t('view')}
                         onClick={() => handleViewSalesOrder(row)}
                       >
-                        <Eye size={16} />
+                        <Eye size={14} />
                       </button>
                       <button
-                        className="btn-icon"
+                        className="btn btn-outline btn-sm"
                         title={t('downloadInvoice')}
                         onClick={() => alert('Download invoice functionality coming soon')}
                       >
-                        <FileText size={16} />
+                        <FileText size={14} />
                       </button>
                     </div>
                   )

@@ -8,6 +8,7 @@ import {
 import './PurchaseOrderViewModal.css';
 import purchaseOrderService from '../services/purchaseOrderService';
 import purchaseOrderExpenseService from '../services/purchaseOrderExpenseService';
+import { useSystemSettings } from '../context/SystemSettingsContext';
 
 const PurchaseOrderViewModal = ({
   isOpen,
@@ -49,19 +50,17 @@ const PurchaseOrderViewModal = ({
     notes: ''
   });
 
+  const { formatDate: systemFormatDate, formatCurrency: systemFormatCurrency } = useSystemSettings();
+
   if (!orderData) return null;
 
   const formatCurrency = (amount) => {
-    return `OMR ${(parseFloat(amount) || 0).toFixed(3)}`;
+    return systemFormatCurrency ? systemFormatCurrency(amount) : `OMR ${(parseFloat(amount) || 0).toFixed(3)}`;
   };
 
   const formatDate = (date) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
+    return systemFormatDate ? systemFormatDate(date) : new Date(date).toLocaleDateString();
   };
 
   const getStatusBadgeClass = (status) => {

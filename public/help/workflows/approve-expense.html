@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Approval Workflow - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="track-expenses.html" class="nav-link">Tracking Expenses</a></li>
+          <li class="nav-item"><a href="add-petty-cash.html" class="nav-link">Adding Petty Cash Cards</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link active">Expense Approval Workflow</a></li>
+          <li class="nav-item"><a href="contract-rates.html" class="nav-link">Using Contract Rates</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Expense Approval Workflow</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Expense Approval Workflow</h1>
+        <p class="lead">
+          This guide explains the expense approval process for managers. Learn how to review,
+          approve, and reject expense submissions efficiently.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Required Role</div>
+            <p style="margin:0;"><span class="role-badge manager">Manager</span> or <span class="role-badge admin">Administrator</span></p>
+          </div>
+        </div>
+
+        <!-- Workflow Overview -->
+        <section>
+          <h2>Workflow Overview</h2>
+          <div class="card">
+            <ol>
+              <li><strong>Staff submits expense</strong> via mobile portal or admin panel</li>
+              <li><strong>Expense enters pending status</strong> awaiting approval</li>
+              <li><strong>Manager reviews</strong> the expense details and receipt</li>
+              <li><strong>Manager approves or rejects</strong> the expense</li>
+              <li>If approved: <strong>Card balance is deducted</strong></li>
+              <li>If rejected: <strong>Submitter is notified with reason</strong></li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- Accessing Approvals -->
+        <section>
+          <h2>Accessing Pending Approvals</h2>
+
+          <h3>Method 1: Notification Badge</h3>
+          <p>The notification bell in the header shows pending approvals. Click to go directly to items needing attention.</p>
+
+          <h3>Method 2: Approvals Tab</h3>
+          <ol>
+            <li>Go to <strong>Finance → Petty Cash</strong></li>
+            <li>Click the <strong>Approvals</strong> tab</li>
+            <li>View all pending expenses</li>
+          </ol>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Daily Check</div>
+              <p style="margin:0;">Check the approval queue at least once daily. Pending items block staff from reconciling their expenses.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Approval Process -->
+        <section>
+          <h2>Processing an Approval</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Step 1: Select an Expense</div>
+              <div class="step-content">
+                <p>Click on any pending expense to view details.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 2: Review Details</div>
+              <div class="step-content">
+                <p>Examine the expense carefully:</p>
+                <ul>
+                  <li><strong>Amount:</strong> Is this amount reasonable for the expense?</li>
+                  <li><strong>Category:</strong> Is the category appropriate?</li>
+                  <li><strong>Description:</strong> Does it clearly explain what was purchased?</li>
+                  <li><strong>Date:</strong> When did the expense occur?</li>
+                  <li><strong>Submitter:</strong> Who submitted this?</li>
+                  <li><strong>Card:</strong> Which card is being charged?</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 3: Check Receipt</div>
+              <div class="step-content">
+                <p>Review the attached receipt:</p>
+                <ul>
+                  <li>Is a receipt attached?</li>
+                  <li>Is the receipt legible?</li>
+                  <li>Does the receipt amount match the expense?</li>
+                  <li>Does the receipt date match?</li>
+                </ul>
+                <div class="callout warning">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Missing Receipt</div>
+                    <p style="margin:0;">If no receipt is attached and company policy requires one, reject and ask submitter to resubmit with receipt.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 4: Make Decision</div>
+              <div class="step-content">
+                <p>Based on your review:</p>
+                <div class="card-grid">
+                  <div class="card" style="border-left: 4px solid #22c55e;">
+                    <h4 style="color:#16a34a;">Approve</h4>
+                    <p>Click <strong>Approve</strong> if:</p>
+                    <ul>
+                      <li>Amount is reasonable</li>
+                      <li>Category is correct</li>
+                      <li>Receipt is valid</li>
+                      <li>Expense is justified</li>
+                    </ul>
+                  </div>
+                  <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4 style="color:#dc2626;">Reject</h4>
+                    <p>Click <strong>Reject</strong> if:</p>
+                    <ul>
+                      <li>Amount is excessive</li>
+                      <li>Receipt is missing/invalid</li>
+                      <li>Expense is not justified</li>
+                      <li>Policy violation</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Step 5: If Rejecting - Provide Reason</div>
+              <div class="step-content">
+                <p>When rejecting, always provide a clear, actionable reason:</p>
+                <ul>
+                  <li><strong>Good:</strong> "Receipt missing - please resubmit with receipt photo"</li>
+                  <li><strong>Good:</strong> "Amount exceeds policy limit for this category - needs manager approval"</li>
+                  <li><strong>Bad:</strong> "Rejected" (no explanation)</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- What Happens Next -->
+        <section>
+          <h2>What Happens After Your Decision</h2>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>If Approved</h4>
+              <ul>
+                <li>Expense status changes to "Approved"</li>
+                <li>Amount is deducted from the card balance</li>
+                <li>Submitter sees approval in their history</li>
+                <li>Transaction is recorded for reporting</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>If Rejected</h4>
+              <ul>
+                <li>Expense status changes to "Rejected"</li>
+                <li>No balance change</li>
+                <li>Submitter sees rejection with your reason</li>
+                <li>They can submit a new expense if correctable</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bulk Processing -->
+        <section>
+          <h2>Processing Multiple Expenses</h2>
+          <p>For efficiency, you can process multiple expenses:</p>
+
+          <ol>
+            <li>Review each expense in the queue</li>
+            <li>Use keyboard shortcuts if available</li>
+            <li>Process similar expenses together</li>
+            <li>Check dashboard shows zero pending when done</li>
+          </ol>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Approval Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Be timely:</strong> Process approvals within 24-48 hours</li>
+              <li><strong>Be consistent:</strong> Apply the same standards to all submitters</li>
+              <li><strong>Be specific:</strong> When rejecting, explain exactly what's wrong</li>
+              <li><strong>Be fair:</strong> Consider context and circumstances</li>
+              <li><strong>Watch patterns:</strong> Note if someone repeatedly has issues</li>
+              <li><strong>Escalate if needed:</strong> Unusual items may need admin review</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/petty-cash.html" class="quick-link">Petty Cash System</a>
+            <a href="track-expenses.html" class="quick-link">Tracking Expenses</a>
+            <a href="../roles/manager.html" class="quick-link">Manager Guide</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

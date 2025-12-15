@@ -350,8 +350,8 @@ const PurchaseOrderAmendmentModal = ({
     const fieldChanges = [
       {
         label: 'Order Date',
-        oldValue: originalPO.orderDate ? new Date(originalPO.orderDate).toLocaleDateString() : '-',
-        newValue: proposedChanges.orderDate ? new Date(proposedChanges.orderDate).toLocaleDateString() : '-',
+        oldValue: originalPO.orderDate ? formatDate(originalPO.orderDate) : '-',
+        newValue: proposedChanges.orderDate ? formatDate(proposedChanges.orderDate) : '-',
         hasChanged: proposedChanges.orderDate && originalPO.orderDate !== proposedChanges.orderDate
       },
       {
@@ -368,8 +368,8 @@ const PurchaseOrderAmendmentModal = ({
       },
       {
         label: 'Expected Delivery',
-        oldValue: originalPO.expectedDeliveryDate ? new Date(originalPO.expectedDeliveryDate).toLocaleDateString() : '-',
-        newValue: proposedChanges.expectedDeliveryDate ? new Date(proposedChanges.expectedDeliveryDate).toLocaleDateString() : '-',
+        oldValue: originalPO.expectedDeliveryDate ? formatDate(originalPO.expectedDeliveryDate) : '-',
+        newValue: proposedChanges.expectedDeliveryDate ? formatDate(proposedChanges.expectedDeliveryDate) : '-',
         hasChanged: proposedChanges.expectedDeliveryDate && originalPO.expectedDeliveryDate !== proposedChanges.expectedDeliveryDate
       },
       {

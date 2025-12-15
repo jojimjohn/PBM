@@ -40,7 +40,7 @@ import {
 } from 'lucide-react'
 import './RoleManagement.css'
 
-const RoleManagement = () => {
+const RoleManagement = ({ embedded = false }) => {
   const { user } = useAuth()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
@@ -80,7 +80,8 @@ const RoleManagement = () => {
 
   // Check permissions
   const canManageRoles = hasPermission(PERMISSIONS.MANAGE_ROLES)
-  const canViewRoles = hasPermission(PERMISSIONS.VIEW_ROLES) || canManageRoles
+  const canManageUsers = hasPermission(PERMISSIONS.MANAGE_USERS)
+  const canViewRoles = hasPermission(PERMISSIONS.VIEW_ROLES) || canManageRoles || canManageUsers
 
   // Load roles
   const loadRoles = useCallback(async () => {
@@ -93,7 +94,8 @@ const RoleManagement = () => {
       const result = await roleService.getAll(filters)
 
       if (result.success) {
-        setRoles(result.data?.roles || [])
+        // Backend returns data as array directly, not nested as { roles: [...] }
+        setRoles(Array.isArray(result.data) ? result.data : result.data?.roles || [])
       } else {
         setError(result.error || 'Failed to load roles')
       }
@@ -110,7 +112,8 @@ const RoleManagement = () => {
     try {
       const result = await roleService.getPermissions()
       if (result.success) {
-        setPermissionGroups(result.data?.permissions || [])
+        // Backend returns { byModule: {...}, allKeys: [...] }
+        setPermissionGroups(result.data?.byModule || result.data?.permissions || [])
       }
     } catch (err) {
       console.error('Error loading permissions:', err)
@@ -289,6 +292,7 @@ const RoleManagement = () => {
 
   // Get role type badge
   const getRoleTypeBadge = (role) => {
+    if (!role) return null
     if (role.is_system) {
       return <Badge variant="info" size="sm"><Lock size={12} /> System</Badge>
     }
@@ -297,46 +301,54 @@ const RoleManagement = () => {
 
   // Get status badge
   const getStatusBadge = (isActive) => {
+    if (isActive === undefined || isActive === null) return null
     return isActive
       ? <Badge variant="success" size="sm"><CheckCircle size={12} /> Active</Badge>
       : <Badge variant="danger" size="sm"><XCircle size={12} /> Inactive</Badge>
   }
 
   // Table columns
+  // NOTE: DataTable render functions receive (value, row) where value is the cell value
+  // and row is the full row object
   const columns = [
     {
       key: 'name',
-      label: t('roleName') || 'Role Name',
+      header: t('roleName') || 'Role Name',
       sortable: true,
-      render: (row) => (
-        <div className="role-name-cell">
-          <Shield className="role-icon" size={18} />
-          <div>
-            <span className="role-name">{row.name}</span>
-            {row.description && (
-              <span className="role-description">{row.description}</span>
-            )}
+      render: (value, row) => {
+        if (!row) return null
+        return (
+          <div className="role-name-cell">
+            <Shield className="role-icon" size={18} />
+            <div>
+              <span className="role-name">{row.name}</span>
+              {row.description && (
+                <span className="role-description">{row.description}</span>
+              )}
+            </div>
           </div>
-        </div>
-      )
+        )
+      }
     },
     {
-      key: 'type',
-      label: t('type') || 'Type',
-      render: (row) => getRoleTypeBadge(row)
+      key: 'is_system',
+      header: t('type') || 'Type',
+      render: (value, row) => getRoleTypeBadge(row)
     },
     {
       key: 'hierarchy_level',
-      label: t('hierarchyLevel') || 'Level',
+      header: t('hierarchyLevel') || 'Level',
       sortable: true,
-      render: (row) => (
-        <span className="hierarchy-badge">Level {row.hierarchy_level}</span>
-      )
+      render: (value, row) => {
+        if (!row) return null
+        return <span className="hierarchy-badge">Level {row.hierarchy_level}</span>
+      }
     },
     {
-      key: 'permissions_count',
-      label: t('permissions') || 'Permissions',
-      render: (row) => {
+      key: 'permissions',
+      header: t('permissions') || 'Permissions',
+      render: (value, row) => {
+        if (!row) return null
         const count = row.permissions?.length || 0
         return (
           <span className="permissions-count">
@@ -347,78 +359,84 @@ const RoleManagement = () => {
     },
     {
       key: 'user_count',
-      label: t('users') || 'Users',
-      render: (row) => (
-        <button
-          className="users-count-btn"
-          onClick={(e) => {
-            e.stopPropagation()
-            openUsersModal(row)
-          }}
-        >
-          <Users size={14} />
-          {row.user_count || 0}
-        </button>
-      )
+      header: t('users') || 'Users',
+      render: (value, row) => {
+        if (!row) return null
+        return (
+          <button
+            className="users-count-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              openUsersModal(row)
+            }}
+          >
+            <Users size={14} />
+            {row.user_count || 0}
+          </button>
+        )
+      }
     },
     {
       key: 'is_active',
-      label: t('status') || 'Status',
-      render: (row) => getStatusBadge(row.is_active)
+      header: t('status') || 'Status',
+      render: (value, row) => row ? getStatusBadge(row.is_active) : null
     },
     {
       key: 'actions',
-      label: t('actions') || 'Actions',
-      render: (row) => (
-        <div className="actions-cell">
-          {canManageRoles && !row.is_system && (
+      header: t('actions') || 'Actions',
+      render: (value, row) => {
+        if (!row) return null
+        return (
+          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+            {canManageRoles && !row.is_system && (
             <>
               <button
-                className="action-btn edit"
+                className="btn btn-outline btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   openEditModal(row)
                 }}
                 title={t('edit') || 'Edit'}
               >
-                <Edit size={16} />
+                <Edit size={14} />
               </button>
               <button
-                className="action-btn clone"
+                className="btn btn-outline btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   openCloneModal(row)
                 }}
                 title={t('clone') || 'Clone'}
               >
-                <Copy size={16} />
+                <Copy size={14} />
               </button>
               <button
-                className="action-btn delete"
+                className="btn btn-danger btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   openDeleteModal(row)
                 }}
                 title={t('delete') || 'Delete'}
               >
-                <Trash2 size={16} />
+                <Trash2 size={14} />
               </button>
             </>
           )}
           {canManageRoles && row.is_system && (
             <button
-              className="action-btn view"
+              className="btn btn-outline btn-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 openEditModal(row)
               }}
               title={t('viewPermissions') || 'View Permissions'}
             >
-              <Eye size={16} />
+              <Eye size={14} />
             </button>
           )}
-        </div>
-      )
+          </div>
+        )
+      }
     }
   ]
 
@@ -436,24 +454,26 @@ const RoleManagement = () => {
   }
 
   return (
-    <div className="role-management-page">
-      {/* Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1>
-            <Shield size={24} />
-            {t('roleManagement') || 'Role Management'}
-          </h1>
-          <p>{t('roleManagementDescription') || 'Manage roles and their permissions'}</p>
-        </div>
+    <div className={`role-management-page ${embedded ? 'embedded' : ''}`}>
+      {/* Header - Only show when not embedded */}
+      {!embedded && (
+        <div className="page-header">
+          <div className="page-title-section">
+            <h1>
+              <Shield size={24} />
+              {t('roleManagement') || 'Role Management'}
+            </h1>
+            <p>{t('roleManagementDescription') || 'Manage roles and their permissions'}</p>
+          </div>
 
-        {canManageRoles && (
-          <button className="btn-primary" onClick={openCreateModal}>
-            <ShieldPlus size={18} />
-            {t('createRole') || 'Create Role'}
-          </button>
-        )}
-      </div>
+          {canManageRoles && (
+            <button className="btn-primary" onClick={openCreateModal}>
+              <ShieldPlus size={18} />
+              {t('createRole') || 'Create Role'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       {message && (
@@ -503,6 +523,14 @@ const RoleManagement = () => {
             <option value="true">{t('active') || 'Active'}</option>
             <option value="false">{t('inactive') || 'Inactive'}</option>
           </select>
+
+          {/* Create Role Button - shown when embedded */}
+          {embedded && canManageRoles && (
+            <button className="btn btn-primary" onClick={openCreateModal}>
+              <ShieldPlus size={16} />
+              {t('createRole') || 'Create Role'}
+            </button>
+          )}
         </div>
       </div>
 

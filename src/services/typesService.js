@@ -1,5 +1,5 @@
 import authService from './authService'
-import { API_BASE_URL } from '../config/api'
+import { API_BASE_URL } from '../config/api.js'
 
 const typesService = {
   /**
@@ -8,9 +8,8 @@ const typesService = {
    */
   async getCustomerTypes() {
     try {
-      const url = `${API_BASE_URL}/customer-types`
-      const data = await authService.makeAuthenticatedRequest(url)
-      return response
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/customer-types`)
+      return data
     } catch (error) {
       console.error('Error fetching customer types:', error)
       return {
@@ -26,9 +25,8 @@ const typesService = {
    */
   async getSupplierTypes() {
     try {
-      const url = `${API_BASE_URL}/supplier-types`
-      const data = await authService.makeAuthenticatedRequest(url)
-      return response
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-types`)
+      return data
     } catch (error) {
       console.error('Error fetching supplier types:', error)
       return {

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Petty Cash System - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="../getting-started/login.html" class="nav-link">Login & Authentication</a></li>
+          <li class="nav-item"><a href="../getting-started/dashboard.html" class="nav-link">Dashboard Overview</a></li>
+          <li class="nav-item"><a href="../getting-started/navigation.html" class="nav-link">System Navigation</a></li>
+        </ul>
+
+        <div class="nav-section-title">Modules</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="customers.html" class="nav-link">Customer Management</a></li>
+          <li class="nav-item"><a href="suppliers.html" class="nav-link">Supplier Management</a></li>
+          <li class="nav-item"><a href="inventory.html" class="nav-link">Inventory Management</a></li>
+          <li class="nav-item"><a href="contracts.html" class="nav-link">Contract Rate System</a></li>
+          <li class="nav-item"><a href="sales.html" class="nav-link">Sales & Invoicing</a></li>
+          <li class="nav-item"><a href="purchase.html" class="nav-link">Purchase Orders</a></li>
+          <li class="nav-item"><a href="petty-cash.html" class="nav-link active">Petty Cash System</a></li>
+          <li class="nav-item"><a href="petty-cash-portal.html" class="nav-link">Mobile Expense Portal</a></li>
+          <li class="nav-item"><a href="wastage.html" class="nav-link">Wastage Management</a></li>
+          <li class="nav-item"><a href="reports.html" class="nav-link">Reports & Analytics</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Modules</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Petty Cash System</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Petty Cash System</h1>
+        <p class="lead">
+          Manage petty cash cards, track expenses, and process approvals. The Petty Cash module
+          provides complete control over small cash expenditures across your organization.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Who Can Access</div>
+            <p style="margin:0;">Full access requires <span class="role-badge accounts">Accounts Staff</span> or <span class="role-badge admin">Admin</span>.
+            Staff can view and submit expenses. <span class="role-badge manager">Managers</span> can approve expenses.</p>
+          </div>
+        </div>
+
+        <!-- System Overview -->
+        <section>
+          <h2>System Overview</h2>
+          <p>The Petty Cash system has four main components:</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h4>Petty Cash Cards</h4>
+              <p>Virtual cards assigned to departments or individuals with set limits and balances.</p>
+            </div>
+
+            <div class="card">
+              <h4>PC Users</h4>
+              <p>Staff members assigned to cards who can submit expenses through the mobile portal.</p>
+            </div>
+
+            <div class="card">
+              <h4>Expenses</h4>
+              <p>Individual expense records with receipts, categories, and approval status.</p>
+            </div>
+
+            <div class="card">
+              <h4>Quick Actions</h4>
+              <p>Approve or reject expenses directly from the Expenses tab using action buttons.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Petty Cash Cards -->
+        <section>
+          <h2>Managing Petty Cash Cards</h2>
+          <p>Navigate to <strong>Finance → Petty Cash</strong> to access the Cards tab.</p>
+
+          <h3>Creating a Card</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Add Card</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Card</strong> in the Cards tab.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Card Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Card Name *</strong> - Descriptive name (e.g., "Operations Petty Cash")</li>
+                  <li><strong>Card Number *</strong> - Unique identifier</li>
+                  <li><strong>Assigned To</strong> - Primary user responsible for the card</li>
+                  <li><strong>Department</strong> - Department using this card</li>
+                  <li><strong>Initial Balance *</strong> - Starting amount on the card</li>
+                  <li><strong>Monthly Limit</strong> - Maximum monthly spending (optional)</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save Card</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong>. The card is now active and ready for expenses.</p>
+              </div>
+            </li>
+          </ol>
+
+          <h3>Card Statuses</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Active</span></td>
+                  <td>Card can be used for expenses</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Suspended</span></td>
+                  <td>Temporarily disabled - no new expenses allowed</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Expired</span></td>
+                  <td>Card has passed its validity period</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:4px;">Closed</span></td>
+                  <td>Card is permanently deactivated</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PC Users -->
+        <section>
+          <h2>Managing PC Users</h2>
+          <p>PC Users are staff members who can submit expenses through the mobile portal.</p>
+
+          <h3>Adding a PC User</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Go to Users Tab</div>
+              <div class="step-content">
+                <p>In the Petty Cash page, click the <strong>Users</strong> tab.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click Add User</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add PC User</strong>.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter User Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Name *</strong> - User's full name</li>
+                  <li><strong>Email</strong> - Contact email</li>
+                  <li><strong>Phone *</strong> - Mobile number (for portal access)</li>
+                  <li><strong>Assigned Card *</strong> - Which petty cash card they use</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Generate Access Credentials</div>
+              <div class="step-content">
+                <p>The system generates a QR code and PIN for portal access. Share these with the user securely.</p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Mobile Portal</div>
+              <p style="margin:0;">PC Users access the system through a special mobile-friendly portal using QR + PIN. See the <a href="petty-cash-portal.html">Mobile Portal Guide</a>.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Managing Expenses -->
+        <section>
+          <h2>Managing Expenses</h2>
+          <p>The Expenses tab shows all expense submissions across all cards.</p>
+
+          <h3>Submitting an Expense (Admin)</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click Add Expense</div>
+              <div class="step-content">
+                <p>In the Expenses tab, click <strong>+ Add Expense</strong>.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Card</div>
+              <div class="step-content">
+                <p>Choose which petty cash card to charge.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Expense Details</div>
+              <div class="step-content">
+                <ul>
+                  <li><strong>Amount *</strong> - Expense amount</li>
+                  <li><strong>Category *</strong> - Select from predefined categories</li>
+                  <li><strong>Description *</strong> - Brief explanation of the expense</li>
+                  <li><strong>Date</strong> - When the expense occurred</li>
+                  <li><strong>PC User</strong> - Optionally assign to a specific user</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Attach Receipt</div>
+              <div class="step-content">
+                <p>Upload a photo or scan of the receipt (recommended for audit trail).</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Submit</div>
+              <div class="step-content">
+                <p>Click <strong>Submit</strong>. The expense goes to pending approval status.</p>
+              </div>
+            </li>
+          </ol>
+
+          <h3>Expense Categories</h3>
+          <ul>
+            <li>Transportation / Fuel</li>
+            <li>Office Supplies</li>
+            <li>Meals & Entertainment</li>
+            <li>Maintenance & Repairs</li>
+            <li>Utilities</li>
+            <li>Miscellaneous</li>
+          </ul>
+        </section>
+
+        <!-- Approval Process -->
+        <section>
+          <h2>Expense Approval Process</h2>
+          <p>Expenses require manager approval before being finalized. All approvals are handled within the Expenses tab using quick actions.</p>
+
+          <h3>For Managers: Approving Expenses</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">View Pending Expenses</div>
+              <div class="step-content">
+                <p>In the <strong>Expenses</strong> tab, filter by "Pending" status to see expenses awaiting approval.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Expense Details</div>
+              <div class="step-content">
+                <p>Click on an expense to view details, receipt, and submitter information.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Use Quick Actions</div>
+              <div class="step-content">
+                <p>Each pending expense has quick action buttons:</p>
+                <ul>
+                  <li><strong>Approve:</strong> Click the approve button - card balance is deducted</li>
+                  <li><strong>Reject:</strong> Click the reject button - provide a reason for rejection</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+
+          <h3>Expense Statuses</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Pending</span></td>
+                  <td>Awaiting manager approval</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Approved</span></td>
+                  <td>Approved and deducted from card balance</td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Rejected</span></td>
+                  <td>Rejected by manager with reason</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Card Operations -->
+        <section>
+          <h2>Card Operations</h2>
+
+          <h3>Reloading a Card</h3>
+          <p>When a card's balance runs low:</p>
+          <ol>
+            <li>Click on the card to open details</li>
+            <li>Click <strong>Reload Card</strong></li>
+            <li>Enter the amount to add</li>
+            <li>Add a note explaining the reload</li>
+            <li>Click <strong>Confirm</strong></li>
+          </ol>
+
+          <h3>Suspending a Card</h3>
+          <p>To temporarily disable a card:</p>
+          <ol>
+            <li>Click on the card</li>
+            <li>Click <strong>Suspend Card</strong></li>
+            <li>The card can be reactivated later</li>
+          </ol>
+
+          <h3>Viewing Card History</h3>
+          <p>Each card has a complete transaction history showing all expenses, reloads, and balance changes.</p>
+        </section>
+
+        <!-- Best Practices -->
+        <section>
+          <h2>Best Practices</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Require receipts:</strong> Enforce receipt uploads for all expenses</li>
+              <li><strong>Set appropriate limits:</strong> Configure monthly limits based on department needs</li>
+              <li><strong>Regular reconciliation:</strong> Compare card balances with physical cash periodically</li>
+              <li><strong>Timely approvals:</strong> Process pending approvals within 24-48 hours</li>
+              <li><strong>Review rejected expenses:</strong> Follow up on rejected items with submitters</li>
+              <li><strong>Monitor balances:</strong> Reload cards before they run out completely</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="petty-cash-portal.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="2" width="14" height="20" rx="2"/>
+              </svg>
+              Mobile Expense Portal
+            </a>
+            <a href="../workflows/track-expenses.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+              Tracking Expenses
+            </a>
+            <a href="../workflows/approve-expense.html" class="quick-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"/>
+              </svg>
+              Approval Workflow
+            </a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

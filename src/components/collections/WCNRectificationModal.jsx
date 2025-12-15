@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3, AlertTriangle, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Package } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import { collectionOrderService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
@@ -8,6 +9,7 @@ import './WCNRectificationModal.css';
 
 const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) => {
   const { t } = useLocalization();
+  const { formatDate } = useSystemSettings();
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -245,7 +247,7 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
                   <label>Finalized Date:</label>
                   <span>
                     {collectionOrder.finalized_at
-                      ? new Date(collectionOrder.finalized_at).toLocaleDateString()
+                      ? formatDate(collectionOrder.finalized_at)
                       : 'N/A'}
                   </span>
                 </div>

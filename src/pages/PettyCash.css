@@ -1139,3 +1139,129 @@
   }
 }
 
+/* ============================================
+   Tab Navigation Styles
+   ============================================ */
+
+.tabs-container {
+  margin-top: 1.5rem;
+}
+
+.tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6b7280;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: #374151;
+  background: #f9fafb;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.tab-btn.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  font-weight: 600;
+}
+
+.tab-btn.active:hover {
+  background: transparent;
+}
+
+.tab-btn svg {
+  flex-shrink: 0;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  margin-left: 0.25rem;
+}
+
+.tab-btn.active .tab-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.tabs-content {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RTL Support for Tabs */
+[dir="rtl"] .tabs-nav {
+  direction: rtl;
+}
+
+[dir="rtl"] .tab-btn {
+  direction: rtl;
+}
+
+[dir="rtl"] .tab-badge {
+  margin-left: 0;
+  margin-right: 0.25rem;
+}
+
+/* Responsive Tabs */
+@media (max-width: 640px) {
+  .tabs-nav {
+    gap: 0.25rem;
+  }
+
+  .tab-btn {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  .tab-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tab-badge {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.6875rem;
+  }
+}
+
