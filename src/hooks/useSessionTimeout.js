@@ -18,7 +18,7 @@ import { API_BASE_URL } from '../config/api.js';
 // Configuration - Warning shows when remaining time is at or below this threshold
 const WARNING_THRESHOLD_MINUTES = 5; // Show warning 5 minutes before timeout
 const CHECK_INTERVAL_MS = 30 * 1000; // Check session status every 30 seconds (more frequent for better UX)
-const ACTIVITY_DEBOUNCE_MS = 60 * 1000; // Debounce activity heartbeat (60 seconds - don't spam server)
+const ACTIVITY_DEBOUNCE_MS = 30 * 1000; // Debounce activity heartbeat (30 seconds - balances UX and server load)
 
 export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
   const [sessionStatus, setSessionStatus] = useState(null);
@@ -188,7 +188,13 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    // Track various user activities
+    // - mousedown: clicking
+    // - mousemove: moving mouse (reading, hovering) - important for keeping session alive while reading
+    // - keydown: typing
+    // - scroll: scrolling through content
+    // - touchstart: mobile touch interactions
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
 
     events.forEach(event => {
       window.addEventListener(event, trackActivity, { passive: true });

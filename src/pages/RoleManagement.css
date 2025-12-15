@@ -23,30 +23,6 @@
   margin: 0;
 }
 
-.role-management-page.embedded .filters-section {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.role-management-page.embedded .search-box {
-  background: white;
-  border: 1px solid #e2e8f0;
-}
-
-.role-management-page.embedded .filter-group {
-  flex-wrap: wrap;
-}
-
-.role-management-page.embedded .filter-group select {
-  min-width: 140px;
-  background: white;
-  border: 1px solid #e2e8f0;
-}
-
 .role-management-page.embedded .alert {
   margin-bottom: 1rem;
 }
@@ -55,40 +31,25 @@
   margin-bottom: 1rem;
 }
 
-/* Ensure filter buttons have correct style in embedded mode */
-.role-management-page.embedded .filter-group .btn {
-  display: inline-flex;
+/* Header Actions Group */
+.header-actions-group {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.role-management-page.embedded .filter-group .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
+/* Spinning animation for refresh button */
+.spinning {
+  animation: spin 1s linear infinite;
 }
 
-.role-management-page.embedded .filter-group .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
-}
-
-/* Embedded DataTable styling */
-.role-management-page.embedded .data-table-container {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.role-management-page.embedded .data-table-toolbar {
-  background: #f8fafc;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .page-header {
@@ -200,60 +161,6 @@
 .access-denied p {
   margin: 0;
   color: var(--text-secondary);
-}
-
-/* ============================================
-   Filters Section
-   ============================================ */
-
-.filters-section {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: white;
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 8px;
-  flex: 1;
-  min-width: 200px;
-  max-width: 400px;
-}
-
-.search-box svg {
-  color: var(--text-secondary);
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 0.875rem;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.filter-group svg {
-  color: var(--text-secondary);
-}
-
-.filter-group select {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-  cursor: pointer;
 }
 
 /* ============================================
@@ -768,15 +675,11 @@
   flex-direction: row-reverse;
 }
 
-[dir="rtl"] .search-box {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .filter-group {
-  flex-direction: row-reverse;
-}
-
 [dir="rtl"] .role-name-cell {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-actions-group {
   flex-direction: row-reverse;
 }
 

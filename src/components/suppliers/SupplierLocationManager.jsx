@@ -36,7 +36,7 @@ const SupplierLocationManager = () => {
     try {
       setLoading(true);
       console.log('Loading supplier locations...');
-      
+
       // Build query parameters
       const params = new URLSearchParams();
       params.append('page', pagination.page.toString());
@@ -44,14 +44,13 @@ const SupplierLocationManager = () => {
 
       const url = `${API_BASE_URL}/supplier-locations?${params.toString()}`;
       console.log('Making request to:', url);
-      
-      const response = await authService.makeAuthenticatedRequest(url);
-      const data = await response.json();
 
-      console.log('Locations API raw response:', response);
-      console.log('Locations API parsed data:', data);
+      // makeAuthenticatedRequest returns parsed JSON directly, not a Response object
+      const data = await authService.makeAuthenticatedRequest(url);
 
-      if (!response.ok) {
+      console.log('Locations API response:', data);
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to fetch supplier locations');
       }
 
@@ -74,13 +73,12 @@ const SupplierLocationManager = () => {
   const loadSuppliers = async () => {
     try {
       console.log('Loading suppliers...');
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/suppliers`);
-      const data = await response.json();
-      
-      console.log('Suppliers API raw response:', response);
-      console.log('Suppliers API parsed data:', data);
+      // makeAuthenticatedRequest returns parsed JSON directly
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/suppliers`);
 
-      if (!response.ok) {
+      console.log('Suppliers API response:', data);
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to fetch suppliers');
       }
 
@@ -88,19 +86,19 @@ const SupplierLocationManager = () => {
       setSuppliers(data.data || []);
     } catch (error) {
       console.error('Error loading suppliers:', error);
+      setSuppliers([]);
     }
   };
 
   const loadRegions = async () => {
     try {
       console.log('Loading regions...');
-      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/regions`);
-      const data = await response.json();
-      
-      console.log('Regions API raw response:', response);
-      console.log('Regions API parsed data:', data);
+      // makeAuthenticatedRequest returns parsed JSON directly
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/materials/regions`);
 
-      if (!response.ok) {
+      console.log('Regions API response:', data);
+
+      if (!data.success) {
         throw new Error(data.error || 'Failed to fetch regions');
       }
 
@@ -282,6 +280,23 @@ const SupplierLocationManager = () => {
   // Table columns for supplier locations - updated to match other screens
   const columns = [
     {
+      key: 'supplierName',
+      header: t('supplier', 'Supplier'),
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="supplier-info">
+          <div className="supplier-avatar" style={{ backgroundColor: '#3b82f6' }}>
+            {value ? value.substring(0, 2).toUpperCase() : '??'}
+          </div>
+          <div className="supplier-details">
+            <strong>{value || 'Unknown Supplier'}</strong>
+            <span className="supplier-id">ID: {row.supplierId}</span>
+          </div>
+        </div>
+      )
+    },
+    {
       key: 'locationCode',
       header: t('locationCode', 'Location Code'),
       sortable: true,
@@ -293,7 +308,7 @@ const SupplierLocationManager = () => {
       )
     },
     {
-      key: 'locationName', 
+      key: 'locationName',
       header: t('locationName', 'Location Name'),
       sortable: true,
       filterable: true,
@@ -304,7 +319,6 @@ const SupplierLocationManager = () => {
           </div>
           <div className="location-details">
             <strong>{value}</strong>
-            <span className="location-supplier">{row.supplierName}</span>
           </div>
         </div>
       )

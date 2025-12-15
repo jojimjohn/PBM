@@ -29,14 +29,12 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Search,
-  Filter,
   Lock,
   Unlock,
   ChevronDown,
   ChevronUp,
-  Check,
-  Eye
+  Eye,
+  RefreshCw
 } from 'lucide-react'
 import './RoleManagement.css'
 
@@ -52,12 +50,7 @@ const RoleManagement = ({ embedded = false }) => {
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
 
-  // Filter state
-  const [filters, setFilters] = useState({
-    isActive: '',
-    isSystem: '',
-    search: ''
-  })
+  // Note: Filters are handled by DataTable's built-in filtering
 
   // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -91,7 +84,7 @@ const RoleManagement = ({ embedded = false }) => {
       setLoading(true)
       setError(null)
 
-      const result = await roleService.getAll(filters)
+      const result = await roleService.getAll()
 
       if (result.success) {
         // Backend returns data as array directly, not nested as { roles: [...] }
@@ -105,7 +98,7 @@ const RoleManagement = ({ embedded = false }) => {
     } finally {
       setLoading(false)
     }
-  }, [canViewRoles, filters])
+  }, [canViewRoles])
 
   // Load available permissions
   const loadPermissions = useCallback(async () => {
@@ -333,6 +326,11 @@ const RoleManagement = ({ embedded = false }) => {
     {
       key: 'is_system',
       header: t('type') || 'Type',
+      filterable: true,
+      filterOptions: [
+        { value: true, label: t('systemRoles') || 'System' },
+        { value: false, label: t('customRoles') || 'Custom' }
+      ],
       render: (value, row) => getRoleTypeBadge(row)
     },
     {
@@ -379,6 +377,11 @@ const RoleManagement = ({ embedded = false }) => {
     {
       key: 'is_active',
       header: t('status') || 'Status',
+      filterable: true,
+      filterOptions: [
+        { value: true, label: t('active') || 'Active' },
+        { value: false, label: t('inactive') || 'Inactive' }
+      ],
       render: (value, row) => row ? getStatusBadge(row.is_active) : null
     },
     {
@@ -492,55 +495,39 @@ const RoleManagement = ({ embedded = false }) => {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="search-box">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder={t('searchRoles') || 'Search roles...'}
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          />
-        </div>
-
-        <div className="filter-group">
-          <Filter size={18} />
-          <select
-            value={filters.isSystem}
-            onChange={(e) => setFilters({ ...filters, isSystem: e.target.value })}
-          >
-            <option value="">{t('allTypes') || 'All Types'}</option>
-            <option value="true">{t('systemRoles') || 'System Roles'}</option>
-            <option value="false">{t('customRoles') || 'Custom Roles'}</option>
-          </select>
-
-          <select
-            value={filters.isActive}
-            onChange={(e) => setFilters({ ...filters, isActive: e.target.value })}
-          >
-            <option value="">{t('allStatuses') || 'All Statuses'}</option>
-            <option value="true">{t('active') || 'Active'}</option>
-            <option value="false">{t('inactive') || 'Inactive'}</option>
-          </select>
-
-          {/* Create Role Button - shown when embedded */}
-          {embedded && canManageRoles && (
-            <button className="btn btn-primary" onClick={openCreateModal}>
-              <ShieldPlus size={16} />
-              {t('createRole') || 'Create Role'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Roles Table */}
+      {/* Roles Table - uses DataTable's built-in filtering like UserManagement */}
       <DataTable
         columns={columns}
         data={roles}
         loading={loading}
+        searchable={true}
+        filterable={true}
+        sortable={true}
+        paginated={true}
+        initialPageSize={10}
         emptyMessage={t('noRolesFound') || 'No roles found'}
         onRowClick={(row) => !row.is_system && canManageRoles && openEditModal(row)}
+        headerActions={
+          <div className="header-actions-group">
+            <button
+              className="btn btn-outline"
+              onClick={loadRoles}
+              disabled={loading}
+              title={t('refresh') || 'Refresh'}
+            >
+              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+            </button>
+            {canManageRoles && (
+              <button
+                className="btn btn-primary"
+                onClick={openCreateModal}
+              >
+                <ShieldPlus size={16} />
+                {t('createRole') || 'Create Role'}
+              </button>
+            )}
+          </div>
+        }
       />
 
       {/* Create/Edit Modal */}

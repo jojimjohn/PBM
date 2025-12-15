@@ -132,6 +132,30 @@ const OilTradingSuppliers = () => {
     }
   }
 
+  // Generate next supplier code based on highest existing code
+  const generateNextSupplierCode = () => {
+    if (suppliers.length === 0) {
+      return 'AR-SUP-001'
+    }
+
+    // Find the highest numeric suffix from existing codes
+    let maxNumber = 0
+    suppliers.forEach(supplier => {
+      if (supplier.code) {
+        const match = supplier.code.match(/AR-SUP-(\d+)/)
+        if (match) {
+          const num = parseInt(match[1], 10)
+          if (num > maxNumber) {
+            maxNumber = num
+          }
+        }
+      }
+    })
+
+    // Return next available code
+    return `AR-SUP-${String(maxNumber + 1).padStart(3, '0')}`
+  }
+
   const initializeForm = (supplier = null) => {
     if (supplier) {
       return {
@@ -161,7 +185,7 @@ const OilTradingSuppliers = () => {
       }
     } else {
       return {
-        code: `AR-SUP-${String(suppliers.length + 1).padStart(3, '0')}`,
+        code: generateNextSupplierCode(),
         name: '',
         type: 'business',
         businessRegistration: '',
