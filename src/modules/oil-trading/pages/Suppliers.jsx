@@ -26,7 +26,7 @@ import {
   Truck,
   Award,
   Calendar,
-  DollarSign,
+  Banknote,
   Package,
   TrendingUp,
   Save,
@@ -577,7 +577,7 @@ const OilTradingSuppliers = () => {
 
             <div className="summary-card">
               <div className="summary-icon profit">
-                <DollarSign size={24} />
+                <Banknote size={24} />
               </div>
               <div className="summary-info">
                 <p className="summary-value">
@@ -936,7 +936,7 @@ const SupplierFormModal = ({
         {/* Banking Information */}
         <div className="form-section">
           <div className="form-section-title">
-            <DollarSign size={20} />
+            <Banknote size={20} />
             Banking Information
           </div>
           

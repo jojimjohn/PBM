@@ -156,6 +156,127 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Compact Header for Collections */
+.manager-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  margin-bottom: 8px;
+}
+
+.manager-header-compact .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.manager-header-compact .page-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.manager-header-compact .header-count {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  padding: 2px 8px;
+  background: var(--gray-100);
+  border-radius: 12px;
+}
+
+.header-actions-compact {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  background: white;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.813rem;
+}
+
+/* Workflow + Search Row */
+.workflow-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.inline-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.search-input-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  min-width: 180px;
+}
+
+.search-input-compact .search-icon {
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+.search-input-compact input {
+  border: none;
+  outline: none;
+  font-size: 0.813rem;
+  width: 100%;
+  background: transparent;
+}
+
+.filter-select-compact {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.813rem;
+  background: white;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.filter-select-compact:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
 .header-title {
   display: flex;
   align-items: center;
@@ -999,13 +1120,363 @@
   .supplier-location-form .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .supplier-location-form .form-actions {
     flex-direction: column-reverse;
   }
-  
+
   .supplier-location-form .btn {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ========================================
+   NEW UX COMPONENTS - Workflow Enhancement
+   ======================================== */
+
+/* Type/Status Container in Table */
+.type-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Type Badge - Distinguishes Callout vs Collection Order vs WCN */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  width: fit-content;
+}
+
+.type-badge-yellow {
+  background: var(--yellow-100, #fef3c7);
+  color: var(--yellow-800, #92400e);
+  border: 1px solid var(--yellow-200, #fde68a);
+}
+
+.type-badge-blue {
+  background: var(--blue-100, #dbeafe);
+  color: var(--blue-800, #1e40af);
+  border: 1px solid var(--blue-200, #bfdbfe);
+}
+
+.type-badge-green {
+  background: var(--green-100, #dcfce7);
+  color: var(--green-800, #166534);
+  border: 1px solid var(--green-200, #bbf7d0);
+}
+
+.type-badge-indigo {
+  background: var(--indigo-100, #e0e7ff);
+  color: var(--indigo-800, #3730a3);
+  border: 1px solid var(--indigo-200, #c7d2fe);
+}
+
+.type-badge-gray {
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-700, #374151);
+  border: 1px solid var(--gray-200, #e5e7eb);
+}
+
+/* Status Row in Table */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+/* Finalized Badge */
+.finalized-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--purple-100);
+  color: var(--purple-700);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+/* Compact Action Buttons (Icon-only with tooltip) */
+.table-actions-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.action-btn:hover {
+  transform: scale(1.05);
+}
+
+.action-btn-primary {
+  background: var(--primary-600, #2563eb);
+  color: white;
+}
+
+.action-btn-primary:hover {
+  background: var(--primary-700, #1d4ed8);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+
+.action-btn-success {
+  background: var(--green-600, #16a34a);
+  color: white;
+}
+
+.action-btn-success:hover {
+  background: var(--green-700, #15803d);
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.3);
+}
+
+.action-btn-secondary {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border: 1px solid var(--gray-200);
+}
+
+.action-btn-secondary:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.action-btn-danger {
+  background: var(--red-50);
+  color: var(--red-600);
+  border: 1px solid var(--red-200);
+}
+
+.action-btn-danger:hover {
+  background: var(--red-100);
+  color: var(--red-700);
+}
+
+/* Legacy support - keep old classes for other pages */
+.actions-with-primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.next-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.next-step-btn .next-step-label {
+  display: inline;
+}
+
+.next-step-primary {
+  background: var(--primary-600, #2563eb);
+  color: white;
+}
+
+.next-step-primary:hover {
+  background: var(--primary-700, #1d4ed8);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+
+.next-step-success {
+  background: var(--green-600, #16a34a);
+  color: white;
+}
+
+.next-step-success:hover {
+  background: var(--green-700, #15803d);
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.3);
+}
+
+.next-step-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-300);
+}
+
+.next-step-secondary:hover {
+  background: var(--gray-200);
+}
+
+/* Hide label on smaller screens to save space */
+@media (max-width: 1200px) {
+  .next-step-btn .next-step-label {
+    display: none;
+  }
+
+  .next-step-btn {
+    padding: 6px 8px;
+  }
+}
+
+/* Empty State Guidance */
+.empty-stage-guidance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--gray-50, #f9fafb);
+  border-radius: 12px;
+  margin: 16px;
+}
+
+.empty-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+}
+
+.empty-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--gray-400);
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0 0 8px 0;
+}
+
+.empty-description {
+  font-size: 14px;
+  color: var(--gray-600);
+  margin: 0 0 20px 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.empty-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--primary-600);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.empty-action-btn:hover {
+  background: var(--primary-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* Dark Mode Support for New Components */
+[data-theme="dark"] .type-badge-yellow {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fbbf24;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+[data-theme="dark"] .type-badge-blue {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .type-badge-green {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+[data-theme="dark"] .type-badge-indigo {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .status-text {
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .finalized-badge {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
+
+[data-theme="dark"] .empty-stage-guidance {
+  background: var(--gray-800, #1f2937);
+}
+
+[data-theme="dark"] .empty-icon-wrapper {
+  background: var(--gray-700);
+}
+
+[data-theme="dark"] .empty-title {
+  color: var(--gray-100);
+}
+
+[data-theme="dark"] .empty-description {
+  color: var(--gray-400);
+}
+
+/* RTL Support for New Components */
+.rtl .type-status-container {
+  align-items: flex-end;
+}
+
+.rtl .type-badge,
+.rtl .status-row,
+.rtl .finalized-badge {
+  flex-direction: row-reverse;
+}
+
+.rtl .actions-with-primary {
+  flex-direction: row-reverse;
+}
+
+.rtl .next-step-btn {
+  flex-direction: row-reverse;
 }

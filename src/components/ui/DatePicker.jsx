@@ -2,13 +2,15 @@ import React, { forwardRef, useState } from 'react'
 import ReactDatePicker from 'react-datepicker'
 import { Calendar, Clock, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSystemSettings } from '../../context/SystemSettingsContext'
 import 'react-datepicker/dist/react-datepicker.css'
 import './DatePicker.css'
 
 /**
  * DatePicker Component
  *
- * Modern date and time picker with range selection support
+ * Modern date and time picker with range selection support.
+ * Automatically uses global date format from SystemSettings.
  *
  * @param {string} label - Field label
  * @param {Date|null} value - Selected date value
@@ -17,7 +19,8 @@ import './DatePicker.css'
  * @param {boolean} showTimeSelect - Enable time picker
  * @param {boolean} showTimeSelectOnly - Show only time picker
  * @param {string} timeFormat - Time format (12h/24h)
- * @param {string} dateFormat - Date format string
+ * @param {string} dateFormat - Date format string (overrides global setting if provided)
+ * @param {boolean} useGlobalFormat - Whether to use global date format (default: true)
  * @param {Date} minDate - Minimum selectable date
  * @param {Date} maxDate - Maximum selectable date
  * @param {boolean} selectsRange - Enable date range selection
@@ -40,8 +43,9 @@ const DatePicker = forwardRef(({
   placeholder = 'Select date',
   showTimeSelect = false,
   showTimeSelectOnly = false,
-  timeFormat = '12h',
+  timeFormat,
   dateFormat,
+  useGlobalFormat = true,
   minDate,
   maxDate,
   selectsRange = false,
@@ -60,12 +64,49 @@ const DatePicker = forwardRef(({
 }, ref) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  // Determine date format based on picker type
+  // Get system settings for date format
+  let systemSettings = null
+  try {
+    systemSettings = useSystemSettings()
+  } catch (e) {
+    // Component used outside SystemSettingsProvider - use defaults
+  }
+
+  // Convert system date format to react-datepicker format
+  // System: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY
+  // ReactDatePicker: dd/MM/yyyy, MM/dd/yyyy, yyyy-MM-dd, dd-MM-yyyy
+  const convertToPickerFormat = (systemFormat) => {
+    if (!systemFormat) return 'dd/MM/yyyy'
+    return systemFormat
+      .replace('DD', 'dd')
+      .replace('YYYY', 'yyyy')
+  }
+
+  // Get effective time format from settings or prop
+  const effectiveTimeFormat = timeFormat || systemSettings?.settings?.timeFormat || '12h'
+
+  // Determine date format based on picker type and global settings
   const getDateFormat = () => {
+    // If explicit dateFormat prop provided, use it
     if (dateFormat) return dateFormat
-    if (showTimeSelectOnly) return timeFormat === '24h' ? 'HH:mm' : 'h:mm aa'
-    if (showTimeSelect) return timeFormat === '24h' ? 'dd/MM/yyyy HH:mm' : 'dd/MM/yyyy h:mm aa'
-    return 'dd/MM/yyyy'
+
+    // Time only picker
+    if (showTimeSelectOnly) return effectiveTimeFormat === '24h' ? 'HH:mm' : 'h:mm aa'
+
+    // Get base date format from system settings or default
+    const baseFormat = useGlobalFormat && systemSettings?.settings?.dateFormat
+      ? convertToPickerFormat(systemSettings.settings.dateFormat)
+      : 'dd/MM/yyyy'
+
+    // Date with time picker
+    if (showTimeSelect) {
+      return effectiveTimeFormat === '24h'
+        ? `${baseFormat} HH:mm`
+        : `${baseFormat} h:mm aa`
+    }
+
+    // Date only
+    return baseFormat
   }
 
   // Custom input component

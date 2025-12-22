@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from './ui/Modal';
-import { FileText, Calendar, User, Package, DollarSign, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FileText, Calendar, User, Package, Banknote, CheckCircle, AlertTriangle } from 'lucide-react';
 import './SalesOrderViewModal.css';
 
 const SalesOrderViewModal = ({
@@ -179,7 +179,7 @@ const SalesOrderViewModal = ({
         {/* Financial Summary Card */}
         <div className="financial-card">
           <div className="financial-card-header">
-            <DollarSign size={18} />
+            <Banknote size={18} />
             <h3>Financial Summary</h3>
           </div>
           <div className="financial-card-body">

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Command, ArrowRight, Clock, Star,
-  FileText, Users, Package, DollarSign, Settings,
+  FileText, Users, Package, Banknote, Settings,
   TrendingUp, Truck, Receipt, Calculator, Home
 } from 'lucide-react'
 import './CommandPalette.css'
@@ -40,7 +40,7 @@ const CommandPalette = ({
     customers: Users,
     suppliers: Truck,
     inventory: Package,
-    sales: DollarSign,
+    sales: Banknote,
     purchase: Receipt,
     reports: TrendingUp,
     settings: Settings,

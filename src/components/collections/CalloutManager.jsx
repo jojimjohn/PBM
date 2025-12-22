@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play, FileCheck, FileEdit, Navigation, PackageSearch } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play, FileCheck, FileEdit, Navigation, PackageSearch, ClipboardList } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import { calloutService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
@@ -11,23 +12,47 @@ import DriverAssignmentModal from './DriverAssignmentModal';
 import StatusUpdateModal from './StatusUpdateModal';
 import WCNFinalizationModal from './WCNFinalizationModal';
 import WCNRectificationModal from './WCNRectificationModal';
+import WorkflowProgressBar, { WORKFLOW_STAGES } from './WorkflowProgressBar';
 import './collections-managers.css';
+
+/**
+ * CalloutManager - Main collection orders management interface
+ *
+ * Features:
+ * - Workflow Progress Bar for stage-based filtering
+ * - Type badges distinguishing Callout vs Collection Order vs WCN
+ * - Contextual "Next Step" action buttons
+ * - Empty state guidance per workflow stage
+ */
 
 const CalloutManager = () => {
   const { t, isRTL } = useLocalization();
+  const { formatDate } = useSystemSettings();
   const [loading, setLoading] = useState(false);
   const [callouts, setCallouts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [workflowStage, setWorkflowStage] = useState('all'); // Workflow stage filter
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedCallout, setSelectedCallout] = useState(null);
+  // Note: DataTable handles its own internal pagination
+  // We load all data and let DataTable paginate client-side
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 1000, // Load all data - DataTable paginates internally
     total: 0,
     totalPages: 0
+  });
+
+  // Persistent stats - loaded separately from filtered data
+  const [globalStats, setGlobalStats] = useState({
+    pending: 0,
+    scheduled: 0,
+    inProgress: 0,
+    completed: 0,
+    finalized: 0,
+    total: 0
   });
 
   // Driver and Status Management
@@ -40,27 +65,141 @@ const CalloutManager = () => {
   const [showWCNRectificationModal, setShowWCNRectificationModal] = useState(false);
   const [selectedWCNOrder, setSelectedWCNOrder] = useState(null);
 
+  // Convert workflow stage to API status filter
+  // DB statuses: scheduled, in_transit, collecting, completed, cancelled, failed
+  const getStatusFilterFromWorkflowStage = useCallback((stage) => {
+    switch (stage) {
+      case 'scheduled':
+        return 'scheduled';
+      case 'in_progress':
+        return 'in_transit,collecting'; // API handles comma-separated
+      case 'completed':
+        return 'completed'; // Will filter finalized out in client
+      case 'finalized':
+        return 'completed'; // Will filter non-finalized out in client
+      default:
+        return undefined; // 'all' stage - no filter
+    }
+  }, []);
+
+  // Helper function to check if a row is finalized
+  // MySQL can return boolean true, number 1, or string '1'
+  const checkIsFinalized = useCallback((row) => {
+    const val = row.is_finalized;
+    return val === true || val === 1 || val === '1';
+  }, []);
+
+  // Load global stats by loading all data and counting client-side
+  // This ensures accurate counts including the is_finalized split
+  const loadGlobalStats = useCallback(async () => {
+    try {
+      // Load ALL collection orders (up to 1000) to get accurate counts
+      const response = await calloutService.getCallouts({
+        page: 1,
+        limit: 1000
+      });
+
+      if (response.success) {
+        const allData = response.data || [];
+
+        // Count each status
+        // Note: There is NO 'pending' status in collection_orders table
+        // Workflow is: scheduled -> in_transit -> collecting -> completed
+        // 'Pending' in UI means scheduled items without driver assigned (we'll show all scheduled)
+        const scheduled = allData.filter(c => c.status === 'scheduled').length;
+        const inTransit = allData.filter(c => c.status === 'in_transit').length;
+        const collecting = allData.filter(c => c.status === 'collecting').length;
+        const inProgress = inTransit + collecting;
+
+        // For completed vs finalized:
+        // - "Completed" stage = status is 'completed' AND NOT finalized
+        // - "Finalized" stage = is_finalized flag is true (any status with is_finalized=1)
+        const completedNotFinalized = allData.filter(c =>
+          c.status === 'completed' && !checkIsFinalized(c)
+        ).length;
+        const finalized = allData.filter(c => checkIsFinalized(c)).length;
+
+        // Also count cancelled/failed for completeness
+        const cancelled = allData.filter(c => c.status === 'cancelled').length;
+        const failed = allData.filter(c => c.status === 'failed').length;
+
+        // Debug: Show what statuses exist in the data
+        const statusBreakdown = allData.reduce((acc, c) => {
+          const key = `${c.status}${checkIsFinalized(c) ? ' (finalized)' : ''}`;
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {});
+
+        console.log('Stats Debug:', {
+          total: allData.length,
+          scheduled,
+          inTransit,
+          collecting,
+          inProgress,
+          completedNotFinalized,
+          finalized,
+          cancelled,
+          failed,
+          sum: scheduled + inProgress + completedNotFinalized + finalized + cancelled + failed,
+          statusBreakdown
+        });
+
+        // For UI: We're merging "Pending" stage with "Scheduled" since there's no pending in DB
+        // The workflow bar should show: Scheduled -> In Progress -> Completed -> Finalized
+        setGlobalStats({
+          pending: 0, // No pending in collection_orders - they start as scheduled
+          scheduled,
+          inProgress,
+          completed: completedNotFinalized,
+          finalized,
+          total: allData.length
+        });
+      }
+    } catch (error) {
+      console.error('Error loading global stats:', error);
+    }
+  }, [checkIsFinalized]);
+
+  useEffect(() => {
+    loadGlobalStats(); // Load stats on mount
+  }, [loadGlobalStats]);
+
   useEffect(() => {
     loadCallouts();
-  }, [pagination.page, statusFilter, priorityFilter, searchTerm]);
+    // DataTable handles pagination internally, so no need for pagination.page dependency
+  }, [workflowStage, priorityFilter, searchTerm]);
 
   const loadCallouts = async () => {
     try {
       setLoading(true);
+      const statusFilter = getStatusFilterFromWorkflowStage(workflowStage);
+
+      // Load all data - DataTable handles pagination internally
       const response = await calloutService.getCallouts({
-        page: pagination.page,
-        limit: pagination.limit,
-        status: statusFilter === 'all' ? undefined : statusFilter,
+        page: 1,
+        limit: 1000, // Load all records
+        status: statusFilter,
         priority: priorityFilter === 'all' ? undefined : priorityFilter,
         search: searchTerm || undefined
       });
 
       if (response.success) {
-        setCallouts(response.data || []);
+        let data = response.data || [];
+
+        // Client-side filtering for completed vs finalized
+        // API can't filter by is_finalized flag
+        if (workflowStage === 'completed') {
+          data = data.filter(c => c.status === 'completed' && !checkIsFinalized(c));
+        } else if (workflowStage === 'finalized') {
+          data = data.filter(c => checkIsFinalized(c));
+        }
+
+        // Pass all filtered data to DataTable - it handles pagination internally
+        setCallouts(data);
         setPagination(prev => ({
           ...prev,
-          total: response.pagination?.total || 0,
-          totalPages: response.pagination?.totalPages || 0
+          total: data.length,
+          totalPages: Math.ceil(data.length / 25) // For reference only
         }));
       }
     } catch (error) {
@@ -70,6 +209,15 @@ const CalloutManager = () => {
     }
   };
 
+  // Use globalStats for workflow bar (persistent across filters)
+  // This ensures counts don't change when user filters by stage
+
+  // Handler for workflow stage changes
+  const handleWorkflowStageChange = useCallback((stage) => {
+    setWorkflowStage(stage);
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
+  }, []);
+
   const handleCreateCallout = () => {
     setSelectedCallout(null);
     setShowCreateModal(true);
@@ -77,12 +225,10 @@ const CalloutManager = () => {
 
   const handleViewCallout = async (callout) => {
     try {
-      // Fetch full details including items from the backend
       const response = await calloutService.getCallout(callout.id);
       if (response.success) {
         setSelectedCallout(response.data);
       } else {
-        // Fallback to row data if fetch fails
         setSelectedCallout(callout);
       }
     } catch (error) {
@@ -103,6 +249,7 @@ const CalloutManager = () => {
         const response = await calloutService.deleteCallout(calloutId);
         if (response.success) {
           loadCallouts();
+          loadGlobalStats(); // Refresh stats after delete
         }
       } catch (error) {
         console.error('Error deleting callout:', error);
@@ -125,6 +272,7 @@ const CalloutManager = () => {
       const response = await calloutService.updateDriverDetails(selectedCollectionOrder.id, driverData);
       if (response.success) {
         loadCallouts();
+        loadGlobalStats(); // Refresh stats after status change
         setShowDriverModal(false);
         setSelectedCollectionOrder(null);
       }
@@ -133,39 +281,56 @@ const CalloutManager = () => {
     }
   };
 
-  // WCN Finalization Handler (Sprint 4.5)
   const handleFinalizeWCN = (collectionOrder) => {
     setSelectedWCNOrder(collectionOrder);
     setShowWCNFinalizationModal(true);
   };
 
   const handleWCNFinalizationSuccess = () => {
-    loadCallouts(); // Refresh the list
+    loadCallouts();
+    loadGlobalStats(); // Refresh stats after finalization
     setShowWCNFinalizationModal(false);
     setSelectedWCNOrder(null);
   };
 
-  // WCN Rectification Handler (Sprint 4.5)
   const handleRectifyWCN = (collectionOrder) => {
     setSelectedWCNOrder(collectionOrder);
     setShowWCNRectificationModal(true);
   };
 
   const handleWCNRectificationSuccess = () => {
-    loadCallouts(); // Refresh the list
+    loadCallouts();
+    loadGlobalStats(); // Refresh stats after rectification
     setShowWCNRectificationModal(false);
     setSelectedWCNOrder(null);
   };
 
+  // Get item type for badge display
+  // Note: No 'pending' status in collection_orders - starts at 'scheduled'
+  const getItemType = useCallback((row) => {
+    if (row.status === 'scheduled') {
+      return { type: 'scheduled', label: t('scheduled') || 'Scheduled', icon: Calendar, color: 'yellow' };
+    }
+    if (['in_transit', 'collecting'].includes(row.status)) {
+      return { type: 'collection', label: t('inProgress') || 'In Progress', icon: Truck, color: 'blue' };
+    }
+    if (row.status === 'completed' && !checkIsFinalized(row)) {
+      return { type: 'wcn-ready', label: t('wcnReady') || 'WCN Ready', icon: FileCheck, color: 'green' };
+    }
+    if (checkIsFinalized(row)) {
+      return { type: 'finalized', label: t('finalized') || 'Finalized', icon: CheckCircle, color: 'indigo' };
+    }
+    return { type: 'unknown', label: row.status, icon: AlertCircle, color: 'gray' };
+  }, [t, checkIsFinalized]);
+
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'scheduled': return <Calendar className="w-4 h-4 text-blue-500" />;
-      case 'in_transit': return <Navigation className="w-4 h-4 text-purple-500" />;
-      case 'collecting': return <PackageSearch className="w-4 h-4 text-orange-500" />;
+      case 'scheduled': return <Calendar className="w-4 h-4 text-yellow-500" />;
+      case 'in_transit': return <Navigation className="w-4 h-4 text-blue-500" />;
+      case 'collecting': return <PackageSearch className="w-4 h-4 text-blue-600" />;
       case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'cancelled': return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'failed': return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      case 'failed': return <AlertCircle className="w-4 h-4 text-red-600" />;
       default: return <AlertCircle className="w-4 h-4 text-gray-500" />;
     }
   };
@@ -180,14 +345,59 @@ const CalloutManager = () => {
     }
   };
 
-  // Calculate statistics (in_transit and collecting both count as "in progress")
-  const stats = {
-    scheduled: callouts.filter(c => c.status === 'scheduled').length,
-    inProgress: callouts.filter(c => c.status === 'in_transit' || c.status === 'collecting').length,
-    completed: callouts.filter(c => c.status === 'completed' && !c.is_finalized).length,
-    finalized: callouts.filter(c => c.is_finalized).length,
-    total: pagination.total || callouts.length
-  };
+  // Get primary action for a row (Next Step button)
+  // Note: No 'pending' status - workflow starts at 'scheduled'
+  const getPrimaryAction = useCallback((row) => {
+    switch (row.status) {
+      case 'scheduled':
+        // Scheduled orders can either be started OR have driver assigned if not yet assigned
+        if (!row.driverName) {
+          return {
+            label: t('assignDriver') || 'Assign Driver',
+            icon: User,
+            handler: () => handleAssignDriver(row),
+            variant: 'primary'
+          };
+        }
+        return {
+          label: t('startCollection') || 'Start',
+          icon: Play,
+          handler: () => handleUpdateStatus(row),
+          variant: 'primary'
+        };
+      case 'in_transit':
+        return {
+          label: t('markArrived') || 'Mark Arrived',
+          icon: MapPin,
+          handler: () => handleUpdateStatus(row),
+          variant: 'primary'
+        };
+      case 'collecting':
+        return {
+          label: t('completeCollection') || 'Complete',
+          icon: CheckCircle,
+          handler: () => handleUpdateStatus(row),
+          variant: 'primary'
+        };
+      case 'completed':
+        if (!checkIsFinalized(row)) {
+          return {
+            label: t('finalizeWcn') || 'Finalize WCN',
+            icon: FileCheck,
+            handler: () => handleFinalizeWCN(row),
+            variant: 'success'
+          };
+        }
+        return {
+          label: t('rectifyWcn') || 'Rectify',
+          icon: FileEdit,
+          handler: () => handleRectifyWCN(row),
+          variant: 'secondary'
+        };
+      default:
+        return null;
+    }
+  }, [t, checkIsFinalized]);
 
   const columns = [
     {
@@ -198,7 +408,7 @@ const CalloutManager = () => {
           <div className="font-medium text-blue-600">{value}</div>
           {row.scheduledDate && (
             <div className="text-xs text-gray-500">
-              {new Date(row.scheduledDate).toLocaleDateString()}
+              {formatDate(row.scheduledDate)}
             </div>
           )}
         </div>
@@ -220,21 +430,35 @@ const CalloutManager = () => {
     },
     {
       key: 'status',
-      header: t('status'),
-      render: (value, row) => (
-        <div>
-          <div className="flex items-center mb-1">
-            {getStatusIcon(value)}
-            <span className="ml-1 text-sm font-medium">{t(value)}</span>
-          </div>
-          {!!row.is_finalized && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-              <FileCheck className="w-3 h-3 mr-1" />
-              {t('wcnFinalized')}
+      header: t('type') + ' / ' + t('status'),
+      render: (value, row) => {
+        const itemType = getItemType(row);
+        const TypeIcon = itemType.icon;
+
+        return (
+          <div className="type-status-container">
+            {/* Type Badge */}
+            <span className={`type-badge type-badge-${itemType.color}`}>
+              <TypeIcon className="w-3 h-3" />
+              <span>{itemType.label}</span>
             </span>
-          )}
-        </div>
-      )
+
+            {/* Status Badge */}
+            <div className="status-row">
+              {getStatusIcon(value)}
+              <span className="status-text">{t(value) || value}</span>
+            </div>
+
+            {/* Finalized indicator */}
+            {checkIsFinalized(row) && (
+              <span className="finalized-badge">
+                <FileCheck className="w-3 h-3" />
+                {t('wcnFinalized')}
+              </span>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'driverName',
@@ -257,140 +481,124 @@ const CalloutManager = () => {
     {
       key: 'actions',
       header: t('actions'),
-      render: (value, row) => (
-        <div className="table-actions">
-          <button
-            onClick={() => handleViewCallout(row)}
-            className="btn btn-outline btn-sm"
-            title={t('viewDetails')}
-          >
-            <Eye size={14} />
-          </button>
+      render: (value, row) => {
+        const primaryAction = getPrimaryAction(row);
 
-          {/* WCN Finalization - Sprint 4.5: Only for completed but NOT finalized orders */}
-          {row.status === 'completed' && !row.is_finalized && (
-            <button
-              onClick={() => handleFinalizeWCN(row)}
-              className="btn btn-success btn-sm"
-              title={t('finalizeWCN')}
-            >
-              <FileCheck size={14} />
-            </button>
-          )}
-
-          {/* WCN Rectification - Sprint 4.5: Only for finalized orders */}
-          {!!row.is_finalized && (
-            <button
-              onClick={() => handleRectifyWCN(row)}
-              className="btn btn-outline btn-sm"
-              title={t('rectifyWCN')}
-            >
-              <FileEdit size={14} />
-            </button>
-          )}
-
-          {/* Driver Assignment - available for scheduled, in_transit, and collecting orders */}
-          {(row.status === 'scheduled' || row.status === 'in_transit' || row.status === 'collecting') && (
-            <button
-              onClick={() => handleAssignDriver(row)}
-              className="btn btn-outline btn-sm"
-              title={t('assignDriver')}
-            >
-              <Truck size={14} />
-            </button>
-          )}
-
-          {/* Status Update - available for scheduled, in_transit, collecting, and failed orders */}
-          {(row.status === 'scheduled' || row.status === 'in_transit' || row.status === 'collecting' || row.status === 'failed') && (
-            <button
-              onClick={() => handleUpdateStatus(row)}
-              className="btn btn-warning btn-sm"
-              title={t('updateStatus')}
-            >
-              <Play size={14} />
-            </button>
-          )}
-
-          {/* Edit/Delete - only for pending and scheduled orders */}
-          {(row.status === 'pending' || row.status === 'scheduled') && (
-            <>
+        return (
+          <div className="table-actions-compact">
+            {/* Primary "Next Step" Action - Icon only with tooltip */}
+            {primaryAction && (
               <button
-                onClick={() => handleEditCallout(row)}
-                className="btn btn-outline btn-sm"
-                title={t('edit')}
+                onClick={primaryAction.handler}
+                className={`action-btn action-btn-${primaryAction.variant}`}
+                title={primaryAction.label}
               >
-                <Edit size={14} />
+                <primaryAction.icon size={16} />
               </button>
-              <button
-                onClick={() => handleDeleteCallout(row.id)}
-                className="btn btn-danger btn-sm"
-                title={t('delete')}
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
-          )}
-        </div>
-      )
+            )}
+
+            {/* View Details */}
+            <button
+              onClick={() => handleViewCallout(row)}
+              className="action-btn action-btn-secondary"
+              title={t('viewDetails')}
+            >
+              <Eye size={16} />
+            </button>
+
+            {/* Edit/Delete - only for pending and scheduled orders */}
+            {(row.status === 'pending' || row.status === 'scheduled') && (
+              <>
+                <button
+                  onClick={() => handleEditCallout(row)}
+                  className="action-btn action-btn-secondary"
+                  title={t('edit')}
+                >
+                  <Edit size={16} />
+                </button>
+                <button
+                  onClick={() => handleDeleteCallout(row.id)}
+                  className="action-btn action-btn-danger"
+                  title={t('delete')}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
+          </div>
+        );
+      }
     }
   ];
 
+  // Empty state guidance component
+  const EmptyStateGuidance = ({ stage }) => {
+    const guidance = {
+      scheduled: {
+        icon: Calendar,
+        title: t('noScheduledCollections') || 'No Scheduled Collections',
+        description: t('scheduledEmptyDescription') || 'Create a new collection order to see it here.',
+        action: { label: t('newCollectionOrder') || '+ New Collection', handler: handleCreateCallout }
+      },
+      in_progress: {
+        icon: Truck,
+        title: t('noActiveCollections') || 'No Active Collections',
+        description: t('inProgressEmptyDescription') || 'Collections currently in transit or being collected will appear here.',
+        action: null
+      },
+      completed: {
+        icon: CheckCircle,
+        title: t('noCompletedCollections') || 'No Completed Collections',
+        description: t('completedEmptyDescription') || 'Completed collections waiting for WCN finalization appear here.',
+        action: null
+      },
+      finalized: {
+        icon: FileCheck,
+        title: t('noFinalizedWcns') || 'No Finalized WCNs',
+        description: t('finalizedEmptyDescription') || 'Finalized waste consignment notes with generated POs appear here.',
+        action: null
+      },
+      all: {
+        icon: Package,
+        title: t('noCalloutsFound') || 'No Collection Orders Found',
+        description: t('createFirstCallout') || 'Create your first callout to get started.',
+        action: { label: t('newCallout') || '+ New Callout', handler: handleCreateCallout }
+      }
+    };
+
+    const config = guidance[stage] || guidance.all;
+    const Icon = config.icon;
+
+    return (
+      <div className="empty-stage-guidance">
+        <div className="empty-icon-wrapper">
+          <Icon className="empty-icon" />
+        </div>
+        <h4 className="empty-title">{config.title}</h4>
+        <p className="empty-description">{config.description}</p>
+        {config.action && (
+          <button className="btn-primary empty-action-btn" onClick={config.action.handler}>
+            <Plus size={16} />
+            {config.action.label}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className={`callout-manager ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Statistics Cards */}
-      <div className="stats-grid">
-        <div className="stat-card stat-card-blue">
-          <div className="stat-icon">
-            <Calendar className="w-6 h-6" />
-          </div>
-          <div className="stat-details">
-            <p className="stat-label">{t('scheduled')}</p>
-            <h3 className="stat-value">{stats.scheduled}</h3>
-          </div>
+      {/* Compact Header with Workflow Bar */}
+      <div className="manager-header-compact">
+        <div className="header-left">
+          <h2 className="page-title">
+            <Truck className="w-5 h-5" />
+            {t('collectionOrders')}
+          </h2>
         </div>
-
-        <div className="stat-card stat-card-orange">
-          <div className="stat-icon">
-            <Package className="w-6 h-6" />
-          </div>
-          <div className="stat-details">
-            <p className="stat-label">{t('inProgress')}</p>
-            <h3 className="stat-value">{stats.inProgress}</h3>
-          </div>
-        </div>
-
-        <div className="stat-card stat-card-green">
-          <div className="stat-icon">
-            <CheckCircle className="w-6 h-6" />
-          </div>
-          <div className="stat-details">
-            <p className="stat-label">{t('completed')}</p>
-            <h3 className="stat-value">{stats.completed}</h3>
-          </div>
-        </div>
-
-        <div className="stat-card stat-card-purple">
-          <div className="stat-icon">
-            <FileCheck className="w-6 h-6" />
-          </div>
-          <div className="stat-details">
-            <p className="stat-label">{t('wcnFinalized')}</p>
-            <h3 className="stat-value">{stats.finalized}</h3>
-          </div>
-        </div>
-      </div>
-
-      <div className="manager-header">
-        <div className="header-title">
-          <Truck className="w-6 h-6" />
-          <div>
-            <h2>{t('collectionOrders')}</h2>
-            <p className="header-subtitle">{stats.total} {t('totalOrders')}</p>
-          </div>
-        </div>
-        <div className="header-actions">
+        <div className="header-actions-compact">
           <button
-            className="btn-secondary"
+            className="btn-icon"
             onClick={() => loadCallouts()}
             title={t('refresh')}
           >
@@ -400,10 +608,9 @@ const CalloutManager = () => {
               <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
               <path d="M16 21h5v-5" />
             </svg>
-            {t('refresh')}
           </button>
           <button
-            className="btn-primary"
+            className="btn-primary btn-sm"
             onClick={handleCreateCallout}
           >
             <Plus className="w-4 h-4" />
@@ -412,43 +619,33 @@ const CalloutManager = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="search-and-filters">
-        <div className="search-input-wrapper">
-          <Search className="w-5 h-5 search-icon" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t('searchCallouts')}
-            className="search-field"
-          />
-        </div>
-
-        <div className="filters-row">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">{t('allStatuses')}</option>
-            <option value="scheduled">{t('scheduled')}</option>
-            <option value="in_transit">{t('inTransit') || 'In Transit'}</option>
-            <option value="collecting">{t('collecting') || 'Collecting'}</option>
-            <option value="completed">{t('completed')}</option>
-            <option value="cancelled">{t('cancelled')}</option>
-            <option value="failed">{t('failed') || 'Failed'}</option>
-          </select>
-
+      {/* Workflow Progress Bar - Compact with integrated search */}
+      <div className="workflow-search-row">
+        <WorkflowProgressBar
+          activeStage={workflowStage}
+          onStageChange={handleWorkflowStageChange}
+          stats={globalStats}
+          compact={true}
+        />
+        <div className="inline-filters">
+          <div className="search-input-compact">
+            <Search className="w-4 h-4 search-icon" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('searchCallouts')}
+            />
+          </div>
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="filter-select"
+            className="filter-select-compact"
           >
             <option value="all">{t('allPriorities')}</option>
             <option value="urgent">{t('urgent')}</option>
             <option value="high">{t('high')}</option>
-            <option value="normal">{t('normal')}</option>
+            <option value="normal">{t('normal') || 'Normal'}</option>
             <option value="low">{t('low')}</option>
           </select>
         </div>
@@ -460,18 +657,21 @@ const CalloutManager = () => {
           <div className="flex justify-center py-8">
             <LoadingSpinner size="large" />
           </div>
+        ) : callouts.length === 0 ? (
+          <EmptyStateGuidance stage={workflowStage} />
         ) : (
           <DataTable
             data={callouts}
             columns={columns}
-            pagination={pagination}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+            initialPageSize={25}
+            paginated={true}
+            searchable={false}
             emptyMessage={t('noCalloutsFound')}
           />
         )}
       </div>
 
-      {/* Create/Edit Callout Modal */}
+      {/* Modals */}
       {showCreateModal && (
         <CalloutFormModal
           callout={selectedCallout}
@@ -482,13 +682,13 @@ const CalloutManager = () => {
           }}
           onSubmit={() => {
             loadCallouts();
+            loadGlobalStats(); // Refresh stats after create/edit
             setShowCreateModal(false);
             setSelectedCallout(null);
           }}
         />
       )}
 
-      {/* Callout Details Modal */}
       {showDetailsModal && selectedCallout && (
         <CalloutDetailsModal
           callout={selectedCallout}
@@ -500,7 +700,6 @@ const CalloutManager = () => {
         />
       )}
 
-      {/* Driver Assignment Modal */}
       {showDriverModal && selectedCollectionOrder && (
         <DriverAssignmentModal
           collectionOrder={selectedCollectionOrder}
@@ -513,7 +712,6 @@ const CalloutManager = () => {
         />
       )}
 
-      {/* Status Update Modal */}
       {showStatusModal && selectedCollectionOrder && (
         <StatusUpdateModal
           collectionOrder={selectedCollectionOrder}
@@ -523,12 +721,12 @@ const CalloutManager = () => {
             setSelectedCollectionOrder(null);
           }}
           onSuccess={async () => {
-            await loadCallouts(); // Refresh collection orders list after status update
+            await loadCallouts();
+            await loadGlobalStats(); // Refresh stats after status change
           }}
         />
       )}
 
-      {/* WCN Finalization Modal - Sprint 4.5 */}
       {showWCNFinalizationModal && selectedWCNOrder && (
         <WCNFinalizationModal
           collectionOrder={selectedWCNOrder}
@@ -541,7 +739,6 @@ const CalloutManager = () => {
         />
       )}
 
-      {/* WCN Rectification Modal - Sprint 4.5 */}
       {showWCNRectificationModal && selectedWCNOrder && (
         <WCNRectificationModal
           collectionOrder={selectedWCNOrder}

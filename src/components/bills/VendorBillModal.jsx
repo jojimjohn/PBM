@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Modal from '../ui/Modal'
+import DatePicker from '../ui/DatePicker'
+import { useSystemSettings } from '../../context/SystemSettingsContext'
 import { FileText, CheckSquare, Square, AlertTriangle, Receipt, Calculator, Link2 } from 'lucide-react'
 import './VendorBillModal.css'
 
@@ -35,6 +37,8 @@ const VendorBillModal = ({
   editingBill = null,
   formatCurrency
 }) => {
+  const { toAPIDateFormat } = useSystemSettings()
+
   // Determine if we're in edit mode
   const isEditMode = !!editingBill
 
@@ -344,25 +348,26 @@ const VendorBillModal = ({
             </div>
 
             <div className="form-group">
-              <label htmlFor="invoiceDate">Invoice Date *</label>
-              <input
-                type="date"
-                id="invoiceDate"
-                value={formData.invoiceDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, invoiceDate: e.target.value }))}
-                className="form-input"
+              <DatePicker
+                label="Invoice Date *"
+                value={formData.invoiceDate ? new Date(formData.invoiceDate) : null}
+                onChange={(date) => setFormData(prev => ({
+                  ...prev,
+                  invoiceDate: date ? (toAPIDateFormat ? toAPIDateFormat(date) : date.toISOString().split('T')[0]) : ''
+                }))}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="dueDate">Due Date</label>
-              <input
-                type="date"
-                id="dueDate"
-                value={formData.dueDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                className="form-input"
+              <DatePicker
+                label="Due Date"
+                value={formData.dueDate ? new Date(formData.dueDate) : null}
+                onChange={(date) => setFormData(prev => ({
+                  ...prev,
+                  dueDate: date ? (toAPIDateFormat ? toAPIDateFormat(date) : date.toISOString().split('T')[0]) : ''
+                }))}
+                minDate={formData.invoiceDate ? new Date(formData.invoiceDate) : null}
               />
             </div>
 

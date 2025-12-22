@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Package, DollarSign, TrendingUp, ShoppingCart, Scale, Activity, Info, AlertTriangle } from 'lucide-react'
+import { Users, Package, Banknote, TrendingUp, ShoppingCart, Scale, Activity, Info, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card'
@@ -116,7 +116,7 @@ const ScrapMaterialsDashboard = () => {
             <Card variant="elevated" hoverable animate>
               <CardContent className="stat-card-modern">
                 <div className="stat-icon-wrapper revenue-icon">
-                  <DollarSign className="stat-icon" />
+                  <Banknote className="stat-icon" />
                 </div>
                 <div className="stat-content">
                   <p className="stat-label">Monthly Revenue</p>
@@ -212,7 +212,7 @@ const ScrapMaterialsDashboard = () => {
             <Button
               variant="secondary"
               size="large"
-              icon={<DollarSign />}
+              icon={<Banknote />}
               fullWidth
               className="action-button-modern"
             >

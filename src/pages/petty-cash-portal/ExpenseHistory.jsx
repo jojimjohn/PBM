@@ -10,7 +10,7 @@ import {
   History,
   Receipt,
   Calendar,
-  DollarSign,
+  Banknote,
   CheckCircle,
   Clock,
   XCircle,
@@ -260,7 +260,7 @@ const ExpenseHistory = ({ user }) => {
 
                   <div className="expense-details">
                     <div className="expense-amount">
-                      <DollarSign size={16} />
+                      <Banknote size={16} />
                       <span>{formatAmount(expense.amount)} OMR</span>
                     </div>
                     <div className="expense-date">

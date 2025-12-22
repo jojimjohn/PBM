@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, DollarSign, FileText, ArrowRight } from 'lucide-react';
+import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { collectionOrderService, calloutService } from '../../services/collectionService';
 import contractService from '../../services/contractService';
+import supplierService from '../../services/supplierService';
 import inventoryService from '../../services/inventoryService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
@@ -231,7 +232,7 @@ const CollectionOrderManager = () => {
             className="p-1 text-green-600 hover:bg-green-50 rounded"
             title={t('viewExpenses')}
           >
-            <DollarSign className="w-4 h-4" />
+            <Banknote className="w-4 h-4" />
           </button>
           {(row.status === 'scheduled' || row.status === 'in_transit') && (
             <>
@@ -499,6 +500,7 @@ const CollectionOrderManager = () => {
 const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
   const { t } = useLocalization();
   const [formData, setFormData] = useState({
+    supplierId: order?.supplierId || callout?.supplierId || '',
     contractId: order?.contractId || callout?.contractId || '',
     locationId: order?.locationId || callout?.locationId || '',
     calloutId: callout?.id || '',
@@ -514,8 +516,10 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
     expenses: order?.expenses || [],
     priority: order?.priority || callout?.priority || 'normal'
   });
-  
+
+  const [suppliers, setSuppliers] = useState([]);
   const [contracts, setContracts] = useState([]);
+  const [filteredContracts, setFilteredContracts] = useState([]);
   const [locations, setLocations] = useState([]);
   const [contractMaterials, setContractMaterials] = useState([]);
   const [selectedContract, setSelectedContract] = useState(null);
@@ -524,6 +528,7 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
 
   useEffect(() => {
     if (isOpen) {
+      loadSuppliers();
       loadContracts();
       // If creating from callout, load callout materials
       if (callout) {
@@ -532,12 +537,43 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
     }
   }, [isOpen, callout]);
 
+  // Filter contracts when supplier changes
+  useEffect(() => {
+    if (formData.supplierId && contracts.length > 0) {
+      const supplierContracts = contracts.filter(c =>
+        c.supplierId === parseInt(formData.supplierId) &&
+        c.status === 'active'
+      );
+      setFilteredContracts(supplierContracts);
+      // Clear contract and location if supplier changed
+      if (!callout) {
+        setFormData(prev => ({ ...prev, contractId: '', locationId: '' }));
+        setLocations([]);
+      }
+    } else {
+      setFilteredContracts([]);
+    }
+  }, [formData.supplierId, contracts]);
+
   useEffect(() => {
     if (formData.contractId) {
       loadContractLocations();
       loadContractDetails();
     }
   }, [formData.contractId]);
+
+  const loadSuppliers = async () => {
+    try {
+      const response = await supplierService.getAll();
+      if (response.success) {
+        // Filter to only active suppliers
+        const activeSuppliers = (response.data || []).filter(s => s.isActive);
+        setSuppliers(activeSuppliers);
+      }
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+    }
+  };
 
   const loadContracts = async () => {
     try {
@@ -551,30 +587,74 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
   };
 
   const loadContractLocations = async () => {
-    // This would load locations for the selected contract
-    // For now, we'll simulate some locations
-    setLocations([
-      { id: 1, locationName: 'Main Warehouse', address: '123 Main St' },
-      { id: 2, locationName: 'Secondary Site', address: '456 Industrial Rd' }
-    ]);
+    try {
+      if (!formData.contractId) return;
+
+      const response = await contractService.getById(formData.contractId);
+      if (response.success && response.data) {
+        const contract = response.data;
+
+        // Extract unique locations from contract rates
+        if (contract.rates && contract.rates.length > 0) {
+          const locationMap = new Map();
+
+          contract.rates.forEach(rate => {
+            const locationId = rate.locationId;
+            const isActive = rate.locationIsActive === 1 || rate.locationIsActive === true;
+
+            if (!locationMap.has(locationId)) {
+              locationMap.set(locationId, {
+                id: locationId,
+                locationName: rate.locationName,
+                locationCode: rate.locationCode,
+                address: rate.locationName, // Using locationName as address fallback
+                isActive: isActive
+              });
+            }
+          });
+
+          let locations = Array.from(locationMap.values());
+
+          // For NEW orders, filter out inactive locations
+          // For EDITING existing orders, keep all locations (including inactive ones)
+          if (!order && !callout) {
+            locations = locations.filter(loc => loc.isActive);
+          }
+
+          setLocations(locations);
+        } else {
+          setLocations([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading contract locations:', error);
+      setLocations([]);
+    }
   };
 
   const loadCalloutMaterials = async () => {
     try {
       if (callout) {
-        // Get callout details with materials
+        // Get callout details with materials (backend returns 'items' not 'materials')
         const response = await calloutService.getCallout(callout.id);
         if (response.success && response.data) {
           const calloutData = response.data;
-          
-          // Load callout materials with pre-filled quantities
-          const materials = calloutData.materials || [];
-          setContractMaterials(materials.map(material => ({
-            ...material,
-            selectedQuantity: material.availableQuantity || material.quantity || 0,
-            unit: material.unit || 'kg',
-            contractRate: material.contractRate || material.rate || 0,
-            estimatedValue: (material.availableQuantity || material.quantity || 0) * (material.contractRate || material.rate || 0)
+
+          // Load callout items with pre-filled quantities and contract rates
+          // Backend returns 'items' array with contractRate from contract_location_rates
+          const items = calloutData.items || calloutData.materials || [];
+          setContractMaterials(items.map(item => ({
+            materialId: item.materialId,
+            materialName: item.materialName,
+            materialCode: item.materialCode,
+            selectedQuantity: item.availableQuantity || item.quantity || 0,
+            unit: item.materialUnit || item.unit || 'kg',
+            contractRate: item.contractRate || item.rate || 0,
+            rateType: item.rateType || 'fixed_rate',
+            paymentDirection: item.paymentDirection || 'we_pay',
+            minimumQuantity: item.minimumQuantity || 0,
+            maximumQuantity: item.maximumQuantity || null,
+            estimatedValue: (item.availableQuantity || item.quantity || 0) * (item.contractRate || item.rate || 0)
           })));
         }
       }
@@ -754,19 +834,32 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
               </div>
             )}
             
-            {/* Contract Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Supplier & Contract Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Autocomplete
-                label={`${t('selectContract')} *`}
-                options={contracts}
+                label={`${t('supplier')} *`}
+                options={suppliers}
+                value={formData.supplierId}
+                onChange={(supplierId) => handleInputChange('supplierId', supplierId)}
+                getOptionLabel={(supplier) => supplier ? supplier.name : ''}
+                getOptionValue={(supplier) => supplier?.id || ''}
+                placeholder={t('selectSupplier')}
+                searchable
+                required
+                disabled={!!callout}
+              />
+
+              <Autocomplete
+                label={`${t('contract')} *`}
+                options={filteredContracts}
                 value={formData.contractId}
                 onChange={(contractId) => handleInputChange('contractId', contractId)}
                 getOptionLabel={(contract) => contract ? `${contract.contractNumber} - ${contract.title}` : ''}
                 getOptionValue={(contract) => contract?.id || ''}
-                placeholder={t('selectContract')}
+                placeholder={formData.supplierId ? t('selectContract') : t('selectSupplierFirst', 'Select supplier first')}
                 searchable
                 required
-                disabled={!!callout}
+                disabled={!formData.supplierId || !!callout}
               />
 
               <Autocomplete
@@ -774,9 +867,9 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
                 options={locations}
                 value={formData.locationId}
                 onChange={(locationId) => handleInputChange('locationId', locationId)}
-                getOptionLabel={(location) => location ? `${location.locationName} - ${location.address}` : ''}
+                getOptionLabel={(location) => location ? `${location.locationName} ${location.locationCode ? `(${location.locationCode})` : ''}` : ''}
                 getOptionValue={(location) => location?.id || ''}
-                placeholder={t('selectLocation')}
+                placeholder={formData.contractId ? t('selectLocation') : t('selectContractFirst', 'Select contract first')}
                 searchable
                 required
                 disabled={!formData.contractId || !!callout}
@@ -1590,7 +1683,7 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <Banknote className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg font-medium mb-2">{t('noExpensesRecorded')}</h3>
               <p>{t('addExpenseToTrackCosts')}</p>
             </div>

@@ -199,6 +199,35 @@
         <div class="nav-section-title">Workflows</div>
         <ul class="nav-menu">
           <li class="nav-item">
+            <a href="workflows/collection-to-wcn.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
+                <path d="M10 12h4"/>
+              </svg>
+              Collection to WCN
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="workflows/create-sales-order.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              Creating Sales Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="workflows/create-contract.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Creating Supplier Contracts
+            </a>
+          </li>
+          <li class="nav-item">
             <a href="workflows/create-po.html" class="nav-link">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -207,6 +236,15 @@
                 <line x1="9" y1="15" x2="15" y2="15"/>
               </svg>
               Creating Purchase Orders
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="workflows/approve-expense.html" class="nav-link">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              Expense Approval Workflow
             </a>
           </li>
           <li class="nav-item">
@@ -225,15 +263,6 @@
                 <line x1="9" y1="12" x2="15" y2="12"/>
               </svg>
               Adding Petty Cash Cards
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="workflows/approve-expense.html" class="nav-link">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 11 12 14 22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
-              Expense Approval Workflow
             </a>
           </li>
           <li class="nav-item">
@@ -506,10 +535,34 @@
                 </thead>
                 <tbody>
                   <tr>
+                    <td><a href="workflows/collection-to-wcn.html">Collection to WCN</a></td>
+                    <td>Complete collection workflow from callout to WCN finalization</td>
+                    <td><span class="role-badge purchase">Purchase</span></td>
+                    <td>6-7 min</td>
+                  </tr>
+                  <tr>
+                    <td><a href="workflows/create-sales-order.html">Creating Sales Orders</a></td>
+                    <td>Create sales orders with automatic contract rate application</td>
+                    <td><span class="role-badge sales">Sales</span></td>
+                    <td>5-6 min</td>
+                  </tr>
+                  <tr>
+                    <td><a href="workflows/create-contract.html">Creating Supplier Contracts</a></td>
+                    <td>Set up supplier contracts with location-specific rates</td>
+                    <td><span class="role-badge manager">Manager</span> <span class="role-badge admin">Admin</span></td>
+                    <td>6-7 min</td>
+                  </tr>
+                  <tr>
                     <td><a href="workflows/create-po.html">Creating Purchase Orders</a></td>
                     <td>Complete guide to creating and submitting POs</td>
                     <td><span class="role-badge purchase">Purchase</span></td>
                     <td>5-10 min</td>
+                  </tr>
+                  <tr>
+                    <td><a href="workflows/approve-expense.html">Expense Approval Process</a></td>
+                    <td>Review and approve expense submissions</td>
+                    <td><span class="role-badge manager">Manager</span></td>
+                    <td>4-5 min</td>
                   </tr>
                   <tr>
                     <td><a href="workflows/track-expenses.html">Tracking Expenses</a></td>
@@ -522,12 +575,6 @@
                     <td>Create and configure petty cash cards</td>
                     <td><span class="role-badge accounts">Accounts</span></td>
                     <td>5-7 min</td>
-                  </tr>
-                  <tr>
-                    <td><a href="workflows/approve-expense.html">Expense Approval Process</a></td>
-                    <td>Review and approve expense submissions</td>
-                    <td><span class="role-badge manager">Manager</span></td>
-                    <td>2-3 min</td>
                   </tr>
                   <tr>
                     <td><a href="workflows/contract-rates.html">Using Contract Rates</a></td>

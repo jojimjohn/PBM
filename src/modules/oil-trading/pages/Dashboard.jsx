@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Droplet, DollarSign, TrendingUp, ShoppingCart, FileText, BarChart3, AlertTriangle, Package } from 'lucide-react'
+import { Users, Droplet, Banknote, TrendingUp, ShoppingCart, FileText, BarChart3, AlertTriangle, Package } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card'
@@ -116,7 +116,7 @@ const OilTradingDashboard = () => {
             <Card variant="elevated" hoverable animate>
               <CardContent className="stat-card-modern">
                 <div className="stat-icon-wrapper revenue-icon">
-                  <DollarSign className="stat-icon" />
+                  <Banknote className="stat-icon" />
                 </div>
                 <div className="stat-content">
                   <p className="stat-label">{t('monthlyRevenue')}</p>
@@ -181,7 +181,7 @@ const OilTradingDashboard = () => {
             <Button
               variant="primary"
               size="large"
-              icon={<DollarSign />}
+              icon={<Banknote />}
               fullWidth
               className="action-button-modern"
             >

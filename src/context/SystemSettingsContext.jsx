@@ -262,6 +262,59 @@ export const SystemSettingsProvider = ({ children }) => {
     return formatDate(date, 'YYYY-MM-DD')
   }
 
+  // Convert date to ISO format for API calls (YYYY-MM-DD)
+  // IMPORTANT: Always use this when sending dates to the backend!
+  const toAPIDateFormat = (date) => {
+    if (!date) return null
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return null
+
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+  }
+
+  // Parse date string from any format to Date object
+  // Handles both API format (YYYY-MM-DD) and display formats
+  const parseDate = (dateString) => {
+    if (!dateString) return null
+    if (dateString instanceof Date) return dateString
+
+    // Try ISO format first (from API)
+    const isoDate = new Date(dateString)
+    if (!isNaN(isoDate.getTime())) return isoDate
+
+    // Try to parse based on current settings format
+    const format = settings.dateFormat
+    const parts = dateString.split(/[-\/]/)
+
+    if (parts.length === 3) {
+      let year, month, day
+
+      if (format === 'DD/MM/YYYY' || format === 'DD-MM-YYYY') {
+        day = parseInt(parts[0], 10)
+        month = parseInt(parts[1], 10) - 1
+        year = parseInt(parts[2], 10)
+      } else if (format === 'MM/DD/YYYY') {
+        month = parseInt(parts[0], 10) - 1
+        day = parseInt(parts[1], 10)
+        year = parseInt(parts[2], 10)
+      } else if (format === 'YYYY-MM-DD') {
+        year = parseInt(parts[0], 10)
+        month = parseInt(parts[1], 10) - 1
+        day = parseInt(parts[2], 10)
+      }
+
+      if (year && month !== undefined && day) {
+        return new Date(year, month, day)
+      }
+    }
+
+    return null
+  }
+
   const value = {
     settings,
     updateSettings,
@@ -274,6 +327,8 @@ export const SystemSettingsProvider = ({ children }) => {
     getCurrentDate,
     getCurrentDateTime,
     getInputDate,
+    toAPIDateFormat,  // Use when sending dates to backend API
+    parseDate,        // Use when parsing dates from various formats
     systemDate: settings.systemDate,
     theme,
     toggleTheme,

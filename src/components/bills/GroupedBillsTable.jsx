@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { ChevronRight, ChevronDown, Eye, DollarSign, AlertTriangle, CheckCircle, Clock, FileText, Receipt, Download, FileSpreadsheet, Printer, Edit, Send } from 'lucide-react'
+import { ChevronRight, ChevronDown, Eye, Banknote, AlertTriangle, CheckCircle, Clock, FileText, Receipt, Download, FileSpreadsheet, Printer, Edit, Send } from 'lucide-react'
 import ReconciliationIndicator from './ReconciliationIndicator'
 import './GroupedBillsTable.css'
 
@@ -246,7 +246,7 @@ const GroupedBillsTable = ({
                 onClick={() => onRecordPayment(bill)}
                 title="Record Payment"
               >
-                <DollarSign size={14} />
+                <Banknote size={14} />
               </button>
             )}
           </div>

@@ -209,11 +209,24 @@
 }
 
 /* Inventory Overview Table */
-.inventory-overview-table {
+.inventory-overview-table,
+.inventory-table {
   background: white;
   border-radius: var(--radius-lg);
   border: 1px solid var(--gray-200);
   box-shadow: var(--shadow-sm);
+}
+
+/* Remove internal scroll from inventory tables - let DataTable handle layout */
+.inventory-overview-table .data-table-container,
+.inventory-table .data-table-container {
+  overflow: visible;
+}
+
+.inventory-overview-table table,
+.inventory-table table {
+  width: 100%;
+  table-layout: auto;
 }
 
 .categories-grid {

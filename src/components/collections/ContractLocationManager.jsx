@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Search, Filter, Building, Phone, User, DollarSign, Package, Edit, Trash2, Eye, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Plus, Search, Filter, Building, Phone, User, Banknote, Package, Edit, Trash2, Eye, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { contractLocationService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
@@ -214,7 +214,7 @@ const ContractLocationManager = () => {
             className="p-1 text-green-600 hover:bg-green-50 rounded"
             title={t('viewRates')}
           >
-            <DollarSign className="w-4 h-4" />
+            <Banknote className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleEditLocation(row)}
@@ -342,7 +342,7 @@ const ContractLocationManager = () => {
         
         <div className="stat-card">
           <div className="stat-icon rates">
-            <DollarSign className="w-6 h-6" />
+            <Banknote className="w-6 h-6" />
           </div>
           <div className="stat-content">
             <div className="stat-value">{locations.reduce((sum, l) => sum + (l.materialRatesCount || 0), 0)}</div>
@@ -793,7 +793,7 @@ const LocationRatesModal = ({ location, isOpen, onClose }) => {
       <div className="p-4">
         <div className="space-y-4">
           <div className="text-center">
-            <DollarSign className="w-12 h-12 text-gray-400 mx-auto" />
+            <Banknote className="w-12 h-12 text-gray-400 mx-auto" />
             <h3 className="text-lg font-medium">{t('materialRatesComingSoon')}</h3>
             <p className="text-gray-600">{t('ratesFeatureDescription')}</p>
           </div>

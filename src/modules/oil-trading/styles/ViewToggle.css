@@ -1,0 +1,79 @@
+/**
+ * ViewToggle Component Styles
+ * Toggle button group for switching between Current Stock and Timeline views
+ */
+
+.view-toggle-container {
+  display: inline-flex;
+  background-color: var(--bg-secondary, #f3f4f6);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background-color: var(--bg-tertiary, #e5e7eb);
+  color: var(--text-primary, #374151);
+}
+
+.view-toggle-btn.active {
+  background-color: var(--primary-color, #3b82f6);
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.view-toggle-icon {
+  flex-shrink: 0;
+}
+
+.view-toggle-label {
+  line-height: 1;
+}
+
+/* RTL Support */
+[dir="rtl"] .view-toggle-container {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .view-toggle-btn {
+  flex-direction: row-reverse;
+}
+
+/* Responsive - hide labels on small screens */
+@media (max-width: 640px) {
+  .view-toggle-btn {
+    padding: 8px 12px;
+  }
+
+  .view-toggle-label {
+    display: none;
+  }
+
+  .view-toggle-icon {
+    margin: 0;
+  }
+}
+
+/* Tablet and above - show full toggle */
+@media (min-width: 768px) {
+  .view-toggle-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}

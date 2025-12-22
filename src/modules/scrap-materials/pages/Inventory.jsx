@@ -12,7 +12,7 @@ import {
   Edit, 
   Package, 
   Truck, 
-  DollarSign, 
+  Banknote,
   Plus, 
   Camera,
   Filter,
@@ -378,7 +378,7 @@ const ScrapMaterialsInventory = () => {
         
         <div className="stat-card">
           <div className="stat-icon">
-            <DollarSign />
+            <Banknote />
           </div>
           <div className="stat-content">
             <div className="stat-value">{formatCurrency(stats.totalValue)}</div>

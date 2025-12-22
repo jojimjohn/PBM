@@ -46,6 +46,29 @@
   display: flex;
   align-items: center;
   gap: 15px;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  border: 2px solid transparent;
+}
+
+/* Clickable summary card (for pending filter) */
+.summary-card.clickable {
+  cursor: pointer;
+}
+
+.summary-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Active filter state */
+.summary-card.active {
+  border-color: #ca8a04;
+  box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.2);
+}
+
+.summary-card.active .card-icon.warning {
+  background: #ca8a04;
+  color: white;
 }
 
 .card-icon {

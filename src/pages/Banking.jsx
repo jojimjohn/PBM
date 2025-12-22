@@ -21,7 +21,7 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  Banknote,
   FileText,
   Calendar,
   ChevronDown,
@@ -603,7 +603,7 @@ const Banking = () => {
             </div>
             <div className="summary-card">
               <div className="card-icon balance">
-                <DollarSign size={24} />
+                <Banknote size={24} />
               </div>
               <div className="card-content">
                 <span className="label">Total Balance</span>
@@ -694,7 +694,7 @@ const Banking = () => {
             </div>
             <div className="summary-card">
               <div className="card-icon balance">
-                <DollarSign size={24} />
+                <Banknote size={24} />
               </div>
               <div className="card-content">
                 <span className="label">Net Flow</span>

@@ -14,6 +14,7 @@ import OilTradingSales from '../modules/oil-trading/pages/Sales'
 import OilTradingWastage from '../modules/oil-trading/pages/Wastage'
 import OilTradingPettyCash from '../modules/oil-trading/pages/PettyCash'
 import OilTradingSettings from '../modules/oil-trading/pages/Settings'
+import OilTradingStockAdjustment from '../modules/oil-trading/pages/StockAdjustment'
 
 // Scrap Materials Module Components
 import ScrapMaterialsDashboard from '../modules/scrap-materials/pages/Dashboard'
@@ -45,6 +46,7 @@ const BusinessRouter = () => {
         <Route path="/customers" element={<OilTradingCustomers />} />
         <Route path="/suppliers" element={<OilTradingSuppliers />} />
         <Route path="/inventory" element={<OilTradingInventory />} />
+        <Route path="/stock-adjustment" element={<OilTradingStockAdjustment />} />
         <Route path="/contracts" element={<OilTradingContracts />} />
         <Route path="/sales" element={<OilTradingSales />} />
         <Route path="/purchase" element={<OilTradingPurchase />} />

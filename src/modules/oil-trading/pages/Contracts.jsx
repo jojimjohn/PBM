@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
+import DatePicker from '../../../components/ui/DatePicker'
 import FileUpload from '../../../components/ui/FileUpload'
 import contractService from '../../../services/contractService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import supplierLocationService from '../../../services/supplierLocationService'
 import uploadService from '../../../services/uploadService'
-import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, DollarSign, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin } from 'lucide-react'
+import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, Banknote, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin } from 'lucide-react'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import '../styles/Contracts.css'
 import '../styles/ContractForm.css'
@@ -20,6 +22,7 @@ import '../styles/ContractForm.css'
 const Contracts = () => {
   const { selectedCompany, user } = useAuth()
   const { t } = useLocalization()
+  const { formatDate: systemFormatDate } = useSystemSettings()
   const { hasPermission } = usePermissions()
   const [contracts, setContracts] = useState([])
   const [contractTypes, setContractTypes] = useState({})
@@ -480,8 +483,8 @@ const Contracts = () => {
         const contractData = {
           ...contract,
           locations: Object.values(locationsMap),
-          formattedStartDate: contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-GB') : 'N/A',
-          formattedEndDate: contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-GB') : 'N/A'
+          formattedStartDate: contract.startDate ? formatDate(contract.startDate) : 'N/A',
+          formattedEndDate: contract.endDate ? formatDate(contract.endDate) : 'N/A'
         }
         
         setViewContractData(contractData)
@@ -526,7 +529,7 @@ const Contracts = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('en-GB')
+    return systemFormatDate ? systemFormatDate(dateString) : new Date(dateString).toLocaleDateString('en-GB')
   }
 
   const getContractStatusInfo = (status) => {
@@ -755,7 +758,7 @@ const Contracts = () => {
 
         <div className="summary-card">
           <div className="summary-icon profit">
-            <DollarSign size={24} />
+            <Banknote size={24} />
           </div>
           <div className="summary-info">
             <p className="summary-value">
@@ -1620,21 +1623,26 @@ const ContractFormModal = ({
             </div>
 
             <div className="form-group">
-              <label>Start Date *</label>
-              <input
-                type="date"
-                value={formData.startDate || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+              <DatePicker
+                label={`${t('startDate')} *`}
+                value={formData.startDate ? new Date(formData.startDate) : null}
+                onChange={(date) => {
+                  const dateStr = date ? date.toISOString().split('T')[0] : ''
+                  setFormData(prev => ({ ...prev, startDate: dateStr }))
+                }}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>End Date *</label>
-              <input
-                type="date"
-                value={formData.endDate || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+              <DatePicker
+                label={`${t('endDate')} *`}
+                value={formData.endDate ? new Date(formData.endDate) : null}
+                onChange={(date) => {
+                  const dateStr = date ? date.toISOString().split('T')[0] : ''
+                  setFormData(prev => ({ ...prev, endDate: dateStr }))
+                }}
+                minDate={formData.startDate ? new Date(formData.startDate) : null}
                 required
               />
             </div>

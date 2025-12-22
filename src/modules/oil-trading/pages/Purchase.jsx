@@ -31,7 +31,7 @@ import purchaseOrderExpenseService from '../../../services/purchaseOrderExpenseS
 import {
   Plus, Search, Filter, Eye, Edit, Edit3, Truck, Package,
   CheckCircle, Clock, AlertTriangle, FileText, Download,
-  DollarSign, MapPin, Building, Calculator, Receipt,
+  Banknote, MapPin, Building, Calculator, Receipt,
   Users, Settings, Paperclip, Image, Trash2
 } from 'lucide-react'
 import '../styles/Purchase.css'
@@ -332,6 +332,12 @@ const Purchase = () => {
 
     return { groupedBills, orphanBills }
   }
+
+  // Helper to get PO order number from ID
+  const getPOOrderNumber = (poId) => {
+    const po = purchaseOrders.find(p => p.id === poId);
+    return po?.orderNumber || `PO #${poId}`;
+  };
 
   // Handle bill payment modal
   const handleRecordPayment = (bill) => {
@@ -785,7 +791,7 @@ const Purchase = () => {
     { id: 'collections', name: 'Collections', icon: Package },
     { id: 'orders', name: 'Purchase Orders', icon: FileText },
     { id: 'bills', name: 'Bills', icon: Receipt },
-    { id: 'expenses', name: 'Purchase Expenses', icon: DollarSign },
+    { id: 'expenses', name: 'Purchase Expenses', icon: Banknote },
     { id: 'vendors', name: 'Vendor Management', icon: Users },
     { id: 'locations', name: 'Storage Locations', icon: Building },
     { id: 'analytics', name: 'Analytics', icon: Calculator }
@@ -870,7 +876,7 @@ const Purchase = () => {
 
         <div className="summary-card">
           <div className="summary-icon value">
-            <DollarSign size={24} />
+            <Banknote size={24} />
           </div>
           <div className="summary-content">
             <h3>Total Expenses</h3>
@@ -1078,7 +1084,7 @@ const Purchase = () => {
                             onClick={() => handleAddExpense(row)}
                             title="Add Purchase Expenses"
                           >
-                            <DollarSign size={14} />
+                            <Banknote size={14} />
                           </button>
                         )}
                       </PermissionGate>
@@ -1175,7 +1181,7 @@ const Purchase = () => {
               </div>
               <div className="summary-card">
                 <div className="card-icon balance">
-                  <DollarSign size={24} />
+                  <Banknote size={24} />
                 </div>
                 <div className="card-content">
                   <span className="card-label">Balance Due</span>
@@ -1676,6 +1682,7 @@ const Purchase = () => {
         >
           <BillDetailsView
             bill={selectedBill}
+            bills={bills}
             onRecordPayment={() => {
               setShowBillDetailsModal(false)
               setShowPaymentModal(true)
@@ -1875,10 +1882,21 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
 }
 
 // Bill Details View Component (inline)
-const BillDetailsView = ({ bill, onRecordPayment, onClose, formatCurrency, formatDate }) => {
+const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency, formatDate }) => {
   const isPaid = bill.payment_status === 'paid'
   const isVendorBill = bill.bill_type === 'vendor'
   const balanceDue = parseFloat(bill.balance_due) || 0
+
+  // Helper to get company bill details by ID
+  const getCompanyBillDetails = (billId) => {
+    const companyBill = bills?.find(b => b.id === billId && b.bill_type === 'company')
+    return companyBill || null
+  }
+
+  // Get linked company bills for vendor bills
+  const linkedCompanyBills = isVendorBill && bill.covers_company_bills?.length > 0
+    ? bill.covers_company_bills.map(billId => getCompanyBillDetails(billId)).filter(Boolean)
+    : []
 
   return (
     <div className="bill-details-view">
@@ -1949,30 +1967,67 @@ const BillDetailsView = ({ bill, onRecordPayment, onClose, formatCurrency, forma
         </div>
       </div>
 
-      {/* Purchase Order Information */}
+      {/* Purchase Order / Company Bills Information */}
       <div className="po-section">
-        <h4>Related Purchase Orders</h4>
-        {isVendorBill && bill.covers_purchase_orders && bill.covers_purchase_orders.length > 0 ? (
-          <div className="po-list">
-            <div className="po-count">
-              This vendor bill covers <strong>{bill.covers_purchase_orders.length}</strong> purchase order(s)
-            </div>
-            <div className="po-ids">
-              {bill.covers_purchase_orders.map((poId, index) => (
-                <span key={poId} className="po-id-badge">
-                  PO #{poId}
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : bill.purchase_order_id ? (
-          <div className="po-list">
-            <span className="po-id-badge">
-              {bill.orderNumber || `PO #${bill.purchase_order_id}`}
-            </span>
-          </div>
+        {isVendorBill ? (
+          <>
+            <h4>Linked Company Bills</h4>
+            {linkedCompanyBills.length > 0 ? (
+              <div className="po-list">
+                <div className="po-count">
+                  This vendor bill covers <strong>{linkedCompanyBills.length}</strong> company bill(s)
+                </div>
+                <div className="linked-bills-table">
+                  <table className="mini-table">
+                    <thead>
+                      <tr>
+                        <th>Bill #</th>
+                        <th>PO #</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linkedCompanyBills.map((companyBill) => (
+                        <tr key={companyBill.id}>
+                          <td>{companyBill.invoice_number}</td>
+                          <td>{companyBill.orderNumber || `PO-${companyBill.purchase_order_id}`}</td>
+                          <td>{formatCurrency(companyBill.invoice_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : bill.covers_company_bills?.length > 0 ? (
+              <div className="po-list">
+                <div className="po-count">
+                  This vendor bill covers <strong>{bill.covers_company_bills.length}</strong> company bill(s)
+                </div>
+                <div className="po-ids">
+                  {bill.covers_company_bills.map((billId) => (
+                    <span key={billId} className="po-id-badge">
+                      Bill #{billId}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="no-po">No company bills linked to this vendor bill</p>
+            )}
+          </>
         ) : (
-          <p className="no-po">No purchase orders linked to this bill</p>
+          <>
+            <h4>Related Purchase Order</h4>
+            {bill.purchase_order_id ? (
+              <div className="po-list">
+                <span className="po-id-badge">
+                  {bill.orderNumber || `PO-${bill.purchase_order_id}`}
+                </span>
+              </div>
+            ) : (
+              <p className="no-po">No purchase order linked to this bill</p>
+            )}
+          </>
         )}
       </div>
 
@@ -1991,7 +2046,7 @@ const BillDetailsView = ({ bill, onRecordPayment, onClose, formatCurrency, forma
         </button>
         {!isPaid && isVendorBill && (
           <button className="btn btn-primary" onClick={onRecordPayment}>
-            <DollarSign size={16} />
+            <Banknote size={16} />
             Record Payment
           </button>
         )}

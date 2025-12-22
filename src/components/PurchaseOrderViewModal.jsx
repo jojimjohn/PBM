@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './ui/Modal';
 import {
-  FileText, Calendar, User, Package, DollarSign,
+  FileText, Calendar, User, Package, Banknote,
   CheckCircle, AlertTriangle, Truck, Edit3, Link2,
   MapPin, Clock, Receipt
 } from 'lucide-react';
@@ -345,22 +345,27 @@ const PurchaseOrderViewModal = ({
                 </tr>
               </thead>
               <tbody>
-                {(orderData.items || []).map((item, index) => (
-                  <tr key={index}>
-                    <td className="text-center">{index + 1}</td>
-                    <td>
-                      <div className="material-name">
-                        <strong>{item.materialName || item.name}</strong>
-                        {item.unit && <span className="material-unit">({item.unit})</span>}
-                      </div>
-                    </td>
-                    <td className="text-right">{(parseFloat(item.quantity) || 0).toFixed(3)}</td>
-                    <td className="text-right">{formatCurrency(item.rate || item.unitPrice)}</td>
-                    <td className="text-right strong">
-                      {formatCurrency(item.totalPrice || (item.quantity * (item.rate || item.unitPrice)))}
-                    </td>
-                  </tr>
-                ))}
+                {(orderData.items || []).map((item, index) => {
+                  // Use quantityOrdered from backend, fallback to quantity for legacy data
+                  const qty = parseFloat(item.quantityOrdered) || parseFloat(item.quantity) || 0;
+                  const rate = parseFloat(item.unitPrice) || parseFloat(item.rate) || parseFloat(item.contractRate) || 0;
+                  const total = parseFloat(item.totalPrice) || (qty * rate);
+
+                  return (
+                    <tr key={index}>
+                      <td className="text-center">{index + 1}</td>
+                      <td>
+                        <div className="material-name">
+                          <strong>{item.materialName || item.name}</strong>
+                          {item.unit && <span className="material-unit">({item.unit})</span>}
+                        </div>
+                      </td>
+                      <td className="text-right">{qty.toFixed(3)}</td>
+                      <td className="text-right">{formatCurrency(rate)}</td>
+                      <td className="text-right strong">{formatCurrency(total)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -428,7 +433,7 @@ const PurchaseOrderViewModal = ({
         {/* Financial Summary Card */}
         <div className="financial-card">
           <div className="financial-card-header">
-            <DollarSign size={18} />
+            <Banknote size={18} />
             <h3>Financial Summary</h3>
           </div>
           <div className="financial-card-body">

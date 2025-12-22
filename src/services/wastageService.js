@@ -236,10 +236,23 @@ class WastageService {
 
   /**
    * Get wastage analytics
+   * @param {Object} params - Query parameters
+   * @param {string} params.dateFrom - Start date (YYYY-MM-DD)
+   * @param {string} params.dateTo - End date (YYYY-MM-DD)
+   * @param {number} params.materialId - Optional material ID filter
    */
-  async getAnalytics(period = '30') {
+  async getAnalytics(params = {}) {
     try {
-      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/analytics?period=${period}`);
+      // Build query string from params
+      const queryParams = new URLSearchParams();
+      if (params.dateFrom) queryParams.append('dateFrom', params.dateFrom);
+      if (params.dateTo) queryParams.append('dateTo', params.dateTo);
+      if (params.materialId) queryParams.append('materialId', params.materialId);
+
+      const queryString = queryParams.toString();
+      const url = `${API_BASE_URL}/wastages/analytics/summary${queryString ? `?${queryString}` : ''}`;
+
+      const data = await authService.makeAuthenticatedRequest(url);
 
       return {
         success: true,

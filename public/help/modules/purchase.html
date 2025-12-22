@@ -147,14 +147,15 @@
             </li>
           </ol>
 
-          <h3>Collection Statuses</h3>
+          <h3>Collection Workflow Stages</h3>
+          <p>Collections are managed through the <strong>Workflow Progress Bar</strong> with four stages:</p>
           <ul>
-            <li><strong>Pending</strong> - Created but not started</li>
-            <li><strong>Scheduled</strong> - Collection scheduled</li>
-            <li><strong>In Transit</strong> - Collector en route</li>
-            <li><strong>Collecting</strong> - Collection in progress</li>
-            <li><strong>Completed</strong> - Collection finished</li>
+            <li><strong>Scheduled</strong> (Yellow) - Collection created, awaiting driver assignment or dispatch</li>
+            <li><strong>In Progress</strong> (Blue) - In Transit or Collecting - driver is active</li>
+            <li><strong>Completed</strong> (Green) - Collection finished, ready for WCN finalization</li>
+            <li><strong>Finalized</strong> (Indigo) - WCN complete, PO auto-generated</li>
           </ul>
+          <p><em>Click any stage in the Workflow Progress Bar to filter the table.</em></p>
         </section>
 
         <!-- Tab 2: Orders -->

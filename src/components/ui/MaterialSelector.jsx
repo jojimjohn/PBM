@@ -85,17 +85,25 @@ const MaterialSelector = ({
       // Remove material from selection
       updatedMaterials = selectedMaterials.filter(m => m.materialId !== materialId);
     } else {
-      // Add material with quantity 0
+      // Add material with quantity 0 and contract rate information
       const material = availableMaterials.find(m => m.materialId === materialId);
       updatedMaterials = [
         ...selectedMaterials,
         {
           materialId: material.materialId,
           materialName: material.materialName,
+          materialCode: material.materialCode,
           quantity: 0,
           unit: material.unit,
           minimumQuantity: material.minimumQuantity,
-          maximumQuantity: material.maximumQuantity
+          maximumQuantity: material.maximumQuantity,
+          // Include contract rate fields - CRITICAL for billing workflow
+          contractRate: material.contractRate || 0,
+          rateType: material.rateType || 'fixed_rate',
+          paymentDirection: material.paymentDirection || 'we_pay',
+          discountPercentage: material.discountPercentage || 0,
+          minimumPrice: material.minimumPrice || 0,
+          standardPrice: material.standardPrice || 0
         }
       ];
     }
@@ -173,6 +181,7 @@ const MaterialSelector = ({
             <tr>
               <th className="checkbox-col">{t('select')}</th>
               <th>{t('material')}</th>
+              <th>{t('rate')}</th>
               <th>{t('quantity')}</th>
               <th>{t('unit')}</th>
             </tr>
@@ -195,13 +204,18 @@ const MaterialSelector = ({
                   </td>
                   <td>
                     <div className="material-name">{material.materialName}</div>
-                    {material.minimumQuantity || material.maximumQuantity ? (
+                    {(material.minimumQuantity > 0 || material.maximumQuantity > 0) ? (
                       <div className="material-constraints">
-                        {material.minimumQuantity && `${t('min')}: ${material.minimumQuantity} ${material.unit}`}
-                        {material.minimumQuantity && material.maximumQuantity && ' | '}
-                        {material.maximumQuantity && `${t('max')}: ${material.maximumQuantity} ${material.unit}`}
+                        {material.minimumQuantity > 0 && `${t('min')}: ${material.minimumQuantity} ${material.unit}`}
+                        {material.minimumQuantity > 0 && material.maximumQuantity > 0 && ' | '}
+                        {material.maximumQuantity > 0 && `${t('max')}: ${material.maximumQuantity} ${material.unit}`}
                       </div>
                     ) : null}
+                  </td>
+                  <td className="text-right">
+                    <span className="contract-rate">
+                      {parseFloat(material.contractRate || 0).toFixed(3)} OMR
+                    </span>
                   </td>
                   <td>
                     {selected ? (

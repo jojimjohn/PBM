@@ -9,7 +9,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Receipt,
   Camera,
-  DollarSign,
+  Banknote,
   FileText,
   Store,
   Calendar,
@@ -214,7 +214,7 @@ const ExpenseSubmitForm = ({
       {/* Amount */}
       <div className="form-group">
         <label className="form-label">
-          <DollarSign size={18} />
+          <Banknote size={18} />
           Amount (OMR) *
         </label>
         <input

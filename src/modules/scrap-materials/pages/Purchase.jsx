@@ -16,7 +16,7 @@ import PurchaseOrderStats from '../../../components/purchase/PurchaseOrderStats'
 import CollectionStats from '../../../components/purchase/CollectionStats'
 import ExpenseStats from '../../../components/purchase/ExpenseStats'
 import WorkflowStepper from '../../../components/purchase/WorkflowStepper'
-import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, Download, DollarSign, MapPin, Edit3 } from 'lucide-react'
+import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, Download, Banknote, MapPin, Edit3 } from 'lucide-react'
 import '../styles/Purchase.css'
 
 const Purchase = () => {
@@ -341,7 +341,9 @@ const Purchase = () => {
             onClick={() => setActiveTab('expenses')}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              <rect width="20" height="12" x="2" y="6" rx="2" />
+              <circle cx="12" cy="12" r="2" />
+              <path d="M6 12h.01M18 12h.01" />
             </svg>
             Expenses
           </button>
@@ -551,7 +553,7 @@ const Purchase = () => {
                   filterable: true,
                   render: (value) => (
                     <span className="category-badge">
-                      <DollarSign size={14} />
+                      <Banknote size={14} />
                       {value}
                     </span>
                   )

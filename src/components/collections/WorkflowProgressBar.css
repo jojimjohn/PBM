@@ -1,0 +1,369 @@
+/**
+ * WorkflowProgressBar Styles
+ *
+ * A horizontal workflow stage selector with:
+ * - Clickable stage buttons
+ * - Count badges
+ * - Arrow connectors
+ * - Mobile horizontal scroll
+ * - RTL support
+ */
+
+.workflow-progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--surface-secondary, #f8fafc);
+  border-radius: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  flex-shrink: 0;
+}
+
+.workflow-progress-bar.compact {
+  padding: 6px 10px;
+  gap: 4px;
+}
+
+.workflow-progress-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.workflow-progress-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workflow-progress-bar::-webkit-scrollbar-thumb {
+  background: var(--border-color, #e2e8f0);
+  border-radius: 2px;
+}
+
+/* RTL Support */
+.workflow-progress-bar.rtl {
+  direction: rtl;
+}
+
+.workflow-progress-bar.rtl .workflow-arrow.rtl-flip {
+  transform: rotate(180deg);
+}
+
+/* Divider between "All" and stages */
+.workflow-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-color, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.compact .workflow-divider {
+  height: 24px;
+}
+
+/* Stages container - enables horizontal scroll on mobile */
+.workflow-stages-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: max-content;
+}
+
+/* Individual stage button - Compact pill style */
+.workflow-stage {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  background: var(--surface-primary, #ffffff);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  min-width: fit-content;
+  font-size: 13px;
+}
+
+.compact .workflow-stage {
+  padding: 3px 8px;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.workflow-stage:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.workflow-stage:active {
+  transform: scale(0.98);
+}
+
+/* Stage icon */
+.workflow-stage .stage-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.compact .workflow-stage .stage-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Stage count - inline with icon */
+.workflow-stage .stage-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  line-height: 1;
+}
+
+.compact .workflow-stage .stage-count {
+  font-size: 12px;
+}
+
+.workflow-stage .stage-count.has-items {
+  color: inherit;
+}
+
+/* Empty state styling */
+.workflow-stage.empty {
+  opacity: 0.6;
+}
+
+.workflow-stage.empty .stage-count {
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Arrow connector */
+.workflow-arrow {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted, #94a3b8);
+  flex-shrink: 0;
+}
+
+.compact .workflow-arrow {
+  width: 10px;
+  height: 10px;
+}
+
+/* "All" button styling */
+.workflow-stage-all {
+  background: var(--surface-primary, #ffffff);
+  border-color: var(--border-color, #e2e8f0);
+}
+
+.workflow-stage-all .stage-icon {
+  color: var(--text-secondary, #64748b);
+}
+
+.workflow-stage-all.active {
+  background: var(--primary-50, #eff6ff);
+  border-color: var(--primary-500, #3b82f6);
+}
+
+.workflow-stage-all.active .stage-icon {
+  color: var(--primary-600, #2563eb);
+}
+
+.workflow-stage-all.active .stage-label,
+.workflow-stage-all.active .stage-count {
+  color: var(--primary-700, #1d4ed8);
+}
+
+/* Yellow stage (Scheduled - first workflow stage) */
+.workflow-stage-yellow {
+  border-color: transparent;
+}
+
+.workflow-stage-yellow .stage-icon {
+  color: var(--yellow-500, #eab308);
+}
+
+.workflow-stage-yellow.active {
+  background: var(--yellow-50, #fefce8);
+  border-color: var(--yellow-400, #facc15);
+}
+
+.workflow-stage-yellow.active .stage-label,
+.workflow-stage-yellow.active .stage-count {
+  color: var(--yellow-700, #a16207);
+}
+
+/* Blue stage (In Progress) */
+.workflow-stage-blue {
+  border-color: transparent;
+}
+
+.workflow-stage-blue .stage-icon {
+  color: var(--blue-500, #3b82f6);
+}
+
+.workflow-stage-blue.active {
+  background: var(--blue-50, #eff6ff);
+  border-color: var(--blue-400, #60a5fa);
+}
+
+.workflow-stage-blue.active .stage-label,
+.workflow-stage-blue.active .stage-count {
+  color: var(--blue-700, #1d4ed8);
+}
+
+/* Purple stage (alternative - currently unused) */
+.workflow-stage-purple {
+  border-color: transparent;
+}
+
+.workflow-stage-purple .stage-icon {
+  color: var(--purple-500, #a855f7);
+}
+
+.workflow-stage-purple.active {
+  background: var(--purple-50, #faf5ff);
+  border-color: var(--purple-400, #c084fc);
+}
+
+.workflow-stage-purple.active .stage-label,
+.workflow-stage-purple.active .stage-count {
+  color: var(--purple-700, #7e22ce);
+}
+
+/* Green stage (Completed) */
+.workflow-stage-green {
+  border-color: transparent;
+}
+
+.workflow-stage-green .stage-icon {
+  color: var(--green-500, #22c55e);
+}
+
+.workflow-stage-green.active {
+  background: var(--green-50, #f0fdf4);
+  border-color: var(--green-400, #4ade80);
+}
+
+.workflow-stage-green.active .stage-label,
+.workflow-stage-green.active .stage-count {
+  color: var(--green-700, #15803d);
+}
+
+/* Indigo stage (Finalized) */
+.workflow-stage-indigo {
+  border-color: transparent;
+}
+
+.workflow-stage-indigo .stage-icon {
+  color: var(--indigo-500, #6366f1);
+}
+
+.workflow-stage-indigo.active {
+  background: var(--indigo-50, #eef2ff);
+  border-color: var(--indigo-400, #818cf8);
+}
+
+.workflow-stage-indigo.active .stage-label,
+.workflow-stage-indigo.active .stage-count {
+  color: var(--indigo-700, #4338ca);
+}
+
+/* Dark mode support */
+[data-theme="dark"] .workflow-progress-bar {
+  background: var(--surface-secondary-dark, #1e293b);
+}
+
+[data-theme="dark"] .workflow-stage {
+  background: var(--surface-primary-dark, #0f172a);
+}
+
+[data-theme="dark"] .workflow-stage .stage-label {
+  color: var(--text-secondary-dark, #94a3b8);
+}
+
+[data-theme="dark"] .workflow-stage .stage-count {
+  color: var(--text-primary-dark, #f1f5f9);
+}
+
+[data-theme="dark"] .workflow-divider {
+  background: var(--border-color-dark, #334155);
+}
+
+[data-theme="dark"] .workflow-arrow {
+  color: var(--text-muted-dark, #64748b);
+}
+
+/* Dark mode active states */
+[data-theme="dark"] .workflow-stage-all.active {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .workflow-stage-yellow.active {
+  background: rgba(234, 179, 8, 0.2);
+}
+
+[data-theme="dark"] .workflow-stage-blue.active {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .workflow-stage-purple.active {
+  background: rgba(168, 85, 247, 0.2);
+}
+
+[data-theme="dark"] .workflow-stage-green.active {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="dark"] .workflow-stage-indigo.active {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .workflow-progress-bar {
+    padding: 12px;
+    gap: 6px;
+  }
+
+  .workflow-stage {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .workflow-stage .stage-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .workflow-stage .stage-label {
+    font-size: 11px;
+  }
+
+  .workflow-stage .stage-count {
+    font-size: 14px;
+  }
+
+  .workflow-arrow {
+    width: 14px;
+    height: 14px;
+  }
+
+  .workflow-divider {
+    height: 32px;
+  }
+}
+
+/* Touch device optimization */
+@media (hover: none) {
+  .workflow-stage:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .workflow-stage:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+}

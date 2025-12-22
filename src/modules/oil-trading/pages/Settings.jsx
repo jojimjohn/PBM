@@ -11,7 +11,7 @@ import {
   Settings as SettingsIcon,
   Globe,
   Calendar,
-  DollarSign,
+  Banknote,
   Clock,
   Monitor,
   Save,

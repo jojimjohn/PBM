@@ -17,7 +17,7 @@ import reportService from '../services/reportService';
 import supplierService from '../services/supplierService';
 import {
   BarChart3,
-  DollarSign,
+  Banknote,
   FileText,
   Truck,
   Receipt,
@@ -106,7 +106,7 @@ const Reports = () => {
     {
       id: 'purchase-cost',
       name: 'Purchase Cost Analysis',
-      icon: DollarSign,
+      icon: Banknote,
       description: 'Purchase costs with collection expenses',
       permission: PERMISSIONS.VIEW_PURCHASE
     },
@@ -284,7 +284,7 @@ const Reports = () => {
         return (
           <div className="summary-cards">
             <SummaryCard
-              icon={<DollarSign />}
+              icon={<Banknote />}
               label="Total Base Cost"
               value={formatCurrency(summary.totalBaseCost)}
               color="blue"
@@ -344,7 +344,7 @@ const Reports = () => {
         return (
           <div className="summary-cards">
             <SummaryCard
-              icon={<DollarSign />}
+              icon={<Banknote />}
               label="Total Expenses"
               value={formatCurrency(summary.totalExpenses)}
               color="blue"

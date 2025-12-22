@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Package, CheckCircle, AlertCircle } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import { calloutService } from '../../services/collectionService';
 import contractService from '../../services/contractService';
 import supplierService from '../../services/supplierService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
+import DatePicker from '../ui/DatePicker';
 import MaterialSelector from '../ui/MaterialSelector';
 
 const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
   const { t } = useLocalization();
+  const { toAPIDateFormat, getInputDate } = useSystemSettings();
   const [formData, setFormData] = useState({
     contractId: '',
     supplierId: '',
@@ -21,12 +24,41 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
     materials: []
   });
   const [contracts, setContracts] = useState([]);
+  const [filteredContracts, setFilteredContracts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [locations, setLocations] = useState([]);
   const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [specialInstructions, setSpecialInstructions] = useState(callout?.specialInstructions || '');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+
+  // Filter contracts when supplier changes - exclude expired contracts
+  useEffect(() => {
+    if (formData.supplierId && contracts.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today for comparison
+
+      const supplierContracts = contracts.filter(c => {
+        // Must belong to selected supplier
+        if (c.supplierId !== parseInt(formData.supplierId)) return false;
+
+        // Must be active status
+        if (c.status !== 'active') return false;
+
+        // Must not be expired (endDate >= today)
+        if (c.endDate) {
+          const endDate = new Date(c.endDate);
+          endDate.setHours(23, 59, 59, 999); // End of the contract end date
+          if (endDate < today) return false;
+        }
+
+        return true;
+      });
+      setFilteredContracts(supplierContracts);
+    } else {
+      setFilteredContracts([]);
+    }
+  }, [formData.supplierId, contracts]);
 
   useEffect(() => {
     if (isOpen) {
@@ -149,18 +181,35 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
             const locationId = rate.locationId;
             const locationName = rate.locationName;
             const locationCode = rate.locationCode;
+            const isActive = rate.locationIsActive === 1 || rate.locationIsActive === true;
 
             if (!locationMap.has(locationId)) {
               locationMap.set(locationId, {
                 id: locationId,
                 name: locationName,
-                locationCode: locationCode
+                locationCode: locationCode,
+                isActive: isActive
               });
             }
           });
 
-          const locations = Array.from(locationMap.values());
+          let locations = Array.from(locationMap.values());
+
+          // For NEW callouts, filter out inactive locations
+          // For EDITING existing callouts, keep all locations (including inactive ones that may be selected)
+          if (!callout) {
+            locations = locations.filter(loc => loc.isActive);
+          }
+
           setLocations(locations);
+
+          // Auto-select if only one location available (for new callouts only)
+          if (!callout && locations.length === 1) {
+            setFormData(prev => ({
+              ...prev,
+              locationId: locations[0].id.toString()
+            }));
+          }
           // Do NOT pre-populate materials - MaterialSelector will handle material selection
         } else {
           setLocations([]);
@@ -173,7 +222,24 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+
+      // Reset dependent fields when supplier changes
+      if (field === 'supplierId') {
+        updated.contractId = '';
+        updated.locationId = '';
+        setLocations([]);
+        setSelectedMaterials([]);
+      }
+
+      // Reset location when contract changes
+      if (field === 'contractId') {
+        updated.locationId = '';
+      }
+
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -327,19 +393,20 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                {/* Supplier Selection - First */}
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '14px', 
-                    fontWeight: 'bold', 
-                    color: '#374151', 
-                    marginBottom: '8px' 
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#374151',
+                    marginBottom: '8px'
                   }}>
-                    {t('selectContract')} <span style={{ color: '#ef4444' }}>*</span>
+                    {t('supplier')} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <select
-                    value={formData.contractId}
-                    onChange={(e) => handleInputChange('contractId', e.target.value)}
+                    value={formData.supplierId}
+                    onChange={(e) => handleInputChange('supplierId', e.target.value)}
                     style={{
                       width: '100%',
                       padding: '12px 16px',
@@ -352,8 +419,51 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
                     }}
                     required
                   >
-                    <option value="">{t('selectContract')}</option>
-                    {contracts.map(contract => (
+                    <option value="">{t('selectSupplier')}</option>
+                    {suppliers.map(supplier => (
+                      <option key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Contract Selection - Filtered by Supplier */}
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#374151',
+                    marginBottom: '8px'
+                  }}>
+                    {t('selectContract')} <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    value={formData.contractId}
+                    onChange={(e) => handleInputChange('contractId', e.target.value)}
+                    disabled={!formData.supplierId}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      backgroundColor: !formData.supplierId ? '#f3f4f6' : 'white',
+                      color: !formData.supplierId ? '#6b7280' : '#1f2937'
+                    }}
+                    required
+                  >
+                    <option value="">
+                      {!formData.supplierId
+                        ? t('selectSupplierFirst')
+                        : filteredContracts.length === 0
+                          ? t('noContractsAvailable')
+                          : t('selectContract')
+                      }
+                    </option>
+                    {filteredContracts.map(contract => (
                       <option key={contract.id} value={contract.id}>
                         {contract.contractNumber} - {contract.title}
                       </option>
@@ -361,6 +471,7 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
                   </select>
                 </div>
 
+                {/* Pickup Location - Filtered by Contract */}
                 <div>
                   <label style={{ 
                     display: 'block', 
@@ -404,35 +515,22 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '14px', 
-                    fontWeight: 'bold', 
-                    color: '#374151', 
-                    marginBottom: '8px' 
-                  }}>
-                    {t('requestedPickupDate')} <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.requestedPickupDate ? formData.requestedPickupDate.split('T')[0] : ''}
-                    onChange={(e) => {
-                      // Convert date to end of day to ensure it's greater than current time
-                      const selectedDate = new Date(e.target.value + 'T23:59:59.999Z');
-                      handleInputChange('requestedPickupDate', selectedDate.toISOString());
+                  <DatePicker
+                    label={t('requestedPickupDate')}
+                    value={formData.requestedPickupDate ? new Date(formData.requestedPickupDate) : null}
+                    onChange={(date) => {
+                      // Convert to ISO format for API consistency
+                      if (date) {
+                        const selectedDate = new Date(date);
+                        selectedDate.setHours(23, 59, 59, 999);
+                        handleInputChange('requestedPickupDate', selectedDate.toISOString());
+                      } else {
+                        handleInputChange('requestedPickupDate', '');
+                      }
                     }}
-                    min={new Date().toISOString().split('T')[0]}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '2px solid #d1d5db',
-                      borderRadius: '8px',
-                      fontSize: '16px',
-                      fontWeight: '500',
-                      backgroundColor: 'white',
-                      color: '#1f2937'
-                    }}
+                    minDate={new Date()}
                     required
+                    size="large"
                   />
                 </div>
                 
@@ -491,19 +589,19 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
                 >
                   {t('cancel')}
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setStep(2)}
-                  disabled={!formData.contractId || !formData.locationId || !formData.requestedPickupDate}
+                  disabled={!formData.supplierId || !formData.contractId || !formData.locationId || !formData.requestedPickupDate}
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: (!formData.contractId || !formData.locationId || !formData.requestedPickupDate) ? '#9ca3af' : '#2563eb',
-                    border: '2px solid ' + ((!formData.contractId || !formData.locationId || !formData.requestedPickupDate) ? '#9ca3af' : '#2563eb'),
+                    backgroundColor: (!formData.supplierId || !formData.contractId || !formData.locationId || !formData.requestedPickupDate) ? '#9ca3af' : '#2563eb',
+                    border: '2px solid ' + ((!formData.supplierId || !formData.contractId || !formData.locationId || !formData.requestedPickupDate) ? '#9ca3af' : '#2563eb'),
                     borderRadius: '8px',
                     color: 'white',
                     fontWeight: 'bold',
                     fontSize: '16px',
-                    cursor: (!formData.contractId || !formData.locationId || !formData.requestedPickupDate) ? 'not-allowed' : 'pointer',
+                    cursor: (!formData.supplierId || !formData.contractId || !formData.locationId || !formData.requestedPickupDate) ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'

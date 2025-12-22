@@ -5,7 +5,7 @@ import { useSystemSettings } from '../context/SystemSettingsContext';
 import purchaseInvoiceService from '../services/purchaseInvoiceService';
 import purchaseOrderService from '../services/purchaseOrderService';
 import uploadService from '../services/uploadService';
-import { FileText, DollarSign, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { FileText, Banknote, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import './PurchaseInvoiceModal.css';
 
 const PurchaseInvoiceModal = ({
@@ -27,9 +27,16 @@ const PurchaseInvoiceModal = ({
   const [selectedPOs, setSelectedPOs] = useState([]);
   const [availablePOs, setAvailablePOs] = useState([]);
 
+  // Generate auto invoice number
+  const generateInvoiceNumber = () => {
+    const year = new Date().getFullYear();
+    const timestamp = Date.now().toString().slice(-6);
+    return `INV-${year}-${timestamp}`;
+  };
+
   // Form states
   const [formData, setFormData] = useState({
-    invoiceNumber: '',
+    invoiceNumber: generateInvoiceNumber(),
     invoiceDate: new Date().toISOString().split('T')[0],
     dueDate: '',
     invoiceAmount: '',
@@ -58,6 +65,36 @@ const PurchaseInvoiceModal = ({
       loadUnbilledPOs();
     }
   }, [billType, mode]);
+
+  // Calculate total from PO items (collected qty × rate)
+  const calculateItemsTotal = (po) => {
+    if (!po?.items || po.items.length === 0) {
+      // Fallback to stored totalAmount if no items
+      return parseFloat(po?.totalAmount) || 0;
+    }
+
+    return po.items.reduce((sum, item) => {
+      const qty = parseFloat(item.quantityOrdered) || parseFloat(item.quantityReceived) || 0;
+      const rate = parseFloat(item.unitPrice) || parseFloat(item.contractRate) || 0;
+      const itemTotal = parseFloat(item.totalPrice) || (qty * rate);
+      return sum + itemTotal;
+    }, 0);
+  };
+
+  // Prefill form when entering create mode
+  useEffect(() => {
+    if (mode === 'create' && purchaseOrder) {
+      // Calculate invoice amount from items (qty × rate) for accuracy
+      const calculatedTotal = calculateItemsTotal(purchaseOrder);
+
+      setFormData(prev => ({
+        ...prev,
+        invoiceNumber: prev.invoiceNumber || generateInvoiceNumber(),
+        // Prefill invoice amount from calculated items total (WCN finalized values)
+        invoiceAmount: calculatedTotal > 0 ? calculatedTotal.toFixed(3) : prev.invoiceAmount
+      }));
+    }
+  }, [mode, purchaseOrder]);
 
   const loadInvoices = async () => {
     if (!purchaseOrder) return;
@@ -208,11 +245,15 @@ const PurchaseInvoiceModal = ({
   };
 
   const resetForm = () => {
+    // Calculate from items for accuracy
+    const calculatedTotal = calculateItemsTotal(purchaseOrder);
+
     setFormData({
-      invoiceNumber: '',
+      invoiceNumber: generateInvoiceNumber(),
       invoiceDate: new Date().toISOString().split('T')[0],
       dueDate: '',
-      invoiceAmount: '',
+      // Prefill invoice amount from calculated items total (WCN finalized values)
+      invoiceAmount: calculatedTotal > 0 ? calculatedTotal.toFixed(3) : '',
       paymentTermsDays: 0,
       notes: ''
     });
@@ -337,7 +378,7 @@ const PurchaseInvoiceModal = ({
                     className="btn-invoice-action btn-payment"
                     onClick={() => handlePaymentMode(invoice)}
                   >
-                    <DollarSign size={16} />
+                    <Banknote size={16} />
                     Record Payment
                   </button>
                 )}
@@ -748,7 +789,7 @@ const PurchaseInvoiceModal = ({
               className="btn-payment-large"
               onClick={() => handlePaymentMode(selectedInvoice)}
             >
-              <DollarSign size={18} />
+              <Banknote size={18} />
               Record Payment
             </button>
           </div>

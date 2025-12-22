@@ -8,7 +8,7 @@ import DataTable from '../../../components/ui/DataTable'
 import customerService from '../../../services/customerService'
 import typesService from '../../../services/typesService'
 import materialService from '../../../services/materialService'
-import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, DollarSign, AlertTriangle, Trash, RotateCcw } from 'lucide-react'
+import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, Banknote, AlertTriangle, Trash, RotateCcw } from 'lucide-react'
 import '../styles/Customers.css'
 
 const OilTradingCustomers = () => {
@@ -750,8 +750,9 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
         <div className="form-section">
           <div className="form-section-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23" />
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              <rect width="20" height="12" x="2" y="6" rx="2" />
+              <circle cx="12" cy="12" r="2" />
+              <path d="M6 12h.01M18 12h.01" />
             </svg>
             Business Terms
           </div>
@@ -760,8 +761,9 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
               <label>Credit Limit (OMR)</label>
               <div className="input-with-icon">
                 <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23" />
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  <rect width="20" height="12" x="2" y="6" rx="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M6 12h.01M18 12h.01" />
                 </svg>
                 <input
                   type="number"
@@ -855,7 +857,7 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <User size={16} /> },
     { id: 'contact', label: 'Contact', icon: <Phone size={16} /> },
-    { id: 'business', label: 'Business', icon: <DollarSign size={16} /> },
+    { id: 'business', label: 'Business', icon: <Banknote size={16} /> },
     { id: 'sales', label: 'Sales', icon: <ShoppingCart size={16} /> },
     ...(customer.type === 'contract' && customer.contractDetails
       ? [{ id: 'contract', label: 'Contract', icon: <FileText size={16} /> }]
@@ -940,7 +942,7 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
                   </div>
                 </div>
                 <div className="overview-card">
-                  <div className="overview-icon"><DollarSign size={24} /></div>
+                  <div className="overview-icon"><Banknote size={24} /></div>
                   <div className="overview-info">
                     <label>Credit Limit</label>
                     <span className="highlight">OMR {parseFloat(customer.creditLimit || 0).toFixed(2)}</span>
@@ -1048,7 +1050,7 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
                   </div>
                 </div>
                 <div className="sales-stat-card success">
-                  <div className="stat-icon"><DollarSign size={32} /></div>
+                  <div className="stat-icon"><Banknote size={32} /></div>
                   <div className="stat-content">
                     <div className="stat-value">OMR {customer.salesHistory?.totalValue?.toFixed(2) || '0.00'}</div>
                     <div className="stat-label">Total Revenue</div>

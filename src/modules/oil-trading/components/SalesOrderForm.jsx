@@ -663,7 +663,6 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 label="Order Date"
                 value={formData.orderDate ? new Date(formData.orderDate) : null}
                 onChange={(date) => setFormData(prev => ({ ...prev, orderDate: date ? date.toISOString().split('T')[0] : '' }))}
-                dateFormat="dd/MM/yyyy"
                 required
               />
             </div>
@@ -673,7 +672,6 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 value={formData.deliveryDate ? new Date(formData.deliveryDate) : null}
                 onChange={(date) => setFormData(prev => ({ ...prev, deliveryDate: date ? date.toISOString().split('T')[0] : '' }))}
                 minDate={formData.orderDate ? new Date(formData.orderDate) : null}
-                dateFormat="dd/MM/yyyy"
               />
             </div>
             <div className="form-group">

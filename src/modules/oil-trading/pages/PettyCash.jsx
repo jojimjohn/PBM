@@ -6,6 +6,7 @@ import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
+import DatePicker from '../../../components/ui/DatePicker'
 import StockChart from '../../../components/StockChart'
 import ImageUpload from '../../../components/ui/ImageUpload'
 import FileUpload from '../../../components/ui/FileUpload'
@@ -17,7 +18,7 @@ import PettyCashUsersSection from '../../../components/petty-cash/PettyCashUsers
 import {
   CreditCard,
   Plus,
-  DollarSign,
+  Banknote,
   TrendingUp,
   User,
   Users,
@@ -647,7 +648,7 @@ const PettyCash = () => {
 
         <div className="stat-card success">
           <div className="stat-icon">
-            <DollarSign />
+            <Banknote />
           </div>
           <div className="stat-content">
             <div className="stat-value">{formatCurrency(cardStats.totalBalance)}</div>
@@ -953,21 +954,25 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
           <h3>{t('validityPeriod', 'Validity Period')}</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>{t('issueDate', 'Issue Date')} *</label>
-              <input
-                type="date"
-                value={formData.issueDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, issueDate: e.target.value }))}
+              <DatePicker
+                label={`${t('issueDate', 'Issue Date')} *`}
+                value={formData.issueDate ? new Date(formData.issueDate) : null}
+                onChange={(date) => {
+                  const dateStr = date ? date.toISOString().split('T')[0] : ''
+                  setFormData(prev => ({ ...prev, issueDate: dateStr }))
+                }}
                 required
               />
             </div>
             <div className="form-group">
-              <label>{t('expiryDate', 'Expiry Date')}</label>
-              <input
-                type="date"
-                value={formData.expiryDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                min={formData.issueDate}
+              <DatePicker
+                label={t('expiryDate', 'Expiry Date')}
+                value={formData.expiryDate ? new Date(formData.expiryDate) : null}
+                onChange={(date) => {
+                  const dateStr = date ? date.toISOString().split('T')[0] : ''
+                  setFormData(prev => ({ ...prev, expiryDate: dateStr }))
+                }}
+                minDate={formData.issueDate ? new Date(formData.issueDate) : null}
               />
             </div>
           </div>
@@ -1161,11 +1166,13 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           </div>
 
           <div className="form-group">
-            <label>{t('transactionDate', 'Transaction Date')} *</label>
-            <input
-              type="date"
-              value={formData.transactionDate}
-              onChange={(e) => setFormData(prev => ({ ...prev, transactionDate: e.target.value }))}
+            <DatePicker
+              label={`${t('transactionDate', 'Transaction Date')} *`}
+              value={formData.transactionDate ? new Date(formData.transactionDate) : null}
+              onChange={(date) => {
+                const dateStr = date ? date.toISOString().split('T')[0] : ''
+                setFormData(prev => ({ ...prev, transactionDate: dateStr }))
+              }}
               required
             />
           </div>
@@ -1317,11 +1324,13 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
         </div>
 
         <div className="form-group">
-          <label>{t('reloadDate', 'Reload Date')} *</label>
-          <input
-            type="date"
-            value={formData.reloadDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, reloadDate: e.target.value }))}
+          <DatePicker
+            label={`${t('reloadDate', 'Reload Date')} *`}
+            value={formData.reloadDate ? new Date(formData.reloadDate) : null}
+            onChange={(date) => {
+              const dateStr = date ? date.toISOString().split('T')[0] : ''
+              setFormData(prev => ({ ...prev, reloadDate: dateStr }))
+            }}
             required
           />
         </div>
@@ -1452,7 +1461,7 @@ const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t })
         <div className="balance-cards-grid">
           <div className="balance-card primary">
             <div className="balance-card-icon">
-              <DollarSign size={24} />
+              <Banknote size={24} />
             </div>
             <div className="balance-card-content">
               <label>{t('currentBalance', 'Current Balance')}</label>

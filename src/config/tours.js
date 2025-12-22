@@ -484,31 +484,42 @@ export const TOUR_CONFIG = {
         popover: {
           title: 'Collections Module',
           titleAr: 'وحدة التحصيلات',
-          description: 'Manage material collections from suppliers, callouts, and WCN finalization.',
-          descriptionAr: 'إدارة تحصيلات المواد من الموردين، النداءات، وإنهاء WCN.',
+          description: 'Manage material collections from suppliers with the new workflow-driven interface.',
+          descriptionAr: 'إدارة تحصيلات المواد من الموردين مع واجهة سير العمل الجديدة.',
           side: 'bottom',
           align: 'start'
         },
         route: '/purchase?tab=collections'
       },
       {
-        element: '.quick-stats-bar',
+        element: '.workflow-progress-bar',
         popover: {
-          title: 'Collection Status',
-          titleAr: 'حالة التحصيل',
-          description: 'Track collections by status: Pending, Scheduled, In Transit, Collecting, Completed.',
-          descriptionAr: 'تتبع التحصيلات حسب الحالة: معلق، مجدول، في الطريق، جاري التحصيل، مكتمل.',
+          title: 'Workflow Progress Bar',
+          titleAr: 'شريط تقدم سير العمل',
+          description: 'Click any stage to filter: Scheduled (yellow), In Progress (blue), Completed (green), Finalized (indigo). Each shows a count badge.',
+          descriptionAr: 'انقر على أي مرحلة للتصفية: مجدول (أصفر)، قيد التقدم (أزرق)، مكتمل (أخضر)، منتهي (نيلي). كل مرحلة تعرض عدد العناصر.',
           side: 'bottom',
           align: 'center'
         }
       },
       {
+        element: '.workflow-stage-all',
+        popover: {
+          title: 'Show All Collections',
+          titleAr: 'عرض جميع التحصيلات',
+          description: 'Click "All" to reset filters and see all collections regardless of status.',
+          descriptionAr: 'انقر "الكل" لإعادة ضبط الفلاتر وعرض جميع التحصيلات بغض النظر عن الحالة.',
+          side: 'bottom',
+          align: 'start'
+        }
+      },
+      {
         element: '[data-tour="callout-manager"]',
         popover: {
-          title: 'Callout Manager',
-          titleAr: 'مدير النداءات',
-          description: 'Create callouts when suppliers notify you about available materials.',
-          descriptionAr: 'إنشاء النداءات عندما يخطرك الموردون بالمواد المتاحة.',
+          title: 'Collection Orders Table',
+          titleAr: 'جدول أوامر التحصيل',
+          description: 'View collections with type badges, status, and icon-only action buttons. Hover on buttons for tooltips.',
+          descriptionAr: 'عرض التحصيلات مع شارات النوع والحالة وأزرار الإجراءات. مرر الماوس على الأزرار لرؤية التلميحات.',
           side: 'right',
           align: 'start'
         }
@@ -518,8 +529,8 @@ export const TOUR_CONFIG = {
         popover: {
           title: 'WCN Finalization',
           titleAr: 'إنهاء WCN',
-          description: 'Finalize Waste Consignment Notes to confirm collected materials and auto-generate PO.',
-          descriptionAr: 'إنهاء مذكرات شحن النفايات لتأكيد المواد المجمعة وإنشاء أمر الشراء تلقائيًا.',
+          description: 'Completed collections show "Finalize WCN" button. This confirms quantities and auto-generates a Purchase Order.',
+          descriptionAr: 'التحصيلات المكتملة تعرض زر "إنهاء WCN". هذا يؤكد الكميات وينشئ أمر شراء تلقائيًا.',
           side: 'bottom',
           align: 'center'
         }
@@ -826,8 +837,8 @@ export const WORKFLOW_GUIDES = {
     id: 'collection-to-wcn',
     name: 'Complete Collection to WCN',
     nameAr: 'إتمام التحصيل إلى WCN',
-    description: 'From supplier callout to WCN finalization and auto-PO',
-    descriptionAr: 'من نداء المورد إلى إنهاء WCN وإنشاء أمر الشراء التلقائي',
+    description: 'From scheduled collection to WCN finalization and auto-PO',
+    descriptionAr: 'من التحصيل المجدول إلى إنهاء WCN وإنشاء أمر الشراء التلقائي',
     category: 'purchase',
     roles: ['PURCHASE_STAFF', 'MANAGER', 'COMPANY_ADMIN', 'SUPER_ADMIN'],
     estimatedTime: '8 min',
@@ -846,41 +857,41 @@ export const WORKFLOW_GUIDES = {
         },
         route: '/purchase?tab=collections'
       },
-      // Step 2: Understand the workflow
+      // Step 2: Understand the Workflow Progress Bar
       {
         context: { requirePage: '/purchase' },
-        element: '[data-tour="workflow-stepper"]',
+        element: '.workflow-progress-bar',
         popover: {
-          title: 'The Collection Workflow',
-          titleAr: 'سير عمل التحصيل',
-          description: 'Collections follow this path: Callout → Collection Order → WCN Finalization → Auto-PO. Each step adds detail and confirmation.',
-          descriptionAr: 'تتبع التحصيلات هذا المسار: النداء ← أمر التحصيل ← إنهاء WCN ← أمر الشراء التلقائي. كل خطوة تضيف تفاصيل وتأكيد.',
+          title: 'Workflow Progress Bar',
+          titleAr: 'شريط تقدم سير العمل',
+          description: 'Collections flow through four stages: Scheduled (yellow) → In Progress (blue) → Completed (green) → Finalized (indigo). Click any stage to filter the table.',
+          descriptionAr: 'تمر التحصيلات عبر أربع مراحل: مجدول (أصفر) ← قيد التقدم (أزرق) ← مكتمل (أخضر) ← منتهي (نيلي). انقر على أي مرحلة لتصفية الجدول.',
           side: 'bottom',
           align: 'center'
         }
       },
-      // Step 3: Callout Manager
+      // Step 3: Scheduled Collections
       {
         context: { requirePage: '/purchase' },
-        element: '[data-tour="callout-manager"]',
+        element: '.workflow-stage-yellow',
         popover: {
-          title: 'Step 1: Callouts',
-          titleAr: 'الخطوة 1: النداءات',
-          description: 'Callouts are created when a supplier notifies you about available materials at a location. Click "New Callout" to record one.',
-          descriptionAr: 'يتم إنشاء النداءات عندما يخطرك المورد بتوفر مواد في موقع ما. انقر "نداء جديد" لتسجيل واحد.',
-          side: 'right',
+          title: 'Step 1: Scheduled Stage',
+          titleAr: 'الخطوة 1: مرحلة المجدول',
+          description: 'Click the yellow Scheduled stage to see collections awaiting driver assignment or dispatch. Use "Assign Driver" icon to assign a driver.',
+          descriptionAr: 'انقر على مرحلة المجدول الصفراء لرؤية التحصيلات التي تنتظر تعيين سائق. استخدم أيقونة "تعيين سائق" لتعيين سائق.',
+          side: 'bottom',
           align: 'start'
         }
       },
-      // Step 4: Collection Orders
+      // Step 4: In Progress Collections
       {
         context: { requirePage: '/purchase' },
-        element: '[data-tour="collection-orders"]',
+        element: '.workflow-stage-blue',
         popover: {
-          title: 'Step 2: Collection Orders',
-          titleAr: 'الخطوة 2: أوامر التحصيل',
-          description: 'Collection orders are created from callouts. They assign a driver and vehicle to pick up materials from the supplier location.',
-          descriptionAr: 'يتم إنشاء أوامر التحصيل من النداءات. تقوم بتعيين سائق ومركبة لاستلام المواد من موقع المورد.',
+          title: 'Step 2: In Progress Stage',
+          titleAr: 'الخطوة 2: مرحلة قيد التقدم',
+          description: 'Blue stage shows active collections - In Transit or Collecting. Use the primary action button to update status as the driver progresses.',
+          descriptionAr: 'المرحلة الزرقاء تعرض التحصيلات النشطة - في الطريق أو جاري التحصيل. استخدم زر الإجراء الأساسي لتحديث الحالة.',
           side: 'bottom',
           align: 'center'
         }

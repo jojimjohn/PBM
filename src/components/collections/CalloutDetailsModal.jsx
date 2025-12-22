@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
   Package, MapPin, Calendar, User, FileText, Truck, Clock, CheckCircle,
-  AlertCircle, DollarSign, Box, Link2, RefreshCw, ShoppingCart, Phone, History, X
+  AlertCircle, Banknote, Box, Link2, RefreshCw, ShoppingCart, Phone, History, X
 } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import Modal from '../ui/Modal';
 
 // Sub-component for Rectification History Modal
@@ -219,6 +220,7 @@ const RectificationHistoryModal = ({ isOpen, onClose, rectificationNotes, rectif
 
 const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
   const { t, isRTL } = useLocalization();
+  const { formatDate } = useSystemSettings();
   const [showRectificationHistory, setShowRectificationHistory] = useState(false);
 
   if (!callout) return null;
@@ -249,7 +251,8 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
   // Calculate totals - show collected if finalized, otherwise show available
   const isFinalized = callout.is_finalized === 1 || callout.isFinalized;
   const hasWCN = callout.wcn_number || callout.wcnNumber;
-  const hasPO = callout.purchase_order_id || callout.purchaseOrderId;
+  const hasPO = callout.purchase_order_id || callout.purchaseOrderId || callout.purchaseOrderNumber;
+  const poNumber = callout.purchaseOrderNumber || callout.purchase_order_number || `PO-${callout.purchase_order_id || callout.purchaseOrderId}`;
   const rectificationCount = callout.rectification_count || callout.rectificationCount || 0;
   const rectificationNotes = callout.rectification_notes || callout.rectificationNotes || '';
 
@@ -258,8 +261,17 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
     sum + parseFloat(item.availableQuantity || 0), 0) || 0;
   const totalCollected = callout.items?.reduce((sum, item) =>
     sum + parseFloat(item.collectedQuantity || 0), 0) || 0;
+
+  // Helper to calculate item value (use stored totalValue or calculate from rate)
+  const getItemValue = (item) => {
+    if (parseFloat(item.totalValue) > 0) return parseFloat(item.totalValue);
+    const qty = parseFloat(item.collectedQuantity) || parseFloat(item.availableQuantity) || 0;
+    const rate = parseFloat(item.contractRate) || 0;
+    return qty * rate;
+  };
+
   const totalValue = callout.items?.reduce((sum, item) =>
-    sum + parseFloat(item.totalValue || 0), 0) || 0;
+    sum + getItemValue(item), 0) || 0;
 
   // Determine what quantity to show prominently
   const hasCollectedData = totalCollected > 0;
@@ -336,7 +348,7 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
                   WCN Date
                 </label>
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: 'var(--green-900)' }}>
-                  {(callout.wcn_date || callout.wcnDate) ? new Date(callout.wcn_date || callout.wcnDate).toLocaleDateString() : '-'}
+                  {(callout.wcn_date || callout.wcnDate) ? formatDate(callout.wcn_date || callout.wcnDate) : '-'}
                 </p>
               </div>
               <div>
@@ -398,7 +410,7 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <ShoppingCart style={{ width: '16px', height: '16px', color: 'var(--green-700)' }} />
                     <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--green-800)' }}>
-                      Purchase Order Created: PO #{callout.purchase_order_id || callout.purchaseOrderId}
+                      Purchase Order Created: {poNumber}
                     </span>
                     <CheckCircle style={{ width: '14px', height: '14px', color: 'var(--green-600)' }} />
                   </div>
@@ -482,7 +494,7 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
               {t('scheduledDate') || 'Scheduled Date'}
             </label>
             <p style={{ margin: 0, fontSize: '16px', fontWeight: '500', color: 'var(--gray-900)' }}>
-              {callout.scheduledDate ? new Date(callout.scheduledDate).toLocaleDateString() : '-'}
+              {callout.scheduledDate ? formatDate(callout.scheduledDate) : '-'}
             </p>
           </div>
 
@@ -643,7 +655,7 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
                           OMR {parseFloat(item.contractRate || item.agreedRate || 0).toFixed(3)}
                         </td>
                         <td style={{ padding: '12px', fontSize: '14px', fontWeight: '600', color: 'var(--primary-600)', textAlign: 'right' }}>
-                          OMR {parseFloat(item.totalValue || 0).toFixed(2)}
+                          OMR {getItemValue(item).toFixed(2)}
                         </td>
                         <td style={{ padding: '12px', fontSize: '14px', color: 'var(--gray-700)', textAlign: 'center' }}>
                           <span style={{

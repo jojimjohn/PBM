@@ -1304,6 +1304,48 @@
   margin: 0;
 }
 
+/* Linked Bills Table */
+.linked-bills-table {
+  margin-top: 0.75rem;
+  overflow-x: auto;
+}
+
+.linked-bills-table .mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  background: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+}
+
+.linked-bills-table .mini-table th {
+  background: var(--gray-100);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: var(--font-semibold);
+  color: var(--gray-700);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.linked-bills-table .mini-table td {
+  padding: 0.5rem 0.75rem;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.linked-bills-table .mini-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.linked-bills-table .mini-table tbody tr:hover {
+  background: var(--gray-50);
+}
+
 /* Notes Section */
 .notes-section {
   margin-bottom: 1.5rem;

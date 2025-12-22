@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Phone, Truck, ShoppingCart, Receipt, DollarSign } from 'lucide-react';
+import { FileText, Phone, Truck, ShoppingCart, Receipt, Banknote } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import '../../styles/WorkflowStepper.css';
 
@@ -52,7 +52,7 @@ const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
     {
       id: 'expenses',
       label: t('expenses', 'Expenses'),
-      icon: <DollarSign size={14} />,
+      icon: <Banknote size={14} />,
       description: t('workflowExpensesDesc', 'Track transportation, customs, and other purchase costs'),
       tab: 'expenses',
       position: 5

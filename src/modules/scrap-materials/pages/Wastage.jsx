@@ -15,7 +15,7 @@ import {
   Edit, 
   Trash2, 
   Calendar,
-  DollarSign,
+  Banknote,
   Package,
   TrendingUp,
   FileText,
@@ -424,7 +424,7 @@ const Wastage = () => {
         
         <div className="summary-card">
           <div className="card-icon danger">
-            <DollarSign size={24} />
+            <Banknote size={24} />
           </div>
           <div className="card-content">
             <div className="card-value">{formatCurrency(calculateTotalWasteCost())}</div>

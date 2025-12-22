@@ -1,24 +1,30 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import Modal from '../../../components/ui/Modal'
 import StockChart from '../../../components/StockChart'
 import MaterialFormModal from '../../../components/MaterialFormModal'
+import StockReportModal from '../../../components/StockReportModal'
+import StockAdjustmentModal from '../../../components/StockAdjustmentModal'
 import inventoryService from '../../../services/inventoryService'
 import materialService from '../../../services/materialService'
 import supplierService from '../../../services/supplierService'
 import branchService from '../../../services/branchService'
 import materialCompositionService from '../../../services/materialCompositionService'
-import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, DollarSign, BarChart3, Calendar, ChevronDown, ChevronRight, Building, Layers } from 'lucide-react'
+import transactionService from '../../../services/transactionService'
+import TimelineView from '../components/TimelineView'
+import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, Banknote, BarChart3, ChevronDown, ChevronRight, Building, Layers, Clock } from 'lucide-react'
 import '../../../styles/theme.css'
 import '../styles/Inventory.css'
 
 const Inventory = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { formatDate } = useSystemSettings()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('stock')
   const [inventory, setInventory] = useState([])
@@ -28,10 +34,10 @@ const Inventory = () => {
   const [branches, setBranches] = useState([])
   const [stockMovements, setStockMovements] = useState([])
   const [alerts, setAlerts] = useState([])
+  const [showAllAlerts, setShowAllAlerts] = useState(false)
   const [showPurchaseForm, setShowPurchaseForm] = useState(false)
   const [showStockHistory, setShowStockHistory] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
-  const [showOpeningStockModal, setShowOpeningStockModal] = useState(false)
   const [showCharts, setShowCharts] = useState(false)
   const [showMaterialForm, setShowMaterialForm] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState(null)
@@ -43,13 +49,15 @@ const Inventory = () => {
   const [showCompositeAdjustModal, setShowCompositeAdjustModal] = useState(false)
   const [compositeAdjustData, setCompositeAdjustData] = useState(null)
 
+  // Stock report modal state
+  const [showStockReport, setShowStockReport] = useState(false)
+
+  // Stock adjustment modal state
+  const [showStockAdjustment, setShowStockAdjustment] = useState(false)
+  const [adjustmentMaterialId, setAdjustmentMaterialId] = useState('')
+
   // Material composition state
   const [expandedRows, setExpandedRows] = useState(new Set())
-  const [showComponents, setShowComponents] = useState(() => {
-    // Load preference from localStorage
-    const saved = localStorage.getItem('inventory_showComponents')
-    return saved === 'true'
-  })
   const [componentMaterialIds, setComponentMaterialIds] = useState([])
   const [materialCompositions, setMaterialCompositions] = useState({})
 
@@ -115,10 +123,12 @@ const Inventory = () => {
     loadMaterialCategories()
   }, [])
 
-  // Save filter preference to localStorage
+  // Load stock movements when Transactions tab is activated
   useEffect(() => {
-    localStorage.setItem('inventory_showComponents', showComponents)
-  }, [showComponents])
+    if (activeTab === 'transactions' && stockMovements.length === 0) {
+      loadStockMovements()
+    }
+  }, [activeTab])
 
   const loadMaterialCategories = async () => {
     try {
@@ -232,8 +242,14 @@ const Inventory = () => {
       const lowStockItems = Object.values(inventoryByMaterial).filter(item =>
         item.currentStock <= item.reorderLevel && item.reorderLevel > 0
       )
-      setAlerts(lowStockItems.map(item => ({
+      setAlerts(lowStockItems.map((item, index) => ({
+        id: `alert-${item.materialId || index}`,
         type: 'warning',
+        severity: item.currentStock <= item.reorderLevel * 0.5 ? 'critical' : 'warning',
+        material: item.materialName || item.materialCode,
+        currentStock: item.currentStock,
+        reorderLevel: item.reorderLevel,
+        unit: item.unit,
         message: `Low stock alert: ${item.materialCode} (${item.currentStock} ${item.unit})`
       })))
 
@@ -241,6 +257,17 @@ const Inventory = () => {
       console.error('Error loading inventory data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Load stock movements for the Transactions tab
+  const loadStockMovements = async () => {
+    try {
+      const movements = await transactionService.getStockMovements({ limit: 100 })
+      setStockMovements(movements)
+    } catch (error) {
+      console.error('Error loading stock movements:', error)
+      setStockMovements([])
     }
   }
 
@@ -263,13 +290,44 @@ const Inventory = () => {
     return { totalItems, totalValue, lowStockCount }
   }
 
+  // Calculate effective stock for a material (handles composite materials)
+  const getEffectiveStock = (materialId) => {
+    const matId = Number(materialId)
+    const material = materials.find(m => Number(m.id) === matId)
+
+    // For composite materials, calculate available units from components
+    if (material?.is_composite) {
+      const components = materialCompositions[matId] || []
+      if (components.length === 0) return { currentStock: 0, reorderLevel: 0 }
+
+      // Calculate how many complete composite units we can make
+      let minUnits = Infinity
+      for (const comp of components) {
+        const compStock = inventory[comp.component_material_id]?.currentStock || 0
+        const qtyPerComposite = parseFloat(comp.quantity_per_composite) || 1
+        const availableUnits = qtyPerComposite > 0 ? Math.floor(compStock / qtyPerComposite) : 0
+        minUnits = Math.min(minUnits, availableUnits)
+      }
+
+      return {
+        currentStock: minUnits === Infinity ? 0 : minUnits,
+        reorderLevel: material.minimumStockLevel || 0
+      }
+    }
+
+    // For regular materials, get from inventory
+    const stock = inventory[matId]
+    return stock || { currentStock: 0, reorderLevel: 0 }
+  }
+
   const getStockStatus = (materialId) => {
-    const stock = inventory[Number(materialId)]
-    if (!stock) return 'out-of-stock'
-    
+    const stock = getEffectiveStock(materialId)
+
     if (stock.currentStock === 0) return 'out-of-stock'
-    if (stock.currentStock <= stock.reorderLevel * 0.5) return 'critical'
-    if (stock.currentStock <= stock.reorderLevel) return 'low'
+    if (stock.reorderLevel > 0) {
+      if (stock.currentStock <= stock.reorderLevel * 0.5) return 'critical'
+      if (stock.currentStock <= stock.reorderLevel) return 'low'
+    }
     return 'good'
   }
 
@@ -465,13 +523,9 @@ const Inventory = () => {
   }
 
   const getFilteredMaterials = () => {
-    if (showComponents) {
-      // Show all materials
-      return materials
-    } else {
-      // Hide component materials
-      return materials.filter(m => !componentMaterialIds.includes(m.id))
-    }
+    // Always hide component materials from main list - they appear only under their parent composite
+    // Convert m.id to Number for consistent comparison with API integer IDs
+    return materials.filter(m => !componentMaterialIds.includes(Number(m.id)))
   }
 
   // Material management handlers
@@ -539,25 +593,27 @@ const Inventory = () => {
           <p>Track stock levels, movements, and material status</p>
         </div>
         <div className="header-actions">
-          <button 
-            className="btn btn-outline"
-            onClick={() => setShowOpeningStockModal(true)}
-          >
-            <Calendar size={16} />
-            {t('setOpeningStock')}
-          </button>
-          <button 
+          <button
             className="btn btn-outline"
             onClick={() => setShowCharts(!showCharts)}
           >
             <BarChart3 size={16} />
             {showCharts ? t('hideCharts') : t('showCharts', 'Show Charts')}
           </button>
-          <button className="btn btn-outline">
+          <button
+            className="btn btn-outline"
+            onClick={() => setShowStockReport(true)}
+          >
             <TrendingUp size={16} />
             {t('stockReport', 'Stock Report')}
           </button>
-          <button className="btn btn-primary">
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setAdjustmentMaterialId('')
+              setShowStockAdjustment(true)
+            }}
+          >
             <Plus size={16} />
             {t('stockAdjustment', 'Stock Adjustment')}
           </button>
@@ -574,12 +630,32 @@ const Inventory = () => {
       {/* Alerts Section */}
       {alerts.length > 0 && (
         <div className="alerts-section">
-          <h3 className="alerts-title">
-            <AlertTriangle size={20} />
-            Stock Alerts ({alerts.length})
-          </h3>
+          <div className="alerts-header">
+            <h3 className="alerts-title">
+              <AlertTriangle size={20} />
+              Stock Alerts ({alerts.length})
+            </h3>
+            {alerts.length > 3 && (
+              <button
+                className="alerts-toggle-btn"
+                onClick={() => setShowAllAlerts(!showAllAlerts)}
+              >
+                {showAllAlerts ? (
+                  <>
+                    <ChevronDown size={14} />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronRight size={14} />
+                    Show All ({alerts.length})
+                  </>
+                )}
+              </button>
+            )}
+          </div>
           <div className="alerts-grid">
-            {alerts.map(alert => (
+            {(showAllAlerts ? alerts : alerts.slice(0, 3)).map(alert => (
               <div key={alert.id} className={`alert-card ${alert.severity}`}>
                 <div className="alert-content">
                   <div className="alert-header">
@@ -590,11 +666,11 @@ const Inventory = () => {
                   </div>
                   <p className="alert-material">{alert.material}</p>
                   <p className="alert-details">
-                    Current: {alert.currentStock} {alert.unit} | 
+                    Current: {alert.currentStock} {alert.unit} |
                     Reorder Level: {alert.reorderLevel} {alert.unit}
                   </p>
                 </div>
-                <button 
+                <button
                   className="btn btn-primary btn-sm"
                   onClick={() => handleCreatePurchaseOrder(alert.id)}
                 >
@@ -610,8 +686,21 @@ const Inventory = () => {
       {/* Charts Section */}
       {showCharts && (
         <div className="charts-section">
-          <StockChart 
-            inventoryData={inventory}
+          <StockChart
+            inventoryData={
+              // Convert inventory object to array with material info for chart
+              materials.map(mat => {
+                const inv = inventory[Number(mat.id)] || {}
+                return {
+                  materialCode: mat.code,
+                  name: mat.name,
+                  currentStock: inv.currentStock || 0,
+                  openingStock: inv.openingStock || 0,
+                  totalValue: inv.totalValue || 0,
+                  reorderLevel: inv.reorderLevel || mat.minimumStockLevel || 0
+                }
+              })
+            }
             title={t('inventoryOverview', 'Inventory Overview')}
             height={400}
           />
@@ -628,11 +717,18 @@ const Inventory = () => {
           Stock Overview
         </button>
         <button
+          className={`tab-btn ${activeTab === 'movements' ? 'active' : ''}`}
+          onClick={() => setActiveTab('movements')}
+        >
+          <Clock size={16} />
+          {t('transactionsTab', 'Transactions')}
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'transactions' ? 'active' : ''}`}
           onClick={() => setActiveTab('transactions')}
         >
           <TrendingUp size={16} />
-          Transactions
+          {t('stockMovementsTab', 'Stock Movements')}
         </button>
         <button
           className={`tab-btn ${activeTab === 'master' ? 'active' : ''}`}
@@ -668,12 +764,13 @@ const Inventory = () => {
             </div>
             <div className="stat-card">
               <div className="stat-icon success">
-                <DollarSign size={24} />
+                <Banknote size={24} />
               </div>
               <div className="stat-info">
                 <p className="stat-value">{formatCurrency(
                   Object.entries(inventory).reduce((sum, [id, stock]) => {
-                    const material = materials.find(m => m.id === id)
+                    const materialId = Number(id)
+                    const material = materials.find(m => Number(m.id) === materialId)
                     // Only count actual materials, not composite groupings
                     if (material?.is_composite) return sum
                     return sum + (stock.currentStock * (material?.standardPrice || 0))
@@ -682,24 +779,6 @@ const Inventory = () => {
                 <p className="stat-label">Total Inventory Value</p>
               </div>
             </div>
-          </div>
-
-          {/* Filter Controls */}
-          <div className="filter-controls" style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={showComponents}
-                onChange={(e) => setShowComponents(e.target.checked)}
-                style={{ cursor: 'pointer' }}
-              />
-              <span>Show component materials</span>
-            </label>
-            {!showComponents && componentMaterialIds.length > 0 && (
-              <span style={{ color: '#6b7280', fontSize: '0.9em' }}>
-                ({componentMaterialIds.length} component material{componentMaterialIds.length !== 1 ? 's' : ''} hidden)
-              </span>
-            )}
           </div>
 
           {/* All Materials DataTable */}
@@ -723,14 +802,26 @@ const Inventory = () => {
               if (material.is_composite && expandedRows.has(material.id)) {
                 const components = materialCompositions[material.id] || []
                 components.forEach(comp => {
+                  const compStock = inventory[comp.component_material_id]
+                  const compCurrentStock = compStock?.currentStock || 0
+                  const compReorderLevel = compStock?.reorderLevel || 0
+                  // Calculate component status
+                  let compStatus = 'good'
+                  if (compCurrentStock === 0) compStatus = 'out-of-stock'
+                  else if (compReorderLevel > 0) {
+                    if (compCurrentStock <= compReorderLevel * 0.5) compStatus = 'critical'
+                    else if (compCurrentStock <= compReorderLevel) compStatus = 'low'
+                  }
+
                   rows.push({
                     id: `${material.id}-comp-${comp.component_material_id}`,
+                    componentMaterialId: comp.component_material_id, // Store the actual ID for lookups
                     parentId: material.id,
                     name: comp.component_material_name,
                     code: comp.component_material_code,
                     category: '',
-                    stock: { currentStock: comp.currentStock, unit: comp.unit },
-                    status: 'component',
+                    stock: { currentStock: compCurrentStock, unit: comp.unit, reorderLevel: compReorderLevel },
+                    status: compStatus,
                     stockValue: 0,
                     componentType: comp.component_type,
                     categoryInfo: null,
@@ -839,22 +930,38 @@ const Inventory = () => {
                 header: t('currentStock'),
                 type: 'number',
                 sortable: true,
-                render: (value, row) => (
-                  <span className="stock-quantity">
-                    {value} {row.stock.unit}
-                  </span>
-                )
+                render: (value, row) => {
+                  // For composite materials, show "See components" instead of qty
+                  if (row.is_composite && !row.isComponent) {
+                    return (
+                      <span className="stock-quantity composite-stock" style={{ color: '#6b7280', fontStyle: 'italic' }}>
+                        See components
+                      </span>
+                    )
+                  }
+                  return (
+                    <span className="stock-quantity">
+                      {value} {row.stock.unit}
+                    </span>
+                  )
+                }
               },
               {
                 key: 'stock.reorderLevel',
                 header: t('reorderLevel'),
                 type: 'number',
                 sortable: true,
-                render: (value, row) => (
-                  <span className="reorder-level">
-                    {value > 0 ? `${value} ${row.stock.unit}` : 'Not set'}
-                  </span>
-                )
+                render: (value, row) => {
+                  // For composite materials, hide reorder level
+                  if (row.is_composite && !row.isComponent) {
+                    return <span className="reorder-level" style={{ color: '#9ca3af' }}>—</span>
+                  }
+                  return (
+                    <span className="reorder-level">
+                      {value > 0 ? `${value} ${row.stock.unit}` : 'Not set'}
+                    </span>
+                  )
+                }
               },
               {
                 key: 'status',
@@ -882,10 +989,22 @@ const Inventory = () => {
                 header: t('actions'),
                 sortable: false,
                 render: (value, row) => {
-                  // Don't show actions for component rows
-                  if (row.isComponent) {
-                    return null
+                  // Don't show actions for composite materials (they're virtual, no physical stock)
+                  // DO show actions for component rows (they have actual physical stock)
+                  if (row.is_composite && !row.isComponent) {
+                    return <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>—</span>
                   }
+
+                  // For component rows, we need to get the actual material data with correct ID
+                  const materialForAction = row.isComponent
+                    ? {
+                        ...row,
+                        id: row.componentMaterialId, // Use the stored component material ID
+                        name: row.name,
+                        code: row.code,
+                        unit: row.stock?.unit || 'units'
+                      }
+                    : row
 
                   return (
                     <div className="action-buttons" onClick={(e) => e.stopPropagation()}>
@@ -893,7 +1012,7 @@ const Inventory = () => {
                         className="btn btn-outline btn-sm"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleViewBatches(row)
+                          handleViewBatches(materialForAction)
                         }}
                         title="View Batches"
                       >
@@ -903,7 +1022,7 @@ const Inventory = () => {
                         className="btn btn-outline btn-sm"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleAdjustStock(row)
+                          handleAdjustStock(materialForAction)
                         }}
                         title="Adjust Stock"
                       >
@@ -913,7 +1032,7 @@ const Inventory = () => {
                         className="btn btn-outline btn-sm"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleViewHistory(row)
+                          handleViewHistory(materialForAction)
                         }}
                         title="View History"
                       >
@@ -942,25 +1061,15 @@ const Inventory = () => {
         </div>
       )}
 
+      {activeTab === 'movements' && (
+        <div className="movements-timeline-view">
+          <TimelineView />
+        </div>
+      )}
+
       {activeTab === 'master' && (
         <div className="materials-view">
-          <div className="materials-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="filter-controls" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={showComponents}
-                  onChange={(e) => setShowComponents(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span>Show component materials</span>
-              </label>
-              {!showComponents && componentMaterialIds.length > 0 && (
-                <span style={{ color: '#6b7280', fontSize: '0.9em' }}>
-                  ({componentMaterialIds.length} component material{componentMaterialIds.length !== 1 ? 's' : ''} hidden)
-                </span>
-              )}
-            </div>
+          <div className="materials-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <button className="btn btn-primary" onClick={handleAddMaterial}>
               <Plus size={16} />
               {t('addMaterial', 'Add Material')}
@@ -981,6 +1090,7 @@ const Inventory = () => {
                 components.forEach(comp => {
                   rows.push({
                     id: `${material.id}-comp-${comp.component_material_id}`,
+                    componentMaterialId: comp.component_material_id, // Store the actual ID for lookups
                     parentId: material.id,
                     name: comp.component_material_name,
                     code: comp.component_material_code,
@@ -1114,7 +1224,6 @@ const Inventory = () => {
                         title="Edit Material"
                       >
                         <Edit size={14} />
-                        Edit
                       </button>
                       <button
                         className="btn btn-outline btn-sm"
@@ -1122,7 +1231,6 @@ const Inventory = () => {
                         title="View Material Details"
                       >
                         <FileText size={14} />
-                        Details
                       </button>
                     </div>
                   )
@@ -1151,10 +1259,16 @@ const Inventory = () => {
         <div className="movements-view">
           <DataTable
             data={stockMovements.map(movement => {
-              const material = materials.find(m => m.id === movement.materialId)
+              // Find material with type-safe comparison (handle string/number mismatch)
+              const material = materials.find(m => Number(m.id) === Number(movement.materialId))
               return {
                 ...movement,
-                material: material || { name: 'Unknown', unit: '' }
+                // Use material from lookup, or fallback to movement's materialName/materialCode
+                material: material || {
+                  name: movement.materialName || 'Unknown',
+                  code: movement.materialCode || '',
+                  unit: ''
+                }
               }
             })}
             columns={[
@@ -1165,7 +1279,9 @@ const Inventory = () => {
                 sortable: true,
                 filterable: true,
                 render: (value) => (
-                  <span className="movement-date">{value}</span>
+                  <span className="movement-date">
+                    {value ? formatDate(new Date(value)) : '-'}
+                  </span>
                 )
               },
               {
@@ -1207,7 +1323,7 @@ const Inventory = () => {
                 sortable: true,
                 filterable: true,
                 render: (value, row) => {
-                  const branchName = row.branchName || branches.find(b => b.id === row.branch_id)?.name || 'Main'
+                  const branchName = row.branchName || branches.find(b => b.id === row.branchId)?.name || 'Main'
                   return (
                     <span style={{ fontSize: '0.9em', color: '#6b7280' }}>
                       <Building size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
@@ -1310,7 +1426,7 @@ const Inventory = () => {
             <div className="history-timeline">
               <h4>Recent Stock Movements</h4>
               {stockMovements
-                .filter(movement => movement.materialId === selectedMaterial.id)
+                .filter(movement => Number(movement.materialId) === Number(selectedMaterial.id))
                 .map(movement => (
                   <div key={movement.id} className="movement-item">
                     <div className={`movement-icon ${movement.type}`}>
@@ -1321,7 +1437,7 @@ const Inventory = () => {
                         <span className="movement-type">
                           {movement.type === 'in' ? 'Stock In' : 'Stock Out'}
                         </span>
-                        <span className="movement-date">{movement.date}</span>
+                        <span className="movement-date">{movement.date ? formatDate(new Date(movement.date)) : '-'}</span>
                       </div>
                       <p className="movement-quantity">
                         {movement.type === 'in' ? '+' : '-'}{movement.quantity} {selectedMaterial.unit}
@@ -1357,16 +1473,28 @@ const Inventory = () => {
         </Modal>
       )}
 
-      {/* Opening Stock Modal */}
-      {showOpeningStockModal && (
-        <OpeningStockModal
-          isOpen={showOpeningStockModal}
-          onClose={() => setShowOpeningStockModal(false)}
-          inventory={inventory}
-          setInventory={setInventory}
-          materials={materials}
-        />
-      )}
+      {/* Stock Report Modal */}
+      <StockReportModal
+        isOpen={showStockReport}
+        onClose={() => setShowStockReport(false)}
+        inventory={inventory}
+        materials={materials}
+        t={t}
+        formatCurrency={formatCurrency}
+      />
+
+      {/* Stock Adjustment Modal */}
+      <StockAdjustmentModal
+        isOpen={showStockAdjustment}
+        onClose={() => setShowStockAdjustment(false)}
+        materials={materials}
+        inventory={inventory}
+        preselectedMaterialId={adjustmentMaterialId}
+        onSuccess={() => {
+          // Reload inventory data after successful adjustment
+          loadInventoryData()
+        }}
+      />
 
       {/* Material Form Modal */}
       <MaterialFormModal
@@ -1663,160 +1791,6 @@ const Inventory = () => {
         </Modal>
       )}
     </div>
-  )
-}
-
-// Opening Stock Modal Component
-const OpeningStockModal = ({ isOpen, onClose, inventory, setInventory, materials }) => {
-  const { t } = useLocalization()
-  const [selectedMaterial, setSelectedMaterial] = useState('')
-  const [openingStockData, setOpeningStockData] = useState({
-    quantity: '',
-    value: '',
-    date: new Date().toISOString().split('T')[0]
-  })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    
-    if (!selectedMaterial) {
-      alert(t('pleaseSelect', 'Please select') + ' ' + t('material'))
-      return
-    }
-
-    // Update inventory with opening stock
-    const updatedInventory = inventory.map(item => {
-      if (item.materialId === selectedMaterial) {
-        return {
-          ...item,
-          openingStock: parseFloat(openingStockData.quantity),
-          openingStockValue: parseFloat(openingStockData.value),
-          openingStockDate: openingStockData.date + 'T00:00:00Z'
-        }
-      }
-      return item
-    })
-
-    setInventory(updatedInventory)
-    
-    // Reset form
-    setSelectedMaterial('')
-    setOpeningStockData({
-      quantity: '',
-      value: '',
-      date: new Date().toISOString().split('T')[0]
-    })
-
-    onClose()
-    alert(t('openingStockUpdated', 'Opening stock updated successfully'))
-  }
-
-  const selectedInventoryItem = inventory.find(item => item.materialId === selectedMaterial)
-  const selectedMaterialInfo = materials.find(mat => mat.id === selectedMaterial)
-
-  return (
-    <Modal
-      title={t('setOpeningStock')}
-      onClose={onClose}
-      className="modal-md"
-    >
-      <form onSubmit={handleSubmit} className="opening-stock-form">
-        <div className="form-section">
-          <div className="form-group">
-            <label>{t('material')} *</label>
-            <select
-              value={selectedMaterial}
-              onChange={(e) => setSelectedMaterial(e.target.value)}
-              required
-            >
-              <option value="">{t('selectMaterial', 'Select Material')}</option>
-              {materials.map(material => (
-                <option key={material.id} value={material.id}>
-                  {material.name} ({material.code})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {selectedMaterial && selectedInventoryItem && (
-            <div className="current-stock-info">
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>{t('currentStock')}</label>
-                  <span>{selectedInventoryItem.currentStock} {selectedInventoryItem.unit}</span>
-                </div>
-                <div className="info-item">
-                  <label>{t('currentOpeningStock', 'Current Opening Stock')}</label>
-                  <span>
-                    {selectedInventoryItem.openingStock || 0} {selectedInventoryItem.unit}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>{t('openingStock')} *</label>
-            <div className="input-with-unit">
-              <input
-                type="number"
-                step="0.01"
-                value={openingStockData.quantity}
-                onChange={(e) => setOpeningStockData({
-                  ...openingStockData,
-                  quantity: e.target.value
-                })}
-                placeholder="0.00"
-                required
-              />
-              {selectedInventoryItem && (
-                <span className="unit-label">{selectedInventoryItem.unit}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>{t('openingStockValue')} *</label>
-            <div className="input-with-unit">
-              <input
-                type="number"
-                step="0.001"
-                value={openingStockData.value}
-                onChange={(e) => setOpeningStockData({
-                  ...openingStockData,
-                  value: e.target.value
-                })}
-                placeholder="0.000"
-                required
-              />
-              <span className="unit-label">OMR</span>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>{t('openingStockDate')} *</label>
-            <input
-              type="date"
-              value={openingStockData.date}
-              onChange={(e) => setOpeningStockData({
-                ...openingStockData,
-                date: e.target.value
-              })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="form-actions">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
-            {t('cancel')}
-          </button>
-          <button type="submit" className="btn btn-primary">
-            {t('updateOpeningStock', 'Update Opening Stock')}
-          </button>
-        </div>
-      </form>
-    </Modal>
   )
 }
 

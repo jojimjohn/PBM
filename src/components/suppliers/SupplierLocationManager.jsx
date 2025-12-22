@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Search, Filter, Building, Phone, User, Edit, Trash2, Eye } from 'lucide-react';
+import { MapPin, Plus, Search, Filter, Building, Phone, User, Edit, Trash2, Eye, RefreshCw } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/authService';
@@ -136,16 +136,15 @@ const SupplierLocationManager = () => {
   const handleDeleteLocation = async (location) => {
     try {
       setLoading(true);
-      const response = await authService.makeAuthenticatedRequest(
+      // makeAuthenticatedRequest already returns parsed JSON
+      const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/supplier-locations/${location.id}`,
         {
           method: 'DELETE'
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (!data.success) {
         throw new Error(data.error || 'Failed to delete supplier location');
       }
 
@@ -161,7 +160,7 @@ const SupplierLocationManager = () => {
   const handleReactivateLocation = async (location) => {
     try {
       setLoading(true);
-      
+
       // Only send allowed fields for reactivation
       const reactivationData = {
         supplierId: location.supplierId,
@@ -176,7 +175,8 @@ const SupplierLocationManager = () => {
         notes: location.notes || ''
       };
 
-      const response = await authService.makeAuthenticatedRequest(
+      // makeAuthenticatedRequest already returns parsed JSON
+      const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/supplier-locations/${location.id}`,
         {
           method: 'PUT',
@@ -187,9 +187,7 @@ const SupplierLocationManager = () => {
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (!data.success) {
         throw new Error(data.error || 'Failed to reactivate supplier location');
       }
 
@@ -205,16 +203,16 @@ const SupplierLocationManager = () => {
   const handleSaveLocation = async () => {
     try {
       setLoading(true);
-      
-      // Validate required fields
-      if (!formData.supplierId || !formData.locationName || !formData.locationCode) {
-        alert('Please fill in all required fields (Supplier, Location Name, and Location Code)');
+
+      // Validate required fields (locationCode is now optional - auto-generated)
+      if (!formData.supplierId || !formData.locationName) {
+        alert('Please fill in all required fields (Supplier and Location Name)');
         setLoading(false);
         return;
       }
 
-      const url = selectedLocation 
-        ? `${API_BASE_URL}/supplier-locations/${selectedLocation.id}` 
+      const url = selectedLocation
+        ? `${API_BASE_URL}/supplier-locations/${selectedLocation.id}`
         : `${API_BASE_URL}/supplier-locations`;
       const method = selectedLocation ? 'PUT' : 'POST';
 
@@ -245,15 +243,10 @@ const SupplierLocationManager = () => {
         return;
       }
 
-      if (cleanFormData.locationCode.length > 10) {
-        alert('Location code must be 10 characters or less');
-        setLoading(false);
-        return;
-      }
-
       console.log('Sending cleaned form data:', cleanFormData);
 
-      const response = await authService.makeAuthenticatedRequest(url, {
+      // makeAuthenticatedRequest already returns parsed JSON
+      const data = await authService.makeAuthenticatedRequest(url, {
         method,
         body: JSON.stringify(cleanFormData),
         headers: {
@@ -261,9 +254,7 @@ const SupplierLocationManager = () => {
         }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (!data.success) {
         throw new Error(data.error || 'Failed to save supplier location');
       }
 
@@ -291,7 +282,6 @@ const SupplierLocationManager = () => {
           </div>
           <div className="supplier-details">
             <strong>{value || 'Unknown Supplier'}</strong>
-            <span className="supplier-id">ID: {row.supplierId}</span>
           </div>
         </div>
       )
@@ -413,15 +403,15 @@ const SupplierLocationManager = () => {
               <Trash2 size={14} />
             </button>
           ) : (
-            <button 
-              className="btn btn-outline btn-sm btn-success" 
+            <button
+              className="btn btn-outline btn-sm btn-success"
               onClick={(e) => {
                 e.stopPropagation()
                 handleReactivateLocation(row)
               }}
-              title="Reactivate"
+              title={t('reactivate', 'Reactivate')}
             >
-              <Plus size={14} />
+              <RefreshCw size={14} />
             </button>
           )}
         </div>
@@ -499,28 +489,59 @@ const SupplierLocationManager = () => {
 };
 
 // Location Form Modal Component
-const LocationFormModal = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  title, 
-  formData, 
-  setFormData, 
+const LocationFormModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  title,
+  formData,
+  setFormData,
   suppliers,
-  regions, 
-  isEdit, 
+  regions,
+  isEdit,
   loading,
-  t 
+  t
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave();
   };
 
+  // Generate location code based on supplier name
+  const generateLocationCode = (supplierId) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    if (!supplier) return '';
+
+    // Create code from supplier name (first 3 chars uppercase)
+    const cleanName = (supplier.name || 'SUP').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const prefix = cleanName.substring(0, 3).padEnd(3, 'X');
+
+    // Generate a sequence number (simple timestamp-based for uniqueness)
+    const sequence = String(Date.now()).slice(-4);
+    return `${prefix}-LOC-${sequence}`;
+  };
+
+  // Handle supplier change - auto-generate location code for new locations
+  const handleSupplierChange = (e) => {
+    const newSupplierId = parseInt(e.target.value);
+
+    if (!isEdit && newSupplierId) {
+      // Auto-generate location code for new locations
+      const generatedCode = generateLocationCode(newSupplierId);
+      setFormData(prev => ({
+        ...prev,
+        supplierId: newSupplierId,
+        locationCode: generatedCode
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, supplierId: newSupplierId }));
+    }
+  };
+
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={title} 
+      title={title}
       onClose={onClose}
       className="modal-xl"
     >
@@ -531,13 +552,13 @@ const LocationFormModal = ({
             <MapPin size={20} />
             {t('basicInformation', 'Basic Information')}
           </div>
-          
+
           <div className="form-grid">
             <div className="form-group">
               <label>{t('supplier', 'Supplier')} *</label>
               <select
                 value={formData.supplierId || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, supplierId: parseInt(e.target.value) }))}
+                onChange={handleSupplierChange}
                 required
                 className="form-control"
               >
@@ -551,13 +572,12 @@ const LocationFormModal = ({
             </div>
 
             <div className="form-group">
-              <label>{t('locationCode', 'Location Code')} *</label>
+              <label>{t('locationCode', 'Location Code')}</label>
               <input
                 type="text"
                 value={formData.locationCode || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, locationCode: e.target.value }))}
-                required
-                placeholder="LOC001"
+                placeholder={t('autoGenerated', 'Auto-generated if left empty')}
                 className="form-control"
               />
             </div>

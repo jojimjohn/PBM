@@ -431,7 +431,6 @@ const PurchaseOrderForm = ({
               label="Order Date"
               value={formData.orderDate ? new Date(formData.orderDate) : null}
               onChange={(date) => setFormData(prev => ({ ...prev, orderDate: date ? date.toISOString().split('T')[0] : '' }))}
-              dateFormat="dd/MM/yyyy"
               required
               error={errors.orderDate}
             />
@@ -441,7 +440,6 @@ const PurchaseOrderForm = ({
               value={formData.expectedDeliveryDate ? new Date(formData.expectedDeliveryDate) : null}
               onChange={(date) => setFormData(prev => ({ ...prev, expectedDeliveryDate: date ? date.toISOString().split('T')[0] : '' }))}
               minDate={formData.orderDate ? new Date(formData.orderDate) : null}
-              dateFormat="dd/MM/yyyy"
               required={formData.status !== 'draft'}
               error={errors.expectedDeliveryDate}
             />

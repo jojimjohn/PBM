@@ -41,7 +41,7 @@ export const Icons = {
   chevronDown: LucideIcons.ChevronDown,
   users: LucideIcons.Users,
   package: LucideIcons.Package,
-  dollarSign: LucideIcons.DollarSign,
+  dollarSign: LucideIcons.Banknote,
   shoppingCart: LucideIcons.ShoppingCart,
   userPlus: LucideIcons.UserPlus,
   // MFA/Security icons

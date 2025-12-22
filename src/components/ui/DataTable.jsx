@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
+import { useSystemSettings } from '../../context/SystemSettingsContext'
 import './DataTable.css'
 
 // Helper function to access nested properties
@@ -79,7 +80,16 @@ const DataTable = ({
   enableColumnToggle = true
 }) => {
   const { t, isRTL } = useLocalization()
-  
+
+  // Get system date formatting (with fallback for standalone use)
+  let systemFormatDate = null
+  try {
+    const settings = useSystemSettings()
+    systemFormatDate = settings?.formatDate
+  } catch (e) {
+    // Component used outside SystemSettingsProvider
+  }
+
   // State management
   const [searchTerm, setSearchTerm] = useState('')
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
@@ -322,7 +332,8 @@ const DataTable = ({
     }
 
     if (column.type === 'date') {
-      return value ? new Date(value).toLocaleDateString() : '-'
+      if (!value) return '-'
+      return systemFormatDate ? systemFormatDate(value) : new Date(value).toLocaleDateString()
     }
 
     if (column.type === 'status') {

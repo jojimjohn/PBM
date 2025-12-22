@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import {
-  Receipt, Calendar, DollarSign, User, FileText,
+  Receipt, Calendar, Banknote, User, FileText,
   CreditCard, Hash, Building2, Image, X, Download, Upload, Trash2
 } from 'lucide-react';
 import './ExpenseViewModal.css';
@@ -19,14 +20,14 @@ const ExpenseViewModal = ({
   onRemoveReceipt, // Callback to handle receipt removal: (expenseId) => Promise
   t = (key) => key, // Translation function
   formatCurrency = (val) => `OMR ${(parseFloat(val) || 0).toFixed(3)}`,
-  formatDate = (date) => date ? new Date(date).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  }) : '-'
+  formatDate: formatDateProp = null
 }) => {
+  const { formatDate: systemFormatDate } = useSystemSettings();
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+
+  // Use provided formatDate prop, system settings, or fallback
+  const formatDate = formatDateProp || systemFormatDate || ((date) => date ? new Date(date).toLocaleDateString() : '-');
 
   if (!expense) return null;
 
@@ -233,7 +234,7 @@ const ExpenseViewModal = ({
           {/* Currency */}
           <div className="detail-item">
             <span className="detail-icon">
-              <DollarSign size={16} />
+              <Banknote size={16} />
             </span>
             <div className="detail-content">
               <span className="detail-label">Currency</span>

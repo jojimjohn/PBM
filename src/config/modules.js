@@ -191,7 +191,8 @@ export const MODULE_ICON_PATHS = {
   'sales': {
     viewBox: "0 0 24 24",
     paths: [
-      "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+      "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z",
+      "M3 6h18M16 10a4 4 0 0 1-8 0"
     ]
   },
   'purchase': {
@@ -215,9 +216,10 @@ export const MODULE_ICON_PATHS = {
     ]
   },
   'expenses': {
-    viewBox: "0 0 24 24", 
+    viewBox: "0 0 24 24",
     paths: [
-      "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+      "M2 6h20v12H2z",
+      "M2 9h20M10 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
     ]
   },
   'petty-cash': {

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creating Sales Orders - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="collection-to-wcn.html" class="nav-link">Collection to WCN</a></li>
+          <li class="nav-item"><a href="create-sales-order.html" class="nav-link active">Creating Sales Orders</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link">Expense Approval</a></li>
+          <li class="nav-item"><a href="create-contract.html" class="nav-link">Creating Contracts</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Creating Sales Orders</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>How to Create a Sales Order</h1>
+        <p class="lead">
+          This step-by-step guide walks you through creating a sales order with automatic contract rate application.
+          Learn how to select customers, add materials, and ensure the best pricing is applied.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Required Role & Estimated Time</div>
+            <p style="margin:0;">
+              <span class="role-badge sales">Sales Staff</span> or higher |
+              <strong>~4 minutes</strong> to complete
+            </p>
+          </div>
+        </div>
+
+        <!-- Workflow Overview -->
+        <section>
+          <h2>Sales Order Workflow</h2>
+          <div class="card">
+            <div class="workflow-diagram">
+              <div class="workflow-step active">
+                <div class="step-number">1</div>
+                <div class="step-label">Select Customer</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step">
+                <div class="step-number">2</div>
+                <div class="step-label">Add Materials</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step highlight">
+                <div class="step-number">3</div>
+                <div class="step-label">Contract Rates</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step">
+                <div class="step-number">4</div>
+                <div class="step-label">Review & Submit</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step success">
+                <div class="step-number">✓</div>
+                <div class="step-label">Order Created</div>
+              </div>
+            </div>
+            <p style="margin-top: 16px; font-size: 14px; color: #6b7280;">
+              Contract rates are automatically applied when you select materials for customers with active contracts.
+            </p>
+          </div>
+        </section>
+
+        <!-- Step 1: Navigate to Sales -->
+        <section>
+          <h2>Step 1: Navigate to Sales Module</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Go to Sales</div>
+              <div class="step-content">
+                <p><strong>Navigate to:</strong> Sales from the main menu</p>
+                <p>The Sales Orders tab shows all your existing orders. You can view, track, and manage orders from here.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click "New Sales Order"</div>
+              <div class="step-content">
+                <p>Click the <strong>+ New Sales Order</strong> button in the top right area.</p>
+                <p>A modal form opens for creating the new order.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 2: Select Customer -->
+        <section>
+          <h2>Step 2: Select Customer</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Choose Customer from Dropdown</div>
+              <div class="step-content">
+                <p>Select the customer for this order from the <strong>Customer</strong> dropdown.</p>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Contract Status Indicator</div>
+                    <p style="margin:0;">Customers with active contracts show a <span style="color:#22c55e;">●</span> green indicator. Their negotiated rates will automatically apply.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Customer Not Found?</div>
+              <div class="step-content">
+                <p>If the customer doesn't exist:</p>
+                <ol>
+                  <li>Go to <strong>Sales → Customers</strong></li>
+                  <li>Click <strong>+ Add Customer</strong></li>
+                  <li>Fill in customer details and save</li>
+                  <li>Return to create the sales order</li>
+                </ol>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 3: Add Materials -->
+        <section>
+          <h2>Step 3: Add Materials to Order</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click "Add Item"</div>
+              <div class="step-content">
+                <p>In the materials section, click <strong>+ Add Item</strong> to add a material to the order.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Material</div>
+              <div class="step-content">
+                <p>Choose the material from the dropdown. The system immediately checks for contract rates.</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Material</strong></td>
+                      <td>Select the material being sold</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Quantity</strong></td>
+                      <td>Enter the quantity to sell</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Unit</strong></td>
+                      <td>Auto-filled based on material (liters, kg, etc.)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Rate</strong></td>
+                      <td>Auto-filled from contract or enter market rate</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Understanding Contract Rate Display</div>
+              <div class="step-content">
+                <p>When a material is added, the rate display shows:</p>
+                <div class="card-grid">
+                  <div class="card" style="border-left: 4px solid #22c55e;">
+                    <h4 style="color:#16a34a;">Contract Rate Applied ✓</h4>
+                    <p>Green highlight means a contract rate is in effect.</p>
+                    <p style="font-size: 14px; margin-top: 8px;">
+                      <strong>Example:</strong><br>
+                      Rate: OMR 24.00/liter (Contract)<br>
+                      <span style="color:#16a34a;">Savings: OMR 2.00/liter vs market</span>
+                    </p>
+                  </div>
+                  <div class="card" style="border-left: 4px solid #6b7280;">
+                    <h4 style="color:#374151;">Market Rate</h4>
+                    <p>No contract or contract doesn't cover this material.</p>
+                    <p style="font-size: 14px; margin-top: 8px;">
+                      <strong>Example:</strong><br>
+                      Rate: OMR 26.00/liter (Market)<br>
+                      <span style="color:#6b7280;">Standard pricing applied</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Contract Rate Types Explained</div>
+              <div class="step-content">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Rate Type</th>
+                      <th>How It Works</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Fixed Rate</strong></td>
+                      <td>Customer pays the negotiated rate regardless of market changes. Protects against price increases.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Discount %</strong></td>
+                      <td>A percentage discount off the current market price. Rate fluctuates with market.</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Minimum Price Guarantee</strong></td>
+                      <td>Customer pays the lower of contract rate OR market rate. Best deal for customer.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add More Items (Optional)</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Item</strong> again to add more materials to the same order.</p>
+                <p>The subtotal updates automatically as you add items.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 4: Review Items -->
+        <section>
+          <h2>Step 4: Review Your Order</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Check Items Table</div>
+              <div class="step-content">
+                <p>Review the items table to verify:</p>
+                <ul>
+                  <li>All materials are correct</li>
+                  <li>Quantities are accurate</li>
+                  <li>Rates show contract pricing where applicable</li>
+                  <li>Subtotals are correct</li>
+                </ul>
+                <p>You can <strong>edit</strong> or <strong>remove</strong> items using the action buttons.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Contract Warnings</div>
+              <div class="step-content">
+                <p>Watch for warning indicators:</p>
+                <div class="callout warning">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Contract Expiring Soon</div>
+                    <p style="margin:0;">Yellow warning means the contract expires soon. Consider discussing renewal with the customer.</p>
+                  </div>
+                </div>
+                <div class="callout" style="background: #fef2f2; border-color: #fecaca;">
+                  <div class="callout-icon" style="color: #ef4444;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title" style="color: #dc2626;">Contract Expired</div>
+                    <p style="margin:0;">Red warning means the contract has expired. Market rates will apply.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Notes (Optional)</div>
+              <div class="step-content">
+                <p>Use the notes field for:</p>
+                <ul>
+                  <li>Delivery instructions</li>
+                  <li>Special handling requirements</li>
+                  <li>Customer reference numbers</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 5: Submit Order -->
+        <section>
+          <h2>Step 5: Create the Sales Order</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click "Create Sales Order"</div>
+              <div class="step-content">
+                <p>Once you've reviewed everything, click <strong>Create Sales Order</strong>.</p>
+                <p>The order is created in "Pending" status.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Order Confirmation</div>
+              <div class="step-content">
+                <p>You'll see a success message with the order number.</p>
+                <p>The new order appears in your Sales Orders table.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Next Steps -->
+        <section>
+          <h2>Next Steps After Creating Order</h2>
+          <div class="card-grid">
+            <div class="card" style="border-left: 4px solid #3b82f6;">
+              <h4>1. Prepare for Delivery</h4>
+              <p>Coordinate with operations to prepare the materials for delivery.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #22c55e;">
+              <h4>2. Confirm Delivery</h4>
+              <p>When materials are delivered, update the order status to "Delivered".</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #f59e0b;">
+              <h4>3. Generate Invoice</h4>
+              <p>Create an invoice from the order for customer payment.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #8b5cf6;">
+              <h4>4. Record Payment</h4>
+              <p>When customer pays, record the payment against the invoice.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section>
+          <h2>Troubleshooting</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Issue</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Customer not in dropdown</td>
+                  <td>Create the customer first in Sales → Customers</td>
+                </tr>
+                <tr>
+                  <td>Contract rate not applying</td>
+                  <td>Check if contract is active and covers this material</td>
+                </tr>
+                <tr>
+                  <td>Material not showing</td>
+                  <td>Ensure material is active and has inventory</td>
+                </tr>
+                <tr>
+                  <td>Wrong rate displayed</td>
+                  <td>Review contract terms - may have different rate type</td>
+                </tr>
+                <tr>
+                  <td>Can't create order</td>
+                  <td>Check that all required fields are filled</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/sales.html" class="quick-link">Sales Module</a>
+            <a href="contract-rates.html" class="quick-link">Using Contract Rates</a>
+            <a href="../roles/sales-staff.html" class="quick-link">Sales Staff Guide</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .workflow-diagram {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .workflow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      min-width: 80px;
+    }
+    .workflow-step.active {
+      background: #dbeafe;
+      border: 2px solid #3b82f6;
+    }
+    .workflow-step.highlight {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+    }
+    .workflow-step.success {
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+    }
+    .step-number {
+      font-weight: bold;
+      font-size: 18px;
+      color: #374151;
+    }
+    .step-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .workflow-arrow {
+      color: #9ca3af;
+      font-size: 20px;
+    }
+    @media (max-width: 768px) {
+      .workflow-diagram {
+        flex-direction: column;
+      }
+      .workflow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</body>
+</html>

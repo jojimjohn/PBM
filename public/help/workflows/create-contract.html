@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creating Supplier Contracts - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="collection-to-wcn.html" class="nav-link">Collection to WCN</a></li>
+          <li class="nav-item"><a href="create-sales-order.html" class="nav-link">Creating Sales Orders</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link">Expense Approval</a></li>
+          <li class="nav-item"><a href="create-contract.html" class="nav-link active">Creating Contracts</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Creating Supplier Contracts</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>How to Create a Supplier Contract</h1>
+        <p class="lead">
+          This step-by-step guide walks you through creating supplier contracts with location-specific material rates.
+          Contracts define your agreements with suppliers: which locations, what materials, and at what rates.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Required Role & Estimated Time</div>
+            <p style="margin:0;">
+              <span class="role-badge manager">Manager</span> or <span class="role-badge admin">Administrator</span> |
+              <strong>~6 minutes</strong> to complete
+            </p>
+          </div>
+        </div>
+
+        <!-- Why Contracts Matter -->
+        <section>
+          <h2>Why Contracts Matter</h2>
+          <div class="card-grid">
+            <div class="card" style="border-left: 4px solid #3b82f6;">
+              <h4>Rate Automation</h4>
+              <p>Contract rates auto-apply during collections, eliminating manual pricing and errors.</p>
+            </div>
+            <div class="card" style="border-left: 4px solid #22c55e;">
+              <h4>Location-Specific Pricing</h4>
+              <p>Different rates for different supplier locations to reflect logistics costs.</p>
+            </div>
+            <div class="card" style="border-left: 4px solid #f59e0b;">
+              <h4>Price Protection</h4>
+              <p>Lock in favorable rates that protect against market fluctuations.</p>
+            </div>
+            <div class="card" style="border-left: 4px solid #8b5cf6;">
+              <h4>Audit Trail</h4>
+              <p>Complete record of agreed terms for compliance and dispute resolution.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Prerequisites -->
+        <section>
+          <h2>Before You Begin</h2>
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Prerequisites</div>
+              <ul style="margin:0;">
+                <li>The supplier must exist in the system (Supplier Management)</li>
+                <li>Supplier locations must be configured</li>
+                <li>Materials to be contracted must be defined</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 1: Navigate to Contracts -->
+        <section>
+          <h2>Step 1: Navigate to Contracts Module</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Go to Contracts</div>
+              <div class="step-content">
+                <p><strong>Navigate to:</strong> Contracts from the main menu (or Purchase → Contracts tab)</p>
+                <p>The contracts list shows all existing contracts with their status, supplier, and validity period.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click "New Contract"</div>
+              <div class="step-content">
+                <p>Click the <strong>+ New Contract</strong> button.</p>
+                <p>The contract form modal opens.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 2: Select Supplier -->
+        <section>
+          <h2>Step 2: Select Supplier</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Choose Supplier from Dropdown</div>
+              <div class="step-content">
+                <p>Select the supplier for this contract from the <strong>Supplier</strong> dropdown.</p>
+                <p>Once selected, the supplier's locations are automatically loaded for rate configuration.</p>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Multiple Contracts</div>
+                    <p style="margin:0;">You can have multiple contracts with the same supplier for different time periods or locations. Only one can be "Active" per supplier at a time.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Set Contract Number (Optional)</div>
+              <div class="step-content">
+                <p>Enter a contract reference number for your records. This could match your paper contract number.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 3: Set Contract Period -->
+        <section>
+          <h2>Step 3: Set Contract Period</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Set Start Date</div>
+              <div class="step-content">
+                <p>Select when the contract becomes effective.</p>
+                <p>Rates only apply to collections on or after this date.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Set End Date</div>
+              <div class="step-content">
+                <p>Select when the contract expires.</p>
+                <p>The system will alert you before expiry so you can negotiate renewal.</p>
+                <div class="callout note">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Expiry Alerts</div>
+                    <p style="margin:0;">You'll see notifications 30, 14, and 7 days before contract expiry. Plan renewals in advance.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Contract Type</div>
+              <div class="step-content">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Standard</strong></td>
+                      <td>Regular supplier contract with standard terms</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Exclusive</strong></td>
+                      <td>Exclusive rights to collect from this supplier</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Spot</strong></td>
+                      <td>Short-term or one-time arrangement</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 4: Configure Location Material Rates -->
+        <section>
+          <h2>Step 4: Configure Location Material Rates</h2>
+          <p>This is the core of the contract - defining what you'll pay for each material at each location.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Select a Location</div>
+              <div class="step-content">
+                <p>In the <strong>Location Material Rates</strong> section, you'll see the supplier's locations listed.</p>
+                <p>Click on a location to expand it and add material rates.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Material Rate</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Material</strong> within a location:</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Material</strong></td>
+                      <td>Select the material (e.g., Engine Oil, Transformer Oil)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Rate Type</strong></td>
+                      <td>How the rate is calculated (see Rate Types below)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Rate/Value</strong></td>
+                      <td>The rate amount or percentage</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Min Quantity</strong></td>
+                      <td>Minimum collection quantity (optional)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Max Quantity</strong></td>
+                      <td>Maximum collection quantity (optional)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Understanding Rate Types</div>
+              <div class="step-content">
+                <div class="card-grid">
+                  <div class="card" style="border-left: 4px solid #3b82f6;">
+                    <h4>Fixed Rate</h4>
+                    <p><strong>Definition:</strong> A locked price per unit until contract expiry.</p>
+                    <p><strong>Use when:</strong> You want price stability regardless of market changes.</p>
+                    <p><strong>Example:</strong> OMR 24.00 per liter for Engine Oil</p>
+                  </div>
+
+                  <div class="card" style="border-left: 4px solid #22c55e;">
+                    <h4>Discount Percentage</h4>
+                    <p><strong>Definition:</strong> A percentage discount off the current market price.</p>
+                    <p><strong>Use when:</strong> You want to benefit from market price drops.</p>
+                    <p><strong>Example:</strong> 10% discount off market price</p>
+                  </div>
+
+                  <div class="card" style="border-left: 4px solid #f59e0b;">
+                    <h4>Minimum Price Guarantee</h4>
+                    <p><strong>Definition:</strong> You pay the lower of contract rate OR market rate.</p>
+                    <p><strong>Use when:</strong> You want maximum flexibility and best price.</p>
+                    <p><strong>Example:</strong> Max OMR 25.00 or market, whichever is less</p>
+                  </div>
+
+                  <div class="card" style="border-left: 4px solid #6b7280;">
+                    <h4>Free / We Pay</h4>
+                    <p><strong>Free:</strong> Supplier gives materials at no charge (disposal fee waived).</p>
+                    <p><strong>We Pay:</strong> You charge the supplier (e.g., hazardous waste disposal).</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Rates for Multiple Materials</div>
+              <div class="step-content">
+                <p>Repeat the process to add rates for all materials you'll collect from this location.</p>
+                <p>Different locations can have different rates for the same material.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Configure Additional Locations</div>
+              <div class="step-content">
+                <p>If the supplier has multiple collection points, configure rates for each location.</p>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Location-Based Pricing</div>
+                    <p style="margin:0;">Remote locations might have different rates due to transportation costs. Configure each location appropriately.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 5: Add Contract Terms -->
+        <section>
+          <h2>Step 5: Add Contract Terms (Optional)</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Payment Terms</div>
+              <div class="step-content">
+                <p>Specify payment terms: Net 30, Net 60, Cash on Collection, etc.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Special Conditions</div>
+              <div class="step-content">
+                <p>Add any special conditions or notes in the terms field:</p>
+                <ul>
+                  <li>Minimum collection frequency</li>
+                  <li>Quality requirements</li>
+                  <li>Exclusivity clauses</li>
+                  <li>Penalty terms</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 6: Save Contract -->
+        <section>
+          <h2>Step 6: Save and Activate Contract</h2>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click "Save Contract"</div>
+              <div class="step-content">
+                <p>Click <strong>Save Contract</strong> to create the contract.</p>
+                <p>The contract is created in <strong>Draft</strong> status.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review the Contract</div>
+              <div class="step-content">
+                <p>Open the contract to review all details:</p>
+                <ul>
+                  <li>Supplier information</li>
+                  <li>Contract period</li>
+                  <li>All location-material rates</li>
+                  <li>Terms and conditions</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Activate the Contract</div>
+              <div class="step-content">
+                <p>When ready to use the contract:</p>
+                <ol>
+                  <li>Open the contract</li>
+                  <li>Click <strong>Change Status</strong></li>
+                  <li>Select <strong>Active</strong></li>
+                  <li>Confirm the activation</li>
+                </ol>
+                <div class="callout warning">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">One Active Contract</div>
+                    <p style="margin:0;">Only one contract per supplier can be active. Activating a new contract will prompt you about the existing active contract.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Contract Status Lifecycle -->
+        <section>
+          <h2>Contract Status Lifecycle</h2>
+          <div class="card">
+            <div class="workflow-diagram">
+              <div class="workflow-step active">
+                <div class="step-number">📝</div>
+                <div class="step-label">Draft</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step success">
+                <div class="step-number">✓</div>
+                <div class="step-label">Active</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step highlight">
+                <div class="step-number">⏰</div>
+                <div class="step-label">Expiring</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step" style="background: #fef2f2; border: 2px solid #ef4444;">
+                <div class="step-number">✗</div>
+                <div class="step-label">Expired</div>
+              </div>
+            </div>
+            <table style="margin-top: 16px;">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Draft</strong></td>
+                  <td>Contract created but not yet in effect. Rates won't apply.</td>
+                </tr>
+                <tr>
+                  <td><strong>Active</strong></td>
+                  <td>Contract is live. Rates automatically apply to collections.</td>
+                </tr>
+                <tr>
+                  <td><strong>Expiring</strong></td>
+                  <td>Contract expires within 30 days. Rates still apply but renewal needed.</td>
+                </tr>
+                <tr>
+                  <td><strong>Expired</strong></td>
+                  <td>Contract has ended. Rates no longer apply. Create new contract or renew.</td>
+                </tr>
+                <tr>
+                  <td><strong>Terminated</strong></td>
+                  <td>Contract was ended early. Rates no longer apply.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Next Steps -->
+        <section>
+          <h2>Next Steps After Creating Contract</h2>
+          <ol>
+            <li><strong>Create Callouts:</strong> Now you can create callouts to this supplier using contract rates</li>
+            <li><strong>Monitor Collections:</strong> Rates will auto-apply when finalizing WCNs</li>
+            <li><strong>Track Expiry:</strong> Watch for expiry notifications and plan renewals</li>
+            <li><strong>Review Performance:</strong> Use reports to track contract value and supplier performance</li>
+          </ol>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section>
+          <h2>Troubleshooting</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Issue</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Supplier not in dropdown</td>
+                  <td>Create supplier first in Supplier Management</td>
+                </tr>
+                <tr>
+                  <td>No locations showing</td>
+                  <td>Add locations to the supplier in Supplier Locations</td>
+                </tr>
+                <tr>
+                  <td>Material not in list</td>
+                  <td>Material must be created in Materials Management</td>
+                </tr>
+                <tr>
+                  <td>Can't activate contract</td>
+                  <td>Check that start date is today or future, and another contract isn't already active</td>
+                </tr>
+                <tr>
+                  <td>Rates not applying to collections</td>
+                  <td>Ensure contract is "Active" and collection date is within contract period</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="../modules/contracts.html" class="quick-link">Contracts Module</a>
+            <a href="collection-to-wcn.html" class="quick-link">Collection to WCN</a>
+            <a href="../modules/suppliers.html" class="quick-link">Supplier Management</a>
+            <a href="../roles/admin.html" class="quick-link">Admin Guide</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .workflow-diagram {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .workflow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      min-width: 80px;
+    }
+    .workflow-step.active {
+      background: #dbeafe;
+      border: 2px solid #3b82f6;
+    }
+    .workflow-step.highlight {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+    }
+    .workflow-step.success {
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+    }
+    .step-number {
+      font-weight: bold;
+      font-size: 18px;
+      color: #374151;
+    }
+    .step-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .workflow-arrow {
+      color: #9ca3af;
+      font-size: 20px;
+    }
+    @media (max-width: 768px) {
+      .workflow-diagram {
+        flex-direction: column;
+      }
+      .workflow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</body>
+</html>

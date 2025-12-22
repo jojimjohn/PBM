@@ -24,7 +24,7 @@ import {
   Truck,
   Award,
   Calendar,
-  DollarSign,
+  Banknote,
   Package,
   TrendingUp,
   Save,
@@ -555,7 +555,7 @@ const ScrapMaterialsSuppliers = () => {
 
         <div className="summary-card">
           <div className="summary-icon profit">
-            <DollarSign size={24} />
+            <Banknote size={24} />
           </div>
           <div className="summary-info">
             <p className="summary-value">
@@ -923,7 +923,7 @@ const SupplierFormModal = ({
         {/* Banking Information */}
         <div className="form-section">
           <div className="form-section-title">
-            <DollarSign size={20} />
+            <Banknote size={20} />
             Banking Information
           </div>
           
@@ -1057,7 +1057,7 @@ const SupplierViewModal = ({
             </div>
             <div className="kpi-card success">
               <div className="kpi-icon">
-                <DollarSign size={20} />
+                <Banknote size={20} />
               </div>
               <div className="kpi-content">
                 <span className="kpi-value">{formatCurrency(0)}</span>
@@ -1268,7 +1268,7 @@ const SupplierViewModal = ({
             {(supplier.bankName || supplier.accountNumber || supplier.iban) && (
               <div className="info-card">
                 <div className="info-card-header">
-                  <DollarSign size={18} />
+                  <Banknote size={18} />
                   <h3>Banking Information</h3>
                 </div>
                 <div className="info-card-content">

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collection to WCN Workflow - PBM Help Center</title>
+  <link rel="stylesheet" href="../css/help.css">
+</head>
+<body>
+  <div class="help-container">
+    <!-- Sidebar Navigation -->
+    <aside class="help-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+            <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="white" stroke-width="2" fill="none"/>
+            <circle cx="20" cy="20" r="5" fill="white"/>
+          </svg>
+          <h1>PBM Help</h1>
+        </div>
+        <p class="sidebar-subtitle">Al Ramrami Trading Enterprises</p>
+      </div>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Workflows</div>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="create-po.html" class="nav-link">Creating Purchase Orders</a></li>
+          <li class="nav-item"><a href="collection-to-wcn.html" class="nav-link active">Collection to WCN</a></li>
+          <li class="nav-item"><a href="create-sales-order.html" class="nav-link">Creating Sales Orders</a></li>
+          <li class="nav-item"><a href="approve-expense.html" class="nav-link">Expense Approval</a></li>
+          <li class="nav-item"><a href="create-contract.html" class="nav-link">Creating Contracts</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="help-main">
+      <header class="help-header">
+        <div class="help-header-content">
+          <nav class="breadcrumb">
+            <a href="../index.html">Help Center</a>
+            <span class="breadcrumb-separator">/</span>
+            <span>Workflows</span>
+            <span class="breadcrumb-separator">/</span>
+            <span>Collection to WCN</span>
+          </nav>
+        </div>
+      </header>
+
+      <div class="help-content">
+        <h1>Complete Collection to WCN Workflow</h1>
+        <p class="lead">
+          This step-by-step guide walks you through the complete collection workflow: from receiving a supplier callout
+          to finalizing the WCN (Waste Consignment Note) and auto-generating a purchase order.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          </div>
+          <div class="callout-content">
+            <div class="callout-title">Required Role & Estimated Time</div>
+            <p style="margin:0;">
+              <span class="role-badge purchase">Purchase Staff</span> or higher |
+              <strong>~8 minutes</strong> to complete
+            </p>
+          </div>
+        </div>
+
+        <!-- Workflow Overview -->
+        <section>
+          <h2>Workflow Overview</h2>
+          <div class="card">
+            <p>Collections move through four stages visible in the <strong>Workflow Progress Bar</strong>:</p>
+            <div class="workflow-diagram">
+              <div class="workflow-step" style="background: #fef9c3; border: 2px solid #facc15;">
+                <div class="step-number">📅</div>
+                <div class="step-label">Scheduled</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step" style="background: #dbeafe; border: 2px solid #3b82f6;">
+                <div class="step-number">🚛</div>
+                <div class="step-label">In Progress</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step" style="background: #dcfce7; border: 2px solid #22c55e;">
+                <div class="step-number">✓</div>
+                <div class="step-label">Completed</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step" style="background: #e0e7ff; border: 2px solid #6366f1;">
+                <div class="step-number">📄</div>
+                <div class="step-label">Finalized</div>
+              </div>
+            </div>
+            <p style="margin-top: 16px; font-size: 14px; color: #6b7280;">
+              <strong>Click any stage</strong> in the Workflow Progress Bar to filter the table. Each stage shows a count badge. WCN finalization automatically updates inventory and generates a purchase order.
+            </p>
+          </div>
+        </section>
+
+        <!-- Prerequisites -->
+        <section>
+          <h2>Before You Begin</h2>
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Prerequisites</div>
+              <ul style="margin:0;">
+                <li>An active supplier contract must exist for the supplier location</li>
+                <li>The supplier must have collection locations configured</li>
+                <li>Materials must be defined with contract rates</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 1: Create Callout -->
+        <section>
+          <h2>Step 1: Create a Collection Order</h2>
+          <p>When a supplier notifies you about available materials, create a collection order to schedule pickup.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Navigate to Collections</div>
+              <div class="step-content">
+                <p><strong>Go to:</strong> Purchase → Collections tab</p>
+                <p>You'll see the <strong>Workflow Progress Bar</strong> at the top showing four stages: Scheduled (yellow), In Progress (blue), Completed (green), and Finalized (indigo). Click any stage to filter.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click "New Callout"</div>
+              <div class="step-content">
+                <p>Click the <strong>+ New Callout</strong> button to create a new collection order.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Fill Callout Details</div>
+              <div class="step-content">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Contract</strong></td>
+                      <td>Select the active supplier contract</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Location</strong></td>
+                      <td>Choose the collection location (loads from contract)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Scheduled Date</strong></td>
+                      <td>When the collection should occur</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Expected Materials</strong></td>
+                      <td>Estimated quantities (can differ from actual)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Notes</strong></td>
+                      <td>Any special instructions or contact details</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save the Collection Order</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong>. The collection order appears in the <strong>Scheduled</strong> stage (yellow) in the Workflow Progress Bar.</p>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Tip</div>
+                    <p style="margin:0;">Schedule callouts based on your low stock report to maintain optimal inventory levels.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 2: Assign Driver -->
+        <section>
+          <h2>Step 2: Assign Driver</h2>
+          <p>Use the Driver Assignment Modal to assign a driver and vehicle to the collection.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Find the Collection Order</div>
+              <div class="step-content">
+                <p>Click the <strong>Scheduled</strong> stage (yellow) in the Workflow Progress Bar to see scheduled collections.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click the "Assign Driver" Icon</div>
+              <div class="step-content">
+                <p>In the Actions column, you'll see icon-only buttons. Hover to see tooltips. Click the <strong>Assign Driver</strong> icon (user icon).</p>
+                <div class="callout note">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Icon Buttons</div>
+                    <p style="margin:0;">The new UI uses icon-only action buttons. Hover over any button to see what it does.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Fill the Driver Assignment Modal</div>
+              <div class="step-content">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Field</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Driver Name</strong></td>
+                      <td>Enter the driver's name (required)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Vehicle Plate</strong></td>
+                      <td>Enter the vehicle plate number, e.g., OM-1234 (required)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Vehicle Type</strong></td>
+                      <td>Select: Truck, Pickup, Van, or Trailer (required)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Assign the Driver</div>
+              <div class="step-content">
+                <p>Click <strong>Assign Driver</strong>. The collection is now ready to start.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 3: Record Collected Quantities -->
+        <section>
+          <h2>Step 3: Update Status & Record Quantities</h2>
+          <p>Use the Status Update Modal to progress the collection and record actual quantities.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Update Collection Status</div>
+              <div class="step-content">
+                <p>Click the primary action button (e.g., "Start Collection") to open the <strong>Status Update Modal</strong>. Progress through statuses:</p>
+                <ul>
+                  <li><strong>In Transit</strong> - Driver is heading to the location</li>
+                  <li><strong>Collecting</strong> - Driver has arrived and is collecting</li>
+                  <li><strong>Completed</strong> - Collection is finished</li>
+                </ul>
+                <div class="callout note">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Status Notes</div>
+                    <p style="margin:0;">Notes are required for critical status changes (Completed, Cancelled, Failed). Add relevant details.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter Actual Quantities</div>
+              <div class="step-content">
+                <p>In the materials table, enter the <strong>actual quantities</strong> collected:</p>
+                <ul>
+                  <li>Quantities may differ from the callout estimates</li>
+                  <li>Some materials might not have been available</li>
+                  <li>Additional materials might have been collected</li>
+                </ul>
+                <div class="callout note">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Contract Rates</div>
+                    <p style="margin:0;">Rates are automatically applied from the contract. You'll see the rate type (Fixed, Discount %, etc.) for each material.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Record Any Issues</div>
+              <div class="step-content">
+                <p>Use the notes field to document:</p>
+                <ul>
+                  <li>Quality issues with materials</li>
+                  <li>Discrepancies from expected quantities</li>
+                  <li>Location access problems</li>
+                </ul>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 4: Add Collection Expenses -->
+        <section>
+          <h2>Step 4: Add Collection Expenses</h2>
+          <p>Record any expenses incurred during the collection trip.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Open Expenses Section</div>
+              <div class="step-content">
+                <p>Expand the <strong>Collection Expenses</strong> section on the collection order.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Add Each Expense</div>
+              <div class="step-content">
+                <p>Click <strong>+ Add Expense</strong> and enter:</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Examples</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Transportation</strong></td>
+                      <td>Fuel, tolls, parking</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Labor</strong></td>
+                      <td>Loading/unloading help</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Other</strong></td>
+                      <td>Documentation fees, misc</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p style="margin-top: 12px;"><strong>Important:</strong> Upload receipt photos for each expense.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Save Expenses</div>
+              <div class="step-content">
+                <p>These expenses will be included in the total purchase cost and attributed to the auto-generated PO.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 5: Finalize WCN -->
+        <section>
+          <h2>Step 5: Finalize WCN (Waste Consignment Note)</h2>
+          <p>This is the critical step that completes the collection and triggers automatic actions.</p>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click "Finalize WCN"</div>
+              <div class="step-content">
+                <p>On the collection order, click the <strong>Finalize WCN</strong> button.</p>
+                <p>A confirmation modal opens showing a summary of everything.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review WCN Summary</div>
+              <div class="step-content">
+                <p>Carefully verify all details in the summary:</p>
+                <ul>
+                  <li><strong>Supplier:</strong> Correct supplier name</li>
+                  <li><strong>Location:</strong> Collection point</li>
+                  <li><strong>Materials:</strong> All items with quantities</li>
+                  <li><strong>Rates:</strong> Contract rates applied correctly</li>
+                  <li><strong>Expenses:</strong> All collection expenses included</li>
+                  <li><strong>Total Value:</strong> Sum of all materials and expenses</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Composite Materials</div>
+              <div class="step-content">
+                <p>If any materials are <strong>composite</strong> (like "Engine Oil with Drums"), you'll see a preview of how they'll be split:</p>
+                <div class="card" style="background: #f0fdf4; border-left: 4px solid #22c55e;">
+                  <p style="margin: 0 0 8px 0;"><strong>Example:</strong></p>
+                  <p style="margin: 0;"><code>Engine Oil with Drums (100 liters)</code> →</p>
+                  <ul style="margin: 8px 0 0 0;">
+                    <li>Engine Oil: 100 liters</li>
+                    <li>Empty Drums: 5 pieces</li>
+                  </ul>
+                </div>
+                <p style="margin-top: 12px;">This auto-splitting ensures accurate inventory tracking.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Confirm Finalization</div>
+              <div class="step-content">
+                <p>Click <strong>Confirm & Generate PO</strong>.</p>
+                <div class="callout warning">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">This Action Cannot Be Undone</div>
+                    <p style="margin:0;">Once finalized, the WCN becomes an official record. Ensure all quantities and expenses are correct.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- What Happens Automatically -->
+        <section>
+          <h2>What Happens When You Finalize</h2>
+          <div class="card-grid">
+            <div class="card" style="border-left: 4px solid #3b82f6;">
+              <h4>1. WCN Record Created</h4>
+              <p>An official Waste Consignment Note is generated with a unique reference number.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #22c55e;">
+              <h4>2. Inventory Updated</h4>
+              <p>Collected materials are added to your inventory. Composite materials are auto-split.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #f59e0b;">
+              <h4>3. Purchase Order Generated</h4>
+              <p>A PO is auto-created with source type "WCN Auto". It includes all materials at contract rates.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid #8b5cf6;">
+              <h4>4. Expenses Linked</h4>
+              <p>Collection expenses are linked to the PO for accurate cost tracking.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Next Steps -->
+        <section>
+          <h2>Next Steps After Finalization</h2>
+          <ol>
+            <li><strong>Navigate to Purchase Orders:</strong> Go to Purchase → Orders tab to see the auto-generated PO</li>
+            <li><strong>Verify the PO:</strong> Check that materials, quantities, and rates are correct</li>
+            <li><strong>When supplier invoices:</strong> Create a Vendor Bill linked to the PO</li>
+            <li><strong>Process payment:</strong> Pay the vendor bill according to payment terms</li>
+          </ol>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section>
+          <h2>Troubleshooting</h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Issue</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>"No active contract" error</td>
+                  <td>Ensure the supplier has an active contract with the collection location</td>
+                </tr>
+                <tr>
+                  <td>Material not showing in list</td>
+                  <td>Add the material to the contract's location rates</td>
+                </tr>
+                <tr>
+                  <td>Wrong rate applied</td>
+                  <td>Check contract rates - they may have expired or be incorrectly configured</td>
+                </tr>
+                <tr>
+                  <td>Can't finalize WCN</td>
+                  <td>Ensure all required fields are filled and quantities are greater than zero</td>
+                </tr>
+                <tr>
+                  <td>Composite material not splitting</td>
+                  <td>Check material configuration - components must be defined</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+          <h4>Related Topics</h4>
+          <div class="quick-links-grid">
+            <a href="create-contract.html" class="quick-link">Create Supplier Contract</a>
+            <a href="../modules/purchase.html" class="quick-link">Purchase Module</a>
+            <a href="../roles/purchase-staff.html" class="quick-link">Purchase Staff Guide</a>
+          </div>
+        </div>
+
+        <footer class="help-footer">
+          <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .workflow-diagram {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .workflow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      min-width: 80px;
+    }
+    .workflow-step.active {
+      background: #dbeafe;
+      border: 2px solid #3b82f6;
+    }
+    .workflow-step.highlight {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+    }
+    .workflow-step.success {
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+    }
+    .step-number {
+      font-weight: bold;
+      font-size: 18px;
+      color: #374151;
+    }
+    .step-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .workflow-arrow {
+      color: #9ca3af;
+      font-size: 20px;
+    }
+    @media (max-width: 768px) {
+      .workflow-diagram {
+        flex-direction: column;
+      }
+      .workflow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</body>
+</html>

@@ -4,128 +4,73 @@ import { useLocalization } from '../../../context/LocalizationContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
-import Modal from '../../../components/ui/Modal'
-import StockChart from '../../../components/StockChart'
 import wastageService from '../../../services/wastageService'
 import materialService from '../../../services/materialService'
+import WastageForm from '../components/WastageForm'
+import WastageDetails from '../components/WastageDetails'
+import WastageAnalytics from '../components/WastageAnalytics'
 import {
   Plus,
   AlertTriangle,
   Eye,
   Edit,
   Trash2,
-  Calendar,
-  DollarSign,
-  Package,
-  TrendingUp,
-  FileText,
+  Banknote,
   CheckCircle,
   Clock,
-  XCircle,
-  Filter,
-  BarChart3,
-  Download
+  BarChart3
 } from 'lucide-react'
 import '../styles/Wastage.css'
 
-// Placeholder components for forms
-const WastageForm = ({ materials, wasteTypes, initialData, onSave, onCancel, isEditing }) => {
-  const { t } = useLocalization()
-  
-  return (
-    <div className="wastage-form">
-      <p>{isEditing ? 'Edit' : 'Add'} Wastage Form - To be fully implemented</p>
-      <div className="modal-actions">
-        <button 
-          className="btn btn-outline"
-          onClick={onCancel}
-        >
-          {t('cancel', 'Cancel')}
-        </button>
-        <button 
-          className="btn btn-primary"
-          onClick={() => onSave({})}
-        >
-          {t(isEditing ? 'update' : 'save', isEditing ? 'Update' : 'Save')}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-const WastageDetails = ({ wastage, materials, wasteTypes, onClose, onApprove, onReject, canApprove }) => {
-  const { t } = useLocalization()
-  
-  if (!wastage) return <div>No wastage data</div>
-  
-  return (
-    <div className="wastage-details">
-      <div className="detail-row">
-        <strong>Material Code:</strong> {wastage.materialCode}
-      </div>
-      <div className="detail-row">
-        <strong>Quantity:</strong> {wastage.quantity} {wastage.unit}
-      </div>
-      <div className="detail-row">
-        <strong>Total Cost:</strong> OMR {(wastage.totalCost || 0).toFixed(3)}
-      </div>
-      <div className="detail-row">
-        <strong>Date:</strong> {new Date(wastage.date).toLocaleDateString()}
-      </div>
-      <div className="detail-row">
-        <strong>Status:</strong> {wastage.status}
-      </div>
-      <div className="detail-row">
-        <strong>Description:</strong> {wastage.description || 'No description'}
-      </div>
-      
-      <div className="modal-actions">
-        {canApprove && wastage.status === 'pending_approval' && (
-          <>
-            <button 
-              className="btn btn-success"
-              onClick={() => onApprove(wastage.id, { approvedBy: 'current-user' })}
-            >
-              {t('approve', 'Approve')}
-            </button>
-            <button 
-              className="btn btn-danger"
-              onClick={() => onReject(wastage.id, { reason: 'Manual rejection' })}
-            >
-              {t('reject', 'Reject')}
-            </button>
-          </>
-        )}
-        <button 
-          className="btn btn-primary"
-          onClick={onClose}
-        >
-          {t('close', 'Close')}
-        </button>
-      </div>
-    </div>
-  )
+// Wastage type colors for consistent styling across components
+export const WASTAGE_TYPE_COLORS = {
+  spillage: '#ef4444',        // red
+  contamination: '#f97316',   // orange
+  expiry: '#eab308',          // yellow
+  damage: '#84cc16',          // lime
+  theft: '#14b8a6',           // teal
+  evaporation: '#06b6d4',     // cyan
+  sorting_loss: '#3b82f6',    // blue
+  quality_rejection: '#8b5cf6', // violet
+  transport_loss: '#d946ef',  // fuchsia
+  handling_damage: '#f43f5e', // rose
+  other: '#6b7280'            // gray
 }
 
 const Wastage = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
+
+  // Data state
   const [loading, setLoading] = useState(true)
   const [wastages, setWastages] = useState([])
-  const [wasteTypes, setWasteTypes] = useState({})
+  const [wasteTypes, setWasteTypes] = useState([])
+  const [wasteTypesMap, setWasteTypesMap] = useState({})
   const [materials, setMaterials] = useState([])
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [selectedWastage, setSelectedWastage] = useState(null)
-  const [showViewModal, setShowViewModal] = useState(false)
-  const [showChartsModal, setShowChartsModal] = useState(false)
   const [error, setError] = useState(null)
+
+  // Summary data state
+  const [summaryData, setSummaryData] = useState({
+    totalWastages: 0,
+    totalCost: 0,
+    pendingCount: 0,
+    approvedCount: 0
+  })
+
+  // Modal state
+  const [showWastageForm, setShowWastageForm] = useState(false)
+  const [showWastageDetails, setShowWastageDetails] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [selectedWastage, setSelectedWastage] = useState(null)
+  const [editingWastage, setEditingWastage] = useState(null)
+
+  // Filter state
   const [filters, setFilters] = useState({
     status: 'all',
-    wasteType: 'all',
-    dateRange: 'all'
+    wasteType: 'all'
   })
+  const [pendingFilterActive, setPendingFilterActive] = useState(false)
 
   useEffect(() => {
     loadWastageData()
@@ -135,34 +80,55 @@ const Wastage = () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       // Load wastage data from backend
       const wastageResult = await wastageService.getAll()
       if (wastageResult.success) {
-        setWastages(wastageResult.data || [])
+        const wastageData = wastageResult.data || []
+        setWastages(wastageData)
+
+        // Calculate summary from loaded data
+        const pending = wastageData.filter(w => w.status === 'pending' || w.status === 'pending_approval').length
+        const approved = wastageData.filter(w => w.status === 'approved').length
+        const totalCost = wastageData.reduce((sum, w) => sum + (w.totalCost || (w.quantity * w.unitCost) || 0), 0)
+
+        setSummaryData({
+          totalWastages: wastageData.length,
+          totalCost,
+          pendingCount: pending,
+          approvedCount: approved
+        })
       } else {
         throw new Error(wastageResult.error || 'Failed to load wastages')
       }
-      
+
       // Load wastage types
       const typesResult = await wastageService.getTypes()
-      if (typesResult.success) {
-        // Convert array to object format for compatibility
+      if (typesResult.success && typesResult.data) {
+        // Convert to array format for dropdowns
+        const typesArray = typesResult.data.map(type => ({
+          value: type.key || type.value,
+          label: type.name || type.label
+        }))
+        setWasteTypes(typesArray)
+
+        // Also create a map for quick lookup
         const typesObj = {}
         typesResult.data.forEach(type => {
-          typesObj[type.key] = { name: type.name, color: type.color }
+          typesObj[type.key || type.value] = {
+            name: type.name || type.label,
+            color: type.color || WASTAGE_TYPE_COLORS[type.key || type.value] || WASTAGE_TYPE_COLORS.other
+          }
         })
-        setWasteTypes(typesObj)
+        setWasteTypesMap(typesObj)
       }
-      
+
       // Load materials
       const materialsResult = await materialService.getAll()
       if (materialsResult.success) {
         setMaterials(materialsResult.data || [])
-      } else {
-        console.warn('Failed to load materials:', materialsResult.error)
       }
-      
+
     } catch (error) {
       console.error('Error loading wastage data:', error)
       setError(error.message)
@@ -173,153 +139,108 @@ const Wastage = () => {
     }
   }
 
+  // Refresh summary data after operations
+  const refreshSummary = async () => {
+    try {
+      const result = await wastageService.getAnalytics({})
+      if (result.success && result.data?.summary) {
+        setSummaryData({
+          totalWastages: result.data.summary.totalWastages || 0,
+          totalCost: result.data.summary.totalCost || 0,
+          pendingCount: result.data.summary.pendingCount || 0,
+          approvedCount: result.data.summary.approvedCount || 0
+        })
+      }
+    } catch (error) {
+      console.error('Error refreshing summary:', error)
+    }
+  }
+
   const formatCurrency = (amount) => {
-    return `OMR ${parseFloat(amount).toFixed(3)}`
+    return `OMR ${parseFloat(amount || 0).toFixed(3)}`
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return '-'
     return new Date(dateString).toLocaleDateString('en-GB')
   }
 
   const getStatusBadge = (status) => {
     const statusConfig = {
+      pending: { label: t('pendingApproval', 'Pending Approval'), class: 'warning' },
       pending_approval: { label: t('pendingApproval', 'Pending Approval'), class: 'warning' },
       approved: { label: t('approved', 'Approved'), class: 'success' },
       rejected: { label: t('rejected', 'Rejected'), class: 'danger' }
     }
-    
+
     return statusConfig[status] || { label: status, class: 'default' }
   }
 
   const getWasteTypeInfo = (wasteType) => {
-    return wasteTypes[wasteType] || { name: wasteType, color: '#666' }
+    return wasteTypesMap[wasteType] || { name: wasteType, color: WASTAGE_TYPE_COLORS.other }
   }
 
-  const calculateTotalWasteCost = () => {
-    return wastages.reduce((sum, wastage) => sum + (wastage.totalCost || 0), 0)
-  }
-
-  const getWastagesByMonth = () => {
-    const monthlyData = {}
-    
-    wastages.forEach(wastage => {
-      const month = new Date(wastage.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
-      if (!monthlyData[month]) {
-        monthlyData[month] = { quantity: 0, cost: 0, count: 0 }
-      }
-      monthlyData[month].quantity += wastage.quantity
-      monthlyData[month].cost += wastage.totalCost
-      monthlyData[month].count += 1
-    })
-    
-    return Object.entries(monthlyData).map(([month, data]) => ({
-      name: month,
-      materialCode: month,
-      currentStock: data.quantity,  // Use quantity as currentStock for display
-      totalValue: data.cost,        // Use cost as totalValue
-      openingStock: 0,              // Not applicable for monthly data
-      reorderLevel: data.count,     // Use count as reorderLevel
-      count: data.count
-    }))
-  }
-
+  // Handlers
   const handleAddWastage = () => {
-    setSelectedWastage(null)
-    setShowAddForm(true)
+    setEditingWastage(null)
+    setShowWastageForm(true)
   }
 
   const handleEditWastage = (wastage) => {
-    setSelectedWastage(wastage)
-    setShowEditForm(true)
+    setEditingWastage(wastage)
+    setShowWastageForm(true)
   }
 
   const handleViewWastage = (wastage) => {
     setSelectedWastage(wastage)
-    setShowViewModal(true)
+    setShowWastageDetails(true)
   }
 
-  const handleSaveWastage = async (wastageData) => {
-    try {
-      setLoading(true)
-      const result = await wastageService.create(wastageData)
-      
-      if (result.success) {
-        await loadWastageData()
-        setShowAddForm(false)
-        alert(t('wastageCreated', 'Wastage record created successfully'))
-      } else {
-        throw new Error(result.error || 'Failed to create wastage record')
-      }
-    } catch (error) {
-      console.error('Error creating wastage:', error)
-      setError(error.message)
-      alert(t('createError', `Failed to create wastage record: ${error.message}`))
-    } finally {
-      setLoading(false)
-    }
+  const handleFormSave = async () => {
+    setShowWastageForm(false)
+    setEditingWastage(null)
+    await loadWastageData()
   }
 
-  const handleUpdateWastage = async (wastageData) => {
-    try {
-      setLoading(true)
-      const result = await wastageService.update(selectedWastage.id, wastageData)
-      
-      if (result.success) {
-        await loadWastageData()
-        setShowEditForm(false)
-        setSelectedWastage(null)
-        alert(t('wastageUpdated', 'Wastage record updated successfully'))
-      } else {
-        throw new Error(result.error || 'Failed to update wastage record')
-      }
-    } catch (error) {
-      console.error('Error updating wastage:', error)
-      setError(error.message)
-      alert(t('updateError', `Failed to update wastage record: ${error.message}`))
-    } finally {
-      setLoading(false)
-    }
+  const handleFormClose = () => {
+    setShowWastageForm(false)
+    setEditingWastage(null)
+  }
+
+  const handleDetailsClose = () => {
+    setShowWastageDetails(false)
+    setSelectedWastage(null)
   }
 
   const handleApproveWastage = async (wastageId, approvalData) => {
     try {
-      setLoading(true)
       const result = await wastageService.approve(wastageId, approvalData)
-      
       if (result.success) {
         await loadWastageData()
-        setShowViewModal(false)
-        alert(t('wastageApproved', 'Wastage record approved successfully'))
+        setShowWastageDetails(false)
+        setSelectedWastage(null)
       } else {
-        throw new Error(result.error || 'Failed to approve wastage record')
+        throw new Error(result.error || 'Failed to approve wastage')
       }
     } catch (error) {
       console.error('Error approving wastage:', error)
-      setError(error.message)
-      alert(t('approveError', `Failed to approve wastage record: ${error.message}`))
-    } finally {
-      setLoading(false)
+      throw error // Re-throw for WastageDetails to handle
     }
   }
 
   const handleRejectWastage = async (wastageId, rejectionData) => {
     try {
-      setLoading(true)
       const result = await wastageService.reject(wastageId, rejectionData)
-      
       if (result.success) {
         await loadWastageData()
-        setShowViewModal(false)
-        alert(t('wastageRejected', 'Wastage record rejected successfully'))
+        setShowWastageDetails(false)
+        setSelectedWastage(null)
       } else {
-        throw new Error(result.error || 'Failed to reject wastage record')
+        throw new Error(result.error || 'Failed to reject wastage')
       }
     } catch (error) {
       console.error('Error rejecting wastage:', error)
-      setError(error.message)
-      alert(t('rejectError', `Failed to reject wastage record: ${error.message}`))
-    } finally {
-      setLoading(false)
+      throw error // Re-throw for WastageDetails to handle
     }
   }
 
@@ -328,47 +249,49 @@ const Wastage = () => {
       try {
         setLoading(true)
         const result = await wastageService.delete(wastageId)
-        
+
         if (result.success) {
-          // Reload data to reflect changes
           await loadWastageData()
-          alert(t('deleteSuccess', 'Wastage record deleted successfully'))
         } else {
-          throw new Error(result.error || 'Failed to delete wastage record')
+          throw new Error(result.error || 'Failed to delete wastage')
         }
       } catch (error) {
         console.error('Error deleting wastage:', error)
         setError(error.message)
-        alert(t('deleteError', `Failed to delete wastage record: ${error.message}`))
       } finally {
         setLoading(false)
       }
     }
   }
 
+  // Handle pending card click
+  const handlePendingCardClick = () => {
+    if (!hasPermission('APPROVE_WASTAGE')) return
+
+    if (pendingFilterActive) {
+      // Remove filter
+      setFilters(prev => ({ ...prev, status: 'all' }))
+      setPendingFilterActive(false)
+    } else {
+      // Apply pending filter
+      setFilters(prev => ({ ...prev, status: 'pending' }))
+      setPendingFilterActive(true)
+    }
+  }
+
+  // Filter wastages
   const filteredWastages = wastages.filter(wastage => {
-    if (filters.status !== 'all' && wastage.status !== filters.status) return false
+    if (filters.status !== 'all') {
+      // Handle both 'pending' and 'pending_approval' status values
+      if (filters.status === 'pending') {
+        if (wastage.status !== 'pending' && wastage.status !== 'pending_approval') return false
+      } else if (wastage.status !== filters.status) {
+        return false
+      }
+    }
     if (filters.wasteType !== 'all' && wastage.wasteType !== filters.wasteType) return false
     return true
   })
-
-  const wasteChartData = Object.entries(wasteTypes).map(([key, type]) => {
-    const typeWastages = wastages.filter(w => w.wasteType === key)
-    const totalCost = typeWastages.reduce((sum, w) => sum + w.totalCost, 0)
-    const totalQuantity = typeWastages.reduce((sum, w) => sum + w.quantity, 0)
-    
-    return {
-      name: type.name,
-      materialCode: type.name,
-      currentStock: totalQuantity, // Use totalQuantity as currentStock for display
-      totalValue: totalCost,       // Use totalCost as totalValue
-      openingStock: 0,             // Not applicable for wastage
-      reorderLevel: typeWastages.length, // Use count as reorderLevel
-      count: typeWastages.length
-    }
-  }).filter(item => item.count > 0)
-
-  // Remove early return - let DataTable handle loading state with skeleton
 
   return (
     <div className="wastage-page">
@@ -380,27 +303,29 @@ const Wastage = () => {
           <button onClick={() => setError(null)} className="error-close">×</button>
         </div>
       )}
-      
+
       <div className="page-header">
         <div className="header-left">
           <h1>{t('wastageManagement', 'Wastage Management')}</h1>
           <p>{t('trackWastageAndLosses', 'Track material wastage and losses')}</p>
         </div>
         <div className="header-actions">
-          <button 
+          <button
             className="btn btn-outline"
-            onClick={() => setShowChartsModal(true)}
+            onClick={() => setShowAnalytics(true)}
           >
             <BarChart3 size={16} />
             {t('viewAnalytics', 'View Analytics')}
           </button>
-          <button 
-            className="btn btn-primary"
-            onClick={handleAddWastage}
-          >
-            <Plus size={16} />
-            {t('reportWastage', 'Report Wastage')}
-          </button>
+          {hasPermission('CREATE_WASTAGE') && (
+            <button
+              className="btn btn-primary"
+              onClick={handleAddWastage}
+            >
+              <Plus size={16} />
+              {t('reportWastage', 'Report Wastage')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -411,41 +336,41 @@ const Wastage = () => {
             <AlertTriangle size={24} />
           </div>
           <div className="card-content">
-            <div className="card-value">{wastages.length}</div>
+            <div className="card-value">{summaryData.totalWastages}</div>
             <div className="card-label">{t('totalWastages', 'Total Wastages')}</div>
           </div>
         </div>
-        
+
         <div className="summary-card">
           <div className="card-icon danger">
-            <DollarSign size={24} />
+            <Banknote size={24} />
           </div>
           <div className="card-content">
-            <div className="card-value">{formatCurrency(calculateTotalWasteCost())}</div>
+            <div className="card-value">{formatCurrency(summaryData.totalCost)}</div>
             <div className="card-label">{t('totalWasteCost', 'Total Waste Cost')}</div>
           </div>
         </div>
-        
-        <div className="summary-card">
+
+        <div
+          className={`summary-card ${hasPermission('APPROVE_WASTAGE') ? 'clickable' : ''} ${pendingFilterActive ? 'active' : ''}`}
+          onClick={handlePendingCardClick}
+          title={hasPermission('APPROVE_WASTAGE') ? t('clickToFilter', 'Click to filter pending wastages') : ''}
+        >
           <div className="card-icon info">
             <Clock size={24} />
           </div>
           <div className="card-content">
-            <div className="card-value">
-              {wastages.filter(w => w.status === 'pending_approval').length}
-            </div>
+            <div className="card-value">{summaryData.pendingCount}</div>
             <div className="card-label">{t('pendingApproval', 'Pending Approval')}</div>
           </div>
         </div>
-        
+
         <div className="summary-card">
           <div className="card-icon success">
             <CheckCircle size={24} />
           </div>
           <div className="card-content">
-            <div className="card-value">
-              {wastages.filter(w => w.status === 'approved').length}
-            </div>
+            <div className="card-value">{summaryData.approvedCount}</div>
             <div className="card-label">{t('approved', 'Approved')}</div>
           </div>
         </div>
@@ -454,13 +379,16 @@ const Wastage = () => {
       {/* Filters */}
       <div className="filters-section">
         <div className="filter-group">
-          <label>{t('status')}:</label>
+          <label>{t('status', 'Status')}:</label>
           <select
             value={filters.status}
-            onChange={(e) => setFilters({...filters, status: e.target.value})}
+            onChange={(e) => {
+              setFilters({...filters, status: e.target.value})
+              setPendingFilterActive(e.target.value === 'pending')
+            }}
           >
             <option value="all">{t('allStatus', 'All Status')}</option>
-            <option value="pending_approval">{t('pendingApproval', 'Pending Approval')}</option>
+            <option value="pending">{t('pendingApproval', 'Pending Approval')}</option>
             <option value="approved">{t('approved', 'Approved')}</option>
             <option value="rejected">{t('rejected', 'Rejected')}</option>
           </select>
@@ -473,8 +401,8 @@ const Wastage = () => {
             onChange={(e) => setFilters({...filters, wasteType: e.target.value})}
           >
             <option value="all">{t('allTypes', 'All Types')}</option>
-            {Object.entries(wasteTypes).map(([key, type]) => (
-              <option key={key} value={key}>{type.name}</option>
+            {wasteTypes.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </select>
         </div>
@@ -487,20 +415,20 @@ const Wastage = () => {
             ...wastage,
             wasteTypeInfo: getWasteTypeInfo(wastage.wasteType),
             statusInfo: getStatusBadge(wastage.status),
-            formattedDate: formatDate(wastage.date),
-            formattedCost: formatCurrency(wastage.totalCost)
+            formattedDate: formatDate(wastage.wastageDate || wastage.date),
+            formattedCost: formatCurrency(wastage.totalCost || (wastage.quantity * wastage.unitCost))
           }))}
           columns={[
             {
               key: 'materialCode',
-              header: t('material'),
+              header: t('material', 'Material'),
               sortable: true,
               filterable: true,
               render: (value, row) => {
-                const material = materials.find(m => m.code === value)
+                const material = materials.find(m => m.id === row.materialId || m.materialCode === value)
                 return (
                   <div className="material-info">
-                    <div className="material-code">{value}</div>
+                    <div className="material-code">{value || row.materialCode || '-'}</div>
                     {material && <div className="material-name">{material.name}</div>}
                   </div>
                 )
@@ -512,33 +440,39 @@ const Wastage = () => {
               sortable: true,
               filterable: true,
               render: (value, row) => (
-                <span className="waste-type-badge" style={{ backgroundColor: row.wasteTypeInfo.color + '20', color: row.wasteTypeInfo.color }}>
-                  {row.wasteTypeInfo.name}
+                <span
+                  className="waste-type-badge"
+                  style={{
+                    backgroundColor: (WASTAGE_TYPE_COLORS[value] || WASTAGE_TYPE_COLORS.other) + '20',
+                    color: WASTAGE_TYPE_COLORS[value] || WASTAGE_TYPE_COLORS.other
+                  }}
+                >
+                  {row.wasteTypeInfo?.name || value}
                 </span>
               )
             },
             {
               key: 'quantity',
-              header: t('quantity'),
+              header: t('quantity', 'Quantity'),
               sortable: true,
               align: 'right',
-              render: (value, row) => `${value} ${row.unit}`
+              render: (value, row) => `${value} ${row.unit || ''}`
             },
             {
               key: 'totalCost',
               header: t('totalCost', 'Total Cost'),
               sortable: true,
               align: 'right',
-              render: (value) => formatCurrency(value)
+              render: (value, row) => row.formattedCost
             },
             {
               key: 'formattedDate',
-              header: t('date'),
+              header: t('date', 'Date'),
               sortable: true
             },
             {
               key: 'status',
-              header: t('status'),
+              header: t('status', 'Status'),
               sortable: true,
               filterable: true,
               render: (value, row) => (
@@ -549,31 +483,31 @@ const Wastage = () => {
             },
             {
               key: 'actions',
-              header: t('actions'),
+              header: t('actions', 'Actions'),
               sortable: false,
               render: (value, row) => (
                 <div className="action-buttons">
                   <button
                     className="btn btn-outline btn-sm"
                     onClick={() => handleViewWastage(row)}
-                    title={t('viewDetails')}
+                    title={t('viewDetails', 'View Details')}
                   >
                     <Eye size={14} />
                   </button>
-                  {hasPermission('EDIT_WASTAGE') && (
+                  {hasPermission('EDIT_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
                     <button
                       className="btn btn-outline btn-sm"
                       onClick={() => handleEditWastage(row)}
-                      title={t('edit')}
+                      title={t('edit', 'Edit')}
                     >
                       <Edit size={14} />
                     </button>
                   )}
-                  {hasPermission('DELETE_WASTAGE') && (
+                  {hasPermission('DELETE_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
                     <button
                       className="btn btn-outline btn-sm btn-danger"
                       onClick={() => handleDeleteWastage(row.id)}
-                      title={t('delete')}
+                      title={t('delete', 'Delete')}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -593,95 +527,34 @@ const Wastage = () => {
         />
       </div>
 
-      {/* Charts Modal */}
-      <Modal
-        isOpen={showChartsModal}
-        title={t('wastageAnalytics', 'Wastage Analytics')}
-        onClose={() => setShowChartsModal(false)}
-        className="modal-xl"
-        closeOnOverlayClick={false}
-      >
-          <div className="charts-container">
-            <StockChart
-              inventoryData={wasteChartData}
-              title={t('wastageByType', 'Wastage by Type')}
-              height={350}
-              fieldLabels={{
-                currentStock: t('totalQuantity', 'Total Quantity'),
-                openingStock: t('baselineQuantity', 'Baseline'),
-                reorderLevel: t('wasteCount', 'Waste Count'),
-                totalValue: t('totalCost', 'Total Cost')
-              }}
-            />
-            
-            <div className="monthly-chart">
-              <StockChart
-                inventoryData={getWastagesByMonth()}
-                title={t('monthlyWastageTrends', 'Monthly Wastage Trends')}
-                height={350}
-                fieldLabels={{
-                  currentStock: t('monthlyQuantity', 'Monthly Quantity'),
-                  openingStock: t('baselineQuantity', 'Baseline'),
-                  reorderLevel: t('incidentCount', 'Incident Count'),
-                  totalValue: t('monthlyCost', 'Monthly Cost')
-                }}
-              />
-            </div>
-          </div>
-        </Modal>
+      {/* WastageForm Modal */}
+      <WastageForm
+        isOpen={showWastageForm}
+        onClose={handleFormClose}
+        onSave={handleFormSave}
+        materials={materials}
+        wasteTypes={wasteTypes}
+        initialData={editingWastage}
+        isEditing={!!editingWastage}
+      />
 
-      {/* Add Wastage Modal */}
-      <Modal
-        isOpen={showAddForm}
-        title={t('reportWastage', 'Report Wastage')}
-        onClose={() => setShowAddForm(false)}
-        className="modal-lg"
-        closeOnOverlayClick={false}
-      >
-          <WastageForm
-            materials={materials}
-            wasteTypes={wasteTypes}
-            onSave={handleSaveWastage}
-            onCancel={() => setShowAddForm(false)}
-          />
-        </Modal>
+      {/* WastageDetails Modal */}
+      <WastageDetails
+        isOpen={showWastageDetails}
+        onClose={handleDetailsClose}
+        wastage={selectedWastage}
+        materials={materials}
+        wasteTypes={wasteTypes}
+        onApprove={handleApproveWastage}
+        onReject={handleRejectWastage}
+        canApprove={hasPermission('APPROVE_WASTAGE')}
+      />
 
-      {/* Edit Wastage Modal */}
-      <Modal
-        isOpen={showEditForm}
-        title={t('editWastage', 'Edit Wastage')}
-        onClose={() => setShowEditForm(false)}
-        className="modal-lg"
-        closeOnOverlayClick={false}
-      >
-          <WastageForm
-            materials={materials}
-            wasteTypes={wasteTypes}
-            initialData={selectedWastage}
-            onSave={handleUpdateWastage}
-            onCancel={() => setShowEditForm(false)}
-            isEditing={true}
-          />
-        </Modal>
-
-      {/* View Wastage Modal */}
-      <Modal
-        isOpen={showViewModal}
-        title={t('wastageDetails', 'Wastage Details')}
-        onClose={() => setShowViewModal(false)}
-        className="modal-lg"
-        closeOnOverlayClick={false}
-      >
-          <WastageDetails
-            wastage={selectedWastage}
-            materials={materials}
-            wasteTypes={wasteTypes}
-            onClose={() => setShowViewModal(false)}
-            onApprove={handleApproveWastage}
-            onReject={handleRejectWastage}
-            canApprove={hasPermission('APPROVE_WASTAGE')}
-          />
-        </Modal>
+      {/* WastageAnalytics Modal */}
+      <WastageAnalytics
+        isOpen={showAnalytics}
+        onClose={() => setShowAnalytics(false)}
+      />
     </div>
   )
 }

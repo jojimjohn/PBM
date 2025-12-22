@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from './ui/Modal';
 import { useSystemSettings } from '../context/SystemSettingsContext';
 import purchaseOrderExpenseService from '../services/purchaseOrderExpenseService';
-import { Plus, Edit2, Trash2, DollarSign, TrendingUp, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Banknote, TrendingUp, Package } from 'lucide-react';
 import './PurchaseOrderExpenseModal.css';
 
 const PurchaseOrderExpenseModal = ({
@@ -170,7 +170,7 @@ const PurchaseOrderExpenseModal = ({
 
           <div className="summary-card">
             <div className="summary-card-icon" style={{ backgroundColor: '#ef444420' }}>
-              <DollarSign size={24} color="#ef4444" />
+              <Banknote size={24} color="#ef4444" />
             </div>
             <div className="summary-card-content">
               <span className="summary-card-label">Total Expenses</span>

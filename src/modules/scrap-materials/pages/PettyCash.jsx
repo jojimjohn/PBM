@@ -14,7 +14,7 @@ import userService from '../../../services/userService'
 import {
   CreditCard,
   Plus,
-  DollarSign,
+  Banknote,
   TrendingUp,
   User,
   Calendar,
@@ -612,7 +612,7 @@ const PettyCash = () => {
 
         <div className="stat-card success">
           <div className="stat-icon">
-            <DollarSign />
+            <Banknote />
           </div>
           <div className="stat-content">
             <div className="stat-value">{formatCurrency(cardStats.totalBalance)}</div>
@@ -1284,7 +1284,7 @@ const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t })
         <div className="balance-cards-grid">
           <div className="balance-card primary">
             <div className="balance-card-icon">
-              <DollarSign size={24} />
+              <Banknote size={24} />
             </div>
             <div className="balance-card-content">
               <label>{t('currentBalance', 'Current Balance')}</label>

@@ -3,7 +3,7 @@ import Modal from './ui/Modal'
 import { useSystemSettings } from '../context/SystemSettingsContext'
 import {
   Plus, Trash2, Save, Calculator, Truck, FileText,
-  Package, DollarSign, MapPin, Calendar, Upload, X, Image
+  Package, Banknote, MapPin, Calendar, Upload, X, Image
 } from 'lucide-react'
 import './PurchaseExpenseForm.css'
 
@@ -15,7 +15,7 @@ const EXPENSE_CATEGORIES = [
   { id: 'storage', name: 'Storage Costs', icon: MapPin },
   { id: 'insurance', name: 'Insurance', icon: FileText },
   { id: 'documentation', name: 'Documentation', icon: FileText },
-  { id: 'other', name: 'Other Expenses', icon: DollarSign }
+  { id: 'other', name: 'Other Expenses', icon: Banknote }
 ]
 
 const PurchaseExpenseForm = ({ 
@@ -185,7 +185,7 @@ const PurchaseExpenseForm = ({
 
   const getCategoryIcon = (categoryId) => {
     const category = EXPENSE_CATEGORIES.find(cat => cat.id === categoryId)
-    return category ? category.icon : DollarSign
+    return category ? category.icon : Banknote
   }
 
   if (!purchaseOrder && !isEdit) return null

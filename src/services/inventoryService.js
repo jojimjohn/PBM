@@ -549,7 +549,124 @@ class InventoryService {
       };
     }
   }
+
+  /**
+   * Get composite material receipts with component breakdown
+   * Returns receipts showing how composite materials were split into components
+   * @param {number} materialId - The composite material ID
+   * @returns {Promise<{success: boolean, data: Object}>}
+   */
+  async getCompositeReceipts(materialId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/inventory/composite-receipts/${materialId}`
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching composite receipts:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch composite receipts',
+        data: null
+      };
+    }
+  }
+
+  /**
+   * Get stock movements timeline with filtering and pagination
+   * @param {Object} filters - Filter options
+   * @param {string} filters.startDate - Start date (YYYY-MM-DD)
+   * @param {string} filters.endDate - End date (YYYY-MM-DD)
+   * @param {number} filters.materialId - Filter by material
+   * @param {string} filters.type - Movement type: 'receipt', 'sale', 'adjustment', 'wastage', 'transfer'
+   * @param {number} filters.page - Page number (default 1)
+   * @param {number} filters.limit - Items per page (default 50)
+   * @returns {Promise<{success: boolean, data: {movements: Array, pagination: Object}}>}
+   */
+  async getStockMovements(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.materialId) params.append('materialId', filters.materialId);
+      if (filters.type) params.append('type', filters.type);
+      if (filters.batchId) params.append('batchId', filters.batchId);
+      if (filters.page) params.append('page', filters.page);
+      if (filters.limit) params.append('limit', filters.limit);
+
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/inventory/movements?${params.toString()}`
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching stock movements:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch stock movements',
+        data: { movements: [], groupedByDate: {}, pagination: { page: 1, limit: 50, total: 0, hasMore: false } }
+      };
+    }
+  }
 }
+
+/**
+ * Calculate stock status based on quantity and reorder level
+ * @param {number} quantity - Current stock quantity
+ * @param {number} reorderLevel - Reorder level threshold
+ * @returns {string} Status: 'good', 'low', 'critical', 'out-of-stock'
+ */
+export function calculateStockStatus(quantity, reorderLevel) {
+  if (quantity === 0 || quantity <= 0) return 'out-of-stock';
+  if (reorderLevel <= 0) return 'good'; // No reorder level set, assume good
+  if (quantity <= reorderLevel * 0.5) return 'critical';
+  if (quantity <= reorderLevel) return 'low';
+  return 'good';
+}
+
+/**
+ * Stock status configuration with labels and colors
+ * Used for consistent status display across the application
+ */
+export const stockStatusConfig = {
+  'good': {
+    label: 'Good Stock',
+    labelAr: 'مخزون جيد',
+    color: '#059669',
+    bgColor: '#d1fae5',
+    icon: 'check-circle'
+  },
+  'low': {
+    label: 'Low Stock',
+    labelAr: 'مخزون منخفض',
+    color: '#d97706',
+    bgColor: '#fef3c7',
+    icon: 'alert-triangle'
+  },
+  'critical': {
+    label: 'Critical',
+    labelAr: 'حرج',
+    color: '#ea580c',
+    bgColor: '#fed7aa',
+    icon: 'alert-circle'
+  },
+  'out-of-stock': {
+    label: 'Out of Stock',
+    labelAr: 'نفذ من المخزون',
+    color: '#dc2626',
+    bgColor: '#fee2e2',
+    icon: 'x-circle'
+  }
+};
 
 const inventoryService = new InventoryService();
 export default inventoryService;

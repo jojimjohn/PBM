@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
+import DatePicker from '../../../components/ui/DatePicker'
 import SalesOrderForm from '../components/SalesOrderForm'
 import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
 import salesOrderService from '../../../services/salesOrderService'
 import customerService from '../../../services/customerService'
-import { Eye, Edit, FileText, DollarSign, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
 import '../styles/Sales.css'
 
 const Sales = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { formatDate, toAPIDateFormat } = useSystemSettings()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('orders') // 'orders' or 'invoices'
   const [showOrderForm, setShowOrderForm] = useState(false)
@@ -22,6 +25,8 @@ const Sales = () => {
   const [editingOrder, setEditingOrder] = useState(null)
   const [todaysSummary, setTodaysSummary] = useState({ totalSales: 0, totalOrders: 0, pendingOrders: 0 })
   const [error, setError] = useState(null)
+  const [filterFromDate, setFilterFromDate] = useState(null)
+  const [filterToDate, setFilterToDate] = useState(null)
 
   // Load sales orders and summary data from backend
   const loadSalesData = async () => {
@@ -232,8 +237,7 @@ const Sales = () => {
       sortable: true,
       render: (value) => {
         if (!value) return '-'
-        const date = new Date(value)
-        return date.toLocaleDateString()
+        return formatDate ? formatDate(value) : new Date(value).toLocaleDateString()
       }
     },
     {
@@ -441,15 +445,19 @@ const Sales = () => {
               <option value="almaha">Al Maha Petroleum</option>
               <option value="gulf">Gulf Construction LLC</option>
             </select>
-            <input 
-              type="date" 
-              className="filter-select"
-              placeholder="From Date"
+            <DatePicker
+              value={filterFromDate}
+              onChange={setFilterFromDate}
+              placeholder={t('fromDate') || 'From Date'}
+              className="filter-datepicker"
+              size="small"
             />
-            <input 
-              type="date" 
-              className="filter-select"
-              placeholder="To Date"
+            <DatePicker
+              value={filterToDate}
+              onChange={setFilterToDate}
+              placeholder={t('toDate') || 'To Date'}
+              className="filter-datepicker"
+              size="small"
             />
           </div>
         </div>
@@ -516,7 +524,8 @@ const Sales = () => {
                   render: (value) => {
                     if (!value) return '-'
                     const date = new Date(value)
-                    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    const formattedDate = formatDate ? formatDate(value) : date.toLocaleDateString()
+                    return formattedDate + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                   }
                 },
                 {
@@ -586,7 +595,9 @@ const Sales = () => {
             <div className="summary-card">
               <div className="summary-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  <rect width="20" height="12" x="2" y="6" rx="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M6 12h.01M18 12h.01" />
                 </svg>
               </div>
               <div className="summary-info">

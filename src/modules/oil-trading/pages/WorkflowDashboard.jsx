@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { useNavigate } from 'react-router-dom'
 import workflowService from '../../../services/workflowService'
 import {
   AlertTriangle, CheckCircle, Package, FileText,
-  DollarSign, TrendingUp, Clock, Calendar,
+  Banknote, TrendingUp, Clock, Calendar,
   ArrowRight, Activity, Bell, Zap, CreditCard,
   Trash2, Truck, Building2, BarChart3, Warehouse,
   AlertCircle, RefreshCw, Users
@@ -61,6 +62,7 @@ const SkeletonActivityItem = () => (
 const WorkflowDashboard = () => {
   const { user, selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { formatDate } = useSystemSettings()
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
@@ -123,7 +125,7 @@ const WorkflowDashboard = () => {
       case 'generate_bill':
         return <FileText {...iconProps} className="action-icon bill" />
       case 'record_payment':
-        return <DollarSign {...iconProps} className="action-icon payment" />
+        return <Banknote {...iconProps} className="action-icon payment" />
       case 'contract_renewal':
         return <Calendar {...iconProps} className="action-icon renewal" />
       case 'low_stock':
@@ -154,7 +156,7 @@ const WorkflowDashboard = () => {
       case 'bill_generation':
         return <FileText {...iconProps} className="activity-icon bill" />
       case 'payment':
-        return <DollarSign {...iconProps} className="activity-icon payment" />
+        return <Banknote {...iconProps} className="activity-icon payment" />
       case 'wastage_approved':
         return <Trash2 {...iconProps} className="activity-icon wastage" />
       case 'expense_approved':
@@ -185,7 +187,7 @@ const WorkflowDashboard = () => {
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
-    return then.toLocaleDateString()
+    return formatDate ? formatDate(timestamp) : then.toLocaleDateString()
   }
 
   const getUrgencyBadge = (urgency, daysPending) => {
@@ -304,7 +306,7 @@ const WorkflowDashboard = () => {
 
             <div className="stat-card">
               <div className="stat-header">
-                <DollarSign size={20} className="stat-icon invoices" />
+                <Banknote size={20} className="stat-icon invoices" />
                 <span className="stat-label">Invoices</span>
               </div>
               <div className="stat-body">
