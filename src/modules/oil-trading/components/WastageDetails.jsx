@@ -19,7 +19,8 @@ import {
   Download,
   AlertTriangle,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Edit
 } from 'lucide-react'
 import './WastageDetails.css'
 
@@ -31,7 +32,9 @@ const WastageDetails = ({
   wasteTypes = [],
   onApprove,
   onReject,
-  canApprove = false
+  onEdit, // New prop for editing wastage
+  canApprove = false,
+  canEdit = false // New prop to control edit button visibility
 }) => {
   const { t } = useLocalization()
   const navigate = useNavigate()
@@ -110,13 +113,16 @@ const WastageDetails = ({
   // Check if wastage is pending (handle both status values)
   const isPending = wastage.status === 'pending' || wastage.status === 'pending_approval'
 
+  // Check if wastage can be edited (not approved - so pending or rejected)
+  const isEditable = wastage.status !== 'approved'
+
   // Handle approval
   const handleApprove = async () => {
     setProcessing(true)
     setError(null)
 
     try {
-      await onApprove(wastage.id, { notes: approvalNotes })
+      await onApprove(wastage.id, { status: 'approved', approvalNotes: approvalNotes })
       setShowApprovalDialog(false)
       setApprovalNotes('')
     } catch (err) {
@@ -134,7 +140,7 @@ const WastageDetails = ({
     setError(null)
 
     try {
-      await onReject(wastage.id, { reason: rejectionReason })
+      await onReject(wastage.id, { status: 'rejected', approvalNotes: rejectionReason })
       setShowRejectionDialog(false)
       setRejectionReason('')
     } catch (err) {
@@ -286,7 +292,9 @@ const WastageDetails = ({
                       <span className="detail-label">{t('approvedByLabel', 'Approved By')}</span>
                       <span className="detail-value">
                         <User size={14} />
-                        {wastage.approvedByName || wastage.approvedBy || '-'}
+                        {wastage.approvedByName && wastage.approvedByLastName
+                          ? `${wastage.approvedByName} ${wastage.approvedByLastName}`
+                          : wastage.approvedByName || '-'}
                       </span>
                     </div>
                     {wastage.approvalNotes && (
@@ -303,7 +311,9 @@ const WastageDetails = ({
                       <span className="detail-label">{t('rejectedByLabel', 'Rejected By')}</span>
                       <span className="detail-value">
                         <User size={14} />
-                        {wastage.rejectedByName || wastage.rejectedBy || '-'}
+                        {wastage.approvedByName && wastage.approvedByLastName
+                          ? `${wastage.approvedByName} ${wastage.approvedByLastName}`
+                          : wastage.approvedByName || '-'}
                       </span>
                     </div>
                     <div className="detail-item full-width">
@@ -397,6 +407,19 @@ const WastageDetails = ({
 
           {/* Modal Actions */}
           <div className="modal-actions">
+            {/* Edit button for unapproved wastages (pending or rejected) */}
+            {canEdit && isEditable && onEdit && (
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  onEdit(wastage)
+                  onClose()
+                }}
+              >
+                <Edit size={16} />
+                {t('edit', 'Edit')}
+              </button>
+            )}
             {canApprove && isPending && (
               <>
                 <button

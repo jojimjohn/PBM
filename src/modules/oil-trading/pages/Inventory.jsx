@@ -6,7 +6,7 @@ import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import Modal from '../../../components/ui/Modal'
-import StockChart from '../../../components/StockChart'
+import InventoryCharts from '../../../components/InventoryCharts'
 import MaterialFormModal from '../../../components/MaterialFormModal'
 import StockReportModal from '../../../components/StockReportModal'
 import StockAdjustmentModal from '../../../components/StockAdjustmentModal'
@@ -26,6 +26,7 @@ const Inventory = () => {
   const { t } = useLocalization()
   const { formatDate } = useSystemSettings()
   const [loading, setLoading] = useState(true)
+  const [loadingMovements, setLoadingMovements] = useState(false)
   const [activeTab, setActiveTab] = useState('stock')
   const [inventory, setInventory] = useState([])
   const [materials, setMaterials] = useState([])
@@ -38,6 +39,8 @@ const Inventory = () => {
   const [showPurchaseForm, setShowPurchaseForm] = useState(false)
   const [showStockHistory, setShowStockHistory] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
+  const [materialMovements, setMaterialMovements] = useState([])
+  const [loadingMaterialMovements, setLoadingMaterialMovements] = useState(false)
   const [showCharts, setShowCharts] = useState(false)
   const [showMaterialForm, setShowMaterialForm] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState(null)
@@ -125,7 +128,8 @@ const Inventory = () => {
 
   // Load stock movements when Transactions tab is activated
   useEffect(() => {
-    if (activeTab === 'transactions' && stockMovements.length === 0) {
+    if (activeTab === 'transactions') {
+      // Always load when tab is activated to ensure fresh data
       loadStockMovements()
     }
   }, [activeTab])
@@ -263,11 +267,16 @@ const Inventory = () => {
   // Load stock movements for the Transactions tab
   const loadStockMovements = async () => {
     try {
+      setLoadingMovements(true)
+      console.log('Loading stock movements...')
       const movements = await transactionService.getStockMovements({ limit: 100 })
+      console.log('Stock movements loaded:', movements.length, 'records', movements)
       setStockMovements(movements)
     } catch (error) {
       console.error('Error loading stock movements:', error)
       setStockMovements([])
+    } finally {
+      setLoadingMovements(false)
     }
   }
 
@@ -482,9 +491,74 @@ const Inventory = () => {
     setTimeout(() => setMessage(null), 3000)
   }
 
-  const handleViewHistory = (material) => {
+  const handleViewHistory = async (material) => {
     setSelectedMaterial(material)
     setShowStockHistory(true)
+    setMaterialMovements([])
+    setLoadingMaterialMovements(true)
+
+    try {
+      // Load batch movements specifically for this material (FIFO-accurate source)
+      const response = await inventoryService.getBatchMovements({
+        materialId: material.id,
+        limit: 50
+      })
+
+      if (response.success && response.data?.movements) {
+        // Transform batch movements to the format expected by the modal
+        const transformedMovements = response.data.movements.map(movement => {
+          // Determine type based on movement quantity (positive = in, negative = out)
+          const isInflow = movement.quantity > 0
+          const type = isInflow ? 'in' : 'out'
+
+          // Build reference string from referenceType and batchNumber
+          let reference = ''
+          if (movement.batchNumber) {
+            reference = movement.batchNumber
+          }
+          if (movement.referenceType && movement.referenceType !== 'seed_data') {
+            reference = reference ? `${reference} (${movement.referenceType})` : movement.referenceType
+          }
+
+          // Build reason from movementType and notes
+          const movementTypeLabels = {
+            'receipt': 'Stock Receipt',
+            'sale': 'Sale',
+            'wastage': 'Wastage',
+            'adjustment': 'Adjustment',
+            'transfer': 'Transfer'
+          }
+          let reason = movementTypeLabels[movement.movementType] || movement.movementType
+          if (movement.notes) {
+            reason = `${reason}: ${movement.notes}`
+          }
+
+          return {
+            id: movement.id,
+            type,
+            quantity: Math.abs(movement.quantity),
+            reason,
+            reference,
+            date: movement.movementDate,
+            // Additional fields for enhanced display
+            runningBalance: movement.runningBalance,
+            unitCost: movement.unitCost,
+            totalValue: movement.totalValue,
+            batchNumber: movement.batchNumber,
+            supplierName: movement.supplierName
+          }
+        })
+
+        setMaterialMovements(transformedMovements)
+      } else {
+        setMaterialMovements([])
+      }
+    } catch (error) {
+      console.error('Error loading material movements:', error)
+      setMaterialMovements([])
+    } finally {
+      setLoadingMaterialMovements(false)
+    }
   }
 
   const handleViewBatches = (material) => {
@@ -683,27 +757,10 @@ const Inventory = () => {
         </div>
       )}
 
-      {/* Charts Section */}
+      {/* Charts Section - New Analytics Dashboard */}
       {showCharts && (
         <div className="charts-section">
-          <StockChart
-            inventoryData={
-              // Convert inventory object to array with material info for chart
-              materials.map(mat => {
-                const inv = inventory[Number(mat.id)] || {}
-                return {
-                  materialCode: mat.code,
-                  name: mat.name,
-                  currentStock: inv.currentStock || 0,
-                  openingStock: inv.openingStock || 0,
-                  totalValue: inv.totalValue || 0,
-                  reorderLevel: inv.reorderLevel || mat.minimumStockLevel || 0
-                }
-              })
-            }
-            title={t('inventoryOverview', 'Inventory Overview')}
-            height={400}
-          />
+          <InventoryCharts materials={materials} />
         </div>
       )}
 
@@ -1258,19 +1315,29 @@ const Inventory = () => {
       {activeTab === 'transactions' && (
         <div className="movements-view">
           <DataTable
-            data={stockMovements.map(movement => {
-              // Find material with type-safe comparison (handle string/number mismatch)
-              const material = materials.find(m => Number(m.id) === Number(movement.materialId))
-              return {
-                ...movement,
-                // Use material from lookup, or fallback to movement's materialName/materialCode
-                material: material || {
+            data={stockMovements
+              // Filter out transactions without valid materials (keep if material found OR has materialName)
+              .filter(movement => {
+                const material = materials.find(m => Number(m.id) === Number(movement.materialId))
+                // Keep if we found the material in our list, or if the backend returned a materialName
+                return material || movement.materialName
+              })
+              .map(movement => {
+                // Find material with type-safe comparison (handle string/number mismatch)
+                const material = materials.find(m => Number(m.id) === Number(movement.materialId))
+                const resolvedMaterial = material || {
                   name: movement.materialName || 'Unknown',
                   code: movement.materialCode || '',
                   unit: ''
                 }
-              }
-            })}
+                return {
+                  ...movement,
+                  // Add top-level materialName for filtering
+                  materialName: resolvedMaterial.name,
+                  // Use material from lookup, or fallback to movement's materialName/materialCode
+                  material: resolvedMaterial
+                }
+              })}
             columns={[
               {
                 key: 'date',
@@ -1285,14 +1352,14 @@ const Inventory = () => {
                 )
               },
               {
-                key: 'materialId',
+                key: 'materialName',
                 header: t('material'),
                 sortable: true,
                 filterable: true,
                 render: (value, row) => (
                   <div className="material-info">
                     <span className="material-name">{row.material.name}</span>
-                    <span className="material-id">{value}</span>
+                    <span className="material-code">{row.material.code}</span>
                   </div>
                 )
               },
@@ -1363,7 +1430,7 @@ const Inventory = () => {
             ]}
             title={t('stockMovements', 'Stock Movements')}
             subtitle={t('stockMovementsSubtitle', 'Track inventory in and out movements')}
-            loading={loading}
+            loading={loadingMovements}
             searchable={true}
             filterable={true}
             sortable={true}
@@ -1400,74 +1467,140 @@ const Inventory = () => {
           size="lg"
         >
           <div className="stock-history-content">
-            <div className="material-summary">
-              <div className="summary-grid">
-                <div className="summary-item">
-                  <label>Material ID</label>
-                  <span>{selectedMaterial.id}</span>
-                </div>
-                <div className="summary-item">
-                  <label>Current Stock</label>
-                  <span>{inventory[Number(selectedMaterial.id)]?.currentStock || 0} {selectedMaterial.unit}</span>
-                </div>
-                <div className="summary-item">
-                  <label>Reorder Level</label>
-                  <span>{inventory[Number(selectedMaterial.id)]?.reorderLevel || 0} {selectedMaterial.unit}</span>
-                </div>
-                <div className="summary-item">
-                  <label>Status</label>
-                  <span className={`status-badge ${getStockStatus(selectedMaterial.id)}`}>
-                    {getStockStatus(selectedMaterial.id)}
-                  </span>
-                </div>
+            {/* Summary Header */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1rem',
+              marginBottom: '1.5rem',
+              padding: '1rem',
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px'
+            }}>
+              <div>
+                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>{t('materialCode')}</label>
+                <span style={{ fontWeight: '600' }}>{selectedMaterial.code}</span>
+              </div>
+              <div>
+                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>{t('currentStock')}</label>
+                <span style={{ fontWeight: '600', color: '#059669' }}>
+                  {inventory[Number(selectedMaterial.id)]?.currentStock || 0} {selectedMaterial.unit}
+                </span>
+              </div>
+              <div>
+                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>{t('status')}</label>
+                <span className={`status-badge ${getStockStatus(selectedMaterial.id)}`}>
+                  {getStockStatus(selectedMaterial.id)}
+                </span>
               </div>
             </div>
-            
-            <div className="history-timeline">
-              <h4>Recent Stock Movements</h4>
-              {stockMovements
-                .filter(movement => Number(movement.materialId) === Number(selectedMaterial.id))
-                .map(movement => (
-                  <div key={movement.id} className="movement-item">
-                    <div className={`movement-icon ${movement.type}`}>
-                      {movement.type === 'in' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                    </div>
-                    <div className="movement-details">
-                      <div className="movement-header">
-                        <span className="movement-type">
-                          {movement.type === 'in' ? 'Stock In' : 'Stock Out'}
-                        </span>
-                        <span className="movement-date">{movement.date ? formatDate(new Date(movement.date)) : '-'}</span>
-                      </div>
-                      <p className="movement-quantity">
-                        {movement.type === 'in' ? '+' : '-'}{movement.quantity} {selectedMaterial.unit}
-                      </p>
-                      <p className="movement-reason">{movement.reason}</p>
-                      <p className="movement-reference">Ref: {movement.reference}</p>
-                    </div>
-                  </div>
-                ))}
-              
-              {stockMovements.filter(movement => movement.materialId === selectedMaterial.id).length === 0 && (
-                <div className="no-movements">
-                  <p>No stock movements found for this material.</p>
-                </div>
-              )}
-            </div>
+
+            {/* Movements Table */}
+            {loadingMaterialMovements ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                <p>{t('loading')}</p>
+              </div>
+            ) : materialMovements.length > 0 ? (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
+                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('type')}</th>
+                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>{t('quantity')}</th>
+                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>{t('balance', 'Balance')}</th>
+                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('reason')}</th>
+                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('reference')}</th>
+                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('date')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {materialMovements.map((movement, index) => (
+                      <tr
+                        key={movement.id}
+                        style={{
+                          borderBottom: '1px solid #e2e8f0',
+                          backgroundColor: index % 2 === 0 ? '#fff' : '#f8fafc'
+                        }}
+                      >
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.85rem',
+                            fontWeight: '500',
+                            backgroundColor: movement.type === 'in' ? '#dcfce7' : '#fee2e2',
+                            color: movement.type === 'in' ? '#166534' : '#991b1b'
+                          }}>
+                            {movement.type === 'in' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                            {movement.type === 'in' ? t('stockIn') : t('stockOut')}
+                          </span>
+                        </td>
+                        <td style={{
+                          padding: '0.75rem',
+                          textAlign: 'right',
+                          fontWeight: '600',
+                          color: movement.type === 'in' ? '#059669' : '#dc2626'
+                        }}>
+                          {movement.type === 'in' ? '+' : '-'}{movement.quantity} {selectedMaterial.unit}
+                        </td>
+                        <td style={{
+                          padding: '0.75rem',
+                          textAlign: 'right',
+                          fontWeight: '500',
+                          color: '#374151',
+                          backgroundColor: '#f8fafc'
+                        }}>
+                          {movement.runningBalance !== undefined
+                            ? `${movement.runningBalance.toFixed(2)} ${selectedMaterial.unit}`
+                            : '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem', color: '#374151' }}>
+                          {movement.reason || '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          {movement.reference ? (
+                            <code style={{
+                              backgroundColor: '#e0f2fe',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              color: '#0369a1'
+                            }}>
+                              {movement.reference}
+                            </code>
+                          ) : '-'}
+                        </td>
+                        <td style={{ padding: '0.75rem', color: '#6b7280', fontSize: '0.85rem' }}>
+                          {movement.date ? formatDate(new Date(movement.date)) : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                <Clock size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                <p>{t('noMovementsFound')}</p>
+              </div>
+            )}
           </div>
-          
-          <div className="modal-actions">
+
+          <div className="modal-actions" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
             <button className="btn btn-outline" onClick={() => setShowStockHistory(false)}>
-              Close
+              {t('close')}
             </button>
-            <button 
-              className="btn btn-primary" 
+            <button
+              className="btn btn-primary"
               onClick={() => {
                 setShowStockHistory(false)
                 handleAdjustStock(selectedMaterial)
               }}
             >
-              Adjust Stock
+              {t('adjustStock')}
             </button>
           </div>
         </Modal>

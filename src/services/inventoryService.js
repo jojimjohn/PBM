@@ -617,6 +617,99 @@ class InventoryService {
       };
     }
   }
+
+  /**
+   * Get chart data for inventory analytics
+   * Returns stock levels over time and movement breakdown for charting
+   * @param {Object} options - Chart options
+   * @param {string} options.startDate - Start date (YYYY-MM-DD)
+   * @param {string} options.endDate - End date (YYYY-MM-DD)
+   * @param {number[]} options.materialIds - Array of material IDs to include
+   * @param {string} options.groupBy - Grouping: 'day', 'week', 'month'
+   * @returns {Promise<{success: boolean, data: {stockLevels: Array, movements: Array, materialInfo: Array}}>}
+   */
+  async getChartData(options = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (options.startDate) params.append('startDate', options.startDate);
+      if (options.endDate) params.append('endDate', options.endDate);
+      if (options.materialIds && options.materialIds.length > 0) {
+        params.append('materialIds', options.materialIds.join(','));
+      }
+      if (options.groupBy) params.append('groupBy', options.groupBy);
+
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/inventory/chart-data?${params.toString()}`
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch chart data',
+        data: {
+          stockLevels: [],
+          movements: [],
+          materialInfo: [],
+          allMaterials: [],
+          dateRange: { start: '', end: '' },
+          summary: { totalReceipts: 0, totalSales: 0, totalWastage: 0, netChange: 0 }
+        }
+      };
+    }
+  }
+
+  /**
+   * Get batch movements history for a material (for View History modal)
+   * Returns stock movements with running balance calculated from batch_movements table
+   * @param {Object} options - Query options
+   * @param {number} options.materialId - Material ID (required)
+   * @param {number} options.page - Page number (default 1)
+   * @param {number} options.limit - Items per page (default 50)
+   * @param {string} options.startDate - Filter start date (YYYY-MM-DD)
+   * @param {string} options.endDate - Filter end date (YYYY-MM-DD)
+   * @returns {Promise<{success: boolean, data: {movements: Array, currentStock: number, pagination: Object}}>}
+   */
+  async getBatchMovements(options = {}) {
+    try {
+      if (!options.materialId) {
+        return {
+          success: false,
+          error: 'materialId is required',
+          data: { movements: [], currentStock: 0, pagination: { page: 1, limit: 50, total: 0, pages: 0 } }
+        };
+      }
+
+      const params = new URLSearchParams();
+      params.append('materialId', options.materialId);
+      if (options.page) params.append('page', options.page);
+      if (options.limit) params.append('limit', options.limit);
+      if (options.startDate) params.append('startDate', options.startDate);
+      if (options.endDate) params.append('endDate', options.endDate);
+
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/inventory/batch-movements?${params.toString()}`
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching batch movements:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch batch movements',
+        data: { movements: [], currentStock: 0, pagination: { page: 1, limit: 50, total: 0, pages: 0 } }
+      };
+    }
+  }
 }
 
 /**

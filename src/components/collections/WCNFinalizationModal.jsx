@@ -8,6 +8,10 @@ import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import './WCNFinalizationModal.css';
 
+// NOTE: Wastage is NOT recorded during WCN finalization.
+// After finalization, users can record wastage separately from the Collection Details modal.
+// This ensures inventory receives FULL verified qty, and wastage only affects inventory upon approval.
+
 const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) => {
   const { t } = useLocalization();
   const { formatDate } = useSystemSettings();
@@ -341,6 +345,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
       await new Promise(r => setTimeout(r, 300));
 
       // Prepare WCN data with verified quantities and quality
+      // NOTE: Wastage is NOT included - it should be recorded separately after finalization
       const wcnData = {
         wcnDate: wcnDate,
         notes: notes,
@@ -371,7 +376,6 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
         materialId: i.materialId,
         materialName: i.materialName,
         verifiedQuantity: i.verifiedQuantity,
-        verifiedQuantityType: typeof i.verifiedQuantity,
         isNewItem: i.isNewItem
       })));
       console.log('=== END DEBUG ===');
@@ -391,11 +395,11 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
         // Step 5: Complete
         setFinalizationStep(5);
         const newItemsAdded = response.data?.newItemsAdded || 0;
-        setFinalizationMessage(
-          newItemsAdded > 0
-            ? `WCN finalized! ${newItemsAdded} new material(s) added.`
-            : 'WCN finalized successfully!'
-        );
+        let successMsg = 'WCN finalized successfully! Inventory updated with full verified quantities.';
+        if (newItemsAdded > 0) {
+          successMsg = `WCN finalized! ${newItemsAdded} new material(s) added.`;
+        }
+        setFinalizationMessage(successMsg);
 
         // Show success briefly before closing
         await new Promise(r => setTimeout(r, 800));
@@ -657,12 +661,10 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                       <th className="text-center">Expected Qty</th>
                       <th className="text-center">Verified Qty</th>
                       <th>Unit</th>
-                      <th className="text-center">Expected Grade</th>
                       <th className="text-center">Verified Grade</th>
-                      <th className="text-center">Quality ✓</th>
                       <th className="text-right">Rate</th>
                       <th className="text-right">Amount</th>
-                      <th className="text-center" style={{ width: '50px' }}></th>
+                      <th className="text-center" style={{ width: '60px' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -703,15 +705,6 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                           </td>
                           <td>{item.unit || 'KG'}</td>
                           <td className="text-center">
-                            {item.isNewItem ? (
-                              <span className="no-expected">-</span>
-                            ) : (
-                              <span className={`quality-badge ${getQualityBadgeClass(item.expectedQualityGrade)}`}>
-                                {item.expectedQualityGrade}
-                              </span>
-                            )}
-                          </td>
-                          <td className="text-center">
                             <select
                               className={`quality-select ${hasGradeChanged ? 'changed' : ''}`}
                               value={item.verifiedQualityGrade}
@@ -722,31 +715,14 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                                 <option key={grade} value={grade}>{grade}</option>
                               ))}
                             </select>
-                            {hasGradeChanged && !item.isNewItem && (
-                              <span className="quality-change-indicator">
-                                {item.expectedQualityGrade} → {item.verifiedQualityGrade}
-                              </span>
-                            )}
-                          </td>
-                          <td className="text-center">
-                            <input
-                              type="checkbox"
-                              className="quality-verified-checkbox"
-                              checked={item.qualityVerified || false}
-                              onChange={() => handleQualityVerifiedToggle(index)}
-                              disabled={processing}
-                              title={item.qualityVerified ? t('qualityVerified', 'Quality Verified') : t('verifyQuality', 'Click to verify quality')}
-                            />
                           </td>
                           <td className="text-right">
                             OMR {rate.toFixed(3)}
                           </td>
                           <td className="text-right">
-                            <strong className={hasQtyChanged ? 'amount-changed' : ''}>
-                              OMR {amount.toFixed(2)}
-                            </strong>
+                            <strong>OMR {amount.toFixed(2)}</strong>
                           </td>
-                          <td className="text-center">
+                          <td className="text-center actions-cell">
                             {item.isNewItem && (
                               <button
                                 type="button"
@@ -765,7 +741,8 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                   </tbody>
                   <tfoot>
                     <tr>
-                      <td colSpan="8" className="text-right"><strong>Total Value:</strong></td>
+                      <td colSpan="3" className="text-right"><strong>Totals:</strong></td>
+                      <td colSpan="3"></td>
                       <td className="text-right">
                         <strong className="total-amount">
                           OMR {items.reduce((sum, item) =>
@@ -829,7 +806,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                   <strong>WCN Number Generated:</strong> A unique WCN number will be created (e.g., WCN-2025-0001)
                 </li>
                 <li>
-                  <strong>Inventory Updated:</strong> All collected materials will be added to inventory
+                  <strong>Inventory Updated:</strong> All collected materials with verified quantities will be added to inventory
                   {compositePreview.length > 0 && (
                     <span className="sub-step">
                       {' '}(Composite materials will be automatically split into components)
@@ -843,6 +820,13 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                   <strong>Collection Finalized:</strong> This collection order will be marked as finalized and locked
                 </li>
               </ol>
+              <div className="alert alert-info" style={{ marginTop: '0.75rem' }}>
+                <AlertCircle size={18} />
+                <span>
+                  <strong>Wastage:</strong> Record any wastage (spillage, contamination, etc.) separately
+                  from the Collection Details modal after finalization. Wastage only affects inventory upon approval.
+                </span>
+              </div>
               <div className="alert alert-warning">
                 <AlertTriangle size={18} />
                 <span>

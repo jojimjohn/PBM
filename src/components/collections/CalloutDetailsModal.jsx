@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Package, MapPin, Calendar, User, FileText, Truck, Clock, CheckCircle,
-  AlertCircle, Banknote, Box, Link2, RefreshCw, ShoppingCart, Phone, History, X
+  AlertCircle, Banknote, Box, Link2, RefreshCw, ShoppingCart, Phone, History, X,
+  Droplet, Loader, Plus
 } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useSystemSettings } from '../../context/SystemSettingsContext';
+import { collectionOrderService } from '../../services/collectionService';
 import Modal from '../ui/Modal';
+import WastageForm from '../../modules/oil-trading/components/WastageForm';
 
 // Sub-component for Rectification History Modal
 const RectificationHistoryModal = ({ isOpen, onClose, rectificationNotes, rectificationCount }) => {
@@ -222,6 +225,48 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
   const { t, isRTL } = useLocalization();
   const { formatDate } = useSystemSettings();
   const [showRectificationHistory, setShowRectificationHistory] = useState(false);
+
+  // State for linked wastages
+  const [linkedWastages, setLinkedWastages] = useState([]);
+  const [wastageLoading, setWastageLoading] = useState(false);
+  const [wastageSummary, setWastageSummary] = useState(null);
+
+  // State for wastage form modal
+  const [showWastageForm, setShowWastageForm] = useState(false);
+
+  // Fetch linked wastages - reusable function
+  const fetchLinkedWastages = useCallback(async () => {
+    if (!callout?.id) return;
+
+    const isFinalized = callout.is_finalized === 1 || callout.isFinalized;
+    if (!isFinalized) return;
+
+    setWastageLoading(true);
+    try {
+      const response = await collectionOrderService.getLinkedWastages(callout.id);
+      if (response.success) {
+        setLinkedWastages(response.data?.wastages || []);
+        setWastageSummary(response.data?.summary || null);
+      }
+    } catch (error) {
+      console.error('Error fetching linked wastages:', error);
+    } finally {
+      setWastageLoading(false);
+    }
+  }, [callout?.id, callout?.is_finalized, callout?.isFinalized]);
+
+  // Fetch linked wastages when modal opens for finalized orders
+  useEffect(() => {
+    if (isOpen) {
+      fetchLinkedWastages();
+    }
+  }, [isOpen, fetchLinkedWastages]);
+
+  // Handle wastage form success - refresh wastages list
+  const handleWastageCreated = () => {
+    setShowWastageForm(false);
+    fetchLinkedWastages(); // Refresh the list
+  };
 
   if (!callout) return null;
 
@@ -448,6 +493,196 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
                   Inventory Updated with collected materials
                 </span>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Wastage Records Section - Show for all finalized orders */}
+        {isFinalized && (
+          <div style={{
+            marginBottom: '24px',
+            padding: '16px',
+            backgroundColor: 'var(--orange-50)',
+            borderRadius: '8px',
+            border: '1px solid var(--orange-200)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: 'var(--orange-800)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Droplet style={{ width: '18px', height: '18px' }} />
+                Wastage Records
+                {wastageSummary && wastageSummary.totalRecords > 0 && (
+                  <span style={{
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: 'var(--orange-200)',
+                    color: 'var(--orange-800)'
+                  }}>
+                    {wastageSummary.totalRecords} record{wastageSummary.totalRecords !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </h4>
+              <button
+                onClick={() => setShowWastageForm(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  backgroundColor: 'var(--orange-600)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = 'var(--orange-700)'}
+                onMouseOut={(e) => e.target.style.backgroundColor = 'var(--orange-600)'}
+              >
+                <Plus style={{ width: '14px', height: '14px' }} />
+                Record Wastage
+              </button>
+            </div>
+
+            {wastageLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px' }}>
+                <Loader style={{ width: '16px', height: '16px', color: 'var(--orange-600)', animation: 'spin 1s linear infinite' }} />
+                <span style={{ fontSize: '14px', color: 'var(--orange-700)' }}>Loading wastage records...</span>
+              </div>
+            ) : (
+              <>
+                {/* Wastage Summary Stats */}
+                {wastageSummary && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--orange-200)' }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--orange-600)', marginBottom: '2px' }}>
+                        Total Cost
+                      </label>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--orange-900)' }}>
+                        OMR {parseFloat(wastageSummary.totalCost || 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--orange-200)' }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--orange-600)', marginBottom: '2px' }}>
+                        Pending Approval
+                      </label>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--yellow-700)' }}>
+                        {wastageSummary.pendingCount || 0}
+                      </p>
+                    </div>
+                    <div style={{ padding: '10px', backgroundColor: 'white', borderRadius: '6px', border: '1px solid var(--orange-200)' }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: 'var(--orange-600)', marginBottom: '2px' }}>
+                        Approved
+                      </label>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--green-700)' }}>
+                        {wastageSummary.approvedCount || 0}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Wastage Entries List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {linkedWastages.map((wastage, index) => (
+                    <div
+                      key={wastage.id || index}
+                      style={{
+                        padding: '12px',
+                        backgroundColor: 'white',
+                        borderRadius: '6px',
+                        border: '1px solid var(--orange-200)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            backgroundColor: 'var(--orange-100)',
+                            color: 'var(--orange-700)',
+                            textTransform: 'capitalize'
+                          }}>
+                            {wastage.wasteType?.replace(/_/g, ' ') || 'Unknown'}
+                          </span>
+                          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--gray-900)' }}>
+                            {wastage.materialName || `Material ${wastage.materialId}`}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--gray-600)' }}>
+                          {parseFloat(wastage.quantity || 0).toFixed(3)} {wastage.materialUnit || 'units'} @ OMR {parseFloat(wastage.unitCost || 0).toFixed(3)}
+                          {wastage.notes && <span style={{ fontStyle: 'italic' }}> — "{wastage.notes}"</span>}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--orange-900)' }}>
+                          OMR {parseFloat(wastage.totalCost || 0).toFixed(2)}
+                        </div>
+                        <span style={{
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          backgroundColor: wastage.status === 'approved' ? 'var(--green-100)' :
+                                          wastage.status === 'rejected' ? 'var(--red-100)' : 'var(--yellow-100)',
+                          color: wastage.status === 'approved' ? 'var(--green-700)' :
+                                wastage.status === 'rejected' ? 'var(--red-700)' : 'var(--yellow-700)'
+                        }}>
+                          {wastage.status === 'approved' ? '✓ Approved' :
+                           wastage.status === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Info about approval */}
+                {wastageSummary?.pendingCount > 0 && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '10px 12px',
+                    backgroundColor: 'var(--yellow-50)',
+                    borderRadius: '6px',
+                    border: '1px solid var(--yellow-200)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <AlertCircle style={{ width: '16px', height: '16px', color: 'var(--yellow-600)' }} />
+                    <span style={{ fontSize: '13px', color: 'var(--yellow-800)' }}>
+                      {wastageSummary.pendingCount} wastage record{wastageSummary.pendingCount !== 1 ? 's' : ''} pending approval.
+                      <span style={{ fontWeight: '600' }}> Go to Wastage Management to approve.</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* No wastages message */}
+                {linkedWastages.length === 0 && (
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: 'white',
+                    borderRadius: '6px',
+                    border: '1px dashed var(--orange-300)',
+                    textAlign: 'center'
+                  }}>
+                    <Droplet style={{ width: '24px', height: '24px', color: 'var(--orange-300)', margin: '0 auto 8px' }} />
+                    <p style={{ margin: 0, fontSize: '14px', color: 'var(--gray-600)' }}>
+                      No wastage records for this collection yet.
+                    </p>
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--gray-500)' }}>
+                      Click "Record Wastage" to add spillage, contamination, or other losses.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -749,6 +984,23 @@ const CalloutDetailsModal = ({ callout, isOpen, onClose, onViewPO }) => {
         rectificationNotes={rectificationNotes}
         rectificationCount={rectificationCount}
       />
+
+      {/* Wastage Form Modal */}
+      {showWastageForm && (
+        <WastageForm
+          isOpen={showWastageForm}
+          onClose={() => setShowWastageForm(false)}
+          onSuccess={handleWastageCreated}
+          preSelectedCollectionId={callout.id}
+          collectionOrderNumber={callout.orderNumber || callout.wcn_number || callout.wcnNumber || callout.calloutNumber}
+          collectionMaterials={callout.items?.map(item => ({
+            materialId: item.materialId,
+            materialName: item.materialName || `Material ${item.materialId}`,
+            unit: item.unit || item.materialUnit || 'KG',
+            quantity: parseFloat(item.collectedQuantity || item.verifiedQuantity || 0)
+          })) || []}
+        />
+      )}
     </Modal>
   );
 };

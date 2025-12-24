@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import Modal from '../../../components/ui/Modal'
 import Input, { Textarea } from '../../../components/ui/Input'
@@ -8,7 +8,7 @@ import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import wastageService from '../../../services/wastageService'
 import inventoryService from '../../../services/inventoryService'
-import collectionService from '../../../services/collectionService'
+import { collectionOrderService } from '../../../services/collectionService'
 import { WASTAGE_TYPE_COLORS } from '../pages/Wastage'
 import {
   Package,
@@ -18,7 +18,8 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Info
 } from 'lucide-react'
 import './WastageForm.css'
 
@@ -26,10 +27,15 @@ const WastageForm = ({
   isOpen,
   onClose,
   onSave,
+  onSuccess, // Alternative callback for when used from collection context
   materials = [],
   wasteTypes = [],
   initialData = null,
-  isEditing = false
+  isEditing = false,
+  // Collection context props - when recording wastage from a collection
+  preSelectedCollectionId = null,
+  collectionMaterials = null, // Array of { materialId, materialName, unit, quantity }
+  collectionOrderNumber = null // For display purposes
 }) => {
   const { t } = useLocalization()
   const { getInputDate, formatCurrency } = useSystemSettings()
@@ -53,15 +59,45 @@ const WastageForm = ({
   const [currentStock, setCurrentStock] = useState(null)
   const [loadingStock, setLoadingStock] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [showStockWarning, setShowStockWarning] = useState(false)
+  // Stock warning is now handled via validation errors, no modal needed
   const [recentCollections, setRecentCollections] = useState([])
   const [loadingCollections, setLoadingCollections] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
   const [submitError, setSubmitError] = useState(null)
 
-  // Reset form when modal opens/closes
+  // Determine which materials to use - collection context materials take priority
+  // Use useMemo to prevent recreation on every render (which causes useEffect to re-fire)
+  const effectiveMaterials = useMemo(() => {
+    if (collectionMaterials && collectionMaterials.length > 0) {
+      return collectionMaterials.map(cm => ({
+        id: cm.materialId,
+        name: cm.materialName,
+        unit: cm.unit,
+        collectedQuantity: cm.quantity // Store for reference
+      }))
+    }
+    return materials
+  }, [collectionMaterials, materials])
+
+  // Check if we're in collection context mode
+  const isCollectionContext = !!preSelectedCollectionId
+
+  // Track if the modal was previously open to detect open/close transitions
+  const wasOpenRef = useRef(false)
+  // Track the initialData ID to detect when editing a different record
+  const lastInitialDataIdRef = useRef(null)
+
+  // Reset form only when modal opens (not on every render)
   useEffect(() => {
-    if (isOpen) {
+    // Only run initialization when modal transitions from closed to open
+    // OR when editing a different wastage record
+    const isOpening = isOpen && !wasOpenRef.current
+    // Use null coalescing to handle both null and undefined consistently
+    const currentDataId = initialData?.id ?? null
+    const lastDataId = lastInitialDataIdRef.current ?? null
+    const isEditingDifferent = isOpen && currentDataId !== lastDataId
+
+    if (isOpening || isEditingDifferent) {
       if (initialData) {
         // Editing existing wastage
         setFormData({
@@ -78,15 +114,17 @@ const WastageForm = ({
         })
 
         // Set selected material
-        const material = materials.find(m => m.id === initialData.materialId)
+        const material = effectiveMaterials.find(m => m.id === initialData.materialId)
         setSelectedMaterial(material)
 
         // Fetch current stock for editing
         if (initialData.materialId) {
           fetchCurrentStock(initialData.materialId)
         }
+
+        lastInitialDataIdRef.current = initialData.id
       } else {
-        // Creating new wastage
+        // Creating new wastage - pre-select collection if in collection context
         setFormData({
           materialId: '',
           wasteType: '',
@@ -96,40 +134,80 @@ const WastageForm = ({
           location: '',
           reason: '',
           description: '',
-          collectionOrderId: '',
+          collectionOrderId: preSelectedCollectionId ? String(preSelectedCollectionId) : '',
           attachments: []
         })
         setSelectedMaterial(null)
         setCurrentStock(null)
+        lastInitialDataIdRef.current = null
       }
 
       setErrors({})
       setSubmitError(null)
-      loadRecentCollections()
-    }
-  }, [isOpen, initialData, materials, getInputDate])
 
-  // Load recent collections for linking
+      // Only load recent collections if not in collection context mode
+      if (!isCollectionContext) {
+        loadRecentCollections()
+      }
+    }
+
+    // Update the ref to track current open state
+    wasOpenRef.current = isOpen
+  }, [isOpen, initialData, effectiveMaterials, getInputDate, preSelectedCollectionId, isCollectionContext])
+
+  // Load recent finalized collections for linking
+  // Only show finalized collections (is_finalized=1) which have completed WCN process
   const loadRecentCollections = async () => {
     setLoadingCollections(true)
     try {
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const sixtyDaysAgo = new Date()
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
 
-      const result = await collectionService.getCallouts({
-        dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
-        status: 'completed'
+      // Get finalized collection orders - these are the ones wastage can be linked to
+      const result = await collectionOrderService.getCollectionOrders({
+        fromDate: sixtyDaysAgo.toISOString().split('T')[0],
+        isFinalized: 'true',
+        limit: 100
       })
 
-      if (result.success && result.data) {
-        setRecentCollections(result.data.data || result.data || [])
+      if (result.success !== false) {
+        // Handle various response formats
+        const collections = result.data?.data || result.data || []
+        // Backend now includes items and materialIds directly for each order
+        const normalizedCollections = (Array.isArray(collections) ? collections : []).map(c => ({
+          ...c,
+          // Use items directly from backend (already includes materialId, materialName)
+          items: c.items || [],
+          // materialIds is now provided by backend, fallback to extracting from items
+          materialIds: c.materialIds || (c.items || []).map(item => item.materialId).filter(Boolean)
+        }))
+        setRecentCollections(normalizedCollections)
+
+        // Debug log if no collections found
+        if (normalizedCollections.length === 0) {
+          console.log('No finalized collections found in the last 60 days')
+        }
       }
     } catch (error) {
       console.error('Error loading collections:', error)
+      setRecentCollections([])
     } finally {
       setLoadingCollections(false)
     }
   }
+
+  // Filter collections by selected material
+  const filteredCollections = formData.materialId
+    ? recentCollections.filter(c =>
+        c.materialIds?.includes(parseInt(formData.materialId)) ||
+        c.materialIds?.includes(String(formData.materialId))
+      )
+    : recentCollections
+
+  // Get selected collection info for display
+  const selectedCollection = formData.collectionOrderId
+    ? recentCollections.find(c => String(c.id) === String(formData.collectionOrderId))
+    : null
 
   // Fetch current stock for selected material
   const fetchCurrentStock = async (materialId) => {
@@ -141,8 +219,9 @@ const WastageForm = ({
     setLoadingStock(true)
     try {
       const result = await inventoryService.getCurrentStock(materialId)
-      if (result.success) {
-        setCurrentStock(result.data?.quantity || 0)
+      if (result.success && result.data) {
+        // API returns totalQuantity and availableQuantity - use availableQuantity for wastage
+        setCurrentStock(result.data.availableQuantity ?? result.data.totalQuantity ?? 0)
       } else {
         setCurrentStock(0)
       }
@@ -156,9 +235,32 @@ const WastageForm = ({
 
   // Handle material selection
   const handleMaterialChange = (materialId) => {
-    const material = materials.find(m => String(m.id) === String(materialId))
+    const material = effectiveMaterials.find(m => String(m.id) === String(materialId))
     setSelectedMaterial(material)
-    setFormData(prev => ({ ...prev, materialId }))
+
+    // Reset collection selection when material changes (unless in collection context)
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        materialId,
+        collectionOrderId: isCollectionContext ? prev.collectionOrderId : ''
+      }
+
+      // In collection context mode, auto-fill cost from the pre-selected collection
+      if (isCollectionContext && prev.collectionOrderId && materialId) {
+        const collection = recentCollections.find(c => String(c.id) === String(prev.collectionOrderId))
+        if (collection && collection.items) {
+          const materialItem = collection.items.find(
+            item => String(item.materialId) === String(materialId)
+          )
+          if (materialItem && materialItem.contractRate) {
+            newData.unitCost = String(materialItem.contractRate)
+          }
+        }
+      }
+
+      return newData
+    })
     fetchCurrentStock(materialId)
 
     // Clear material error
@@ -169,7 +271,25 @@ const WastageForm = ({
 
   // Handle form field changes
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value }
+
+      // Auto-fill unit cost when collection is selected (if material is already selected)
+      if (field === 'collectionOrderId' && value && prev.materialId) {
+        const collection = recentCollections.find(c => String(c.id) === String(value))
+        if (collection && collection.items) {
+          const materialItem = collection.items.find(
+            item => String(item.materialId) === String(prev.materialId)
+          )
+          // Use contract rate from the collection item if available
+          if (materialItem && materialItem.contractRate) {
+            newData.unitCost = String(materialItem.contractRate)
+          }
+        }
+      }
+
+      return newData
+    })
 
     // Clear error for this field
     if (errors[field]) {
@@ -192,6 +312,11 @@ const WastageForm = ({
     const quantity = parseFloat(formData.quantity)
     if (!formData.quantity || isNaN(quantity) || quantity <= 0) {
       newErrors.quantity = t('quantityRequired', 'Valid quantity is required')
+    } else if (currentStock !== null && quantity > currentStock) {
+      // Hard block: wastage quantity cannot exceed available stock
+      newErrors.quantity = t('quantityExceedsStock', 'Quantity ({qty}) exceeds available stock ({stock})')
+        .replace('{qty}', quantity)
+        .replace('{stock}', currentStock)
     }
 
     const unitCost = parseFloat(formData.unitCost)
@@ -215,16 +340,21 @@ const WastageForm = ({
   }
 
   // Handle form submission
-  const handleSubmit = async (forceSubmit = false) => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       return
     }
 
     const quantity = parseFloat(formData.quantity)
 
-    // Check if quantity exceeds stock (only for new entries, not editing)
-    if (!forceSubmit && !isEditing && currentStock !== null && quantity > currentStock) {
-      setShowStockWarning(true)
+    // Double-check stock validation (already done in validateForm, but safety check)
+    if (currentStock !== null && quantity > currentStock) {
+      setErrors(prev => ({
+        ...prev,
+        quantity: t('quantityExceedsStock', 'Quantity ({qty}) exceeds available stock ({stock})')
+          .replace('{qty}', quantity)
+          .replace('{stock}', currentStock)
+      }))
       return
     }
 
@@ -266,7 +396,12 @@ const WastageForm = ({
       }
 
       if (result.success) {
-        onSave(result.data)
+        // Call appropriate callback - onSuccess takes priority (for collection context)
+        if (onSuccess) {
+          onSuccess(result.data)
+        } else if (onSave) {
+          onSave(result.data)
+        }
         onClose()
       } else {
         setSubmitError(result.error || t('networkErrorRetry', 'Network error. Please try again.'))
@@ -341,10 +476,12 @@ const WastageForm = ({
     }))
   }
 
-  // Material options with current stock display
-  const materialOptions = materials.map(m => ({
+  // Material options with current stock display - use effective materials (collection or general)
+  const materialOptions = effectiveMaterials.map(m => ({
     value: String(m.id),
-    label: `${m.code || m.materialCode || ''} - ${m.name || ''}`
+    label: isCollectionContext
+      ? `${m.name || ''} (${m.collectedQuantity || 0} ${m.unit || ''})`
+      : `${m.code || m.materialCode || ''} - ${m.name || ''}`
   }))
 
   // Waste type options with color indicator
@@ -354,13 +491,22 @@ const WastageForm = ({
     color: WASTAGE_TYPE_COLORS[type.value] || WASTAGE_TYPE_COLORS.other
   }))
 
-  // Collection options
+  // Collection options - use filtered collections based on selected material
   const collectionOptions = [
-    { value: '', label: t('selectCollection', 'Select collection (optional)') },
-    ...recentCollections.map(c => ({
-      value: String(c.id),
-      label: `${c.referenceNumber || c.id} - ${new Date(c.collectionDate || c.createdAt).toLocaleDateString()}`
-    }))
+    { value: '', label: formData.materialId
+      ? t('selectCollectionForMaterial', 'Select collection containing this material')
+      : t('selectMaterialFirst', 'Select a material first')
+    },
+    ...filteredCollections.map(c => {
+      const wcnRef = c.wcn_number || c.wcnNumber || c.order_number || c.orderNumber || `#${c.id}`
+      const supplier = c.supplier_name || c.supplierName || ''
+      const date = new Date(c.finalized_at || c.finalizedAt || c.scheduled_date || c.scheduledDate || c.created_at || c.createdAt).toLocaleDateString()
+      const itemCount = c.items?.length || 0
+      return {
+        value: String(c.id),
+        label: `${wcnRef}${supplier ? ` - ${supplier}` : ''} (${date}, ${itemCount} ${t('items', 'items')})`
+      }
+    })
   ]
 
   // Calculate total cost
@@ -390,6 +536,21 @@ const WastageForm = ({
             </div>
           )}
 
+          {/* Collection Context Banner */}
+          {isCollectionContext && (
+            <div className="collection-context-banner">
+              <Info size={18} />
+              <div className="context-info">
+                <strong>{t('recordingWastageFor', 'Recording wastage for collection')}:</strong>
+                <span className="collection-ref">{collectionOrderNumber || `#${preSelectedCollectionId}`}</span>
+              </div>
+              <div className="context-note">
+                <AlertTriangle size={14} />
+                <span>{t('wastageInventoryNote', 'Note: Inventory will only be reduced when this wastage is approved.')}</span>
+              </div>
+            </div>
+          )}
+
           {/* Material Selection Section */}
           <div className="form-section">
             <h4 className="section-title">
@@ -405,8 +566,8 @@ const WastageForm = ({
                   onChange={(e) => handleMaterialChange(e.target.value)}
                 >
                   <option value="">{t('selectMaterialPlaceholder', 'Select a material...')}</option>
-                  {materialOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  {materialOptions.map((opt, index) => (
+                    <option key={`mat-${opt.value}-${index}`} value={opt.value}>{opt.label}</option>
                   ))}
                 </Select>
                 {errors.materialId && <span className="error-text">{errors.materialId}</span>}
@@ -454,6 +615,75 @@ const WastageForm = ({
               </div>
             </div>
           </div>
+
+          {/* Collection Link Section - Hidden when in collection context mode */}
+          {/* Placed before Quantities so cost can auto-fill from selected collection */}
+          {!isCollectionContext && (
+            <div className="form-section">
+              <h4 className="section-title">
+                <LinkIcon size={18} />
+                {t('linkToCollection', 'Link to Collection')}
+              </h4>
+
+              <div className="form-row">
+                <div className="form-group flex-1">
+                  <Select
+                    value={formData.collectionOrderId}
+                    onChange={(e) => handleChange('collectionOrderId', e.target.value)}
+                    disabled={loadingCollections || !formData.materialId}
+                  >
+                    {loadingCollections ? (
+                      <option value="">{t('loading', 'Loading...')}</option>
+                    ) : filteredCollections.length === 0 && formData.materialId ? (
+                      <option value="">{t('noCollectionsForMaterial', 'No collections found with this material')}</option>
+                    ) : (
+                      collectionOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))
+                    )}
+                  </Select>
+                  <span className="field-hint">
+                    {!formData.materialId
+                      ? t('selectMaterialToFilterCollections', 'Select a material to see relevant collections')
+                      : t('optionalCollectionLink', 'Optional: Link this wastage to a collection order')
+                    }
+                  </span>
+                </div>
+              </div>
+
+              {/* Selected Collection Info */}
+              {selectedCollection && (
+                <div className="selected-collection-info">
+                  <div className="collection-info-header">
+                    <span className="info-icon">ℹ️</span>
+                    <strong>{t('selectedCollectionInfo', 'Selected Collection')}</strong>
+                  </div>
+                  <div className="collection-info-details">
+                    <div className="info-row">
+                      <span className="info-label">{t('wcnNumber', 'WCN')}:</span>
+                      <span className="info-value">{selectedCollection.wcn_number || selectedCollection.wcnNumber || selectedCollection.order_number || selectedCollection.orderNumber || `#${selectedCollection.id}`}</span>
+                    </div>
+                    {(selectedCollection.supplier_name || selectedCollection.supplierName) && (
+                      <div className="info-row">
+                        <span className="info-label">{t('supplier', 'Supplier')}:</span>
+                        <span className="info-value">{selectedCollection.supplier_name || selectedCollection.supplierName}</span>
+                      </div>
+                    )}
+                    <div className="info-row">
+                      <span className="info-label">{t('date', 'Date')}:</span>
+                      <span className="info-value">{new Date(selectedCollection.finalized_at || selectedCollection.finalizedAt || selectedCollection.scheduled_date || selectedCollection.scheduledDate || selectedCollection.created_at).toLocaleDateString()}</span>
+                    </div>
+                    {selectedCollection.items && selectedCollection.items.length > 0 && (
+                      <div className="info-row">
+                        <span className="info-label">{t('materials', 'Materials')}:</span>
+                        <span className="info-value">{selectedCollection.items.map(i => i.materialName || i.material_name || `ID:${i.materialId || i.material_id}`).join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Quantities Section */}
           <div className="form-section">
@@ -522,33 +752,6 @@ const WastageForm = ({
                   onChange={(e) => handleChange('location', e.target.value)}
                   placeholder={t('warehouseOrLocation', 'Warehouse or location')}
                 />
-              </div>
-            </div>
-          </div>
-
-          {/* Collection Link Section */}
-          <div className="form-section">
-            <h4 className="section-title">
-              <LinkIcon size={18} />
-              {t('linkToCollection', 'Link to Collection')}
-            </h4>
-
-            <div className="form-row">
-              <div className="form-group flex-1">
-                <Select
-                  value={formData.collectionOrderId}
-                  onChange={(e) => handleChange('collectionOrderId', e.target.value)}
-                  disabled={loadingCollections}
-                >
-                  {loadingCollections ? (
-                    <option value="">{t('loading', 'Loading...')}</option>
-                  ) : (
-                    collectionOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))
-                  )}
-                </Select>
-                <span className="field-hint">{t('optionalCollectionLink', 'Optional: Link this wastage to a collection order')}</span>
               </div>
             </div>
           </div>
@@ -655,41 +858,6 @@ const WastageForm = ({
         </div>
       </Modal>
 
-      {/* Stock Warning Modal */}
-      <Modal
-        isOpen={showStockWarning}
-        onClose={() => setShowStockWarning(false)}
-        title={t('stockWarningTitle', 'Stock Quantity Warning')}
-        className="stock-warning-modal"
-      >
-        <div className="stock-warning-content">
-          <div className="warning-icon">
-            <AlertTriangle size={48} />
-          </div>
-          <p>
-            {t('stockWarningMessage', 'Quantity exceeds current stock ({stock} {unit}). This may indicate data discrepancy.')
-              .replace('{stock}', currentStock)
-              .replace('{unit}', selectedMaterial?.unit || '')}
-          </p>
-          <div className="warning-actions">
-            <button
-              className="btn btn-outline"
-              onClick={() => setShowStockWarning(false)}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button
-              className="btn btn-warning"
-              onClick={() => {
-                setShowStockWarning(false)
-                handleSubmit(true)
-              }}
-            >
-              {t('proceedAnyway', 'Proceed Anyway')}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </>
   )
 }

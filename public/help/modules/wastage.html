@@ -71,9 +71,27 @@
           </div>
         </div>
 
+        <!-- Key Concept: Wastage and Inventory -->
+        <section>
+          <h2>How Wastage Affects Inventory</h2>
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Important: Inventory is Only Reduced When Wastage is Approved</div>
+              <p style="margin:0;">Recording wastage does NOT immediately reduce inventory. The wastage record stays in "Pending" status until a manager approves it. <strong>Only upon approval</strong> is the inventory actually reduced. This ensures accurate tracking and prevents errors.</p>
+            </div>
+          </div>
+        </section>
+
         <!-- Understanding Wastage -->
         <section>
-          <h2>Understanding Wastage</h2>
+          <h2>Understanding Wastage Types</h2>
           <p>Wastage in oil trading can occur due to various reasons:</p>
 
           <div class="card-grid">
@@ -96,12 +114,83 @@
               <h4>Damage</h4>
               <p>Container damage leading to product loss (leaking drums, punctured tanks).</p>
             </div>
+
+            <div class="card">
+              <h4>Transport Loss</h4>
+              <p>Loss during transportation from supplier location to warehouse.</p>
+            </div>
+
+            <div class="card">
+              <h4>Quality Rejection</h4>
+              <p>Materials rejected during quality inspection that cannot be used.</p>
+            </div>
           </div>
         </section>
 
-        <!-- Recording Wastage -->
+        <!-- Recording Wastage: Two Methods -->
         <section>
           <h2>Recording Wastage</h2>
+          <p>There are two ways to record wastage in the system:</p>
+
+          <h3>Method 1: From Collection Details (Recommended)</h3>
+          <p>Use this method when wastage occurred during a specific collection.</p>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Open Collection Details</div>
+              <div class="step-content">
+                <p>In the Collections module, click on a <strong>finalized</strong> collection order to view its details.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click "Record Wastage"</div>
+              <div class="step-content">
+                <p>In the Wastage section, click the orange <strong>+ Record Wastage</strong> button.</p>
+                <p>This opens a pre-filled form with the collection's materials.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Select Material and Enter Details</div>
+              <div class="step-content">
+                <p>The form shows only materials from this collection. Select the affected material and enter:</p>
+                <ul>
+                  <li><strong>Quantity:</strong> Amount of wastage</li>
+                  <li><strong>Unit Cost:</strong> Cost per unit for COGS calculation</li>
+                  <li><strong>Wastage Type:</strong> Reason for the loss</li>
+                  <li><strong>Description:</strong> Detailed explanation</li>
+                </ul>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Submit</div>
+              <div class="step-content">
+                <p>Click <strong>Save</strong>. The wastage is linked to the collection and sent for approval.</p>
+              </div>
+            </li>
+          </ol>
+
+          <h3>Method 2: From Collection Orders Table</h3>
+          <p>Quick access via the wastage icon in the actions column.</p>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Find the Collection</div>
+              <div class="step-content">
+                <p>In the Collection Orders table, locate the finalized collection order.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click the Wastage Icon</div>
+              <div class="step-content">
+                <p>Click the <strong>droplet icon</strong> (💧) in the Actions column. This opens the wastage form pre-linked to that collection.</p>
+              </div>
+            </li>
+          </ol>
+
+          <h3>Method 3: From Wastage Module (General)</h3>
+          <p>Use this for wastage not related to a specific collection.</p>
           <ol class="steps">
             <li class="step">
               <div class="step-title">Navigate to Wastage</div>
@@ -111,49 +200,9 @@
             </li>
 
             <li class="step">
-              <div class="step-title">Select Material</div>
+              <div class="step-title">Fill in Details</div>
               <div class="step-content">
-                <p>Choose the material that was wasted from the dropdown.</p>
-              </div>
-            </li>
-
-            <li class="step">
-              <div class="step-title">Enter Quantity</div>
-              <div class="step-content">
-                <p>Enter the exact quantity lost. The system will show the value based on cost price.</p>
-              </div>
-            </li>
-
-            <li class="step">
-              <div class="step-title">Select Wastage Type</div>
-              <div class="step-content">
-                <p>Choose the reason for wastage:</p>
-                <ul>
-                  <li>Spillage</li>
-                  <li>Evaporation</li>
-                  <li>Contamination</li>
-                  <li>Damage</li>
-                  <li>Expired</li>
-                  <li>Other (specify)</li>
-                </ul>
-              </div>
-            </li>
-
-            <li class="step">
-              <div class="step-title">Add Details</div>
-              <div class="step-content">
-                <ul>
-                  <li><strong>Date:</strong> When the wastage occurred</li>
-                  <li><strong>Location:</strong> Where it happened</li>
-                  <li><strong>Description:</strong> Detailed explanation of what happened</li>
-                </ul>
-              </div>
-            </li>
-
-            <li class="step">
-              <div class="step-title">Submit for Approval</div>
-              <div class="step-content">
-                <p>Click <strong>Submit</strong>. The wastage record goes to manager for approval before affecting inventory.</p>
+                <p>Select material, enter quantity, choose type, and optionally link to a collection.</p>
               </div>
             </li>
           </ol>
@@ -176,7 +225,7 @@
             <li class="step">
               <div class="step-title">Review Details</div>
               <div class="step-content">
-                <p>Examine the wastage record: material, quantity, reason, and supporting documentation.</p>
+                <p>Examine the wastage record: material, quantity, reason, linked collection, and any attachments.</p>
               </div>
             </li>
 
@@ -184,22 +233,24 @@
               <div class="step-title">Approve or Reject</div>
               <div class="step-content">
                 <ul>
-                  <li><strong>Approve:</strong> Inventory is deducted; wastage is recorded in reports</li>
-                  <li><strong>Reject:</strong> Provide reason; record is sent back for correction</li>
+                  <li><strong>Approve:</strong> Inventory is reduced using FIFO allocation; COGS is calculated</li>
+                  <li><strong>Reject:</strong> Record is marked rejected; no inventory change</li>
                 </ul>
               </div>
             </li>
           </ol>
 
-          <div class="callout warning">
+          <div class="callout tip">
             <div class="callout-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4"/>
+                <path d="M12 8h.01"/>
               </svg>
             </div>
             <div class="callout-content">
-              <div class="callout-title">Important</div>
-              <p style="margin:0;">Approved wastage permanently reduces inventory. Ensure the record is accurate before approving.</p>
+              <div class="callout-title">FIFO Inventory Allocation</div>
+              <p style="margin:0;">When wastage is approved, the system uses FIFO (First In, First Out) to deduct from the oldest inventory batches first. This ensures accurate Cost of Goods Sold (COGS) calculations.</p>
             </div>
           </div>
         </section>
@@ -213,23 +264,101 @@
                 <tr>
                   <th>Status</th>
                   <th>Description</th>
+                  <th>Can Edit?</th>
+                  <th>Can Delete?</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Pending</span></td>
                   <td>Awaiting manager approval</td>
+                  <td>✅ Yes</td>
+                  <td>✅ Yes</td>
                 </tr>
                 <tr>
                   <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Approved</span></td>
                   <td>Approved and deducted from inventory</td>
+                  <td>⚠️ Amendment only</td>
+                  <td>❌ No</td>
                 </tr>
                 <tr>
                   <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Rejected</span></td>
-                  <td>Rejected with reason - needs correction or removal</td>
+                  <td>Rejected - no inventory impact</td>
+                  <td>❌ No</td>
+                  <td>✅ Yes</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <!-- Amendment Feature -->
+        <section>
+          <h2>Amending Approved Wastage</h2>
+          <p>If you need to correct an <strong>approved</strong> wastage record, you must use the Amendment feature (not regular edit).</p>
+
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Amendment Adjusts Inventory Automatically</div>
+              <p style="margin:0;">When you amend an approved wastage:</p>
+              <ul style="margin:8px 0 0 0;">
+                <li>If new quantity is <strong>higher</strong>: Additional inventory is deducted</li>
+                <li>If new quantity is <strong>lower</strong>: Some inventory is restored</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>How to Amend</h3>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Find the Approved Record</div>
+              <div class="step-content">
+                <p>In the Wastage list, locate the approved record you need to correct.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Click "Amend"</div>
+              <div class="step-content">
+                <p>Click the <strong>Amend</strong> button (only visible for approved records).</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Enter New Details</div>
+              <div class="step-content">
+                <p>Update the quantity and provide an <strong>amendment note</strong> explaining why the change is needed. This note is required for audit purposes.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Submit</div>
+              <div class="step-content">
+                <p>The amendment is processed and inventory is automatically adjusted by the difference.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Deletion Rules -->
+        <section>
+          <h2>Deleting Wastage Records</h2>
+          <div class="card">
+            <h4>Deletion Rules</h4>
+            <ul>
+              <li><strong>Pending:</strong> ✅ Can be deleted</li>
+              <li><strong>Rejected:</strong> ✅ Can be deleted</li>
+              <li><strong>Approved:</strong> ❌ Cannot be deleted - use Amendment instead</li>
+            </ul>
+            <p style="margin-top:12px;color:#64748b;font-size:14px;">
+              Approved wastages cannot be deleted because they have already affected inventory.
+              If you need to correct an approved wastage, use the Amendment feature instead.
+            </p>
           </div>
         </section>
 
@@ -245,19 +374,8 @@
               <li><strong>Wastage by Type:</strong> Understand common causes (spillage vs evaporation)</li>
               <li><strong>Monthly Trends:</strong> Track wastage over time</li>
               <li><strong>Cost Impact:</strong> Financial impact of wastage on operations</li>
+              <li><strong>By Collection:</strong> View wastage linked to specific collections</li>
             </ul>
-          </div>
-
-          <div class="callout tip">
-            <div class="callout-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-            </div>
-            <div class="callout-content">
-              <div class="callout-title">Use Analytics</div>
-              <p style="margin:0;">Regular review of wastage analytics can help identify handling issues, storage problems, or training needs.</p>
-            </div>
           </div>
         </section>
 
@@ -267,11 +385,12 @@
           <div class="card">
             <ul>
               <li><strong>Record immediately:</strong> Log wastage as soon as it happens while details are fresh</li>
+              <li><strong>Link to collections:</strong> Always link wastage to the relevant collection for better tracking</li>
               <li><strong>Be accurate:</strong> Measure quantities precisely - estimates lead to inventory discrepancies</li>
               <li><strong>Document thoroughly:</strong> Include photos or documentation when possible</li>
               <li><strong>Identify root causes:</strong> Use the wastage type to track patterns</li>
               <li><strong>Review regularly:</strong> Monthly wastage review helps identify issues early</li>
-              <li><strong>Train staff:</strong> Proper handling training reduces spillage and damage</li>
+              <li><strong>Use amendments:</strong> Never create new records to "correct" approved ones - use the Amendment feature</li>
             </ul>
           </div>
         </section>
@@ -282,11 +401,13 @@
           <div class="quick-links-grid">
             <a href="inventory.html" class="quick-link">Inventory Management</a>
             <a href="reports.html" class="quick-link">Reports & Analytics</a>
+            <a href="../workflows/collection-to-wcn.html" class="quick-link">Collection to WCN</a>
           </div>
         </div>
 
         <footer class="help-footer">
           <p>PBM Help Center - Al Ramrami Trading Enterprises</p>
+          <p><em>Last updated: December 2025</em></p>
         </footer>
       </div>
     </main>

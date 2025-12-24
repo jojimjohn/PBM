@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useLocalization } from '../../../context/LocalizationContext';
 import { useSystemSettings } from '../../../context/SystemSettingsContext';
-import inventoryService from '../../../services/inventoryService';
+import transactionService from '../../../services/transactionService';
 import DatePicker from '../../../components/ui/DatePicker';
 import '../styles/TimelineView.css';
 
@@ -181,57 +181,72 @@ const TimelineView = ({ materialId = null, onWastageClick = null }) => {
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [typeFilter, setTypeFilter] = useState('');
 
-  // Fetch movements
+  // Fetch transactions from transactions table
   const fetchMovements = useCallback(async (page = 1) => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = { page, limit: pageSize };
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
+      // Build params for transactionService
+      const params = {
+        limit: pageSize,
+        offset: (page - 1) * pageSize
+      };
+      if (startDate) params.dateFrom = startDate;
+      if (endDate) params.dateTo = endDate;
       if (materialId) params.materialId = materialId;
-      if (typeFilter) params.type = typeFilter;
+      if (typeFilter) params.transactionType = typeFilter;
 
-      const response = await inventoryService.getStockMovements(params);
+      // Use transactionService.getAll() which queries transactions table
+      const response = await transactionService.getAll(params);
 
-      if (response.success && response.data) {
-        const { movements: movementsList, pagination: paginationData } = response.data;
+      if (response.success && response.data && Array.isArray(response.data)) {
+        // Filter out transactions without materialId (like payments)
+        const materialTransactions = response.data.filter(tx => tx.materialId != null);
 
-        const transformedMovements = (movementsList || []).map(m => ({
-          id: m.id,
-          date: m.movementDate,
-          type: m.movementType,
-          transactionType: m.movementType,
-          quantity: m.quantity,
-          materialId: m.materialId,
-          materialName: m.materialName,
-          materialCode: m.batchNumber,
-          materialUnit: m.materialUnit || '',
-          unit: m.materialUnit || '',
-          reference: m.referenceNumber || m.batchNumber,
-          referenceNumber: m.referenceNumber,
-          unitCost: m.unitCost,
-          supplierName: m.supplierName,
-          traceability: m.traceability || null
+        const transformedMovements = materialTransactions.map(tx => ({
+          id: tx.id,
+          date: tx.transactionDate || tx.created_at,
+          type: tx.transactionType,
+          transactionType: tx.transactionType,
+          quantity: tx.quantity,
+          materialId: tx.materialId,
+          materialName: tx.materialName || 'Unknown',
+          materialCode: tx.materialCode || '',
+          materialUnit: '',
+          unit: '',
+          reference: tx.transactionNumber || tx.referenceId || '-',
+          referenceNumber: tx.transactionNumber,
+          referenceId: tx.referenceId,
+          referenceType: tx.referenceType,
+          unitCost: tx.unitPrice || 0,
+          amount: tx.amount,
+          description: tx.description,
+          traceability: null
         }));
 
         // Group by date
         const grouped = {};
         transformedMovements.forEach(m => {
-          const dateKey = m.date ? m.date.split('T')[0] : 'unknown';
+          let dateKey = 'unknown';
+          if (m.date) {
+            const dateStr = typeof m.date === 'string' ? m.date : m.date.toISOString();
+            dateKey = dateStr.split('T')[0];
+          }
           if (!grouped[dateKey]) grouped[dateKey] = [];
           grouped[dateKey].push(m);
         });
 
         setMovements(transformedMovements);
         setGroupedMovements(grouped);
+
+        const total = response.pagination?.total || transformedMovements.length;
         setPagination({
-          page: paginationData?.page || page,
-          limit: paginationData?.limit || pageSize,
-          total: paginationData?.total || transformedMovements.length,
-          pages: paginationData?.pages || 1,
-          hasMore: paginationData?.hasMore || false
+          page: page,
+          limit: pageSize,
+          total: total,
+          pages: Math.ceil(total / pageSize) || 1,
+          hasMore: page * pageSize < total
         });
       } else {
         setMovements([]);
@@ -239,8 +254,8 @@ const TimelineView = ({ materialId = null, onWastageClick = null }) => {
         setPagination({ page: 1, limit: pageSize, total: 0, pages: 1, hasMore: false });
       }
     } catch (err) {
-      console.error('Error fetching movements:', err);
-      setError(err.message || 'Failed to load movements');
+      console.error('Error fetching transactions:', err);
+      setError(err.message || 'Failed to load transactions');
     } finally {
       setLoading(false);
     }
@@ -271,9 +286,9 @@ const TimelineView = ({ materialId = null, onWastageClick = null }) => {
 
   const sortedDates = Object.keys(groupedMovements).sort((a, b) => new Date(b) - new Date(a));
 
-  // Calculate summary stats
-  const totalIn = movements.filter(m => ['purchase', 'receipt', 'in'].includes(m.transactionType)).reduce((sum, m) => sum + Math.abs(m.quantity), 0);
-  const totalOut = movements.filter(m => ['sale', 'out', 'wastage'].includes(m.transactionType)).reduce((sum, m) => sum + Math.abs(m.quantity), 0);
+  // Calculate summary stats - purchases are positive, sales/wastage are negative
+  const totalIn = movements.filter(m => ['purchase', 'receipt', 'in', 'adjustment'].includes(m.transactionType) && parseFloat(m.quantity) > 0).reduce((sum, m) => sum + Math.abs(parseFloat(m.quantity) || 0), 0);
+  const totalOut = movements.filter(m => ['sale', 'out', 'wastage'].includes(m.transactionType) || parseFloat(m.quantity) < 0).reduce((sum, m) => sum + Math.abs(parseFloat(m.quantity) || 0), 0);
 
   return (
     <div className="timeline-view">
@@ -330,7 +345,7 @@ const TimelineView = ({ materialId = null, onWastageClick = null }) => {
           >
             {t('all', 'All')}
           </button>
-          {['receipt', 'sale', 'adjustment', 'wastage'].map((type) => {
+          {['purchase', 'sale', 'adjustment', 'wastage'].map((type) => {
             const config = movementTypeConfig[type];
             return (
               <button
@@ -369,8 +384,8 @@ const TimelineView = ({ materialId = null, onWastageClick = null }) => {
       {!loading && !error && movements.length === 0 && (
         <div className="timeline-empty">
           <Package size={40} className="empty-icon" />
-          <h3>{t('noMovementsFound', 'No movements found')}</h3>
-          <p>{t('noMovementsDescription', 'Try adjusting your date range or filters.')}</p>
+          <h3>{t('noTransactionsFound', 'No transactions found')}</h3>
+          <p>{t('noTransactionsDescription', 'Try adjusting your date range or filters. Transactions include purchases, sales, adjustments, and wastages.')}</p>
         </div>
       )}
 

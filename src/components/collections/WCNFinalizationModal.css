@@ -927,3 +927,7 @@
     width: 100%;
   }
 }
+
+/* NOTE: Wastage entry styles removed.
+   Wastage is now recorded separately via the Collection Details modal.
+   See WastageForm component for wastage recording styles. */

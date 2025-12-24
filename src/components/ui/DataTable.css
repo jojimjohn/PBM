@@ -439,6 +439,29 @@
   color: #6b7280;
 }
 
+/* Inventory stock status badges */
+.status-badge.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.low {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.critical {
+  background: #dc2626;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+.status-badge.out-of-stock {
+  background: #374151;
+  color: white;
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;

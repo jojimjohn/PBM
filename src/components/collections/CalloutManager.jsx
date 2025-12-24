@@ -430,33 +430,20 @@ const CalloutManager = () => {
     },
     {
       key: 'status',
-      header: t('type') + ' / ' + t('status'),
+      header: t('status'),
       render: (value, row) => {
         const itemType = getItemType(row);
         const TypeIcon = itemType.icon;
 
+        // Single badge showing the workflow stage - cleaner than multiple badges
         return (
-          <div className="type-status-container">
-            {/* Type Badge */}
-            <span className={`type-badge type-badge-${itemType.color}`}>
-              <TypeIcon className="w-3 h-3" />
-              <span>{itemType.label}</span>
-            </span>
-
-            {/* Status Badge */}
-            <div className="status-row">
-              {getStatusIcon(value)}
-              <span className="status-text">{t(value) || value}</span>
-            </div>
-
-            {/* Finalized indicator */}
-            {checkIsFinalized(row) && (
-              <span className="finalized-badge">
-                <FileCheck className="w-3 h-3" />
-                {t('wcnFinalized')}
-              </span>
-            )}
-          </div>
+          <span
+            className={`type-badge type-badge-${itemType.color}`}
+            title={`${itemType.label}${checkIsFinalized(row) ? ' - ' + (t('wcnFinalized') || 'WCN Finalized') : ''}`}
+          >
+            <TypeIcon className="w-3.5 h-3.5" />
+            <span>{itemType.label}</span>
+          </span>
         );
       }
     },

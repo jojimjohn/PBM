@@ -3,7 +3,7 @@ import {
   HelpCircle, GraduationCap, Check, Lock, Play,
   RotateCcw, LayoutDashboard, ShoppingCart, TrendingUp, Truck,
   FileText, Settings, Clock, ChevronDown, ChevronUp,
-  Briefcase, Users, Package
+  Briefcase, Users, Package, BookOpen, ExternalLink
 } from 'lucide-react';
 import { useTour } from '../../context/TourContext';
 import { useLocalization } from '../../context/LocalizationContext';
@@ -201,6 +201,26 @@ const HelpMenu = () => {
           <div className="help-menu-header">
             <GraduationCap size={20} />
             <span>{t('helpAndTraining', 'Help & Training')}</span>
+          </div>
+
+          {/* Help Documentation Link */}
+          <div className="help-menu-section help-docs-section">
+            <a
+              href="/help/index.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="help-docs-link"
+              onClick={() => setIsOpen(false)}
+            >
+              <div className="help-docs-content">
+                <BookOpen size={18} />
+                <div className="help-docs-text">
+                  <span className="help-docs-title">{t('helpDocumentation', 'Help Documentation')}</span>
+                  <span className="help-docs-description">{t('helpDocsDescription', 'Complete guides, tutorials & reference')}</span>
+                </div>
+              </div>
+              <ExternalLink size={14} className="external-icon" />
+            </a>
           </div>
 
           {/* Workflow Guides Section */}

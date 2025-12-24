@@ -208,6 +208,45 @@ class WastageService {
   }
 
   /**
+   * Amend an approved wastage record
+   * This endpoint handles inventory adjustment when quantity changes:
+   * - If new quantity > old: reduces inventory by the difference
+   * - If new quantity < old: restores inventory by the difference
+   *
+   * @param {number} wastageId - The wastage ID to amend
+   * @param {Object} amendmentData - Amendment details
+   * @param {number} amendmentData.quantity - New quantity (required)
+   * @param {number} amendmentData.unitCost - New unit cost (optional)
+   * @param {string} amendmentData.reason - Updated reason (optional)
+   * @param {string} amendmentData.description - Updated description (optional)
+   * @param {string} amendmentData.location - Updated location (optional)
+   * @param {string} amendmentData.amendmentNotes - Explanation for amendment (required)
+   */
+  async amend(wastageId, amendmentData) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages/${wastageId}/amend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(amendmentData),
+      });
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || 'Wastage record amended successfully'
+      };
+    } catch (error) {
+      console.error('Error amending wastage record:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to amend wastage record'
+      };
+    }
+  }
+
+  /**
    * Reject a wastage record
    */
   async reject(wastageId, rejectionData) {

@@ -176,28 +176,34 @@ const transactionService = {
         ...params
       })
 
-      if (!response.success) {
+      if (!response.success || !response.data || !Array.isArray(response.data)) {
+        console.warn('No stock movements data returned:', response)
         return []
       }
 
       // Transform transactions to stock movements format
-      return response.data.map(tx => ({
-        id: tx.id,
-        materialId: tx.materialId,
-        materialName: tx.materialName || 'Unknown Material',
-        materialCode: tx.materialCode || '',
-        type: parseFloat(tx.quantity || 0) >= 0 ? 'in' : 'out',
-        quantity: Math.abs(parseFloat(tx.quantity || 0)),
-        date: tx.transactionDate || tx.created_at,
-        reason: tx.description || tx.transactionType,
-        reference: tx.transactionNumber || tx.referenceId || '-',
-        referenceType: tx.referenceType || tx.transactionType,
-        transactionType: tx.transactionType,
-        unitPrice: tx.unitPrice,
-        amount: tx.amount,
-        branchId: tx.branchId,
-        createdBy: tx.userName || tx.createdBy
-      }))
+      // Filter out transactions without valid materialId (e.g., payment transactions)
+      return response.data
+        .filter(tx => tx.materialId != null)
+        .map(tx => ({
+          id: tx.id,
+          materialId: tx.materialId,
+          materialName: tx.materialName || '',
+          materialCode: tx.materialCode || '',
+          // Determine type based on transactionType, not quantity sign
+          // Wastage, sale, transfer_out are always 'out' regardless of quantity sign
+          type: ['sale', 'wastage', 'transfer', 'transfer_out'].includes(tx.transactionType) ? 'out' : 'in',
+          quantity: Math.abs(parseFloat(tx.quantity || 0)),
+          date: tx.transactionDate || tx.created_at,
+          reason: tx.description || tx.transactionType,
+          reference: tx.transactionNumber || tx.referenceId || '-',
+          referenceType: tx.referenceType || tx.transactionType,
+          transactionType: tx.transactionType,
+          unitPrice: tx.unitPrice,
+          amount: tx.amount,
+          branchId: tx.branchId,
+          createdBy: tx.userName || tx.createdBy
+        }))
     } catch (error) {
       console.error('Error fetching stock movements:', error)
       return []

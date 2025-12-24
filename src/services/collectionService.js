@@ -287,6 +287,34 @@ export const collectionOrderService = {
         error: error.message || 'Network error',
       };
     }
+  },
+
+  // Get linked wastages for a finalized collection order
+  getLinkedWastages: async (collectionOrderId) => {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${BASE_URL}/collection-orders/${collectionOrderId}/wastages`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message,
+      };
+    } catch (error) {
+      console.error('Error fetching linked wastages:', error);
+      return {
+        success: false,
+        error: error.message || 'Network error',
+        data: { wastages: [], summary: null },
+      };
+    }
   }
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight } from 'lucide-react';
+import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight, Droplet } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { collectionOrderService, calloutService } from '../../services/collectionService';
 import contractService from '../../services/contractService';
@@ -11,6 +11,7 @@ import DataTable from '../ui/DataTable';
 import DatePicker from '../ui/DatePicker';
 import Autocomplete from '../ui/Autocomplete';
 import Input, { Textarea } from '../ui/Input';
+import WastageForm from '../../modules/oil-trading/components/WastageForm';
 import './collections-managers.css';
 
 const CollectionOrderManager = () => {
@@ -26,6 +27,9 @@ const CollectionOrderManager = () => {
   const [showCalloutModal, setShowCalloutModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedCallout, setSelectedCallout] = useState(null);
+  // Wastage form state
+  const [showWastageForm, setShowWastageForm] = useState(false);
+  const [wastageOrderContext, setWastageOrderContext] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -101,6 +105,20 @@ const CollectionOrderManager = () => {
         console.error('Error deleting collection order:', error);
       }
     }
+  };
+
+  // Open wastage form with collection context
+  const handleRecordWastage = (order) => {
+    setWastageOrderContext(order);
+    setShowWastageForm(true);
+  };
+
+  // Handle wastage form success
+  const handleWastageCreated = () => {
+    setShowWastageForm(false);
+    setWastageOrderContext(null);
+    // Optionally refresh the orders list to update any wastage indicators
+    loadOrders();
   };
 
   const handleUpdateStatus = async (orderId, newStatus) => {
@@ -218,42 +236,55 @@ const CollectionOrderManager = () => {
     {
       key: 'actions',
       title: t('actions'),
-      render: (value, row) => (
-        <div className="flex space-x-1">
-          <button
-            onClick={() => handleViewOrder(row)}
-            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-            title={t('viewDetails')}
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleViewExpenses(row)}
-            className="p-1 text-green-600 hover:bg-green-50 rounded"
-            title={t('viewExpenses')}
-          >
-            <Banknote className="w-4 h-4" />
-          </button>
-          {(row.status === 'scheduled' || row.status === 'in_transit') && (
-            <>
+      render: (value, row) => {
+        const isFinalized = row.is_finalized === 1 || row.isFinalized;
+        return (
+          <div className="flex space-x-1">
+            <button
+              onClick={() => handleViewOrder(row)}
+              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+              title={t('viewDetails')}
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleViewExpenses(row)}
+              className="p-1 text-green-600 hover:bg-green-50 rounded"
+              title={t('viewExpenses')}
+            >
+              <Banknote className="w-4 h-4" />
+            </button>
+            {/* Wastage button - only for finalized orders */}
+            {isFinalized && (
               <button
-                onClick={() => handleEditOrder(row)}
-                className="p-1 text-purple-600 hover:bg-purple-50 rounded"
-                title={t('edit')}
+                onClick={() => handleRecordWastage(row)}
+                className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                title={t('recordWastage') || 'Record Wastage'}
               >
-                <Edit className="w-4 h-4" />
+                <Droplet className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => handleDeleteOrder(row.id)}
-                className="p-1 text-red-600 hover:bg-red-50 rounded"
-                title={t('delete')}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          )}
-        </div>
-      )
+            )}
+            {(row.status === 'scheduled' || row.status === 'in_transit') && (
+              <>
+                <button
+                  onClick={() => handleEditOrder(row)}
+                  className="p-1 text-purple-600 hover:bg-purple-50 rounded"
+                  title={t('edit')}
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteOrder(row.id)}
+                  className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  title={t('delete')}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        );
+      }
     }
   ];
 
@@ -490,6 +521,26 @@ const CollectionOrderManager = () => {
             setShowExpensesModal(false);
             setSelectedOrder(null);
           }}
+        />
+      )}
+
+      {/* Wastage Form Modal */}
+      {showWastageForm && wastageOrderContext && (
+        <WastageForm
+          isOpen={showWastageForm}
+          onClose={() => {
+            setShowWastageForm(false);
+            setWastageOrderContext(null);
+          }}
+          onSuccess={handleWastageCreated}
+          preSelectedCollectionId={wastageOrderContext.id}
+          collectionOrderNumber={wastageOrderContext.orderNumber || wastageOrderContext.wcn_number || wastageOrderContext.wcnNumber}
+          collectionMaterials={wastageOrderContext.items?.map(item => ({
+            materialId: item.materialId,
+            materialName: item.materialName || `Material ${item.materialId}`,
+            unit: item.unit || item.materialUnit || 'KG',
+            quantity: parseFloat(item.collectedQuantity || item.verifiedQuantity || 0)
+          })) || []}
         />
       )}
     </div>

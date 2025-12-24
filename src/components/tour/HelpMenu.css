@@ -328,6 +328,100 @@
 }
 
 /* ===================================================================
+   Help Documentation Link
+   =================================================================== */
+
+.help-docs-section {
+  padding: 0;
+}
+
+.help-docs-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  color: inherit;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.help-docs-link:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.help-docs-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.help-docs-content > svg {
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.help-docs-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.help-docs-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #166534;
+}
+
+.help-docs-description {
+  font-size: 11px;
+  color: #4ade80;
+}
+
+.help-docs-link .external-icon {
+  flex-shrink: 0;
+  color: #22c55e;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.help-docs-link:hover .external-icon {
+  opacity: 1;
+}
+
+/* Dark mode support for help docs link */
+.dark .help-docs-link {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(34, 197, 94, 0.1) 100%);
+}
+
+.dark .help-docs-link:hover {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.2) 0%, rgba(34, 197, 94, 0.15) 100%);
+}
+
+.dark .help-docs-title {
+  color: #4ade80;
+}
+
+.dark .help-docs-description {
+  color: #86efac;
+}
+
+/* RTL support for help docs link */
+[dir="rtl"] .help-docs-link {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .help-docs-content {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .help-docs-text {
+  text-align: right;
+}
+
+/* ===================================================================
    Workflow Category
    =================================================================== */
 
