@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { API_BASE_URL } from '../config/api.js';
+import authService from '../services/authService.js';
 
 // Configuration - Warning shows when remaining time is at or below this threshold
 const WARNING_THRESHOLD_MINUTES = 5; // Show warning 5 minutes before timeout
@@ -67,6 +68,45 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
           }
         }
       } else if (response.status === 401) {
+        // JWT token may have expired - try to refresh it first
+        console.log('[Session] Got 401, attempting token refresh...');
+
+        try {
+          // Attempt to refresh the access token using the refresh token
+          await authService.refreshAccessToken();
+          console.log('[Session] Token refreshed successfully, retrying status check');
+
+          // Retry the session status check with the new token
+          const retryResponse = await fetch(`${API_BASE_URL}/auth/session/status`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (retryResponse.ok) {
+            const retryData = await retryResponse.json();
+            if (retryData.success) {
+              setSessionStatus(retryData.data);
+              const remainingMinutes = retryData.data.remainingMinutes || 0;
+              const shouldShowWarning = remainingMinutes <= WARNING_THRESHOLD_MINUTES && remainingMinutes > 0;
+              if (shouldShowWarning && (!warningDismissed || remainingMinutes <= 2)) {
+                setShowWarning(true);
+              } else if (!shouldShowWarning) {
+                setWarningDismissed(false);
+                setShowWarning(false);
+              }
+            }
+            return; // Successfully recovered
+          }
+          // Retry also failed, fall through to logout
+          console.log('[Session] Retry after refresh still failed');
+        } catch (refreshError) {
+          // Token refresh failed - session is truly expired
+          console.log('[Session] Token refresh failed:', refreshError.message);
+        }
+
         // Session expired or invalid - MUST trigger logout and redirect
         console.log('[Session] Session expired (401) - triggering logout');
         setSessionStatus(null);
@@ -91,19 +131,39 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
 
   /**
    * Extend session (called when user clicks "Stay logged in")
+   * Handles 401 by attempting token refresh before giving up
    */
   const extendSession = useCallback(async () => {
     if (!isAuthenticated || isExtending) return false;
 
     setIsExtending(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/session/extend`, {
+      let response = await fetch(`${API_BASE_URL}/auth/session/extend`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+
+      // Handle 401 - try to refresh token first
+      if (response.status === 401) {
+        console.log('[Session] Extend got 401, attempting token refresh...');
+        try {
+          await authService.refreshAccessToken();
+          // Retry extend with new token
+          response = await fetch(`${API_BASE_URL}/auth/session/extend`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (refreshError) {
+          console.error('[Session] Token refresh failed during extend:', refreshError.message);
+          return false;
+        }
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -134,18 +194,38 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
 
   /**
    * Send heartbeat to server to update session activity
+   * Handles 401 by attempting token refresh before giving up
    */
   const sendHeartbeat = useCallback(async () => {
     if (!isAuthenticated) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/session/heartbeat`, {
+      let response = await fetch(`${API_BASE_URL}/auth/session/heartbeat`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
+
+      // Handle 401 - try to refresh token first
+      if (response.status === 401) {
+        console.debug('[Session] Heartbeat got 401, attempting token refresh...');
+        try {
+          await authService.refreshAccessToken();
+          // Retry heartbeat with new token
+          response = await fetch(`${API_BASE_URL}/auth/session/heartbeat`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (refreshError) {
+          console.debug('[Session] Token refresh failed during heartbeat:', refreshError.message);
+          return; // Can't send heartbeat without valid token
+        }
+      }
 
       if (response.ok) {
         const data = await response.json();
