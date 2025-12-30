@@ -221,11 +221,11 @@ class SalesOrderService {
   async updateStatus(orderId, status) {
     try {
       const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/${orderId}/status`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ orderStatus: status }),
       });
       return data;
     } catch (error) {
@@ -295,6 +295,72 @@ class SalesOrderService {
         success: false,
         error: error.message || 'Failed to calculate order pricing',
         data: null
+      };
+    }
+  }
+
+  /**
+   * Preview FIFO allocation before confirming an order
+   * Shows which batches will be used, COGS, and gross margin calculations
+   * @param {Array} items - Array of { materialId, quantity, unitPrice }
+   * @param {number} branchId - Optional branch filter
+   * @returns {Promise<Object>} FIFO preview with allocations and summary
+   */
+  async previewFIFO(items, branchId = null) {
+    try {
+      // Ensure materialId is integer for proper database matching
+      const sanitizedItems = items.map(item => ({
+        materialId: parseInt(item.materialId, 10),
+        quantity: parseFloat(item.quantity) || 0,
+        unitPrice: parseFloat(item.unitPrice) || 0
+      }));
+
+      const requestBody = { items: sanitizedItems };
+      if (branchId) {
+        requestBody.branchId = parseInt(branchId, 10);
+      }
+
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/sales-orders/preview-fifo`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      // Check if backend returned an error
+      if (!data.success) {
+        return {
+          success: false,
+          error: data.error || 'Backend returned an error',
+          data: {
+            canFulfillAll: false,
+            items: [],
+            summary: { totalCOGS: 0, totalRevenue: 0, grossMargin: 0, grossMarginPercent: 0 },
+            insufficientItems: null
+          }
+        };
+      }
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error previewing FIFO allocation:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to preview FIFO allocation',
+        data: {
+          canFulfillAll: false,
+          items: [],
+          summary: { totalCOGS: 0, totalRevenue: 0, grossMargin: 0, grossMarginPercent: 0 },
+          insufficientItems: null
+        }
       };
     }
   }

@@ -25,10 +25,16 @@ import {
   AlertCircle,
   Link,
   ExternalLink,
+  History,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Ban,
+  PlayCircle,
 } from 'lucide-react';
 import DataTable from '../ui/DataTable';
 import Modal from '../ui/Modal';
 import pettyCashUsersService from '../../services/pettyCashUsersService';
+import pettyCashService from '../../services/pettyCashService';
 import './PettyCashUsersSection.css';
 
 const PettyCashUsersSection = ({
@@ -49,8 +55,16 @@ const PettyCashUsersSection = ({
   const [showQrModal, setShowQrModal] = useState(false);
   const [showResetPinModal, setShowResetPinModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [qrCodeData, setQrCodeData] = useState(null);
+
+  // Transaction history states
+  const [transactions, setTransactions] = useState([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+
+  // Deactivation states
+  const [deactivationReason, setDeactivationReason] = useState('');
 
   // Form states
   const [formData, setFormData] = useState({
@@ -272,20 +286,106 @@ const PettyCashUsersSection = ({
     }
   };
 
-  // Handle toggle active status
-  const handleToggleActive = async (user) => {
+  // Handle deactivate user (with reason)
+  const openDeactivateModal = (user) => {
+    setSelectedUser(user);
+    setDeactivationReason('');
+    setFormError(null);
+    setShowDeactivateModal(true);
+  };
+
+  const handleDeactivateUser = async (e) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    if (deactivationReason.trim().length < 5) {
+      setFormError('Please provide a reason (at least 5 characters)');
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+
     try {
-      const result = await pettyCashUsersService.update(user.id, {
-        isActive: !user.is_active,
-      });
+      const result = await pettyCashService.deactivateUser(selectedUser.id, deactivationReason.trim());
+
+      if (result.success) {
+        setShowDeactivateModal(false);
+        setDeactivationReason('');
+        loadUsers();
+        onRefresh?.();
+      } else {
+        setFormError(result.error || 'Failed to deactivate user');
+      }
+    } catch (err) {
+      setFormError(err.message || 'Failed to deactivate user');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle reactivate user
+  const handleReactivateUser = async (user) => {
+    if (!window.confirm(`Are you sure you want to reactivate ${user.name}?`)) {
+      return;
+    }
+
+    try {
+      const result = await pettyCashService.reactivateUser(user.id);
 
       if (result.success) {
         loadUsers();
+        onRefresh?.();
       } else {
-        setError(result.error || 'Failed to update user status');
+        setError(result.error || 'Failed to reactivate user');
       }
     } catch (err) {
-      setError(err.message || 'Failed to update user status');
+      setError(err.message || 'Failed to reactivate user');
+    }
+  };
+
+  // Load transaction history for a user's card
+  const loadTransactionHistory = async (cardId) => {
+    if (!cardId) return;
+
+    setTransactionsLoading(true);
+    try {
+      const result = await pettyCashService.getCardTransactions(cardId, { limit: 20 });
+      if (result.success) {
+        setTransactions(result.data || []);
+      } else {
+        console.error('Failed to load transactions:', result.error);
+        setTransactions([]);
+      }
+    } catch (err) {
+      console.error('Error loading transactions:', err);
+      setTransactions([]);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  // Get transaction type icon and color
+  const getTransactionTypeInfo = (type) => {
+    switch (type) {
+      case 'initial_balance':
+        return { icon: <ArrowUpCircle size={16} />, color: '#28a745', label: t('initialBalance', 'Initial Balance') };
+      case 'reload':
+        return { icon: <ArrowUpCircle size={16} />, color: '#17a2b8', label: t('reload', 'Reload') };
+      case 'expense':
+        return { icon: <ArrowDownCircle size={16} />, color: '#ffc107', label: t('expense', 'Expense') };
+      case 'expense_approved':
+        return { icon: <CheckCircle size={16} />, color: '#28a745', label: t('expenseApproved', 'Expense Approved') };
+      case 'expense_rejected':
+        return { icon: <XCircle size={16} />, color: '#dc3545', label: t('expenseRejected', 'Expense Rejected') };
+      case 'adjustment':
+        return { icon: <RefreshCw size={16} />, color: '#6c757d', label: t('adjustment', 'Adjustment') };
+      case 'deduction':
+        return { icon: <ArrowDownCircle size={16} />, color: '#dc3545', label: t('deduction', 'Deduction') };
+      case 'reversal':
+        return { icon: <RefreshCw size={16} />, color: '#fd7e14', label: t('reversal', 'Reversal') };
+      default:
+        return { icon: <History size={16} />, color: '#6c757d', label: type };
     }
   };
 
@@ -389,6 +489,9 @@ const PettyCashUsersSection = ({
   // Open view modal
   const openViewModal = async (user) => {
     try {
+      // Reset transaction state
+      setTransactions([]);
+
       // Fetch both user details and QR code in parallel
       const [userResult, qrResult] = await Promise.all([
         pettyCashUsersService.getById(user.id),
@@ -404,6 +507,11 @@ const PettyCashUsersSection = ({
         };
         setSelectedUser(userData);
         setShowViewModal(true);
+
+        // Load transaction history for the user's card
+        if (userData.card_id) {
+          loadTransactionHistory(userData.card_id);
+        }
       } else {
         setError(userResult.error || 'Failed to load user details');
       }
@@ -505,13 +613,23 @@ const PettyCashUsersSection = ({
                 >
                   <Key size={14} />
                 </button>
-                <button
-                  className={`btn btn-sm ${row.is_active ? 'btn-outline' : 'btn-success'}`}
-                  onClick={() => handleToggleActive(row)}
-                  title={row.is_active ? t('deactivate', 'Deactivate') : t('activate', 'Activate')}
-                >
-                  {row.is_active ? <XCircle size={14} /> : <CheckCircle size={14} />}
-                </button>
+                {row.is_active ? (
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={() => openDeactivateModal(row)}
+                    title={t('deactivate', 'Deactivate')}
+                  >
+                    <Ban size={14} />
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => handleReactivateUser(row)}
+                    title={t('reactivate', 'Reactivate')}
+                  >
+                    <PlayCircle size={14} />
+                  </button>
+                )}
                 <button
                   className="btn btn-danger btn-sm"
                   onClick={() => handleDeleteUser(row)}
@@ -1061,22 +1179,22 @@ const PettyCashUsersSection = ({
                     <>
                       <button
                         className="btn btn-sm"
-                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}
+                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '0.5rem' }}
                         onClick={() => {
                           navigator.clipboard.writeText(selectedUser.portalUrl);
                           alert(t('urlCopied', 'URL copied to clipboard'));
                         }}
+                        title={t('copyUrl', 'Copy URL')}
                       >
-                        <Copy size={14} />
-                        {t('copyUrl', 'Copy URL')}
+                        <Copy size={18} />
                       </button>
                       <button
                         className="btn btn-sm"
-                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}
+                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '0.5rem' }}
                         onClick={() => window.open(selectedUser.portalUrl, '_blank')}
+                        title={t('openPortal', 'Open Portal')}
                       >
-                        <ExternalLink size={14} />
-                        {t('openPortal', 'Open Portal')}
+                        <ExternalLink size={18} />
                       </button>
                     </>
                   )}
@@ -1125,8 +1243,223 @@ const PettyCashUsersSection = ({
                 </ul>
               </div>
             )}
+
+            {/* Transaction History Section */}
+            <div className="transaction-history-section" style={{
+              marginTop: '1rem',
+              padding: '1rem',
+              background: '#f8f9fa',
+              borderRadius: '8px',
+              border: '1px solid #e9ecef'
+            }}>
+              <h4 style={{
+                marginBottom: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#333'
+              }}>
+                <History size={18} />
+                {t('transactionHistory', 'Transaction History')}
+              </h4>
+
+              {transactionsLoading ? (
+                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                  <Loader2 size={24} className="spinning" />
+                  <p style={{ marginTop: '0.5rem', color: '#666' }}>
+                    {t('loadingTransactions', 'Loading transactions...')}
+                  </p>
+                </div>
+              ) : transactions.length > 0 ? (
+                <div className="transaction-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {transactions.map((txn) => {
+                    const typeInfo = getTransactionTypeInfo(txn.transaction_type);
+                    return (
+                      <div key={txn.id} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        padding: '0.75rem',
+                        borderBottom: '1px solid #e9ecef',
+                        background: 'white'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                          <div style={{
+                            color: typeInfo.color,
+                            marginTop: '2px'
+                          }}>
+                            {typeInfo.icon}
+                          </div>
+                          <div>
+                            <div style={{
+                              fontWeight: '500',
+                              color: '#333',
+                              marginBottom: '0.25rem'
+                            }}>
+                              {typeInfo.label}
+                            </div>
+                            {txn.description && (
+                              <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                                {txn.description}
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                              {txn.transaction_date
+                                ? new Date(txn.transaction_date).toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                : '-'}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{
+                            fontWeight: '600',
+                            color: txn.amount >= 0 ? '#28a745' : '#dc3545'
+                          }}>
+                            {txn.amount >= 0 ? '+' : ''}{formatCurrency(txn.amount)}
+                          </div>
+                          {txn.balance_after !== null && (
+                            <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                              {t('balance', 'Balance')}: {formatCurrency(txn.balance_after)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '1.5rem',
+                  color: '#666',
+                  background: 'white',
+                  borderRadius: '4px'
+                }}>
+                  <History size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                  <p>{t('noTransactionsFound', 'No transactions found')}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Deactivation Info (if deactivated) */}
+            {!selectedUser.is_active && selectedUser.deactivation_reason && (
+              <div style={{
+                marginTop: '1rem',
+                padding: '1rem',
+                background: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '8px'
+              }}>
+                <h4 style={{
+                  marginBottom: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  color: '#856404'
+                }}>
+                  <Ban size={16} />
+                  {t('deactivationInfo', 'Deactivation Information')}
+                </h4>
+                <p style={{ margin: 0, color: '#856404' }}>
+                  <strong>{t('reason', 'Reason')}:</strong> {selectedUser.deactivation_reason}
+                </p>
+                {selectedUser.deactivated_at && (
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#856404' }}>
+                    <strong>{t('deactivatedOn', 'Deactivated on')}:</strong>{' '}
+                    {new Date(selectedUser.deactivated_at).toLocaleString('en-GB')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
+      </Modal>
+
+      {/* Deactivation Reason Modal */}
+      <Modal
+        isOpen={showDeactivateModal}
+        onClose={() => setShowDeactivateModal(false)}
+        title={t('deactivateUser', 'Deactivate User')}
+        size="sm"
+      >
+        <form onSubmit={handleDeactivateUser} className="pc-user-form">
+          {formError && (
+            <div className="form-error">
+              <AlertCircle size={16} />
+              {formError}
+            </div>
+          )}
+
+          <div style={{
+            padding: '1rem',
+            background: '#fff3cd',
+            border: '1px solid #ffc107',
+            borderRadius: '8px',
+            marginBottom: '1rem'
+          }}>
+            <p style={{ margin: 0, color: '#856404' }}>
+              <strong>{t('warning', 'Warning')}:</strong>{' '}
+              {t(
+                'deactivateUserWarning',
+                `Deactivating ${selectedUser?.name} will prevent them from accessing the petty cash portal.`
+              )}
+            </p>
+          </div>
+
+          <div className="form-group">
+            <label>{t('deactivationReason', 'Reason for Deactivation')} *</label>
+            <textarea
+              value={deactivationReason}
+              onChange={(e) => setDeactivationReason(e.target.value)}
+              placeholder={t('enterDeactivationReason', 'Enter the reason for deactivation...')}
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                resize: 'vertical'
+              }}
+              required
+            />
+            <span style={{ fontSize: '0.75rem', color: '#666' }}>
+              {t('minChars', 'Minimum 5 characters')}
+            </span>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setShowDeactivateModal(false)}
+            >
+              {t('cancel', 'Cancel')}
+            </button>
+            <button
+              type="submit"
+              className="btn btn-warning"
+              disabled={submitting || deactivationReason.trim().length < 5}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="spinning" />
+                  {t('deactivating', 'Deactivating...')}
+                </>
+              ) : (
+                <>
+                  <Ban size={16} />
+                  {t('deactivate', 'Deactivate')}
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

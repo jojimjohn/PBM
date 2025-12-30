@@ -35,7 +35,13 @@ import {
   Upload,
   Camera,
   Lock,
-  FileText
+  FileText,
+  Ban,
+  PlayCircle,
+  History,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Loader2
 } from 'lucide-react'
 import '../../../pages/PettyCash.css'
 
@@ -58,8 +64,12 @@ const PettyCash = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [showReloadModal, setShowReloadModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
+  const [showDeactivateCardModal, setShowDeactivateCardModal] = useState(false)
   const [selectedCard, setSelectedCard] = useState(null)
   const [editingCard, setEditingCard] = useState(null)
+  const [cardDeactivationReason, setCardDeactivationReason] = useState('')
+  const [cardTransactions, setCardTransactions] = useState([])
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
   
   // Form states
   const [cardForm, setCardForm] = useState({})
@@ -374,6 +384,121 @@ const PettyCash = () => {
     }
   }
 
+  // Handle deactivate card (suspend with reason)
+  const openDeactivateCardModal = (card) => {
+    setSelectedCard(card)
+    setCardDeactivationReason('')
+    setShowDeactivateCardModal(true)
+  }
+
+  const handleDeactivateCard = async (e) => {
+    e.preventDefault()
+    if (!selectedCard) return
+
+    if (cardDeactivationReason.trim().length < 5) {
+      setError('Please provide a reason (at least 5 characters)')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const result = await pettyCashService.deactivateCard(selectedCard.id, cardDeactivationReason.trim())
+
+      if (result.success) {
+        setShowDeactivateCardModal(false)
+        setCardDeactivationReason('')
+        await loadPettyCashData()
+        alert('Card deactivated successfully')
+      } else {
+        throw new Error(result.error || 'Failed to deactivate card')
+      }
+    } catch (error) {
+      console.error('Error deactivating card:', error)
+      setError(error.message)
+      alert(`Failed to deactivate card: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handle reactivate card
+  const handleReactivateCard = async (card) => {
+    if (!window.confirm(`Are you sure you want to reactivate card ${card.cardNumber}?`)) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      const result = await pettyCashService.reactivateCard(card.id)
+
+      if (result.success) {
+        await loadPettyCashData()
+        alert('Card reactivated successfully')
+      } else {
+        throw new Error(result.error || 'Failed to reactivate card')
+      }
+    } catch (error) {
+      console.error('Error reactivating card:', error)
+      setError(error.message)
+      alert(`Failed to reactivate card: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load transaction history for a card
+  const loadCardTransactions = async (cardId) => {
+    if (!cardId) return
+
+    setTransactionsLoading(true)
+    try {
+      const result = await pettyCashService.getCardTransactions(cardId, { limit: 20 })
+      if (result.success) {
+        setCardTransactions(result.data || [])
+      } else {
+        console.error('Failed to load transactions:', result.error)
+        setCardTransactions([])
+      }
+    } catch (err) {
+      console.error('Error loading transactions:', err)
+      setCardTransactions([])
+    } finally {
+      setTransactionsLoading(false)
+    }
+  }
+
+  // Get transaction type info for display
+  const getTransactionTypeInfo = (type) => {
+    switch (type) {
+      case 'initial_balance':
+        return { icon: <ArrowUpCircle size={16} />, color: '#28a745', label: t('initialBalance', 'Initial Balance') }
+      case 'reload':
+        return { icon: <ArrowUpCircle size={16} />, color: '#17a2b8', label: t('reload', 'Reload') }
+      case 'expense':
+        return { icon: <ArrowDownCircle size={16} />, color: '#ffc107', label: t('expense', 'Expense') }
+      case 'expense_approved':
+        return { icon: <CheckCircle size={16} />, color: '#28a745', label: t('expenseApproved', 'Expense Approved') }
+      case 'expense_rejected':
+        return { icon: <AlertCircle size={16} />, color: '#dc3545', label: t('expenseRejected', 'Expense Rejected') }
+      case 'adjustment':
+        return { icon: <RefreshCw size={16} />, color: '#6c757d', label: t('adjustment', 'Adjustment') }
+      case 'deduction':
+        return { icon: <ArrowDownCircle size={16} />, color: '#dc3545', label: t('deduction', 'Deduction') }
+      case 'reversal':
+        return { icon: <RefreshCw size={16} />, color: '#fd7e14', label: t('reversal', 'Reversal') }
+      default:
+        return { icon: <History size={16} />, color: '#6c757d', label: type }
+    }
+  }
+
+  // Handle view card modal with transaction loading
+  const handleViewCard = async (card) => {
+    setSelectedCard(card)
+    setCardTransactions([])
+    setShowViewModal(true)
+    await loadCardTransactions(card.id)
+  }
+
   // Card table columns
   const cardColumns = [
     {
@@ -442,8 +567,7 @@ const PettyCash = () => {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              setSelectedCard(row)
-              setShowViewModal(true)
+              handleViewCard(row)
             }}
             className="btn btn-outline btn-sm"
             title={t('viewDetails', 'View Details')}
@@ -462,26 +586,52 @@ const PettyCash = () => {
               >
                 <Edit size={14} />
               </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleReloadCard(row)
-                }}
-                className="btn btn-success btn-sm"
-                title={t('reloadCard', 'Reload Card')}
-              >
-                <RefreshCw size={14} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleAddExpense(row)
-                }}
-                className="btn btn-primary btn-sm"
-                title={t('addExpense', 'Add Expense')}
-              >
-                <Receipt size={14} />
-              </button>
+              {row.status === 'active' && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleReloadCard(row)
+                    }}
+                    className="btn btn-success btn-sm"
+                    title={t('reloadCard', 'Reload Card')}
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleAddExpense(row)
+                    }}
+                    className="btn btn-primary btn-sm"
+                    title={t('addExpense', 'Add Expense')}
+                  >
+                    <Receipt size={14} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openDeactivateCardModal(row)
+                    }}
+                    className="btn btn-warning btn-sm"
+                    title={t('deactivateCard', 'Deactivate Card')}
+                  >
+                    <Ban size={14} />
+                  </button>
+                </>
+              )}
+              {row.status === 'suspended' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleReactivateCard(row)
+                  }}
+                  className="btn btn-success btn-sm"
+                  title={t('reactivateCard', 'Reactivate Card')}
+                >
+                  <PlayCircle size={14} />
+                </button>
+              )}
             </>
           )}
         </div>
@@ -625,6 +775,14 @@ const PettyCash = () => {
           <p>{t('pettyCashSubtitle', 'Manage staff expense cards and track spending')}</p>
         </div>
         <div className="header-actions">
+          <button
+            className="btn btn-outline"
+            onClick={loadPettyCashData}
+            disabled={loading}
+            title={t('refresh', 'Refresh')}
+          >
+            <RefreshCw size={20} className={loading ? 'spinning' : ''} />
+          </button>
           {hasPermission('MANAGE_PETTY_CASH') && (
             <button className="btn btn-primary" onClick={handleAddCard}>
               <Plus size={20} />
@@ -765,6 +923,16 @@ const PettyCash = () => {
             <div className="section">
               <div className="section-header">
                 <h2>{t('recentExpenses', 'Recent Expenses')}</h2>
+                <div className="section-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={loadPettyCashData}
+                    disabled={loading}
+                    title={t('refresh', 'Refresh')}
+                  >
+                    <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+                  </button>
+                </div>
                 <div className="section-filters">
                   <select
                     value={expenseFilter}
@@ -866,12 +1034,98 @@ const PettyCash = () => {
           onClose={() => {
             setShowViewModal(false)
             setSelectedCard(null)
+            setCardTransactions([])
           }}
           card={selectedCard}
           formatCurrency={formatCurrency}
           formatDate={formatDate}
           t={t}
+          transactions={cardTransactions}
+          transactionsLoading={transactionsLoading}
+          getTransactionTypeInfo={getTransactionTypeInfo}
         />
+      )}
+
+      {/* Card Deactivation Modal */}
+      {showDeactivateCardModal && selectedCard && (
+        <Modal
+          isOpen={showDeactivateCardModal}
+          onClose={() => {
+            setShowDeactivateCardModal(false)
+            setCardDeactivationReason('')
+          }}
+          title={t('deactivateCard', 'Deactivate Card')}
+          className="modal-sm"
+        >
+          <form onSubmit={handleDeactivateCard} className="deactivation-form">
+            <div style={{
+              padding: '1rem',
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ margin: 0, color: '#856404' }}>
+                <strong>{t('warning', 'Warning')}:</strong>{' '}
+                {t(
+                  'deactivateCardWarning',
+                  `Deactivating card ${selectedCard.cardNumber} will prevent any expenses from being recorded on this card. Associated petty cash users will also be affected.`
+                )}
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label>{t('deactivationReason', 'Reason for Deactivation')} *</label>
+              <textarea
+                value={cardDeactivationReason}
+                onChange={(e) => setCardDeactivationReason(e.target.value)}
+                placeholder={t('enterDeactivationReason', 'Enter the reason for deactivation...')}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  resize: 'vertical'
+                }}
+                required
+              />
+              <span style={{ fontSize: '0.75rem', color: '#666' }}>
+                {t('minChars', 'Minimum 5 characters')}
+              </span>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowDeactivateCardModal(false)
+                  setCardDeactivationReason('')
+                }}
+              >
+                {t('cancel', 'Cancel')}
+              </button>
+              <button
+                type="submit"
+                className="btn btn-warning"
+                disabled={loading || cardDeactivationReason.trim().length < 5}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="spinning" />
+                    {t('deactivating', 'Deactivating...')}
+                  </>
+                ) : (
+                  <>
+                    <Ban size={16} />
+                    {t('deactivate', 'Deactivate')}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   )
@@ -1381,7 +1635,17 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
 }
 
 // Card View Modal Component
-const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t }) => {
+const CardViewModal = ({
+  isOpen,
+  onClose,
+  card,
+  formatCurrency,
+  formatDate,
+  t,
+  transactions = [],
+  transactionsLoading = false,
+  getTransactionTypeInfo = () => ({ icon: null, color: '#666', label: '' })
+}) => {
   if (!card) return null
 
   const getStatusBadge = (status) => {
@@ -1588,6 +1852,128 @@ const CardViewModal = ({ isOpen, onClose, card, formatCurrency, formatDate, t })
                 {t('notes', 'Notes')}
               </h3>
               <div className="notes-display">{card.notes}</div>
+            </div>
+          )}
+
+          {/* Transaction History Section */}
+          <div className="detail-section">
+            <h3 className="section-title">
+              <History size={18} />
+              {t('transactionHistory', 'Transaction History')}
+            </h3>
+
+            {transactionsLoading ? (
+              <div style={{ textAlign: 'center', padding: '1rem' }}>
+                <Loader2 size={24} className="spinning" />
+                <p style={{ marginTop: '0.5rem', color: '#666' }}>
+                  {t('loadingTransactions', 'Loading transactions...')}
+                </p>
+              </div>
+            ) : transactions.length > 0 ? (
+              <div className="transaction-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {transactions.map((txn) => {
+                  const typeInfo = getTransactionTypeInfo(txn.transaction_type);
+                  return (
+                    <div key={txn.id} style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      padding: '0.75rem',
+                      borderBottom: '1px solid #e9ecef',
+                      background: 'white'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                        <div style={{
+                          color: typeInfo.color,
+                          marginTop: '2px'
+                        }}>
+                          {typeInfo.icon}
+                        </div>
+                        <div>
+                          <div style={{
+                            fontWeight: '500',
+                            color: '#333',
+                            marginBottom: '0.25rem'
+                          }}>
+                            {typeInfo.label}
+                          </div>
+                          {txn.description && (
+                            <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                              {txn.description}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                            {txn.transaction_date
+                              ? new Date(txn.transaction_date).toLocaleString('en-GB', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : '-'}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{
+                          fontWeight: '600',
+                          color: txn.amount >= 0 ? '#28a745' : '#dc3545'
+                        }}>
+                          {txn.amount >= 0 ? '+' : ''}{formatCurrency(txn.amount)}
+                        </div>
+                        {txn.balance_after !== null && (
+                          <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                            {t('balance', 'Balance')}: {formatCurrency(txn.balance_after)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '1.5rem',
+                color: '#666',
+                background: '#f8f9fa',
+                borderRadius: '4px'
+              }}>
+                <History size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                <p>{t('noTransactionsFound', 'No transactions found')}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Deactivation Info (if suspended) */}
+          {card.status === 'suspended' && card.deactivation_reason && (
+            <div style={{
+              marginTop: '1rem',
+              padding: '1rem',
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '8px'
+            }}>
+              <h4 style={{
+                marginBottom: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: '#856404'
+              }}>
+                <Ban size={16} />
+                {t('deactivationInfo', 'Deactivation Information')}
+              </h4>
+              <p style={{ margin: 0, color: '#856404' }}>
+                <strong>{t('reason', 'Reason')}:</strong> {card.deactivation_reason}
+              </p>
+              {card.deactivated_at && (
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#856404' }}>
+                  <strong>{t('deactivatedOn', 'Deactivated on')}:</strong>{' '}
+                  {new Date(card.deactivated_at).toLocaleString('en-GB')}
+                </p>
+              )}
             </div>
           )}
         </div>

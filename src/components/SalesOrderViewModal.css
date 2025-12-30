@@ -419,3 +419,263 @@
 .order-view-professional .btn-primary:hover {
   background-color: #2563eb;
 }
+
+/* Batch Allocations Section */
+.order-view-professional .allocations-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.order-view-professional .allocations-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background-color: #f0fdf4;
+  border-bottom: 1px solid #bbf7d0;
+}
+
+.order-view-professional .allocations-card-header svg {
+  color: #16a34a;
+}
+
+.order-view-professional .allocations-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #374151;
+  flex: 1;
+}
+
+.order-view-professional .allocations-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.order-view-professional .allocations-card-body {
+  padding: 20px;
+}
+
+/* Margin Summary */
+.order-view-professional .margin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.order-view-professional .margin-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-view-professional .margin-item.highlight {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #86efac;
+}
+
+.order-view-professional .margin-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.order-view-professional .margin-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.order-view-professional .margin-value.revenue {
+  color: #3b82f6;
+}
+
+.order-view-professional .margin-value.cogs {
+  color: #f59e0b;
+}
+
+.order-view-professional .margin-value.positive {
+  color: #16a34a;
+}
+
+.order-view-professional .margin-value.negative {
+  color: #dc2626;
+}
+
+.order-view-professional .margin-percent {
+  font-size: 14px;
+  margin-left: 4px;
+  opacity: 0.8;
+}
+
+/* Item Allocations */
+.order-view-professional .item-allocations {
+  margin-top: 20px;
+}
+
+.order-view-professional .allocations-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.order-view-professional .allocation-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.order-view-professional .allocation-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fafafa;
+}
+
+.order-view-professional .allocation-item-header:hover {
+  background: #f3f4f6;
+}
+
+.order-view-professional .allocation-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-view-professional .allocation-material {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.order-view-professional .allocation-qty {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.order-view-professional .allocation-item-cogs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-view-professional .cogs-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.order-view-professional .cogs-value {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.order-view-professional .expand-icon {
+  color: #9ca3af;
+}
+
+/* Batch Details Table */
+.order-view-professional .batch-details {
+  padding: 12px 16px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.order-view-professional .batch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.order-view-professional .batch-table th {
+  text-align: left;
+  padding: 8px;
+  color: #6b7280;
+  font-weight: 500;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-view-professional .batch-table td {
+  padding: 8px;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.order-view-professional .batch-table .batch-number {
+  font-family: monospace;
+  font-size: 12px;
+  color: #6366f1;
+}
+
+.order-view-professional .no-allocations {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+}
+
+/* Pending FIFO Card */
+.order-view-professional .pending-fifo-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.order-view-professional .pending-fifo-card svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.order-view-professional .pending-fifo-content {
+  flex: 1;
+}
+
+.order-view-professional .pending-fifo-content strong {
+  color: #92400e;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.order-view-professional .pending-fifo-content p {
+  color: #78350f;
+  margin: 0;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-view-professional .margin-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .order-view-professional .allocation-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

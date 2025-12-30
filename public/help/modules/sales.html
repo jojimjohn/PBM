@@ -55,8 +55,9 @@
       <div class="help-content">
         <h1>Sales & Invoicing</h1>
         <p class="lead">
-          Create sales orders, generate invoices, and track payments. The Sales module integrates with
-          the Contract Rate System to automatically apply customer-specific pricing.
+          Create sales orders with FIFO inventory tracking, generate invoices, and track payments.
+          The Sales module integrates with the Contract Rate System and provides real-time
+          profit analysis through FIFO cost allocation.
         </p>
 
         <div class="callout note">
@@ -147,54 +148,147 @@
             </li>
 
             <li class="step">
+              <div class="step-title">Preview FIFO Allocation (Optional)</div>
+              <div class="step-content">
+                <p>Click <strong>Preview FIFO</strong> to see:</p>
+                <ul>
+                  <li>Which inventory batches will be used (oldest first)</li>
+                  <li>Cost of Goods Sold (COGS) calculation</li>
+                  <li>Gross margin and profit percentage</li>
+                  <li>Warnings if stock is insufficient</li>
+                </ul>
+                <div class="callout tip">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">FIFO Preview</div>
+                    <p style="margin:0;">
+                      FIFO (First-In, First-Out) ensures older inventory is sold first.
+                      The preview shows exact batch allocations before you commit to the order.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
               <div class="step-title">Save Order</div>
               <div class="step-content">
-                <p>Click <strong>Save Order</strong>. The order is created with "Pending" status.</p>
+                <p>Click <strong>Save Order</strong>. The order is created with "Draft" status.</p>
               </div>
             </li>
           </ol>
         </section>
 
+        <!-- FIFO Inventory Tracking -->
+        <section>
+          <h2>FIFO Inventory Tracking</h2>
+          <p>When a sales order is marked as <strong>Delivered</strong>, the system automatically:</p>
+          <ul>
+            <li>Consumes inventory from the oldest batches first (FIFO)</li>
+            <li>Records Cost of Goods Sold (COGS) for each item</li>
+            <li>Creates batch movement records for audit trail</li>
+            <li>Updates transaction history</li>
+          </ul>
+
+          <div class="callout note">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Why FIFO Matters</div>
+              <p style="margin:0;">
+                FIFO ensures accurate cost tracking for each sale. You'll know exactly which batches
+                (at their specific purchase costs) were used, enabling precise profit analysis.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <!-- Order Statuses -->
         <section>
-          <h2>Sales Order Statuses</h2>
+          <h2>Sales Order Statuses & Lifecycle</h2>
+          <p>Sales orders follow a specific lifecycle. Use the quick action buttons in the table to progress orders:</p>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
                   <th>Status</th>
                   <th>Description</th>
-                  <th>Actions Available</th>
+                  <th>Quick Actions</th>
+                  <th>Can Delete?</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td><span style="background:#e0e7ff;color:#4f46e5;padding:2px 8px;border-radius:4px;">Draft</span></td>
-                  <td>Order created but not submitted</td>
-                  <td>Edit, Delete, Submit</td>
-                </tr>
-                <tr>
-                  <td><span style="background:#fef3c7;color:#ca8a04;padding:2px 8px;border-radius:4px;">Pending</span></td>
-                  <td>Awaiting processing</td>
-                  <td>Edit, Cancel, Process</td>
+                  <td>Order created, not yet confirmed</td>
+                  <td>View, Edit, Confirm ✓, Cancel ✕</td>
+                  <td><span style="color:#22c55e;">✓ Yes</span></td>
                 </tr>
                 <tr>
                   <td><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;">Confirmed</span></td>
-                  <td>Order confirmed, preparing for delivery</td>
-                  <td>Generate Invoice, Cancel</td>
+                  <td>Order confirmed, inventory reserved</td>
+                  <td>View, Edit, Deliver 🚚, Cancel ✕, Invoice 📄</td>
+                  <td><span style="color:#dc2626;">✗ No</span></td>
                 </tr>
                 <tr>
                   <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Delivered</span></td>
-                  <td>Materials delivered to customer</td>
-                  <td>Generate Invoice, View</td>
+                  <td>Materials delivered, inventory reduced (FIFO)</td>
+                  <td>View, Invoice 📄</td>
+                  <td><span style="color:#dc2626;">✗ No</span></td>
                 </tr>
                 <tr>
                   <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Cancelled</span></td>
-                  <td>Order cancelled</td>
-                  <td>View only</td>
+                  <td>Order cancelled, inventory released</td>
+                  <td>View</td>
+                  <td><span style="color:#22c55e;">✓ Yes</span></td>
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Delete Restrictions</div>
+              <p style="margin:0;">
+                Only <strong>Draft</strong> and <strong>Cancelled</strong> orders can be deleted.
+                Confirmed and Delivered orders are protected because they have inventory implications.
+                If you need to undo a delivered order, cancel it first.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Order Lifecycle Workflow -->
+        <section>
+          <h2>Order Workflow</h2>
+          <div class="card">
+            <h3>Standard Order Flow</h3>
+            <div style="text-align:center;padding:1rem;background:#f8fafc;border-radius:8px;margin:1rem 0;">
+              <span style="background:#e0e7ff;color:#4f46e5;padding:4px 12px;border-radius:4px;">Draft</span>
+              <span style="margin:0 0.5rem;">→</span>
+              <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:4px;">Confirmed</span>
+              <span style="margin:0 0.5rem;">→</span>
+              <span style="background:#dcfce7;color:#16a34a;padding:4px 12px;border-radius:4px;">Delivered</span>
+              <span style="margin:0 0.5rem;">→</span>
+              <span style="background:#fef3c7;color:#ca8a04;padding:4px 12px;border-radius:4px;">Invoice</span>
+            </div>
+            <ul>
+              <li><strong>Draft → Confirmed:</strong> Reserves inventory quantities (not yet consumed)</li>
+              <li><strong>Confirmed → Delivered:</strong> Triggers FIFO allocation - inventory is actually consumed</li>
+              <li><strong>Delivered → Invoice:</strong> Generate invoice for payment collection</li>
+            </ul>
           </div>
         </section>
 

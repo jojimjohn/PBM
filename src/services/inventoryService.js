@@ -277,6 +277,41 @@ class InventoryService {
   }
 
   /**
+   * Get batch stock for a material (FIFO source)
+   * Returns accurate stock from inventory_batches table for sales order forms
+   * @param {number} materialId - Material ID
+   * @returns {Promise<{success: boolean, data: Object}>} Batch stock data with availability
+   */
+  async getBatchStock(materialId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/inventory/batch-stock/${materialId}`
+      );
+
+      return {
+        success: true,
+        data: data.data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('Error fetching batch stock:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch batch stock',
+        data: {
+          materialId: materialId,
+          totalRemaining: 0,
+          reservedQuantity: 0,
+          availableQuantity: 0,
+          activeBatchCount: 0,
+          stockStatus: 'out-of-stock',
+          source: 'inventory_batches'
+        }
+      };
+    }
+  }
+
+  /**
    * Validate stock availability for sales order
    */
   async validateStockAvailability(items) {

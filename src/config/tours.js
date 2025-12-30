@@ -408,8 +408,8 @@ export const TOUR_CONFIG = {
         popover: {
           title: 'Sales Module',
           titleAr: 'وحدة المبيعات',
-          description: 'Create and manage sales orders, generate invoices, and track deliveries.',
-          descriptionAr: 'إنشاء وإدارة أوامر المبيعات، إنشاء الفواتير، وتتبع التسليمات.',
+          description: 'Create and manage sales orders with FIFO inventory tracking, generate invoices, and track deliveries.',
+          descriptionAr: 'إنشاء وإدارة أوامر المبيعات مع تتبع المخزون FIFO، إنشاء الفواتير، وتتبع التسليمات.',
           side: 'bottom',
           align: 'start'
         },
@@ -453,9 +453,20 @@ export const TOUR_CONFIG = {
         popover: {
           title: 'Orders Table',
           titleAr: 'جدول الطلبات',
-          description: 'All sales orders with customer, items, amount, and invoice status.',
-          descriptionAr: 'جميع أوامر المبيعات مع العميل، العناصر، المبلغ، وحالة الفاتورة.',
+          description: 'All sales orders with customer, items, amount, and invoice status. Use action buttons to manage order lifecycle.',
+          descriptionAr: 'جميع أوامر المبيعات مع العميل، العناصر، المبلغ، وحالة الفاتورة. استخدم أزرار الإجراءات لإدارة دورة حياة الطلب.',
           side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '[data-tour="order-actions"]',
+        popover: {
+          title: 'Order Actions',
+          titleAr: 'إجراءات الطلب',
+          description: 'Quick actions: View (👁), Edit (✏), Confirm (✓), Deliver (🚚), Cancel (✕), Delete (🗑). Delete is only available for Draft and Cancelled orders.',
+          descriptionAr: 'إجراءات سريعة: عرض (👁)، تحرير (✏)، تأكيد (✓)، تسليم (🚚)، إلغاء (✕)، حذف (🗑). الحذف متاح فقط للطلبات المسودة والملغاة.',
+          side: 'left',
           align: 'center'
         }
       },
@@ -464,8 +475,8 @@ export const TOUR_CONFIG = {
         popover: {
           title: 'Create Order',
           titleAr: 'إنشاء طلب',
-          description: 'Click to create a new sales order. Select customer, add items, and save.',
-          descriptionAr: 'انقر لإنشاء أمر مبيعات جديد. حدد العميل، أضف العناصر، واحفظ.',
+          description: 'Click to create a new sales order. The FIFO preview shows which inventory batches will be used and calculates gross margin.',
+          descriptionAr: 'انقر لإنشاء أمر مبيعات جديد. معاينة FIFO تعرض دفعات المخزون التي سيتم استخدامها وتحسب هامش الربح الإجمالي.',
           side: 'left',
           align: 'center'
         }
@@ -998,17 +1009,17 @@ export const WORKFLOW_GUIDES = {
   /**
    * How to Create a Sales Order
    *
-   * Educational guide for sales order creation with contract rate application.
+   * Educational guide for sales order creation with contract rate application and FIFO preview.
    */
   'create-sales-order': {
     id: 'create-sales-order',
     name: 'How to Create a Sales Order',
     nameAr: 'كيفية إنشاء أمر مبيعات',
-    description: 'Create sales orders with automatic contract rate application',
-    descriptionAr: 'إنشاء أوامر المبيعات مع تطبيق أسعار العقود التلقائي',
+    description: 'Create sales orders with FIFO inventory preview and contract rate application',
+    descriptionAr: 'إنشاء أوامر المبيعات مع معاينة مخزون FIFO وتطبيق أسعار العقود',
     category: 'sales',
     roles: ['SALES_STAFF', 'MANAGER', 'COMPANY_ADMIN', 'SUPER_ADMIN'],
-    estimatedTime: '4 min',
+    estimatedTime: '5 min',
     steps: [
       // Step 1: Navigate to Sales
       {
@@ -1083,7 +1094,49 @@ export const WORKFLOW_GUIDES = {
           align: 'center'
         }
       },
-      // Step 6: Submit
+      // Step 6: FIFO Preview Button
+      {
+        context: {
+          requireModal: 'SalesOrderForm',
+          requireFormState: { completeItemCount: 1 }
+        },
+        element: '[data-tour="so-fifo-preview-button"]',
+        popover: {
+          title: 'Step 3: Preview FIFO Allocation',
+          titleAr: 'الخطوة 3: معاينة تخصيص FIFO',
+          description: 'Before submitting, click "Preview FIFO" to see which inventory batches will be used. This shows Cost of Goods Sold (COGS), gross margin, and alerts if stock is insufficient.',
+          descriptionAr: 'قبل الإرسال، انقر "معاينة FIFO" لمعرفة دفعات المخزون التي سيتم استخدامها. يعرض تكلفة البضائع المباعة وهامش الربح الإجمالي وتنبيهات إذا كان المخزون غير كافٍ.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      // Step 7: FIFO Modal - Batch Allocations
+      {
+        context: { requireModal: 'FIFOPreviewModal' },
+        element: '[data-tour="fifo-batch-allocations"]',
+        popover: {
+          title: 'FIFO Batch Allocations',
+          titleAr: 'تخصيصات دفعات FIFO',
+          description: 'Each material shows which batches (oldest first) will be consumed. Expand to see batch details: purchase date, unit cost, and allocated quantity.',
+          descriptionAr: 'كل مادة تعرض الدفعات التي سيتم استهلاكها (الأقدم أولاً). وسّع لرؤية تفاصيل الدفعة: تاريخ الشراء، تكلفة الوحدة، والكمية المخصصة.',
+          side: 'left',
+          align: 'start'
+        }
+      },
+      // Step 8: FIFO Modal - Summary
+      {
+        context: { requireModal: 'FIFOPreviewModal' },
+        element: '[data-tour="fifo-summary"]',
+        popover: {
+          title: 'Profit Analysis',
+          titleAr: 'تحليل الربح',
+          description: 'See total revenue, COGS (cost of goods sold), gross margin, and margin percentage. Green margin = profit, red = loss. Confirm only if stock is sufficient.',
+          descriptionAr: 'شاهد إجمالي الإيرادات وتكلفة البضائع المباعة وهامش الربح الإجمالي ونسبة الهامش. الهامش الأخضر = ربح، الأحمر = خسارة. قم بالتأكيد فقط إذا كان المخزون كافياً.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      // Step 9: Submit
       {
         context: {
           requireModal: 'SalesOrderForm',
@@ -1093,10 +1146,23 @@ export const WORKFLOW_GUIDES = {
         popover: {
           title: 'Create Sales Order',
           titleAr: 'إنشاء أمر المبيعات',
-          description: 'Click to create the order. It will be in "Pending" status until you confirm delivery and generate an invoice.',
-          descriptionAr: 'انقر لإنشاء الطلب. سيكون بحالة "معلق" حتى تؤكد التسليم وتنشئ فاتورة.',
+          description: 'Click to create the order in "Draft" status. You can then Confirm it, mark as Delivered, and generate an Invoice.',
+          descriptionAr: 'انقر لإنشاء الطلب بحالة "مسودة". يمكنك بعد ذلك تأكيده ووضعه كمُسلَّم وإنشاء فاتورة.',
           side: 'top',
           align: 'end'
+        }
+      },
+      // Step 10: Order Status Actions
+      {
+        context: { requirePage: '/sales' },
+        element: '[data-tour="order-status-actions"]',
+        popover: {
+          title: 'Order Lifecycle',
+          titleAr: 'دورة حياة الطلب',
+          description: 'Manage order status: Draft → Confirmed (✓) → Delivered (🚚). You can Cancel (✕) before delivery. Generate invoice (📄) after confirming. Delete (🗑) only Draft or Cancelled orders.',
+          descriptionAr: 'إدارة حالة الطلب: مسودة ← مؤكد (✓) ← مُسلَّم (🚚). يمكنك الإلغاء (✕) قبل التسليم. إنشاء فاتورة (📄) بعد التأكيد. الحذف (🗑) فقط للطلبات المسودة أو الملغاة.',
+          side: 'left',
+          align: 'center'
         }
       },
       // Completion
@@ -1106,8 +1172,8 @@ export const WORKFLOW_GUIDES = {
         popover: {
           title: 'Sales Order Created! 🎉',
           titleAr: 'تم إنشاء أمر المبيعات! 🎉',
-          description: 'Your order appears here. Next steps: Prepare for delivery, confirm delivery, then generate invoice for payment.',
-          descriptionAr: 'يظهر طلبك هنا. الخطوات التالية: التحضير للتسليم، تأكيد التسليم، ثم إنشاء فاتورة للدفع.',
+          description: 'Your order appears here. Workflow: Confirm → Deliver → Generate Invoice. Only Draft and Cancelled orders can be deleted.',
+          descriptionAr: 'يظهر طلبك هنا. سير العمل: تأكيد ← تسليم ← إنشاء فاتورة. يمكن حذف الطلبات المسودة والملغاة فقط.',
           side: 'top',
           align: 'center'
         }

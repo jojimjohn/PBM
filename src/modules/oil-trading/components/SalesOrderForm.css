@@ -41,9 +41,23 @@
   border: 1px solid #bbf7d0;
 }
 
+.stock-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  font-weight: 600;
+}
+
+.stock-error .stock-error-message {
+  font-size: 0.75rem;
+  color: #b91c1c;
+  margin-top: 0.25rem;
+}
+
 .stock-warning svg,
 .stock-low svg,
-.stock-ok svg {
+.stock-ok svg,
+.stock-error svg {
   flex-shrink: 0;
 }
 

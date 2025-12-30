@@ -51,8 +51,9 @@
       <div class="help-content">
         <h1>How to Create a Sales Order</h1>
         <p class="lead">
-          This step-by-step guide walks you through creating a sales order with automatic contract rate application.
-          Learn how to select customers, add materials, and ensure the best pricing is applied.
+          This step-by-step guide walks you through creating a sales order with automatic contract rate application
+          and FIFO inventory tracking. Learn how to select customers, add materials, preview profit margins,
+          and manage orders through their complete lifecycle.
         </p>
 
         <div class="callout note">
@@ -65,7 +66,7 @@
             <div class="callout-title">Required Role & Estimated Time</div>
             <p style="margin:0;">
               <span class="role-badge sales">Sales Staff</span> or higher |
-              <strong>~4 minutes</strong> to complete
+              <strong>~5 minutes</strong> to complete
             </p>
           </div>
         </div>
@@ -90,8 +91,13 @@
                 <div class="step-label">Contract Rates</div>
               </div>
               <div class="workflow-arrow">→</div>
-              <div class="workflow-step">
+              <div class="workflow-step" style="background:#dbeafe;border:2px solid #3b82f6;">
                 <div class="step-number">4</div>
+                <div class="step-label">FIFO Preview</div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step">
+                <div class="step-number">5</div>
                 <div class="step-label">Review & Submit</div>
               </div>
               <div class="workflow-arrow">→</div>
@@ -101,7 +107,7 @@
               </div>
             </div>
             <p style="margin-top: 16px; font-size: 14px; color: #6b7280;">
-              Contract rates are automatically applied when you select materials for customers with active contracts.
+              Contract rates are automatically applied, and FIFO preview shows which inventory batches will be used with profit analysis.
             </p>
           </div>
         </section>
@@ -277,9 +283,123 @@
           </ol>
         </section>
 
-        <!-- Step 4: Review Items -->
+        <!-- Step 4: FIFO Preview -->
         <section>
-          <h2>Step 4: Review Your Order</h2>
+          <h2>Step 4: Preview FIFO Allocation (Optional)</h2>
+
+          <div class="callout note">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">What is FIFO?</div>
+              <p style="margin:0;">FIFO (First-In, First-Out) ensures older inventory is sold first. This helps with accurate cost tracking, proper inventory rotation, and precise profit calculations.</p>
+            </div>
+          </div>
+
+          <ol class="steps">
+            <li class="step">
+              <div class="step-title">Click "Preview FIFO"</div>
+              <div class="step-content">
+                <p>After adding materials, click the <strong>Preview FIFO</strong> button to see inventory allocation details.</p>
+                <p>This is optional but recommended for larger orders or when you need to verify profit margins.</p>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Batch Allocations</div>
+              <div class="step-content">
+                <p>The FIFO Preview modal shows which inventory batches will be used:</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Column</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Batch Number</strong></td>
+                      <td>Unique identifier for each inventory batch</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Purchase Date</strong></td>
+                      <td>When the batch was purchased (oldest used first)</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Available Qty</strong></td>
+                      <td>Quantity remaining in the batch</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Allocated Qty</strong></td>
+                      <td>Quantity that will be used for this order</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Unit Cost</strong></td>
+                      <td>Original purchase cost per unit</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Total Cost</strong></td>
+                      <td>Cost for this allocation (Qty × Unit Cost)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Review Summary & Profit Analysis</div>
+              <div class="step-content">
+                <p>At the bottom of the FIFO preview, review the profit summary:</p>
+                <div class="card-grid">
+                  <div class="card" style="border-left: 4px solid #3b82f6;">
+                    <h4>Sales Revenue</h4>
+                    <p>Total selling price based on contract or market rates.</p>
+                  </div>
+                  <div class="card" style="border-left: 4px solid #ef4444;">
+                    <h4>COGS (Cost of Goods Sold)</h4>
+                    <p>Total cost from FIFO batch allocations.</p>
+                  </div>
+                  <div class="card" style="border-left: 4px solid #22c55e;">
+                    <h4>Gross Margin</h4>
+                    <p>Revenue minus COGS with profit percentage.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Check Stock Warnings</div>
+              <div class="step-content">
+                <p>The preview shows warnings if:</p>
+                <div class="callout warning">
+                  <div class="callout-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18"/>
+                    </svg>
+                  </div>
+                  <div class="callout-content">
+                    <div class="callout-title">Insufficient Stock</div>
+                    <p style="margin:0;">Order quantity exceeds available inventory. Reduce quantity or wait for stock replenishment.</p>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="step">
+              <div class="step-title">Close Preview</div>
+              <div class="step-content">
+                <p>Click <strong>Close</strong> to return to the order form. The preview doesn't commit any changes yet.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- Step 5: Review Items -->
+        <section>
+          <h2>Step 5: Review Your Order</h2>
 
           <ol class="steps">
             <li class="step">
@@ -339,51 +459,135 @@
           </ol>
         </section>
 
-        <!-- Step 5: Submit Order -->
+        <!-- Step 6: Submit Order -->
         <section>
-          <h2>Step 5: Create the Sales Order</h2>
+          <h2>Step 6: Create the Sales Order</h2>
 
           <ol class="steps">
             <li class="step">
               <div class="step-title">Click "Create Sales Order"</div>
               <div class="step-content">
                 <p>Once you've reviewed everything, click <strong>Create Sales Order</strong>.</p>
-                <p>The order is created in "Pending" status.</p>
+                <p>The order is created in <span style="background:#e0e7ff;color:#4f46e5;padding:2px 8px;border-radius:4px;">Draft</span> status.</p>
               </div>
             </li>
 
             <li class="step">
               <div class="step-title">Order Confirmation</div>
               <div class="step-content">
-                <p>You'll see a success message with the order number.</p>
-                <p>The new order appears in your Sales Orders table.</p>
+                <p>You'll see a success message with the order number (e.g., SO-1234567890).</p>
+                <p>The new order appears in your Sales Orders table ready for processing.</p>
               </div>
             </li>
           </ol>
         </section>
 
+        <!-- Order Lifecycle -->
+        <section>
+          <h2>Order Lifecycle & Status Management</h2>
+
+          <div class="card">
+            <h3>Order Status Flow</h3>
+            <div style="text-align:center;padding:1rem;background:#f8fafc;border-radius:8px;margin:1rem 0;">
+              <span style="background:#e0e7ff;color:#4f46e5;padding:4px 12px;border-radius:4px;">Draft</span>
+              <span style="margin:0 0.5rem;">→</span>
+              <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:4px;">Confirmed</span>
+              <span style="margin:0 0.5rem;">→</span>
+              <span style="background:#dcfce7;color:#16a34a;padding:4px 12px;border-radius:4px;">Delivered</span>
+              <span style="margin:0 0.5rem;">→</span>
+              <span style="background:#fef3c7;color:#ca8a04;padding:4px 12px;border-radius:4px;">Invoice</span>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Description</th>
+                  <th>What Happens</th>
+                  <th>Can Delete?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span style="background:#e0e7ff;color:#4f46e5;padding:2px 8px;border-radius:4px;">Draft</span></td>
+                  <td>Order created, not yet confirmed</td>
+                  <td>No inventory changes</td>
+                  <td><span style="color:#22c55e;">✓ Yes</span></td>
+                </tr>
+                <tr>
+                  <td><span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:4px;">Confirmed</span></td>
+                  <td>Order confirmed, ready for fulfillment</td>
+                  <td>Inventory reserved (not yet consumed)</td>
+                  <td><span style="color:#dc2626;">✗ No</span></td>
+                </tr>
+                <tr>
+                  <td><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;">Delivered</span></td>
+                  <td>Materials delivered to customer</td>
+                  <td><strong>FIFO allocation executed:</strong><br>
+                    • Inventory reduced using oldest batches first<br>
+                    • COGS recorded for accurate profit tracking<br>
+                    • Batch movements created for audit trail</td>
+                  <td><span style="color:#dc2626;">✗ No</span></td>
+                </tr>
+                <tr>
+                  <td><span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;">Cancelled</span></td>
+                  <td>Order cancelled</td>
+                  <td>Reserved inventory released</td>
+                  <td><span style="color:#22c55e;">✓ Yes</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warning">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Delete Restrictions</div>
+              <p style="margin:0;">Only <strong>Draft</strong> and <strong>Cancelled</strong> orders can be deleted. Confirmed and Delivered orders are protected because they have inventory implications.</p>
+            </div>
+          </div>
+        </section>
+
         <!-- Next Steps -->
         <section>
-          <h2>Next Steps After Creating Order</h2>
+          <h2>After Creating an Order</h2>
           <div class="card-grid">
+            <div class="card" style="border-left: 4px solid #4f46e5;">
+              <h4>1. Confirm Order</h4>
+              <p>Click the <strong>✓ Confirm</strong> button to confirm the order and reserve inventory.</p>
+            </div>
+
             <div class="card" style="border-left: 4px solid #3b82f6;">
-              <h4>1. Prepare for Delivery</h4>
+              <h4>2. Prepare for Delivery</h4>
               <p>Coordinate with operations to prepare the materials for delivery.</p>
             </div>
 
             <div class="card" style="border-left: 4px solid #22c55e;">
-              <h4>2. Confirm Delivery</h4>
-              <p>When materials are delivered, update the order status to "Delivered".</p>
+              <h4>3. Mark as Delivered</h4>
+              <p>Click the <strong>🚚 Deliver</strong> button. <strong>This triggers FIFO allocation</strong> - inventory is reduced using oldest batches first.</p>
             </div>
 
             <div class="card" style="border-left: 4px solid #f59e0b;">
-              <h4>3. Generate Invoice</h4>
-              <p>Create an invoice from the order for customer payment.</p>
+              <h4>4. Generate Invoice</h4>
+              <p>Click the <strong>📄 Invoice</strong> button to create an invoice for customer payment.</p>
             </div>
+          </div>
 
-            <div class="card" style="border-left: 4px solid #8b5cf6;">
-              <h4>4. Record Payment</h4>
-              <p>When customer pays, record the payment against the invoice.</p>
+          <div class="callout tip">
+            <div class="callout-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="callout-content">
+              <div class="callout-title">Quick Actions</div>
+              <p style="margin:0;">Use the quick action buttons in the Sales Orders table to progress orders without opening them. Hover over an order row to see available actions.</p>
             </div>
           </div>
         </section>
@@ -420,6 +624,22 @@
                   <td>Can't create order</td>
                   <td>Check that all required fields are filled</td>
                 </tr>
+                <tr>
+                  <td>FIFO preview shows insufficient stock</td>
+                  <td>Order quantity exceeds available inventory. Reduce quantity or wait for stock replenishment through purchases.</td>
+                </tr>
+                <tr>
+                  <td>Can't delete order</td>
+                  <td>Only Draft and Cancelled orders can be deleted. Cancel the order first if needed.</td>
+                </tr>
+                <tr>
+                  <td>Inventory not updating after delivery</td>
+                  <td>Check browser console for errors. The backend server may need restart if code was recently updated.</td>
+                </tr>
+                <tr>
+                  <td>COGS showing as zero</td>
+                  <td>Verify inventory batches exist with purchase costs. COGS is calculated from actual batch costs.</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -430,6 +650,7 @@
           <h4>Related Topics</h4>
           <div class="quick-links-grid">
             <a href="../modules/sales.html" class="quick-link">Sales Module</a>
+            <a href="../modules/inventory.html" class="quick-link">Inventory & FIFO</a>
             <a href="contract-rates.html" class="quick-link">Using Contract Rates</a>
             <a href="../roles/sales-staff.html" class="quick-link">Sales Staff Guide</a>
           </div>

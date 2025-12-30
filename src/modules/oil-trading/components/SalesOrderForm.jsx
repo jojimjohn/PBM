@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
+import FIFOPreviewModal from '../../../components/FIFOPreviewModal'
 import FileUpload from '../../../components/ui/FileUpload'
 import DatePicker from '../../../components/ui/DatePicker'
 import Autocomplete from '../../../components/ui/Autocomplete'
@@ -48,6 +49,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
   const [contractTermsExpanded, setContractTermsExpanded] = useState(false)
   const [stockInfo, setStockInfo] = useState({}) // Track current stock levels
   const [defaultVatRate, setDefaultVatRate] = useState(5) // VAT rate from database
+  const [showFIFOPreview, setShowFIFOPreview] = useState(false) // FIFO preview modal
+  const [pendingOrderData, setPendingOrderData] = useState(null) // Order data waiting for FIFO confirmation
 
   // Tour context broadcast
   const { broadcast, isTourActive } = useTourBroadcast()
@@ -241,22 +244,65 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
   const loadStockInfo = async (materials) => {
     try {
-      const companyId = 'alramrami' // TODO: Get from auth context
       const stockData = {}
-      
+
+      // Use getBatchStock for accurate FIFO-based stock levels
       for (const material of materials) {
-        const stock = await inventoryService.getCurrentStock(material.id)
-        stockData[material.id] = {
-          currentStock: stock?.currentStock || 0,
-          unit: stock?.unit || material.unit,
-          isLowStock: stock ? stock.currentStock <= stock.reorderLevel : false,
-          reorderLevel: stock?.reorderLevel || 0
+        const result = await inventoryService.getBatchStock(material.id)
+        if (result.success && result.data) {
+          const stock = result.data
+          stockData[material.id] = {
+            currentStock: stock.availableQuantity || 0,
+            totalRemaining: stock.totalRemaining || 0,
+            reservedQuantity: stock.reservedQuantity || 0,
+            unit: stock.unit || material.unit,
+            isLowStock: stock.stockStatus === 'low-stock',
+            isOutOfStock: stock.stockStatus === 'out-of-stock',
+            activeBatchCount: stock.activeBatchCount || 0,
+            weightedAvgCost: stock.weightedAvgCost || 0,
+            source: 'inventory_batches' // Indicates FIFO source
+          }
+        } else {
+          // Fallback if batch stock unavailable
+          stockData[material.id] = {
+            currentStock: 0,
+            unit: material.unit,
+            isLowStock: false,
+            isOutOfStock: true,
+            source: 'fallback'
+          }
         }
       }
-      
+
       setStockInfo(stockData)
     } catch (error) {
       console.error('Error loading stock information:', error)
+    }
+  }
+
+  // Fetch stock for a single material (for real-time updates)
+  const fetchMaterialStock = async (materialId) => {
+    try {
+      const result = await inventoryService.getBatchStock(materialId)
+      if (result.success && result.data) {
+        const stock = result.data
+        setStockInfo(prev => ({
+          ...prev,
+          [materialId]: {
+            currentStock: stock.availableQuantity || 0,
+            totalRemaining: stock.totalRemaining || 0,
+            reservedQuantity: stock.reservedQuantity || 0,
+            unit: stock.unit,
+            isLowStock: stock.stockStatus === 'low-stock',
+            isOutOfStock: stock.stockStatus === 'out-of-stock',
+            activeBatchCount: stock.activeBatchCount || 0,
+            weightedAvgCost: stock.weightedAvgCost || 0,
+            source: 'inventory_batches'
+          }
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching material stock:', error)
     }
   }
 
@@ -344,6 +390,11 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       const effectiveRate = getEffectiveRate(value)
       newItems[index].rate = effectiveRate
       newItems[index].amount = newItems[index].quantity * effectiveRate
+
+      // Fetch real-time stock for the selected material
+      if (value) {
+        fetchMaterialStock(value)
+      }
 
       // Check if using contract rate vs standard rate and show appropriate message
       const material = materials.find(m => m.id === value)
@@ -563,6 +614,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
     try {
       const isDraft = formData.status === 'draft'
+      const isConfirmed = formData.status === 'confirmed'
 
       // Validate required fields (relaxed for drafts)
       if (!formData.customer) {
@@ -574,29 +626,42 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         throw new Error('Please fill in all item details')
       }
 
+      // Stock validation for non-draft orders
+      if (!isDraft) {
+        const insufficientItems = formData.items
+          .filter(item => item.materialId && item.quantity)
+          .filter(item => {
+            const stock = stockInfo[item.materialId]
+            return stock && parseFloat(item.quantity) > stock.currentStock
+          })
+          .map(item => {
+            const material = materials.find(m => m.id === item.materialId)
+            const stock = stockInfo[item.materialId]
+            return `${material?.name || 'Unknown'}: Requested ${item.quantity}, Available ${stock?.currentStock || 0} ${stock?.unit || ''}`
+          })
+
+        if (insufficientItems.length > 0) {
+          throw new Error(`Insufficient stock for:\n${insufficientItems.join('\n')}`)
+        }
+      }
+
       // For drafts: allow items with at least materialId (partial items OK)
       // For confirmed: require all fields (materialId, quantity, rate)
       const filteredItems = isDraft
         ? formData.items.filter(item => item.materialId) // Only need material for drafts
         : formData.items.filter(item => item.materialId && item.quantity && item.rate) // All fields for confirmed
 
-      console.log('📤 Submitting SO Data:')
-      console.log('- Status:', formData.status)
-      console.log('- isDraft:', isDraft)
-      console.log('- Items before filter:', formData.items)
-      console.log('- Items after filter:', filteredItems)
-
       // Prepare order data
       const orderData = {
         ...formData,
-        items: filteredItems,  // ✅ Use filtered items
+        items: filteredItems,
         id: `order_${Date.now()}`,
-        status: formData.status, // Use status from form instead of hardcoded 'pending'
+        status: formData.status,
         createdAt: new Date().toISOString(),
-        createdBy: 'current_user', // Replace with actual user
+        createdBy: 'current_user',
         contractInfo: formData.customer.contractDetails ? {
           contractId: formData.customer.contractDetails.contractId,
-          ratesApplied: filteredItems.map(item => ({  // ✅ Use filtered items
+          ratesApplied: filteredItems.map(item => ({
             materialId: item.materialId,
             contractRate: contractRates[item.materialId] || null,
             standardRate: materials.find(m => m.id === item.materialId)?.standardPrice || 0,
@@ -605,7 +670,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         } : null
       }
 
-      console.log('- Final orderData:', orderData)
+      // For confirmed orders, show FIFO preview before submitting
+      if (isConfirmed && filteredItems.length > 0) {
+        setPendingOrderData(orderData)
+        setShowFIFOPreview(true)
+        setLoading(false)
+        return // Wait for FIFO confirmation
+      }
 
       await onSave(orderData)
       onClose()
@@ -615,6 +686,43 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     } finally {
       setLoading(false)
     }
+  }
+
+  // Handle FIFO preview confirmation
+  const handleFIFOConfirm = async (fifoData) => {
+    setShowFIFOPreview(false)
+    setLoading(true)
+
+    try {
+      // Add FIFO preview data to the order for reference
+      const orderWithFIFO = {
+        ...pendingOrderData,
+        fifoPreview: {
+          totalCOGS: fifoData.summary.totalCOGS,
+          grossMargin: fifoData.summary.grossMargin,
+          allocations: fifoData.items.map(item => ({
+            materialId: item.materialId,
+            cogs: item.cogs,
+            batches: item.allocations.length
+          }))
+        }
+      }
+
+      await onSave(orderWithFIFO)
+      setPendingOrderData(null)
+      onClose()
+    } catch (error) {
+      console.error('Error saving order after FIFO confirmation:', error)
+      alert(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handle FIFO preview cancellation
+  const handleFIFOCancel = () => {
+    setShowFIFOPreview(false)
+    setPendingOrderData(null)
   }
 
   if (!isOpen) {
@@ -919,23 +1027,31 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       step="0.001"
                       required={!isDraft}
                     />
-                    {/* Stock validation display */}
+                    {/* Stock validation display - Real-time from FIFO batch system */}
                     {item.materialId && stockInfo[item.materialId] && (
                       <div className="stock-info">
-                        {parseFloat(item.quantity) > stockInfo[item.materialId].currentStock ? (
+                        {stockInfo[item.materialId].isOutOfStock || stockInfo[item.materialId].currentStock <= 0 ? (
+                          <div className="stock-error">
+                            <AlertTriangle size={14} />
+                            <span>Out of stock!</span>
+                          </div>
+                        ) : parseFloat(item.quantity) > stockInfo[item.materialId].currentStock ? (
                           <div className="stock-warning">
                             <AlertTriangle size={14} />
-                            <span>Insufficient stock! Available: {stockInfo[item.materialId].currentStock} {stockInfo[item.materialId].unit}</span>
+                            <span>
+                              Insufficient! Available: {stockInfo[item.materialId].currentStock.toFixed(3)} {stockInfo[item.materialId].unit}
+                              {formData.status !== 'draft' && <strong> (Cannot submit)</strong>}
+                            </span>
                           </div>
                         ) : stockInfo[item.materialId].isLowStock ? (
                           <div className="stock-low">
                             <Package size={14} />
-                            <span>Low stock: {stockInfo[item.materialId].currentStock} {stockInfo[item.materialId].unit}</span>
+                            <span>Low stock: {stockInfo[item.materialId].currentStock.toFixed(3)} {stockInfo[item.materialId].unit}</span>
                           </div>
                         ) : (
                           <div className="stock-ok">
                             <Check size={14} />
-                            <span>Available: {stockInfo[item.materialId].currentStock} {stockInfo[item.materialId].unit}</span>
+                            <span>Available: {stockInfo[item.materialId].currentStock.toFixed(3)} {stockInfo[item.materialId].unit}</span>
                           </div>
                         )}
                       </div>
@@ -1185,8 +1301,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               </div>
 
               <div className="override-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline"
                   onClick={() => {
                     setShowOverrideModal(false)
@@ -1204,6 +1320,20 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           </div>
         </div>
       )}
+
+      {/* FIFO Preview Modal */}
+      <FIFOPreviewModal
+        isOpen={showFIFOPreview}
+        onClose={handleFIFOCancel}
+        onConfirm={handleFIFOConfirm}
+        items={pendingOrderData?.items?.filter(item => item.materialId).map(item => ({
+          materialId: parseInt(item.materialId, 10),
+          quantity: parseFloat(item.quantity) || 0,
+          unitPrice: parseFloat(item.rate) || 0
+        })) || []}
+        branchId={pendingOrderData?.branch_id ? parseInt(pendingOrderData.branch_id, 10) : null}
+        formatCurrency={(val) => `${parseFloat(val || 0).toFixed(3)} OMR`}
+      />
     </Modal>
   )
 }

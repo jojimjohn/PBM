@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
-import { FileText, Calendar, User, Package, Banknote, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FileText, Calendar, User, Package, Banknote, CheckCircle, AlertTriangle, Layers, DollarSign, TrendingUp, ChevronDown, ChevronUp, Hash } from 'lucide-react';
 import './SalesOrderViewModal.css';
 
 const SalesOrderViewModal = ({
@@ -10,7 +10,19 @@ const SalesOrderViewModal = ({
   onEdit,
   t
 }) => {
+  const [expandedAllocations, setExpandedAllocations] = useState({});
+
   if (!orderData) return null;
+
+  const toggleAllocation = (itemId) => {
+    setExpandedAllocations(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  const isDelivered = orderData.status === 'delivered';
+  const hasCOGS = parseFloat(orderData.cogs) > 0;
 
   const formatCurrency = (amount) => {
     return `OMR ${(parseFloat(amount) || 0).toFixed(2)}`;
@@ -175,6 +187,119 @@ const SalesOrderViewModal = ({
             </table>
           </div>
         </div>
+
+        {/* Batch Allocations Section - Only for delivered orders with COGS */}
+        {isDelivered && hasCOGS && (
+          <div className="allocations-card">
+            <div className="allocations-card-header">
+              <Layers size={18} />
+              <h3>FIFO Batch Allocations</h3>
+              <span className="allocations-badge">
+                <TrendingUp size={14} />
+                COGS Tracked
+              </span>
+            </div>
+            <div className="allocations-card-body">
+              {/* Gross Margin Summary */}
+              <div className="margin-summary">
+                <div className="margin-item">
+                  <span className="margin-label">Total Revenue</span>
+                  <span className="margin-value revenue">{formatCurrency(orderData.totalAmount)}</span>
+                </div>
+                <div className="margin-item">
+                  <span className="margin-label">Total COGS</span>
+                  <span className="margin-value cogs">{formatCurrency(orderData.cogs)}</span>
+                </div>
+                <div className="margin-item highlight">
+                  <span className="margin-label">Gross Profit</span>
+                  <span className={`margin-value ${(orderData.totalAmount - orderData.cogs) >= 0 ? 'positive' : 'negative'}`}>
+                    {formatCurrency(orderData.totalAmount - orderData.cogs)}
+                    {orderData.totalAmount > 0 && (
+                      <span className="margin-percent">
+                        ({(((orderData.totalAmount - orderData.cogs) / orderData.totalAmount) * 100).toFixed(1)}%)
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Per-Item COGS Breakdown */}
+              <div className="item-allocations">
+                <h4 className="allocations-subtitle">Per-Item Cost Breakdown</h4>
+                {(orderData.salesOrderItems || orderData.items || []).map((item, index) => (
+                  <div key={index} className="allocation-item">
+                    <div
+                      className="allocation-item-header"
+                      onClick={() => item.batchAllocations?.length > 0 && toggleAllocation(index)}
+                      style={{ cursor: item.batchAllocations?.length > 0 ? 'pointer' : 'default' }}
+                    >
+                      <div className="allocation-item-info">
+                        <span className="allocation-material">{item.materialName || item.name}</span>
+                        <span className="allocation-qty">{(parseFloat(item.quantity) || 0).toFixed(3)} {item.unit}</span>
+                      </div>
+                      <div className="allocation-item-cogs">
+                        <span className="cogs-label">COGS:</span>
+                        <span className="cogs-value">{formatCurrency(item.cogs || 0)}</span>
+                        {item.batchAllocations?.length > 0 && (
+                          <span className="expand-icon">
+                            {expandedAllocations[index] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded Batch Details */}
+                    {expandedAllocations[index] && item.batchAllocations && (
+                      <div className="batch-details">
+                        <table className="batch-table">
+                          <thead>
+                            <tr>
+                              <th><Hash size={12} /> Batch</th>
+                              <th>Purchase Date</th>
+                              <th className="text-right">Qty</th>
+                              <th className="text-right">Unit Cost</th>
+                              <th className="text-right">COGS</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {item.batchAllocations.map((alloc, allocIdx) => (
+                              <tr key={allocIdx}>
+                                <td className="batch-number">{alloc.batchNumber}</td>
+                                <td>{formatDate(alloc.purchaseDate)}</td>
+                                <td className="text-right">{(parseFloat(alloc.quantity) || 0).toFixed(3)}</td>
+                                <td className="text-right">{formatCurrency(alloc.unitCost)}</td>
+                                <td className="text-right">{formatCurrency(alloc.cogs)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* If no batch allocations available yet, show pending message */}
+                    {!item.batchAllocations && (
+                      <div className="no-allocations">
+                        <AlertTriangle size={14} />
+                        <span>Batch allocation details not available</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending FIFO Message for non-delivered orders */}
+        {!isDelivered && orderData.status !== 'cancelled' && orderData.status !== 'draft' && (
+          <div className="pending-fifo-card">
+            <AlertTriangle size={18} />
+            <div className="pending-fifo-content">
+              <strong>Pending FIFO Allocation</strong>
+              <p>COGS will be calculated when this order is marked as delivered. The system will use FIFO (First-In-First-Out) to allocate inventory batches.</p>
+            </div>
+          </div>
+        )}
 
         {/* Financial Summary Card */}
         <div className="financial-card">

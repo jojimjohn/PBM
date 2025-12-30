@@ -9,7 +9,7 @@ import SalesOrderForm from '../components/SalesOrderForm'
 import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
 import salesOrderService from '../../../services/salesOrderService'
 import customerService from '../../../services/customerService'
-import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle, Truck, XCircle, Clock, Trash2 } from 'lucide-react'
 import '../styles/Sales.css'
 
 const Sales = () => {
@@ -70,13 +70,11 @@ const Sales = () => {
     if (storedCustomer) {
       try {
         const customer = JSON.parse(storedCustomer)
-        console.log('Auto-opening sales order form for customer:', customer.name)
         setSelectedCustomer(customer)
         setShowOrderForm(true)
         // Clear the stored customer after using it
         sessionStorage.removeItem('selectedCustomerForOrder')
       } catch (error) {
-        console.error('Error parsing stored customer:', error)
         sessionStorage.removeItem('selectedCustomerForOrder')
       }
     }
@@ -95,23 +93,17 @@ const Sales = () => {
 
       // Check if editing existing order or creating new one
       if (editingOrder) {
-        console.log('Updating sales order:', editingOrder.id, orderData)
         result = await salesOrderService.update(editingOrder.id, orderData)
 
         if (!result.success) {
           throw new Error(result.error || 'Failed to update sales order')
         }
-
-        console.log('Sales order updated successfully:', result.data)
       } else {
-        console.log('Creating sales order:', orderData)
         result = await salesOrderService.create(orderData)
 
         if (!result.success) {
           throw new Error(result.error || 'Failed to create sales order')
         }
-
-        console.log('Sales order created successfully:', result.data)
       }
 
       // Refresh the sales orders list
@@ -206,6 +198,92 @@ const Sales = () => {
     }
   }
 
+  // Quick status change handler
+  const handleQuickStatusChange = async (order, newStatus) => {
+    // Prevent changing from delivered if it has an invoice
+    if (order.status === 'delivered' && order.invoiceNumber && newStatus !== 'delivered') {
+      alert('Cannot change status of a delivered order with an invoice.')
+      return
+    }
+
+    // Confirm status change
+    const statusLabels = {
+      draft: 'Draft',
+      confirmed: 'Confirmed',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled'
+    }
+
+    const confirmMessage = `Change order ${order.orderNumber} status from "${statusLabels[order.status]}" to "${statusLabels[newStatus]}"?`
+    if (!window.confirm(confirmMessage)) return
+
+    try {
+      setLoading(true)
+      const result = await salesOrderService.updateStatus(order.id, newStatus)
+
+      if (result.success) {
+        // Refresh the data to show updated status
+        await loadSalesData()
+      } else {
+        throw new Error(result.error || 'Failed to update status')
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      alert(`❌ Failed to update status:\n\n${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Get next possible status transitions for an order
+  const getNextStatuses = (currentStatus) => {
+    const transitions = {
+      draft: ['confirmed', 'cancelled'],
+      confirmed: ['delivered', 'cancelled'],
+      delivered: ['cancelled'],
+      cancelled: []
+    }
+    return transitions[currentStatus] || []
+  }
+
+  // Delete order handler with validation
+  const handleDeleteOrder = async (order) => {
+    // Check if order can be deleted based on status
+    const deletableStatuses = ['draft', 'cancelled']
+
+    if (!deletableStatuses.includes(order.status)) {
+      alert(`❌ Cannot delete order with status "${order.status}".\n\nOnly Draft and Cancelled orders can be deleted.`)
+      return
+    }
+
+    // Confirm deletion
+    const confirmMessage = `Are you sure you want to delete order ${order.orderNumber}?\n\nThis action cannot be undone.`
+    if (!window.confirm(confirmMessage)) return
+
+    try {
+      setLoading(true)
+      const result = await salesOrderService.delete(order.id)
+
+      if (result.success) {
+        // Refresh the data to show updated list
+        await loadSalesData()
+        alert(`✅ Order ${order.orderNumber} deleted successfully.`)
+      } else {
+        throw new Error(result.error || 'Failed to delete order')
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error)
+      alert(`❌ Failed to delete order:\n\n${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Check if order can be deleted
+  const canDeleteOrder = (order) => {
+    return ['draft', 'cancelled'].includes(order.status)
+  }
+
   // Define table columns for sales orders
   const salesOrderColumns = [
     {
@@ -241,24 +319,15 @@ const Sales = () => {
       }
     },
     {
-      key: 'items',
+      key: 'itemCount',
       header: t('items'),
-      sortable: false,
+      sortable: true,
       render: (value, row) => {
-        const items = value || row.salesOrderItems || []
+        const count = parseInt(value) || 0
         return (
-          <div className="items-summary">
-            <div className="item-count">{items.length} {t('items')}</div>
-            <div className="item-details">
-              {items.slice(0, 2).map((item, index) => (
-                <span key={index} className="item-name">
-                  {item.materialName || item.name} ({item.quantity}{item.unit})
-                </span>
-              ))}
-              {items.length > 2 && (
-                <span className="more-items">+{items.length - 2} {t('more')}</span>
-              )}
-            </div>
+          <div className="items-count-badge">
+            <span className="count-number">{count}</span>
+            <span className="count-label">{count === 1 ? t('item') || 'item' : t('items')}</span>
           </div>
         )
       }
@@ -307,44 +376,87 @@ const Sales = () => {
       key: 'actions',
       header: t('actions'),
       sortable: false,
-      width: '150px',
-      render: (value, row) => (
-        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-outline btn-sm"
-            title={t('view')}
-            onClick={() => handleViewSalesOrder(row)}
-          >
-            <Eye size={14} />
-          </button>
-          <button
-            className="btn btn-outline btn-sm"
-            title={t('edit')}
-            onClick={() => handleEditSalesOrder(row)}
-          >
-            <Edit size={14} />
-          </button>
-          {(row.status === 'confirmed' || row.status === 'delivered') && (
-            row.invoiceNumber ? (
-              <button
-                className="btn btn-success btn-sm"
-                title={`Invoice: ${row.invoiceNumber} - Download invoice functionality coming soon`}
-                disabled
-              >
-                <FileText size={14} />
-              </button>
-            ) : (
+      width: '220px',
+      render: (value, row) => {
+        const nextStatuses = getNextStatuses(row.status)
+        return (
+          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              className="btn btn-outline btn-sm"
+              title={t('view')}
+              onClick={() => handleViewSalesOrder(row)}
+            >
+              <Eye size={14} />
+            </button>
+            <button
+              className="btn btn-outline btn-sm"
+              title={t('edit')}
+              onClick={() => handleEditSalesOrder(row)}
+            >
+              <Edit size={14} />
+            </button>
+            {/* Quick Status Actions */}
+            {row.status === 'draft' && (
               <button
                 className="btn btn-primary btn-sm"
-                title={t('generateInvoice')}
-                onClick={() => handleGenerateInvoice(row)}
+                title={t('confirm') || 'Confirm'}
+                onClick={() => handleQuickStatusChange(row, 'confirmed')}
               >
-                <FileText size={14} />
+                <CheckCircle size={14} />
               </button>
-            )
-          )}
-        </div>
-      )
+            )}
+            {row.status === 'confirmed' && (
+              <button
+                className="btn btn-success btn-sm"
+                title={t('markDelivered') || 'Mark Delivered'}
+                onClick={() => handleQuickStatusChange(row, 'delivered')}
+              >
+                <Truck size={14} />
+              </button>
+            )}
+            {nextStatuses.includes('cancelled') && !row.invoiceNumber && (
+              <button
+                className="btn btn-danger btn-sm"
+                title={t('cancel') || 'Cancel'}
+                onClick={() => handleQuickStatusChange(row, 'cancelled')}
+              >
+                <XCircle size={14} />
+              </button>
+            )}
+            {/* Delete Button - Only for draft/cancelled orders */}
+            {canDeleteOrder(row) && (
+              <button
+                className="btn btn-outline btn-sm"
+                title={t('delete') || 'Delete'}
+                style={{ color: '#dc2626' }}
+                onClick={() => handleDeleteOrder(row)}
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+            {/* Invoice Actions */}
+            {(row.status === 'confirmed' || row.status === 'delivered') && (
+              row.invoiceNumber ? (
+                <button
+                  className="btn btn-outline btn-sm"
+                  title={`Invoice: ${row.invoiceNumber}`}
+                  style={{ color: '#10b981' }}
+                >
+                  <FileText size={14} />
+                </button>
+              ) : (
+                <button
+                  className="btn btn-outline btn-sm"
+                  title={t('generateInvoice')}
+                  onClick={() => handleGenerateInvoice(row)}
+                >
+                  <FileText size={14} />
+                </button>
+              )
+            )}
+          </div>
+        )
+      }
     }
   ]
 
