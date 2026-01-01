@@ -256,7 +256,19 @@ const ExpenseSubmitForm = ({
               key={cat.id}
               type="button"
               className={`category-btn ${formData.category === cat.id ? 'selected' : ''}`}
-              onClick={() => setFormData((prev) => ({ ...prev, category: cat.id }))}
+              onClick={() => {
+                // Auto-select petrol card when fuel category is selected
+                if (cat.id === 'fuel') {
+                  setFormData((prev) => ({ ...prev, category: cat.id, paymentMethod: 'petrol_card' }));
+                } else {
+                  // Reset to default payment method when switching away from fuel
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: cat.id,
+                    paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod
+                  }));
+                }
+              }}
             >
               <span className="category-icon">{categoryIcons[cat.id] || '📋'}</span>
               <span className="category-name">{cat.name}</span>

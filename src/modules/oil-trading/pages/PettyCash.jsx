@@ -1504,7 +1504,20 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
             <label>{t('expenseType', 'Expense Type')} *</label>
             <select
               value={formData.expenseType}
-              onChange={(e) => setFormData(prev => ({ ...prev, expenseType: e.target.value }))}
+              onChange={(e) => {
+                const categoryId = e.target.value;
+                // Auto-select petrol card when fuel category is selected
+                if (categoryId === 'fuel') {
+                  setFormData(prev => ({ ...prev, expenseType: categoryId, paymentMethod: 'petrol_card', cardId: '' }));
+                } else {
+                  // Reset to default payment method when switching away from fuel
+                  setFormData(prev => ({
+                    ...prev,
+                    expenseType: categoryId,
+                    paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod
+                  }));
+                }
+              }}
               required
             >
               <option value="">{t('selectExpenseType', 'Select Expense Type')}</option>
