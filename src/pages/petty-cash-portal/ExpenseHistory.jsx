@@ -276,10 +276,14 @@ const ExpenseHistory = ({ user }) => {
                     </div>
                   )}
 
-                  {expense.receiptPhoto && (
+                  {expense.hasReceipt && (
                     <div className="expense-receipt">
                       <Image size={14} />
-                      <span>Receipt attached</span>
+                      <span>
+                        {expense.receiptCount > 1
+                          ? `${expense.receiptCount} receipts attached`
+                          : 'Receipt attached'}
+                      </span>
                     </div>
                   )}
 

@@ -75,6 +75,11 @@ const PettyCash = () => {
   const [cardTransactions, setCardTransactions] = useState([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
 
+  // Receipt preview modal state
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
+  const [receiptPreview, setReceiptPreview] = useState(null)
+  const [receiptLoading, setReceiptLoading] = useState(false)
+
   // Form states
   const [cardForm, setCardForm] = useState({})
   const [expenseForm, setExpenseForm] = useState({})
@@ -307,6 +312,48 @@ const PettyCash = () => {
       existingReceiptKey: expense.receipt_key || null
     })
     setShowEditExpenseModal(true)
+  }
+
+  // Handle view receipt button click - opens receipt preview modal
+  const handleViewReceipt = async (expense) => {
+    // Check if expense has any receipts
+    if (!expense.hasReceipt && !expense.receiptPhoto && !expense.receipt_key) {
+      alert(t('noReceipt', 'No Receipt Attached'))
+      return
+    }
+
+    setReceiptLoading(true)
+    setShowReceiptModal(true)
+
+    try {
+      // Fetch receipts for this expense
+      const result = await pettyCashService.getExpenseReceipts(expense.id)
+
+      if (result.success && result.data?.receipts?.length > 0) {
+        // Set the first receipt for preview
+        setReceiptPreview({
+          expense: expense,
+          receipts: result.data.receipts,
+          currentIndex: 0
+        })
+      } else if (expense.receiptPhoto) {
+        // Fallback to legacy receipt field
+        setReceiptPreview({
+          expense: expense,
+          receipts: [{ downloadUrl: expense.receiptPhoto, originalFilename: 'Receipt', contentType: 'image/*' }],
+          currentIndex: 0
+        })
+      } else {
+        alert(t('noReceiptFound', 'No receipt found for this expense'))
+        setShowReceiptModal(false)
+      }
+    } catch (error) {
+      console.error('Error fetching receipts:', error)
+      alert(t('errorLoadingReceipt', 'Error loading receipt'))
+      setShowReceiptModal(false)
+    } finally {
+      setReceiptLoading(false)
+    }
   }
 
   // Handle update expense submission
@@ -806,15 +853,10 @@ const PettyCash = () => {
       render: (value, row) => (
         <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
           <button
-            className="btn btn-outline btn-sm"
+            className={`btn btn-outline btn-sm ${row.hasReceipt || row.receiptPhoto ? '' : 'disabled'}`}
             title={t('viewReceipt', 'View Receipt')}
-            onClick={() => {
-              if (row.receiptPhoto) {
-                window.open(row.receiptPhoto, '_blank')
-              } else {
-                alert(t('noReceipt', 'No Receipt Attached'))
-              }
-            }}
+            onClick={() => handleViewReceipt(row)}
+            style={{ opacity: row.hasReceipt || row.receiptPhoto ? 1 : 0.5 }}
           >
             <Receipt size={14} />
           </button>
@@ -1241,6 +1283,158 @@ const PettyCash = () => {
           t={t}
           formatCurrency={formatCurrency}
         />
+      )}
+
+      {/* Receipt Preview Modal */}
+      {showReceiptModal && (
+        <Modal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            setShowReceiptModal(false)
+            setReceiptPreview(null)
+          }}
+          title={t('viewReceipt', 'View Receipt')}
+          className="receipt-preview-modal"
+        >
+          <div className="receipt-preview-content" style={{ padding: '1rem' }}>
+            {receiptLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <Loader2 size={32} className="spinning" />
+                <p style={{ marginTop: '1rem', color: '#666' }}>
+                  {t('loadingReceipt', 'Loading receipt...')}
+                </p>
+              </div>
+            ) : receiptPreview ? (
+              <>
+                {/* Expense Info Header */}
+                <div style={{
+                  marginBottom: '1rem',
+                  padding: '0.75rem',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <strong>{receiptPreview.expense?.expenseNumber}</strong>
+                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                      {receiptPreview.expense?.description}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#2563eb' }}>
+                      {formatCurrency(receiptPreview.expense?.amount)}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                      {formatDate(receiptPreview.expense?.expenseDate)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Receipt Navigation (if multiple) */}
+                {receiptPreview.receipts.length > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      disabled={receiptPreview.currentIndex === 0}
+                      onClick={() => setReceiptPreview(prev => ({
+                        ...prev,
+                        currentIndex: prev.currentIndex - 1
+                      }))}
+                    >
+                      ← {t('previous', 'Previous')}
+                    </button>
+                    <span>
+                      {receiptPreview.currentIndex + 1} / {receiptPreview.receipts.length}
+                    </span>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      disabled={receiptPreview.currentIndex === receiptPreview.receipts.length - 1}
+                      onClick={() => setReceiptPreview(prev => ({
+                        ...prev,
+                        currentIndex: prev.currentIndex + 1
+                      }))}
+                    >
+                      {t('next', 'Next')} →
+                    </button>
+                  </div>
+                )}
+
+                {/* Receipt Display */}
+                {(() => {
+                  const currentReceipt = receiptPreview.receipts[receiptPreview.currentIndex]
+                  const isPdf = currentReceipt?.contentType?.includes('pdf')
+
+                  return (
+                    <div style={{
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      background: '#fff'
+                    }}>
+                      {isPdf ? (
+                        <iframe
+                          src={currentReceipt.downloadUrl}
+                          title={currentReceipt.originalFilename || 'Receipt PDF'}
+                          style={{
+                            width: '100%',
+                            height: '500px',
+                            border: 'none'
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={currentReceipt.downloadUrl}
+                          alt={currentReceipt.originalFilename || 'Receipt'}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '500px',
+                            display: 'block',
+                            margin: '0 auto'
+                          }}
+                        />
+                      )}
+
+                      {/* Receipt filename and actions */}
+                      <div style={{
+                        padding: '0.75rem',
+                        borderTop: '1px solid #eee',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: '#f8f9fa'
+                      }}>
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                          {currentReceipt.originalFilename || 'Receipt'}
+                        </span>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => window.open(currentReceipt.downloadUrl, '_blank')}
+                          title={t('openInNewTab', 'Open in New Tab')}
+                        >
+                          <Eye size={14} />
+                          {t('openInNewTab', 'Open in New Tab')}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                <Receipt size={48} style={{ opacity: 0.3 }} />
+                <p>{t('noReceiptFound', 'No receipt found')}</p>
+              </div>
+            )}
+          </div>
+        </Modal>
       )}
     </div>
   )
