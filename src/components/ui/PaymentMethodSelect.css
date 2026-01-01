@@ -1,0 +1,456 @@
+/* PaymentMethodSelect.css */
+
+.payment-method-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-method-select.rtl {
+  direction: rtl;
+}
+
+/* Label */
+.payment-method-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #1f2937);
+  margin-bottom: 4px;
+}
+
+.payment-method-label .required-indicator {
+  color: var(--color-error, #ef4444);
+  margin-inline-start: 4px;
+}
+
+/* Options Container */
+.payment-method-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Individual Option Button */
+.payment-method-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-secondary, #f9fafb);
+  border: 2px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: start;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-method-option:hover:not(.disabled) {
+  background: var(--bg-hover, #f3f4f6);
+  border-color: var(--border-hover, #d1d5db);
+}
+
+.payment-method-option.selected {
+  background: var(--method-color-light);
+  border-color: var(--method-color);
+  box-shadow: 0 0 0 3px var(--method-color-light);
+}
+
+.payment-method-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Radio Circle */
+.option-radio {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #d1d5db);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  transition: all 0.2s ease;
+}
+
+.option-radio.checked {
+  border-color: var(--method-color);
+  background: var(--method-color);
+}
+
+.radio-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* Icon */
+.option-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  background: var(--bg-tertiary, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  transition: all 0.2s ease;
+}
+
+.payment-method-option.selected .option-icon {
+  background: var(--method-color);
+  color: white;
+}
+
+/* Content */
+.option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.option-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+}
+
+.option-description {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.4;
+}
+
+/* Reimbursement Badge */
+.reimbursement-badge {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  background: var(--method-color);
+  color: white;
+  border-radius: 4px;
+}
+
+/* Reimbursement Warning */
+.reimbursement-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.8125rem;
+  overflow: hidden;
+}
+
+.reimbursement-warning .warning-icon {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+/* Error Message */
+.payment-method-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-error, #ef4444);
+  font-size: 0.8125rem;
+  margin-top: 4px;
+}
+
+.payment-method-error svg {
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .payment-method-option {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .option-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+
+  .option-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .option-label {
+    font-size: 0.875rem;
+  }
+
+  .option-description {
+    font-size: 0.75rem;
+  }
+
+  .reimbursement-badge {
+    position: static;
+    margin-top: 8px;
+    align-self: flex-start;
+  }
+
+  .payment-method-option {
+    flex-wrap: wrap;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .payment-method-option {
+    background: var(--bg-dark-secondary, #1f2937);
+    border-color: var(--border-dark, #374151);
+  }
+
+  .payment-method-option:hover:not(.disabled) {
+    background: var(--bg-dark-hover, #374151);
+  }
+
+  .option-icon {
+    background: var(--bg-dark-tertiary, #374151);
+  }
+
+  .option-label {
+    color: var(--text-dark-primary, #f9fafb);
+  }
+
+  .option-description {
+    color: var(--text-dark-secondary, #9ca3af);
+  }
+
+  .reimbursement-warning {
+    background: #422006;
+    border-color: #92400e;
+    color: #fbbf24;
+  }
+}
+
+/* Compact Mode (for PC Portal) */
+.payment-method-select.compact .payment-method-options {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.payment-method-select.compact .payment-method-option {
+  flex: 1 1 calc(33.333% - 8px);
+  min-width: 120px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px 12px;
+}
+
+.payment-method-select.compact .option-radio {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+}
+
+.payment-method-select.compact .option-content {
+  align-items: center;
+}
+
+.payment-method-select.compact .reimbursement-badge {
+  position: static;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .payment-method-select.compact .payment-method-option {
+    flex: 1 1 100%;
+    flex-direction: row;
+    text-align: start;
+    align-items: flex-start;
+  }
+
+  .payment-method-select.compact .option-content {
+    align-items: flex-start;
+  }
+
+  .payment-method-select.compact .option-radio {
+    position: static;
+  }
+}
+
+/* ========================================
+   NEW COMPACT CHIP MODE (for admin forms)
+   ======================================== */
+
+/* Compact row layout */
+.payment-method-compact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Payment method chip button */
+.payment-method-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border-color, #e5e7eb);
+  border-radius: 20px;
+  background: var(--bg-secondary, #f9fafb);
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.payment-method-chip:hover:not(.disabled) {
+  border-color: var(--method-color);
+  color: var(--method-color);
+  background: color-mix(in srgb, var(--method-color) 8%, white);
+}
+
+.payment-method-chip.selected {
+  background: var(--method-color);
+  border-color: var(--method-color);
+  color: white;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--method-color) 30%, transparent);
+}
+
+.payment-method-chip.selected svg {
+  color: white;
+}
+
+.payment-method-chip.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-tertiary, #f3f4f6);
+}
+
+.payment-method-chip svg {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.payment-method-chip .chip-fuel-tag {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Compact info messages */
+.compact-info-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-top: 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  overflow: hidden;
+}
+
+.compact-info-message.warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+}
+
+.compact-info-message.warning svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.compact-info-message.info {
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  color: #1e40af;
+}
+
+.compact-info-message.info svg {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+/* Compact error */
+.payment-method-error.compact {
+  margin-top: 6px;
+  font-size: 0.75rem;
+}
+
+/* Mobile: stack chips vertically on very small screens */
+@media (max-width: 360px) {
+  .payment-method-compact-row {
+    flex-direction: column;
+  }
+
+  .payment-method-chip {
+    justify-content: center;
+  }
+}
+
+/* 4-column grid (for full-size payment method cards) */
+.payment-method-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .payment-method-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Fuel only badge */
+.fuel-only-badge {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 3px 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Petrol card info message */
+.petrol-card-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 0.8125rem;
+  overflow: hidden;
+}
+
+.petrol-card-info .info-icon {
+  flex-shrink: 0;
+  color: #3b82f6;
+}
+
+/* Balance display */
+.option-balance {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--method-color);
+  margin-top: 4px;
+}

@@ -1265,3 +1265,168 @@
   }
 }
 
+/* Card Type Selector Styles */
+.card-type-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.card-type-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.card-type-option:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.card-type-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.card-type-option input[type="radio"] {
+  margin-top: 4px;
+  margin-right: 12px;
+  accent-color: #3b82f6;
+}
+
+.card-type-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-type-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.card-type-desc {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Payment Method Selector Styles */
+.payment-method-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.payment-method-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+  text-align: center;
+}
+
+.payment-method-option:hover:not(.disabled) {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.payment-method-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.payment-method-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.payment-method-option input[type="radio"] {
+  display: none;
+}
+
+.payment-method-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  color: #6b7280;
+}
+
+.payment-method-option.selected .payment-method-icon {
+  color: #3b82f6;
+}
+
+.payment-method-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.payment-method-desc {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Card Type Badge */
+.card-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.card-type-badge.top-up {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.card-type-badge.petrol {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Info Banner */
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.info-banner.info-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.info-banner.info-info {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .card-type-selector,
+  .payment-method-selector {
+    grid-template-columns: 1fr;
+  }
+}
+

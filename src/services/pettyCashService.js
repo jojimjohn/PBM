@@ -407,7 +407,7 @@ class PettyCashService {
   }
 
   /**
-   * Upload expense receipt
+   * Upload expense receipt (max 2 per expense)
    */
   async uploadReceipt(expenseId, receiptFile) {
     try {
@@ -424,6 +424,45 @@ class PettyCashService {
       return {
         success: false,
         error: error.message || 'Failed to upload receipt'
+      };
+    }
+  }
+
+  /**
+   * Get all receipts for an expense
+   */
+  async getExpenseReceipts(expenseId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipts`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching expense receipts:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch receipts'
+      };
+    }
+  }
+
+  /**
+   * Delete a receipt from an expense
+   * @param {number} expenseId - Expense ID
+   * @param {number|string} receiptId - Receipt ID or 'legacy' for legacy receipts
+   */
+  async deleteReceipt(expenseId, receiptId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipts/${receiptId}`,
+        { method: 'DELETE' }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error deleting receipt:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to delete receipt'
       };
     }
   }
@@ -651,6 +690,164 @@ class PettyCashService {
         success: false,
         error: error.message || 'Failed to get card audit trail'
       };
+    }
+  }
+
+  // ============================================================================
+  // RECEIPT MANAGEMENT METHODS
+  // ============================================================================
+
+  /**
+   * Upload a receipt for an expense
+   * @param {number} expenseId - The expense ID to attach receipt to
+   * @param {File} file - The receipt file (image or PDF)
+   * @param {function} onProgress - Optional progress callback (0-100)
+   * @returns {Promise<Object>} Upload result with receipt URL
+   */
+  async uploadExpenseReceipt(expenseId, file, onProgress = null) {
+    try {
+      // Validate file before upload
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        return {
+          success: false,
+          error: 'Invalid file type. Only JPEG, PNG, and PDF files are allowed.'
+        };
+      }
+
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        return {
+          success: false,
+          error: 'File too large. Maximum size is 10MB.'
+        };
+      }
+
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('receipt', file);
+
+      // Use XMLHttpRequest for progress tracking if callback provided
+      if (onProgress) {
+        return new Promise((resolve) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = Math.round((event.loaded / event.total) * 100);
+              onProgress(percentComplete);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(response);
+              } else {
+                resolve({
+                  success: false,
+                  error: response.message || 'Upload failed'
+                });
+              }
+            } catch (e) {
+              resolve({
+                success: false,
+                error: 'Invalid server response'
+              });
+            }
+          });
+
+          xhr.addEventListener('error', () => {
+            resolve({
+              success: false,
+              error: 'Network error during upload'
+            });
+          });
+
+          // Get auth token from authService
+          const token = authService.getToken();
+
+          xhr.open('POST', `${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipt`);
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          }
+          xhr.send(formData);
+        });
+      }
+
+      // Standard fetch upload without progress
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipt`,
+        {
+          method: 'POST',
+          body: formData,
+          // Don't set Content-Type header - browser will set it with boundary for FormData
+          headers: {}
+        }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error uploading expense receipt:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to upload receipt'
+      };
+    }
+  }
+
+  /**
+   * Get presigned URL for viewing/downloading a receipt
+   * @param {number} expenseId - The expense ID
+   * @returns {Promise<Object>} Result with downloadUrl
+   */
+  async getExpenseReceiptUrl(expenseId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipt`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error getting expense receipt URL:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to get receipt URL'
+      };
+    }
+  }
+
+  /**
+   * Delete a receipt from an expense (admin only)
+   * @param {number} expenseId - The expense ID
+   * @returns {Promise<Object>} Deletion result
+   */
+  async deleteExpenseReceipt(expenseId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/petty-cash-expenses/${expenseId}/receipt`,
+        { method: 'DELETE' }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error deleting expense receipt:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to delete receipt'
+      };
+    }
+  }
+
+  /**
+   * Check if an expense has a receipt attached
+   * @param {number} expenseId - The expense ID
+   * @returns {Promise<boolean>} Whether the expense has a receipt
+   */
+  async hasReceipt(expenseId) {
+    try {
+      const result = await this.getExpenseReceiptUrl(expenseId);
+      return result.success && result.hasReceipt;
+    } catch (error) {
+      return false;
     }
   }
 }

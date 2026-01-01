@@ -19,6 +19,10 @@ import {
   CheckCircle,
   AlertCircle,
   Image,
+  CreditCard,
+  Wallet,
+  Fuel,
+  Building2,
 } from 'lucide-react';
 import pettyCashPortalService from '../../services/pettyCashPortalService';
 import './PettyCashPortal.css';
@@ -36,6 +40,54 @@ const categoryIcons = {
   emergency: '🚨',
 };
 
+// Payment method options for mobile portal (updated for card type system)
+// top_up_card: User's assigned petty cash card - deducts from their card balance
+// petrol_card: Shared company fuel card - only for fuel category
+// company_card: Company debit card - no petty cash deduction
+// iou: Personal expense - reimbursed when approved
+const PAYMENT_METHODS = [
+  {
+    value: 'top_up_card',
+    label: 'My Card',
+    labelAr: 'بطاقتي',
+    desc: 'Use your assigned card',
+    icon: CreditCard,
+    color: '#3b82f6',
+    fuelOnly: false,
+    requiresReimbursement: false
+  },
+  {
+    value: 'petrol_card',
+    label: 'Petrol Card',
+    labelAr: 'بطاقة البترول',
+    desc: 'Shared fuel card',
+    icon: Fuel,
+    color: '#f59e0b',
+    fuelOnly: true,  // Only available for fuel category
+    requiresReimbursement: false
+  },
+  {
+    value: 'company_card',
+    label: 'Company Card',
+    labelAr: 'بطاقة الشركة',
+    desc: 'Company debit card',
+    icon: Building2,
+    color: '#8b5cf6',
+    fuelOnly: false,
+    requiresReimbursement: false
+  },
+  {
+    value: 'iou',
+    label: 'IOU (Personal)',
+    labelAr: 'سلفة شخصية',
+    desc: 'Reimbursed when approved',
+    icon: Wallet,
+    color: '#ef4444',
+    fuelOnly: false,
+    requiresReimbursement: true
+  },
+];
+
 const ExpenseSubmitForm = ({
   user,
   categories = [],
@@ -49,6 +101,7 @@ const ExpenseSubmitForm = ({
     expenseDate: new Date().toISOString().split('T')[0],
     vendor: '',
     receiptNumber: '',
+    paymentMethod: 'top_up_card', // Default to user's assigned card
   });
   const [receipt, setReceipt] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(null);
@@ -130,6 +183,7 @@ const ExpenseSubmitForm = ({
         expenseDate: formData.expenseDate,
         vendor: formData.vendor || null,
         receiptNumber: formData.receiptNumber || null,
+        paymentMethod: formData.paymentMethod || 'top_up_card',
       };
 
       const result = await pettyCashPortalService.submitExpense(expenseData);
@@ -298,6 +352,59 @@ const ExpenseSubmitForm = ({
           className="form-input"
           placeholder="Optional receipt number"
         />
+      </div>
+
+      {/* Payment Method */}
+      <div className="form-group">
+        <label className="form-label">
+          <CreditCard size={18} />
+          Payment Method *
+        </label>
+        <div className="payment-method-grid payment-method-grid-4">
+          {PAYMENT_METHODS.map((method) => {
+            const Icon = method.icon;
+            const isSelected = formData.paymentMethod === method.value;
+            const isFuelCategory = formData.category === 'fuel';
+            const isPetrolDisabled = method.fuelOnly && !isFuelCategory;
+            const isDisabled = isPetrolDisabled;
+
+            return (
+              <button
+                key={method.value}
+                type="button"
+                className={`payment-method-btn ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                onClick={() => !isDisabled && setFormData((prev) => ({ ...prev, paymentMethod: method.value }))}
+                disabled={isDisabled}
+                title={isPetrolDisabled ? 'Petrol card can only be used for fuel expenses' : ''}
+                style={{
+                  '--method-color': method.color,
+                  '--method-color-light': `${method.color}20`,
+                }}
+              >
+                <Icon size={20} />
+                <span className="payment-method-label">{method.label}</span>
+                <span className="payment-method-desc">{method.desc}</span>
+                {method.fuelOnly && !isSelected && (
+                  <span className="fuel-only-tag">Fuel Only</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {/* IOU Reimbursement Warning */}
+        {formData.paymentMethod === 'iou' && (
+          <div className="payment-warning">
+            <AlertCircle size={14} />
+            <span>This personal expense will be reimbursed when approved by manager</span>
+          </div>
+        )}
+        {/* Petrol Card Info */}
+        {formData.paymentMethod === 'petrol_card' && (
+          <div className="payment-info">
+            <Fuel size={14} />
+            <span>Using shared company petrol card for this fuel expense</span>
+          </div>
+        )}
       </div>
 
       {/* Receipt Upload */}

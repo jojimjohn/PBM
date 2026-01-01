@@ -10,6 +10,8 @@ import DatePicker from '../../../components/ui/DatePicker'
 import StockChart from '../../../components/StockChart'
 import ImageUpload from '../../../components/ui/ImageUpload'
 import FileUpload from '../../../components/ui/FileUpload'
+import PaymentMethodSelect from '../../../components/ui/PaymentMethodSelect'
+import ReceiptUpload from '../../../components/ui/ReceiptUpload'
 import pettyCashService from '../../../services/pettyCashService'
 import uploadService from '../../../services/uploadService'
 import userService from '../../../services/userService'
@@ -62,18 +64,21 @@ const PettyCash = () => {
   // Modal states
   const [showCardModal, setShowCardModal] = useState(false)
   const [showExpenseModal, setShowExpenseModal] = useState(false)
+  const [showEditExpenseModal, setShowEditExpenseModal] = useState(false)
   const [showReloadModal, setShowReloadModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showDeactivateCardModal, setShowDeactivateCardModal] = useState(false)
   const [selectedCard, setSelectedCard] = useState(null)
   const [editingCard, setEditingCard] = useState(null)
+  const [editingExpense, setEditingExpense] = useState(null)
   const [cardDeactivationReason, setCardDeactivationReason] = useState('')
   const [cardTransactions, setCardTransactions] = useState([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
-  
+
   // Form states
   const [cardForm, setCardForm] = useState({})
   const [expenseForm, setExpenseForm] = useState({})
+  const [editExpenseForm, setEditExpenseForm] = useState({})
   const [reloadForm, setReloadForm] = useState({})
   
   // Tab state
@@ -181,6 +186,8 @@ const PettyCash = () => {
   const handleAddCard = () => {
     const today = new Date().toISOString().split('T')[0]
     setCardForm({
+      cardType: 'top_up',  // 'top_up' or 'petrol'
+      cardNumber: '',      // Manual entry for physical card number
       cardName: '',
       department: '',
       initialBalance: '',
@@ -215,6 +222,8 @@ const PettyCash = () => {
     }
 
     setCardForm({
+      cardType: card.card_type || 'top_up',
+      cardNumber: card.cardNumber || '',
       cardName: card.cardName || '',
       department: card.department || '',
       initialBalance: card.initialBalance || '',
@@ -245,13 +254,10 @@ const PettyCash = () => {
       amount: '',
       description: '',
       merchant: '',
-      location: '',
       transactionDate: new Date().toISOString().split('T')[0],
-      receiptPhotos: [],
-      hasReceipt: false,
-      tags: '',
       notes: '',
-      submittedByPcUser: '' // PC User assignment (optional)
+      paymentMethod: 'top_up_card', // Default payment method
+      receiptFile: null // S3-integrated receipt file
     })
     setShowExpenseModal(true)
   }
@@ -283,6 +289,67 @@ const PettyCash = () => {
     }
   }
 
+  // Handle edit expense button click
+  const handleEditExpense = (expense) => {
+    setEditingExpense(expense)
+    setEditExpenseForm({
+      id: expense.id,
+      cardId: expense.cardId?.toString() || '',
+      expenseType: expense.category || expense.expenseType || '',
+      amount: expense.amount?.toString() || '',
+      transactionDate: expense.expenseDate?.split('T')[0] || expense.transactionDate?.split('T')[0] || '',
+      description: expense.description || '',
+      merchant: expense.vendor || expense.merchant || '',  // Backend returns 'vendor'
+      paymentMethod: expense.paymentMethod || 'top_up_card',
+      notes: expense.notes || '',
+      receiptFile: null,
+      existingReceipt: expense.receiptPhoto || null,
+      existingReceiptKey: expense.receipt_key || null
+    })
+    setShowEditExpenseModal(true)
+  }
+
+  // Handle update expense submission
+  const handleUpdateExpense = async (formData) => {
+    try {
+      // Update expense data - match backend schema (vendor instead of merchant, no location/hasReceipt)
+      const expenseData = {
+        cardId: formData.cardId ? parseInt(formData.cardId) : null,
+        category: formData.expenseType,
+        amount: parseFloat(formData.amount),
+        expenseDate: formData.transactionDate,
+        description: formData.description,
+        vendor: formData.merchant || null,  // Backend expects 'vendor' not 'merchant'
+        paymentMethod: formData.paymentMethod || 'top_up_card',
+        notes: formData.notes || null
+      }
+
+      const result = await pettyCashService.updateExpense(editingExpense.id, expenseData)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update expense')
+      }
+
+      // Upload receipt if a new file was selected
+      if (formData.receiptFile) {
+        const uploadResult = await pettyCashService.uploadReceipt(editingExpense.id, formData.receiptFile)
+        if (!uploadResult.success) {
+          console.warn('Receipt upload failed:', uploadResult.error)
+          // Don't fail the whole operation if receipt upload fails
+        }
+      }
+
+      // Reload data and close modal
+      await loadPettyCashData()
+      setShowEditExpenseModal(false)
+      setEditingExpense(null)
+      alert(t('expenseUpdated', 'Expense updated successfully'))
+    } catch (error) {
+      console.error('Error updating expense:', error)
+      throw error // Re-throw to let modal handle it
+    }
+  }
+
   const handleSaveCard = async (e) => {
     e.preventDefault()
 
@@ -292,7 +359,9 @@ const PettyCash = () => {
       // Map form data to backend schema
       // Note: assignedTo/staffName are now optional - user assignment is handled via Petty Cash Users
       const cardData = {
-        cardName: cardForm.cardName || null,
+        cardType: cardForm.cardType || 'top_up',
+        cardNumber: cardForm.cardNumber || null,  // Manual card number (null = auto-generate)
+        cardName: cardForm.cardName || (cardForm.cardType === 'petrol' ? 'Petrol Card' : null),
         department: cardForm.department || null,
         initialBalance: parseFloat(cardForm.initialBalance),
         monthlyLimit: parseFloat(cardForm.monthlyLimit) || null,
@@ -353,21 +422,38 @@ const PettyCash = () => {
 
       // Map frontend field names to backend schema
       const expensePayload = {
-        cardId: parseInt(formData.cardId),
+        cardId: formData.cardId ? parseInt(formData.cardId) : null,
         category: formData.expenseType, // Frontend: expenseType → Backend: category
         description: formData.description,
         amount: parseFloat(formData.amount),
         expenseDate: formData.transactionDate, // Frontend: transactionDate → Backend: expenseDate
         vendor: formData.merchant || null, // Frontend: merchant → Backend: vendor
-        receiptNumber: formData.receiptNumber || null,
         notes: formData.notes || null, // Convert empty string to null
-        // Include PC User assignment if specified
-        submittedByPcUser: formData.submittedByPcUser ? parseInt(formData.submittedByPcUser) : null
+        paymentMethod: formData.paymentMethod || 'top_up_card'
       }
 
       const result = await pettyCashService.createExpense(expensePayload)
 
       if (result.success) {
+        const expenseId = result.data?.id
+
+        // Upload receipt if file was selected
+        if (formData.receiptFile && expenseId) {
+          try {
+            const uploadResult = await pettyCashService.uploadExpenseReceipt(
+              expenseId,
+              formData.receiptFile,
+              (progress) => console.log(`Receipt upload progress: ${progress}%`)
+            )
+            if (!uploadResult.success) {
+              console.warn('Receipt upload failed:', uploadResult.error)
+              // Don't fail the whole operation if receipt upload fails
+            }
+          } catch (uploadError) {
+            console.warn('Receipt upload error:', uploadError)
+          }
+        }
+
         await loadPettyCashData()
         setShowExpenseModal(false)
         setSelectedCard(null)
@@ -732,6 +818,16 @@ const PettyCash = () => {
           >
             <Receipt size={14} />
           </button>
+          {/* Edit button - available for admins/managers */}
+          {hasPermission('MANAGE_PETTY_CASH') && (
+            <button
+              className="btn btn-outline btn-sm"
+              title={t('editExpense', 'Edit Expense')}
+              onClick={() => handleEditExpense(row)}
+            >
+              <Edit size={14} />
+            </button>
+          )}
           {row.status === 'pending' && hasPermission('APPROVE_EXPENSE') && (
             <>
               <button
@@ -1127,12 +1223,33 @@ const PettyCash = () => {
           </form>
         </Modal>
       )}
+
+      {/* Edit Expense Modal */}
+      {showEditExpenseModal && editingExpense && (
+        <EditExpenseFormModal
+          isOpen={showEditExpenseModal}
+          onClose={() => {
+            setShowEditExpenseModal(false)
+            setEditingExpense(null)
+          }}
+          onSave={handleUpdateExpense}
+          expense={editingExpense}
+          cards={cards}
+          expenseTypes={expenseTypes}
+          formData={editExpenseForm}
+          setFormData={setEditExpenseForm}
+          t={t}
+          formatCurrency={formatCurrency}
+        />
+      )}
     </div>
   )
 }
 
 // Card Form Modal Component
 const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, users, t }) => {
+  const isPetrolCard = formData.cardType === 'petrol'
+
   return (
     <Modal
       isOpen={isOpen}
@@ -1142,6 +1259,46 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
       closeOnOverlayClick={false}
     >
       <form onSubmit={onSubmit} className="card-form">
+        {/* Card Type Selection - Only show for new cards */}
+        {!card && (
+          <div className="form-section">
+            <h3>{t('cardType', 'Card Type')}</h3>
+            <div className="card-type-selector">
+              <label className={`card-type-option ${formData.cardType === 'top_up' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="cardType"
+                  value="top_up"
+                  checked={formData.cardType === 'top_up'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
+                />
+                <div className="card-type-content">
+                  <span className="card-type-title">{t('topUpCard', 'Top-up Card')}</span>
+                  <span className="card-type-desc">{t('topUpCardDesc', 'Regular petty cash card assigned to specific users')}</span>
+                </div>
+              </label>
+              <label className={`card-type-option ${formData.cardType === 'petrol' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="cardType"
+                  value="petrol"
+                  checked={formData.cardType === 'petrol'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
+                />
+                <div className="card-type-content">
+                  <span className="card-type-title">{t('petrolCard', 'Petrol Card')}</span>
+                  <span className="card-type-desc">{t('petrolCardDesc', 'Shared fuel card for all users (one per company)')}</span>
+                </div>
+              </label>
+            </div>
+            {isPetrolCard && (
+              <div className="info-banner info-warning" style={{ marginTop: '12px' }}>
+                <span>⛽ {t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="form-section">
           <h3>{t('cardInformation', 'Card Information')}</h3>
           <div className="form-grid">
@@ -1149,11 +1306,11 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
               <label>{t('cardNumber', 'Card Number')}</label>
               <input
                 type="text"
-                value={card ? (card.cardNumber || '') : t('willBeAutoGenerated', 'Will be auto-generated')}
-                readOnly
-                className="readonly-field"
+                value={formData.cardNumber || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, cardNumber: e.target.value }))}
+                placeholder={t('cardNumberPlaceholder', 'Enter physical card number or leave empty for auto-generate')}
               />
-              <span className="form-help">{t('cardNumberAutoGenerated', 'Auto-generated unique identifier')}</span>
+              <span className="form-help">{t('cardNumberHelp', 'Enter the physical card number or leave empty to auto-generate')}</span>
             </div>
             <div className="form-group">
               <label>{t('cardName', 'Card Name')}</label>
@@ -1161,7 +1318,7 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                 type="text"
                 value={formData.cardName || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, cardName: e.target.value }))}
-                placeholder={t('cardNamePlaceholder', 'e.g., Main Office, Driver 1')}
+                placeholder={isPetrolCard ? t('petrolCardName', 'Petrol Card') : t('cardNamePlaceholder', 'e.g., Main Office, Driver 1')}
               />
               <span className="form-help">{t('cardNameDescription', 'Optional descriptive name for this card')}</span>
             </div>
@@ -1259,35 +1416,6 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
 const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState(null)
-  const [pcUsers, setPcUsers] = React.useState([])
-  const [loadingPcUsers, setLoadingPcUsers] = React.useState(false)
-
-  // Load PC users when card changes
-  React.useEffect(() => {
-    const loadPcUsers = async () => {
-      if (!formData.cardId) {
-        setPcUsers([])
-        return
-      }
-
-      setLoadingPcUsers(true)
-      try {
-        const result = await pettyCashUsersService.getAll({ cardId: formData.cardId, isActive: true })
-        if (result.success) {
-          setPcUsers(result.data || [])
-        } else {
-          setPcUsers([])
-        }
-      } catch (err) {
-        console.error('Error loading PC users:', err)
-        setPcUsers([])
-      } finally {
-        setLoadingPcUsers(false)
-      }
-    }
-
-    loadPcUsers()
-  }, [formData.cardId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -1316,25 +1444,27 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="expense-form">
-        {/* Card Selection with Details */}
-        <div className="form-group">
-          <label>{t('selectCard', 'Select Card')} *</label>
-          <select
-            value={formData.cardId}
-            onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value, submittedByPcUser: '' }))}
-            required
-          >
-            <option value="">{t('selectCard', 'Select Card')}</option>
-            {cards.filter(card => card.status === 'active').map(card => (
-              <option key={card.id} value={card.id}>
-                {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Card Selection - Only for top_up_card payment method */}
+        {(!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (
+          <div className="form-group">
+            <label>{t('selectCard', 'Select Card')} *</label>
+            <select
+              value={formData.cardId}
+              onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value }))}
+              required={formData.paymentMethod === 'top_up_card' || !formData.paymentMethod}
+            >
+              <option value="">{t('selectCard', 'Select Card')}</option>
+              {cards.filter(card => card.status === 'active' && card.cardType !== 'petrol').map(card => (
+                <option key={card.id} value={card.id}>
+                  {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        {/* Selected Card Info Panel */}
-        {formData.cardId && (() => {
+        {/* Selected Card Info Panel - Only for top_up_card */}
+        {formData.cardId && (!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (() => {
           const selectedCard = cards.find(c => c.id === parseInt(formData.cardId));
           if (!selectedCard) return null;
           return (
@@ -1368,28 +1498,6 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
             </div>
           );
         })()}
-
-        {/* PC User Assignment (optional) */}
-        {formData.cardId && (
-          <div className="form-group">
-            <label>{t('assignToPcUser', 'Assign to PC User')} ({t('optional', 'Optional')})</label>
-            <select
-              value={formData.submittedByPcUser || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, submittedByPcUser: e.target.value }))}
-              disabled={loadingPcUsers}
-            >
-              <option value="">{loadingPcUsers ? t('loading', 'Loading...') : t('selectPcUser', 'Select PC User (Optional)')}</option>
-              {pcUsers.map(user => (
-                <option key={user.id} value={user.id}>
-                  {user.name} {user.department ? `- ${user.department}` : ''} {user.employee_id ? `(${user.employee_id})` : ''}
-                </option>
-              ))}
-            </select>
-            <span className="form-help" style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem', display: 'block' }}>
-              {t('pcUserAssignmentHelp', 'Optionally assign this expense to a specific petty cash user on this card')}
-            </span>
-          </div>
-        )}
 
         <div className="form-grid">
           <div className="form-group">
@@ -1443,56 +1551,40 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           />
         </div>
 
-        <div className="form-grid">
-          <div className="form-group">
-            <label>{t('merchant', 'Merchant')}</label>
-            <input
-              type="text"
-              value={formData.merchant}
-              onChange={(e) => setFormData(prev => ({ ...prev, merchant: e.target.value }))}
-              placeholder={t('merchantName', 'Store/vendor name')}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>{t('location', 'Location')}</label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder={t('expenseLocation', 'City, area')}
-            />
-          </div>
-        </div>
-
         <div className="form-group">
-          <label>{t('receiptPhotos', 'Receipt Photos')}</label>
-          {/*
-            TODO Sprint 4+: Replace ImageUpload with backend FileUpload when adding expense edit functionality
-            Current: ImageUpload (client-side only, not persisted to backend)
-            Future: FileUpload component with uploadService.uploadSingleFile('receipts', expenseId, file)
-            Backend route ready: POST /api/uploads/receipts/:id/attachment
-          */}
-          <ImageUpload
-            images={formData.receiptPhotos}
-            onImagesChange={(images) => setFormData(prev => ({ ...prev, receiptPhotos: images }))}
-            maxImages={3}
-            acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
+          <label>{t('merchant', 'Merchant')}</label>
+          <input
+            type="text"
+            value={formData.merchant}
+            onChange={(e) => setFormData(prev => ({ ...prev, merchant: e.target.value }))}
+            placeholder={t('merchantName', 'Store/vendor name')}
           />
-          <div className="form-help">
-            {t('receiptHelp', 'Upload clear photos of receipts. Maximum 3 images.')}
-          </div>
         </div>
 
+        {/* Payment Method Selection - Compact Mode */}
+        <PaymentMethodSelect
+          label={t('paymentMethod', 'Payment Method')}
+          value={formData.paymentMethod || 'top_up_card'}
+          onChange={(method) => {
+            // Clear card selection when switching to non-card payment methods
+            if (method === 'company_card' || method === 'iou') {
+              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
+            } else {
+              setFormData(prev => ({ ...prev, paymentMethod: method }))
+            }
+          }}
+          category={formData.expenseType}
+          compact={true}
+          required
+        />
+
+        {/* Receipt Upload (S3-integrated) */}
         <div className="form-group">
-          <label>
-            <input
-              type="checkbox"
-              checked={formData.hasReceipt}
-              onChange={(e) => setFormData(prev => ({ ...prev, hasReceipt: e.target.checked }))}
-            />
-            {t('hasReceiptConfirmation', 'I have a physical receipt for this expense')}
-          </label>
+          <ReceiptUpload
+            label={t('uploadReceipt', 'Upload Receipt')}
+            value={formData.receiptFile}
+            onChange={(file) => setFormData(prev => ({ ...prev, receiptFile: file }))}
+          />
         </div>
 
         <div className="form-group">
@@ -1627,6 +1719,457 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
           <button type="submit" className="btn btn-success" disabled={isSubmitting}>
             <RefreshCw size={16} />
             {isSubmitting ? t('reloading', 'Reloading...') : t('reloadCard', 'Reload Card')}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+// Edit Expense Form Modal Component
+const EditExpenseFormModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  expense,
+  cards,
+  expenseTypes,
+  formData,
+  setFormData,
+  t,
+  formatCurrency
+}) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState(null)
+  const [receipts, setReceipts] = React.useState([])
+  const [loadingReceipts, setLoadingReceipts] = React.useState(false)
+  const [maxReceipts, setMaxReceipts] = React.useState(2)
+  const [deletingReceiptId, setDeletingReceiptId] = React.useState(null)
+
+  // Load existing receipts when modal opens
+  React.useEffect(() => {
+    const loadReceipts = async () => {
+      if (!isOpen || !expense?.id) return
+
+      setLoadingReceipts(true)
+      try {
+        const result = await pettyCashService.getExpenseReceipts(expense.id)
+        if (result.success) {
+          setReceipts(result.data?.receipts || [])
+          setMaxReceipts(result.data?.maxAllowed || 2)
+        }
+      } catch (err) {
+        console.error('Error loading receipts:', err)
+      } finally {
+        setLoadingReceipts(false)
+      }
+    }
+
+    loadReceipts()
+  }, [isOpen, expense?.id])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      if (typeof onSave !== 'function') {
+        throw new Error('onSave handler not provided')
+      }
+      await onSave(formData)
+    } catch (err) {
+      setError(err.message || 'Failed to update expense')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Handle receipt file selection and upload
+  const handleReceiptChange = async (file) => {
+    if (!file) return
+
+    // Check if we can upload more
+    if (receipts.length >= maxReceipts) {
+      setError(`Maximum ${maxReceipts} receipts allowed. Delete an existing receipt first.`)
+      return
+    }
+
+    setFormData(prev => ({ ...prev, receiptFile: file }))
+
+    // Upload immediately
+    try {
+      setIsSubmitting(true)
+      const result = await pettyCashService.uploadReceipt(expense.id, file)
+      if (result.success) {
+        // Add to receipts list
+        setReceipts(prev => [...prev, {
+          id: result.data.id,
+          storageKey: result.data.storageKey,
+          originalFilename: result.data.originalFilename,
+          downloadUrl: result.data.downloadUrl,
+          uploadedAt: new Date().toISOString()
+        }])
+        setFormData(prev => ({ ...prev, receiptFile: null }))
+      } else {
+        setError(result.error || 'Failed to upload receipt')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to upload receipt')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Handle deleting a receipt
+  const handleDeleteReceipt = async (receiptId) => {
+    if (!window.confirm(t('confirmDeleteReceipt', 'Are you sure you want to delete this receipt?'))) {
+      return
+    }
+
+    setDeletingReceiptId(receiptId)
+    try {
+      const result = await pettyCashService.deleteReceipt(expense.id, receiptId)
+      if (result.success) {
+        setReceipts(prev => prev.filter(r => r.id !== receiptId))
+      } else {
+        setError(result.error || 'Failed to delete receipt')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to delete receipt')
+    } finally {
+      setDeletingReceiptId(null)
+    }
+  }
+
+  if (!expense) return null
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      title={t('editExpense', 'Edit Expense')}
+      onClose={onClose}
+      className="modal-lg"
+      closeOnOverlayClick={false}
+    >
+      <form onSubmit={handleSubmit} className="expense-form">
+        {/* Expense ID Badge */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '1rem',
+          padding: '0.5rem 0.75rem',
+          background: '#e9ecef',
+          borderRadius: '6px',
+          fontSize: '0.85rem'
+        }}>
+          <FileText size={16} />
+          <span>{t('expenseNumber', 'Expense #')}: <strong>{expense.expenseNumber || expense.id}</strong></span>
+          {expense.status && (
+            <span className={`expense-status ${expense.status}`} style={{ marginInlineStart: 'auto' }}>
+              {expense.status === 'approved' && <CheckCircle size={14} />}
+              {expense.status === 'pending' && <Clock size={14} />}
+              {expense.status === 'rejected' && <AlertCircle size={14} />}
+              <span>{t(expense.status, expense.status)}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Payment Method Selection - Compact Mode */}
+        <PaymentMethodSelect
+          label={t('paymentMethod', 'Payment Method')}
+          value={formData.paymentMethod || 'top_up_card'}
+          onChange={(method) => {
+            if (method === 'company_card' || method === 'iou') {
+              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
+            } else {
+              setFormData(prev => ({ ...prev, paymentMethod: method }))
+            }
+          }}
+          category={formData.expenseType}
+          compact={true}
+          required
+        />
+
+        {/* Card Selection - Only for top_up_card payment method */}
+        {(!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <label>{t('selectCard', 'Select Card')} *</label>
+            <select
+              value={formData.cardId}
+              onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value }))}
+              required={formData.paymentMethod === 'top_up_card' || !formData.paymentMethod}
+            >
+              <option value="">{t('selectCard', 'Select Card')}</option>
+              {cards.filter(card => card.status === 'active' && card.cardType !== 'petrol').map(card => (
+                <option key={card.id} value={card.id}>
+                  {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="form-grid" style={{ marginTop: '1rem' }}>
+          <div className="form-group">
+            <label>{t('expenseType', 'Expense Type')} *</label>
+            <select
+              value={formData.expenseType}
+              onChange={(e) => setFormData(prev => ({ ...prev, expenseType: e.target.value }))}
+              required
+            >
+              <option value="">{t('selectExpenseType', 'Select Expense Type')}</option>
+              {expenseTypes.map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.name} - {t('maxAmount', 'Max')}: OMR {type.maxAmount}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>{t('amount', 'Amount')} (OMR) *</label>
+            <input
+              type="number"
+              step="0.001"
+              value={formData.amount}
+              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <DatePicker
+              label={`${t('transactionDate', 'Transaction Date')} *`}
+              value={formData.transactionDate ? new Date(formData.transactionDate) : null}
+              onChange={(date) => {
+                const dateStr = date ? date.toISOString().split('T')[0] : ''
+                setFormData(prev => ({ ...prev, transactionDate: dateStr }))
+              }}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>{t('description', 'Description')} *</label>
+          <input
+            type="text"
+            value={formData.description}
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            required
+            placeholder={t('expenseDescription', 'Brief description of expense')}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>{t('merchant', 'Merchant')}</label>
+          <input
+            type="text"
+            value={formData.merchant}
+            onChange={(e) => setFormData(prev => ({ ...prev, merchant: e.target.value }))}
+            placeholder={t('merchantName', 'Store/vendor name')}
+          />
+        </div>
+
+        {/* Receipt Section */}
+        <div className="form-section" style={{ marginTop: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+          <h4 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Receipt size={18} />
+              {t('receiptAttachments', 'Receipt Attachments')}
+            </span>
+            <span style={{ fontSize: '0.8rem', color: '#6c757d', fontWeight: 'normal' }}>
+              {receipts.length}/{maxReceipts} {t('attached', 'attached')}
+            </span>
+          </h4>
+
+          {/* Loading state */}
+          {loadingReceipts && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem',
+              color: '#6c757d'
+            }}>
+              <Loader2 size={20} className="spinning" style={{ marginRight: '0.5rem' }} />
+              {t('loadingReceipts', 'Loading receipts...')}
+            </div>
+          )}
+
+          {/* Existing Receipts List */}
+          {!loadingReceipts && receipts.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              {receipts.map((receipt, index) => (
+                <div
+                  key={receipt.id || `legacy-${index}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    background: 'white',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '6px'
+                  }}
+                >
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: '#e9ecef',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {receipt.contentType?.includes('pdf') ? (
+                      <FileText size={20} style={{ color: '#dc3545' }} />
+                    ) : (
+                      <Camera size={20} style={{ color: '#6c757d' }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontWeight: '500',
+                      fontSize: '0.85rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {receipt.originalFilename || t('receipt', 'Receipt')}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                      {receipt.uploadedAt ? new Date(receipt.uploadedAt).toLocaleDateString() : ''}
+                      {receipt.fileSize && ` • ${(receipt.fileSize / 1024).toFixed(1)} KB`}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => window.open(receipt.downloadUrl, '_blank')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        background: '#0d6efd',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '0.35rem 0.6rem',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                      title={t('viewReceipt', 'View Receipt')}
+                    >
+                      <Eye size={14} />
+                      {t('view', 'View')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteReceipt(receipt.id)}
+                      disabled={deletingReceiptId === receipt.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        background: deletingReceiptId === receipt.id ? '#6c757d' : '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '0.35rem 0.6rem',
+                        cursor: deletingReceiptId ? 'not-allowed' : 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                      title={t('deleteReceipt', 'Delete Receipt')}
+                    >
+                      {deletingReceiptId === receipt.id ? (
+                        <Loader2 size={14} className="spinning" />
+                      ) : (
+                        <Ban size={14} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* No receipts message */}
+          {!loadingReceipts && receipts.length === 0 && (
+            <div style={{
+              padding: '1rem',
+              background: 'white',
+              border: '1px dashed #dee2e6',
+              borderRadius: '6px',
+              textAlign: 'center',
+              color: '#6c757d',
+              marginBottom: '0.75rem'
+            }}>
+              <Receipt size={24} style={{ opacity: 0.5, marginBottom: '0.5rem' }} />
+              <div>{t('noReceiptsAttached', 'No receipts attached')}</div>
+            </div>
+          )}
+
+          {/* Upload Section - Only show if under max limit */}
+          {!loadingReceipts && receipts.length < maxReceipts && (
+            <ReceiptUpload
+              label={t('uploadReceipt', 'Upload Receipt')}
+              value={formData.receiptFile}
+              onChange={handleReceiptChange}
+              disabled={isSubmitting}
+            />
+          )}
+
+          {/* Max reached message */}
+          {!loadingReceipts && receipts.length >= maxReceipts && (
+            <div style={{
+              padding: '0.5rem 0.75rem',
+              background: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '4px',
+              fontSize: '0.85rem',
+              color: '#856404'
+            }}>
+              {t('maxReceiptsReached', 'Maximum number of receipts reached. Delete an existing receipt to upload a new one.')}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group" style={{ marginTop: '1rem' }}>
+          <label>{t('notes', 'Additional Notes')}</label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            rows="3"
+            placeholder={t('additionalNotes', 'Any additional details...')}
+          />
+        </div>
+
+        {error && (
+          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+            {error}
+          </div>
+        )}
+
+        <div className="form-actions">
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
+            {t('cancel', 'Cancel')}
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="spinning" />
+                {t('updating', 'Updating...')}
+              </>
+            ) : (
+              <>
+                <CheckCircle size={16} />
+                {t('updateExpense', 'Update Expense')}
+              </>
+            )}
           </button>
         </div>
       </form>

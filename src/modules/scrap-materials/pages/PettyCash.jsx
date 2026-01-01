@@ -8,6 +8,7 @@ import DataTable from '../../../components/ui/DataTable'
 import StockChart from '../../../components/StockChart'
 import ImageUpload from '../../../components/ui/ImageUpload'
 import FileUpload from '../../../components/ui/FileUpload'
+import PaymentMethodSelect from '../../../components/ui/PaymentMethodSelect'
 import pettyCashService from '../../../services/pettyCashService'
 import uploadService from '../../../services/uploadService'
 import userService from '../../../services/userService'
@@ -155,6 +156,8 @@ const PettyCash = () => {
   const handleAddCard = () => {
     const today = new Date().toISOString().split('T')[0]
     setCardForm({
+      cardType: 'top_up',  // 'top_up' or 'petrol'
+      cardNumber: '',      // Manual entry for physical card number
       assignedTo: '',
       staffName: '',
       department: '',
@@ -190,6 +193,8 @@ const PettyCash = () => {
     }
 
     setCardForm({
+      cardType: card.card_type || 'top_up',
+      cardNumber: card.cardNumber || '',
       assignedTo: card.assignedTo?.toString() || '',
       staffName: card.staffName || '',
       department: card.department || '',
@@ -273,8 +278,10 @@ const PettyCash = () => {
 
       // Map form data to backend schema
       const cardData = {
-        assignedTo: parseInt(cardForm.assignedTo),
-        staffName: cardForm.staffName,
+        cardType: cardForm.cardType || 'top_up',
+        cardNumber: cardForm.cardNumber || null,  // Manual card number (null = auto-generate)
+        assignedTo: cardForm.cardType === 'petrol' ? null : parseInt(cardForm.assignedTo) || null,
+        staffName: cardForm.cardType === 'petrol' ? 'Shared' : cardForm.staffName,
         department: cardForm.department || null,
         initialBalance: parseFloat(cardForm.initialBalance),
         monthlyLimit: parseFloat(cardForm.monthlyLimit) || null,
@@ -787,6 +794,8 @@ const PettyCash = () => {
 
 // Card Form Modal Component
 const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, users, t }) => {
+  const isPetrolCard = formData.cardType === 'petrol'
+
   // Handle user selection - auto-populate staffName
   const handleUserChange = (userId) => {
     const selectedUser = users.find(u => u.id === parseInt(userId))
@@ -808,45 +817,105 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
       closeOnOverlayClick={false}
     >
       <form onSubmit={onSubmit} className="card-form">
+        {/* Card Type Selection - Only show for new cards */}
+        {!card && (
+          <div className="form-section">
+            <h3>{t('cardType', 'Card Type')}</h3>
+            <div className="card-type-selector">
+              <label className={`card-type-option ${formData.cardType === 'top_up' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="cardType"
+                  value="top_up"
+                  checked={formData.cardType === 'top_up'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
+                />
+                <div className="card-type-content">
+                  <span className="card-type-title">{t('topUpCard', 'Top-up Card')}</span>
+                  <span className="card-type-desc">{t('topUpCardDesc', 'Regular petty cash card assigned to specific users')}</span>
+                </div>
+              </label>
+              <label className={`card-type-option ${formData.cardType === 'petrol' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="cardType"
+                  value="petrol"
+                  checked={formData.cardType === 'petrol'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
+                />
+                <div className="card-type-content">
+                  <span className="card-type-title">{t('petrolCard', 'Petrol Card')}</span>
+                  <span className="card-type-desc">{t('petrolCardDesc', 'Shared fuel card for all users (one per company)')}</span>
+                </div>
+              </label>
+            </div>
+            {isPetrolCard && (
+              <div className="info-banner info-warning" style={{ marginTop: '12px' }}>
+                <span>⛽ {t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Card Number Section */}
         <div className="form-section">
-          <h3>{t('staffAssignment', 'Staff Assignment')}</h3>
+          <h3>{t('cardInformation', 'Card Information')}</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>{t('assignedUser', 'Assigned User')} *</label>
-              <select
-                value={formData.assignedTo}
-                onChange={(e) => handleUserChange(e.target.value)}
-                required
-              >
-                <option value="">{t('selectUser', 'Select User...')}</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.fullName} - {user.role}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>{t('staffName', 'Staff Name')} *</label>
+              <label>{t('cardNumber', 'Card Number')}</label>
               <input
                 type="text"
-                value={formData.staffName}
-                onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
-                required
-                readOnly
+                value={formData.cardNumber || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, cardNumber: e.target.value }))}
+                placeholder={t('cardNumberPlaceholder', 'Enter physical card number or leave empty for auto-generate')}
               />
-            </div>
-            <div className="form-group">
-              <label>{t('department', 'Department')}</label>
-              <input
-                type="text"
-                value={formData.department}
-                onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                placeholder={t('departmentPlaceholder', 'e.g., Accounting, Sales')}
-              />
+              <span className="form-help">{t('cardNumberHelp', 'Enter the physical card number or leave empty to auto-generate')}</span>
             </div>
           </div>
         </div>
+
+        {/* Staff Assignment - Only show for Top-up cards */}
+        {!isPetrolCard && (
+          <div className="form-section">
+            <h3>{t('staffAssignment', 'Staff Assignment')}</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>{t('assignedUser', 'Assigned User')} *</label>
+                <select
+                  value={formData.assignedTo}
+                  onChange={(e) => handleUserChange(e.target.value)}
+                  required={!isPetrolCard}
+                >
+                  <option value="">{t('selectUser', 'Select User...')}</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.fullName} - {user.role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>{t('staffName', 'Staff Name')} *</label>
+                <input
+                  type="text"
+                  value={formData.staffName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
+                  required={!isPetrolCard}
+                  readOnly
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('department', 'Department')}</label>
+                <input
+                  type="text"
+                  value={formData.department}
+                  onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                  placeholder={t('departmentPlaceholder', 'e.g., Accounting, Sales')}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="form-section">
           <h3>{t('cardLimits', 'Card Limits')}</h3>
@@ -951,23 +1020,26 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="expense-form">
-        <div className="form-grid">
+        {/* Card Selection - Only for top_up_card payment method */}
+        {(!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (
           <div className="form-group">
             <label>{t('selectCard', 'Select Card')} *</label>
             <select
               value={formData.cardId}
               onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value }))}
-              required
+              required={formData.paymentMethod === 'top_up_card' || !formData.paymentMethod}
             >
               <option value="">{t('selectCard', 'Select Card')}</option>
-              {cards.map(card => (
+              {cards.filter(card => card.status === 'active' && card.cardType !== 'petrol').map(card => (
                 <option key={card.id} value={card.id}>
-                  {card.cardNumber} - {card.assignedStaff.name}
+                  {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
                 </option>
               ))}
             </select>
           </div>
+        )}
 
+        <div className="form-grid">
           <div className="form-group">
             <label>{t('expenseType', 'Expense Type')} *</label>
             <select
@@ -1038,6 +1110,22 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
             />
           </div>
         </div>
+
+        {/* Payment Method Selection */}
+        <PaymentMethodSelect
+          label={t('paymentMethod', 'Payment Method')}
+          value={formData.paymentMethod || 'top_up_card'}
+          onChange={(method) => {
+            // Clear card selection when switching to non-card payment methods
+            if (method === 'company_card' || method === 'iou') {
+              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
+            } else {
+              setFormData(prev => ({ ...prev, paymentMethod: method }))
+            }
+          }}
+          category={formData.expenseType}
+          required
+        />
 
         <div className="form-group">
           <label>{t('receiptPhotos', 'Receipt Photos')}</label>

@@ -342,9 +342,13 @@ class AuthService {
     const method = (options.method || 'GET').toUpperCase();
     const needsCsrf = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
 
+    // Check if body is FormData (for file uploads)
+    const isFormData = options.body instanceof FormData;
+
     // Build headers with CSRF token for state-changing requests
+    // Don't set Content-Type for FormData - browser sets it automatically with boundary
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
 
