@@ -15,6 +15,7 @@ import SessionTimeoutWarning from './SessionTimeoutWarning'
 import ProfileModal from './ProfileModal'
 import HelpMenu from './tour/HelpMenu'
 import ProductTour from './tour/ProductTour'
+import ProjectSelector from './ui/ProjectSelector'
 import workflowService from '../services/workflowService'
 import { Menu, X } from 'lucide-react'
 import './MainLayout.css'
@@ -197,7 +198,8 @@ const MainLayout = () => {
         'invoices': '/invoices',
         'settings': '/settings',
         'users': '/users',
-        'roles': '/roles'
+        'roles': '/roles',
+        'projects': '/projects'
       }
       
       // Map module IDs to translation keys
@@ -220,7 +222,8 @@ const MainLayout = () => {
         'invoices': 'invoice',
         'settings': 'settings',
         'users': 'userManagement',
-        'roles': 'roleManagement'
+        'roles': 'roleManagement',
+        'projects': 'projects'
       }
       
       const iconData = getModuleIconPaths(moduleId)
@@ -294,6 +297,11 @@ const MainLayout = () => {
           {/* Right Side - User Info and Actions */}
           <div className="header-right">
             <div className="header-actions">
+              {/* Project Selector - Global project filter */}
+              <div data-tour="project-selector">
+                <ProjectSelector />
+              </div>
+
               {/* Notification Panel */}
               <div data-tour="notifications-bell">
                 <NotificationPanel

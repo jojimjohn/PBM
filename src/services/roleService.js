@@ -204,7 +204,7 @@ const roleService = {
         `${API_BASE_URL}/roles/${roleId}`,
         {
           method: 'PUT',
-          body: JSON.stringify({ isActive })
+          body: JSON.stringify({ is_active: isActive })  // Backend expects snake_case
         }
       )
       return result

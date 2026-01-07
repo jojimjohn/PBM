@@ -211,13 +211,13 @@ const OilTradingCustomers = () => {
       sortable: true,
       filterable: true,
       render: (value, row) => (
-        <div className="customer-name-cell">
-          <div className="customer-avatar-mini">
+        <div className="cell-row">
+          <div className="cell-avatar">
             {value.split(' ').map(word => word[0]).join('').substring(0, 2).toUpperCase()}
           </div>
-          <div className="customer-name-info">
-            <div className="name">{value}</div>
-            <div className="code">{row.code}</div>
+          <div className="cell-info">
+            <span className="cell-text">{value}</span>
+            <span className="cell-code">{row.code}</span>
           </div>
         </div>
       )
@@ -237,7 +237,7 @@ const OilTradingCustomers = () => {
       render: (value, row) => {
         const typeObj = customerTypes.find(t => t.code === value)
         return (
-          <span className={`customer-type-badge ${value}`}>
+          <span className="status-badge">
             {typeObj ? typeObj.name : value}
           </span>
         )
@@ -254,7 +254,7 @@ const OilTradingCustomers = () => {
       header: t('phone'),
       sortable: true,
       render: (value, row) => (
-        <div className="contact-info">
+        <div className="cell-icon">
           <Phone size={14} />
           <span>{row.contact?.phone || t('notAvailable')}</span>
         </div>
@@ -265,7 +265,7 @@ const OilTradingCustomers = () => {
       header: t('email'),
       sortable: true,
       render: (value, row) => (
-        <div className="contact-info">
+        <div className="cell-icon">
           <Mail size={14} />
           <span>{row.contact?.email || t('notAvailable')}</span>
         </div>
@@ -279,9 +279,9 @@ const OilTradingCustomers = () => {
       sortable: true,
       filterable: true,
       render: (value, row) => (
-        <div className="sales-summary">
-          <div className="total-value">OMR {(row.salesHistory?.totalValue || 0).toFixed(2)}</div>
-          <div className="order-count">{row.salesHistory?.totalOrders || 0} {t('orders')}</div>
+        <div className="cell-info" style={{ alignItems: 'flex-end' }}>
+          <span className="cell-number">OMR {(row.salesHistory?.totalValue || 0).toFixed(2)}</span>
+          <span className="cell-text-secondary">{row.salesHistory?.totalOrders || 0} {t('orders')}</span>
         </div>
       )
     },
@@ -389,35 +389,28 @@ const OilTradingCustomers = () => {
 
   return (
     <div className="oil-customers-page">
-      <div className="page-header">
-        <div className="header-left">
-          <h1>Customer Management</h1>
-          <p>Manage fuel customers and delivery contracts - {customers.length} customers</p>
-        </div>
-        <div className="header-actions">
-          {hasPermission('MANAGE_CUSTOMERS') && (
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowAddForm(true)}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="8.5" cy="7" r="4" />
-                <line x1="20" y1="8" x2="20" y2="14" />
-                <line x1="23" y1="11" x2="17" y2="11" />
-              </svg>
-              Add Customer
-            </button>
-          )}
-        </div>
-      </div>
-
       <div className="customers-content">
         <DataTable
           data={customers}
           columns={columns}
           title={t('customerManagement')}
-          subtitle={t('customerSubtitle')}
+          subtitle={`${t('customerSubtitle')} - ${customers.length} ${t('customers')}`}
+          headerActions={
+            hasPermission('MANAGE_CUSTOMERS') && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowAddForm(true)}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+                {t('addCustomer')}
+              </button>
+            )
+          }
           loading={loading}
           searchable={true}
           filterable={true}
@@ -882,7 +875,7 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
             <h2>{customer.name}</h2>
             <div className="customer-meta">
               <span className="customer-code">{customer.code}</span>
-              <span className={`customer-type-badge ${customer.type}`}>
+              <span className="status-badge">
                 {customer.type ? customer.type.replace(/[-_]/g, ' ').toUpperCase() : 'N/A'}
               </span>
               <span className={`status-pill ${customer.isActive ? 'active' : 'inactive'}`}>

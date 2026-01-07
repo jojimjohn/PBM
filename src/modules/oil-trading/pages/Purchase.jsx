@@ -811,15 +811,7 @@ const Purchase = () => {
   }
 
   return (
-    <div className="purchase-page">
-      {/* Page Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1>Purchase Management</h1>
-          <p>Complete vendor procurement and expense tracking for {selectedCompany?.name}</p>
-        </div>
-      </div>
-
+    <div className="page-container">
       {/* Message Toast */}
       {message.text && (
         <div
@@ -838,86 +830,78 @@ const Purchase = () => {
         onStepClick={(tab) => setActiveTab(tab)}
       />
 
-      {/* Summary Cards - Only show on Orders tab */}
-      {activeTab === 'orders' && (
-      <div className="purchase-summary">
-        <div className="summary-card">
-          <div className="summary-icon total">
-            <FileText size={24} />
-          </div>
-          <div className="summary-content">
-            <h3>Total Orders</h3>
-            <p className="summary-number">{summary.total}</p>
-            <p className="summary-change">All time</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon pending">
-            <Clock size={24} />
-          </div>
-          <div className="summary-content">
-            <h3>Pending Orders</h3>
-            <p className="summary-number">{summary.pending}</p>
-            <p className="summary-change">Awaiting approval</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon approved">
-            <CheckCircle size={24} />
-          </div>
-          <div className="summary-content">
-            <h3>Order Value</h3>
-            <p className="summary-number">{formatCurrency(summary.totalValue)}</p>
-            <p className="summary-change">Total purchase value</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon value">
-            <Banknote size={24} />
-          </div>
-          <div className="summary-content">
-            <h3>Total Expenses</h3>
-            <p className="summary-number">{formatCurrency(summary.totalExpenses)}</p>
-            <p className="summary-change">Additional costs</p>
-          </div>
-        </div>
-      </div>
-      )}
-
       {/* Tab Navigation */}
-      <div className="purchase-tabs">
-        <div className="tab-buttons">
-          {tabs.map(tab => {
-            const IconComponent = tab.icon
-            // Map tab IDs to data-tour attributes for workflow guides
-            const tourIdMap = {
-              collections: 'collections-tab',
-              orders: 'purchase-orders-tab',
-              bills: 'bills-tab',
-              expenses: 'expenses-tab'
-            }
-            return (
-              <button
-                key={tab.id}
-                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-                data-tour={tourIdMap[tab.id] || undefined}
-              >
-                <IconComponent size={18} />
-                {tab.name}
-              </button>
-            )
-          })}
-        </div>
+      <div className="tab-navigation">
+        {tabs.map(tab => {
+          const IconComponent = tab.icon
+          // Map tab IDs to data-tour attributes for workflow guides
+          const tourIdMap = {
+            collections: 'collections-tab',
+            orders: 'purchase-orders-tab',
+            bills: 'bills-tab',
+            expenses: 'expenses-tab'
+          }
+          return (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+              data-tour={tourIdMap[tab.id] || undefined}
+            >
+              <IconComponent size={16} />
+              {tab.name}
+            </button>
+          )
+        })}
       </div>
 
       {/* Tab Content */}
       <div className="tab-content">
         {activeTab === 'orders' && (
           <div className="orders-tab">
+            {/* Summary Cards */}
+            <div className="summary-cards">
+              <div className="summary-card">
+                <div className="summary-icon info">
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{summary.total}</div>
+                  <div className="summary-label">Total Orders</div>
+                </div>
+              </div>
+
+              <div className="summary-card">
+                <div className="summary-icon warning">
+                  <Clock size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{summary.pending}</div>
+                  <div className="summary-label">Pending Orders</div>
+                </div>
+              </div>
+
+              <div className="summary-card">
+                <div className="summary-icon success">
+                  <CheckCircle size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{formatCurrency(summary.totalValue)}</div>
+                  <div className="summary-label">Order Value</div>
+                </div>
+              </div>
+
+              <div className="summary-card">
+                <div className="summary-icon">
+                  <Banknote size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{formatCurrency(summary.totalExpenses)}</div>
+                  <div className="summary-label">Total Expenses</div>
+                </div>
+              </div>
+            </div>
+
             <DataTable
               headerActions={
                 <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
@@ -947,28 +931,16 @@ const Purchase = () => {
                   filterable: true,
                   render: (value, row) => (
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: '600', color: '#1f2937' }}>{value}</span>
-                        {amendmentCounts[row.id] > 0 && (
-                          <span
-                            style={{
-                              backgroundColor: '#3b82f6',
-                              color: 'white',
-                              padding: '0.125rem 0.5rem',
-                              borderRadius: '0.75rem',
-                              fontSize: '0.625rem',
-                              fontWeight: '600',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem'
-                            }}
-                            title={`${amendmentCounts[row.id]} amendment${amendmentCounts[row.id] > 1 ? 's' : ''}`}
-                          >
-                            🔄 {amendmentCounts[row.id]}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{formatDate(row.orderDate)}</div>
+                      <strong>{value}</strong>
+                      {amendmentCounts[row.id] > 0 && (
+                        <span
+                          className="tab-count"
+                          title={`${amendmentCounts[row.id]} amendment${amendmentCounts[row.id] > 1 ? 's' : ''}`}
+                        >
+                          {amendmentCounts[row.id]}
+                        </span>
+                      )}
+                      <div className="text-muted">{formatDate(row.orderDate)}</div>
                     </div>
                   )
                 },
@@ -980,14 +952,14 @@ const Purchase = () => {
                   render: (value, row) => {
                     if (value === 'wcn_auto') {
                       return (
-                        <span className="source-type-badge wcn-auto" title={`Auto-generated from WCN ${row.wcn_number || ''}`}>
+                        <span className="status-badge info" title={`Auto-generated from WCN ${row.wcn_number || ''}`}>
                           <Truck size={12} />
                           AUTO
                         </span>
                       );
                     } else {
                       return (
-                        <span className="source-type-badge manual" title={row.collection_order_id ? `Linked to WCN ${row.wcn_number || ''}` : 'Manually created'}>
+                        <span className="status-badge neutral" title={row.collection_order_id ? `Linked to WCN ${row.wcn_number || ''}` : 'Manually created'}>
                           <Edit3 size={12} />
                           MANUAL
                         </span>
@@ -1010,19 +982,7 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value) => (
-                    <span 
-                      style={{ 
-                        backgroundColor: getStatusColor(value),
-                        color: 'white',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '1rem',
-                        fontSize: '0.75rem',
-                        fontWeight: '500',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                    >
+                    <span className={`status-badge ${value}`}>
                       {getStatusIcon(value)}
                       {getStatusName(value)}
                     </span>
@@ -1035,7 +995,7 @@ const Purchase = () => {
                   sortable: true,
                   align: 'right',
                   render: (value) => (
-                    <span style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(value)}</span>
+                    <strong>{formatCurrency(value)}</strong>
                   )
                 },
                 {
@@ -1043,7 +1003,7 @@ const Purchase = () => {
                   header: 'Actions',
                   sortable: false,
                   render: (value, row) => (
-                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    <div className="cell-actions">
                       <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE_ORDER}>
                         <button 
                           className="btn btn-outline btn-sm"
@@ -1136,65 +1096,60 @@ const Purchase = () => {
         {/* Phase 1.5: Bills Tab */}
         {activeTab === 'bills' && (
           <div className="bills-tab">
-            <div className="tab-header">
-              <h3>Bills & Invoices</h3>
-              <p>Manage company bills from WCN and vendor bills from suppliers</p>
-            </div>
-
             {/* Bills Summary Cards */}
-            <div className="bills-summary-cards">
+            <div className="summary-cards auto-fit">
               <div className="summary-card">
-                <div className="card-icon company-bill">
-                  <FileText size={24} />
+                <div className="summary-icon info">
+                  <FileText size={22} />
                 </div>
-                <div className="card-content">
-                  <span className="card-label">Company Bills</span>
-                  <span className="card-value">{billSummary.companyBills}</span>
-                </div>
-              </div>
-              <div className="summary-card">
-                <div className="card-icon vendor-bill">
-                  <Receipt size={24} />
-                </div>
-                <div className="card-content">
-                  <span className="card-label">Vendor Bills</span>
-                  <span className="card-value">{billSummary.vendorBills}</span>
-                </div>
-              </div>
-              <div className="summary-card warning">
-                <div className="card-icon unpaid">
-                  <Clock size={24} />
-                </div>
-                <div className="card-content">
-                  <span className="card-label">Unpaid</span>
-                  <span className="card-value">{billSummary.unpaid}</span>
-                </div>
-              </div>
-              <div className="summary-card danger">
-                <div className="card-icon overdue">
-                  <AlertTriangle size={24} />
-                </div>
-                <div className="card-content">
-                  <span className="card-label">Overdue</span>
-                  <span className="card-value">{billSummary.overdue}</span>
+                <div>
+                  <div className="summary-value">{billSummary.companyBills}</div>
+                  <div className="summary-label">Company Bills</div>
                 </div>
               </div>
               <div className="summary-card">
-                <div className="card-icon balance">
-                  <Banknote size={24} />
+                <div className="summary-icon">
+                  <Receipt size={22} />
                 </div>
-                <div className="card-content">
-                  <span className="card-label">Balance Due</span>
-                  <span className="card-value">{formatCurrency(billSummary.balanceDue)}</span>
+                <div>
+                  <div className="summary-value">{billSummary.vendorBills}</div>
+                  <div className="summary-label">Vendor Bills</div>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-icon warning">
+                  <Clock size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{billSummary.unpaid}</div>
+                  <div className="summary-label">Unpaid</div>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-icon danger">
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{billSummary.overdue}</div>
+                  <div className="summary-label">Overdue</div>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-icon success">
+                  <Banknote size={22} />
+                </div>
+                <div>
+                  <div className="summary-value">{formatCurrency(billSummary.balanceDue)}</div>
+                  <div className="summary-label">Balance Due</div>
                 </div>
               </div>
             </div>
 
             {/* Bills Filters */}
-            <div className="bills-filters">
-              <div className="filter-group">
-                <label>Bill Type:</label>
+            <div className="filters-bar">
+              <div className="filter-controls">
                 <select
+                  className="filter-select"
                   value={billTypeFilter}
                   onChange={(e) => setBillTypeFilter(e.target.value)}
                 >
@@ -1202,10 +1157,8 @@ const Purchase = () => {
                   <option value="company">Company Bills</option>
                   <option value="vendor">Vendor Bills</option>
                 </select>
-              </div>
-              <div className="filter-group">
-                <label>Payment Status:</label>
                 <select
+                  className="filter-select"
                   value={billPaymentFilter}
                   onChange={(e) => setBillPaymentFilter(e.target.value)}
                 >
@@ -1259,11 +1212,6 @@ const Purchase = () => {
 
         {activeTab === 'expenses' && (
           <div className="expenses-tab">
-            <div className="tab-header">
-              <h3>Purchase Expenses</h3>
-              <p>Track transportation, loading, and other purchase-related costs</p>
-            </div>
-
             <DataTable
               data={purchaseExpenses}
               columns={[
@@ -1272,11 +1220,7 @@ const Purchase = () => {
                   header: 'PO Number',
                   sortable: true,
                   filterable: true,
-                  render: (value) => (
-                    <span style={{ fontWeight: '600', color: '#1f2937' }}>
-                      {value || '-'}
-                    </span>
-                  )
+                  render: (value) => <strong>{value || '-'}</strong>
                 },
                 {
                   key: 'category',
@@ -1284,14 +1228,7 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value) => (
-                    <span style={{ 
-                      backgroundColor: '#e0f2fe',
-                      color: '#0369a1',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.75rem',
-                      textTransform: 'capitalize'
-                    }}>
+                    <span className="status-badge confirmed">
                       {value.replace('_', ' ')}
                     </span>
                   )
@@ -1317,7 +1254,7 @@ const Purchase = () => {
                   type: 'currency',
                   sortable: true,
                   render: (value) => (
-                    <span style={{ fontWeight: '600', color: '#059669' }}>{formatCurrency(value)}</span>
+                    <span className="text-success font-semibold">{formatCurrency(value)}</span>
                   )
                 },
                 {
@@ -1339,26 +1276,15 @@ const Purchase = () => {
                     { value: 'rejected', label: 'Rejected' }
                   ],
                   render: (value, row) => {
-                    // PO expenses in unified_expenses don't have a status field - they are auto-recorded
-                    // If referenceType is 'purchase_order', show as "Recorded" since they're auto-approved
                     const displayStatus = value || (row.referenceType === 'purchase_order' ? 'recorded' : 'pending')
-                    const statusColors = {
-                      approved: { bg: '#dcfce7', color: '#166534' },
-                      recorded: { bg: '#dbeafe', color: '#1e40af' },
-                      pending: { bg: '#fef3c7', color: '#92400e' },
-                      rejected: { bg: '#fee2e2', color: '#991b1b' }
-                    }
-                    const colors = statusColors[displayStatus] || statusColors.pending
+                    const statusClass = {
+                      approved: 'delivered',
+                      recorded: 'confirmed',
+                      pending: 'pending',
+                      rejected: 'cancelled'
+                    }[displayStatus] || 'pending'
                     return (
-                      <span style={{
-                        backgroundColor: colors.bg,
-                        color: colors.color,
-                        padding: '0.25rem 0.5rem',
-                        borderRadius: '0.375rem',
-                        fontSize: '0.75rem',
-                        fontWeight: '500',
-                        textTransform: 'capitalize'
-                      }}>
+                      <span className={`status-badge ${statusClass}`}>
                         {displayStatus === 'recorded' ? 'Recorded' :
                          displayStatus === 'approved' ? 'Approved' :
                          displayStatus === 'pending' ? 'Pending' : 'Rejected'}
@@ -1370,24 +1296,12 @@ const Purchase = () => {
                   key: 'receiptPhoto',
                   header: 'Receipt',
                   sortable: false,
-                  render: (value, row) => {
+                  render: (value) => {
                     if (value) {
                       return (
                         <button
                           onClick={() => window.open(value, '_blank')}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '4px 8px',
-                            backgroundColor: '#dcfce7',
-                            color: '#166534',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            fontWeight: '500',
-                            cursor: 'pointer'
-                          }}
+                          className="btn btn-outline btn-sm"
                           title="View Receipt"
                         >
                           <Image size={12} />
@@ -1395,68 +1309,32 @@ const Purchase = () => {
                         </button>
                       )
                     }
-                    return (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        color: '#9ca3af',
-                        fontSize: '11px'
-                      }}>
-                        <Paperclip size={12} />
-                        None
-                      </span>
-                    )
+                    return <span className="text-muted">None</span>
                   }
                 },
                 {
                   key: 'actions',
                   header: 'Actions',
                   sortable: false,
+                  width: '140px',
                   render: (value, row) => (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="cell-actions">
                       <button
                         onClick={() => {
                           setSelectedExpense(row)
                           setShowExpenseViewModal(true)
                         }}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '6px 12px',
-                          backgroundColor: '#dbeafe',
-                          color: '#1e40af',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}
+                        className="btn btn-outline btn-sm"
                         title="View Details"
                       >
                         <Eye size={14} />
-                        View
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(row.id)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '6px 12px',
-                          backgroundColor: '#fee2e2',
-                          color: '#dc2626',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}
+                        className="btn btn-outline btn-sm btn-danger"
                         title="Delete Expense"
                       >
                         <Trash2 size={14} />
-                        Delete
                       </button>
                     </div>
                   )
@@ -1906,17 +1784,7 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
           <span className={`bill-type-badge ${bill.bill_type}`}>
             {isVendorBill ? 'Vendor Bill' : 'Company Bill'}
           </span>
-          <span
-            className={`status-badge ${bill.payment_status}`}
-            style={{
-              backgroundColor: bill.payment_status === 'paid' ? '#d1fae5' :
-                              bill.payment_status === 'overdue' ? '#fee2e2' :
-                              bill.payment_status === 'partial' ? '#dbeafe' : '#fef3c7',
-              color: bill.payment_status === 'paid' ? '#059669' :
-                     bill.payment_status === 'overdue' ? '#dc2626' :
-                     bill.payment_status === 'partial' ? '#2563eb' : '#d97706'
-            }}
-          >
+          <span className={`status-badge ${bill.payment_status}`}>
             {bill.payment_status === 'unpaid' ? 'Unpaid' :
              bill.payment_status === 'partial' ? 'Partially Paid' :
              bill.payment_status === 'paid' ? 'Paid' : 'Overdue'}

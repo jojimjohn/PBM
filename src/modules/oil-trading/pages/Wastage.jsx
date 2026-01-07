@@ -294,60 +294,35 @@ const Wastage = () => {
   })
 
   return (
-    <div className="wastage-page">
+    <div className="page-container">
       {/* Error Display */}
       {error && (
-        <div className="error-banner">
+        <div className="alert-error mb-4">
           <AlertTriangle size={16} />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="error-close">×</button>
+          <button onClick={() => setError(null)} className="btn-icon-close">×</button>
         </div>
       )}
-
-      <div className="page-header">
-        <div className="header-left">
-          <h1>{t('wastageManagement', 'Wastage Management')}</h1>
-          <p>{t('trackWastageAndLosses', 'Track material wastage and losses')}</p>
-        </div>
-        <div className="header-actions">
-          <button
-            className="btn btn-outline"
-            onClick={() => setShowAnalytics(true)}
-          >
-            <BarChart3 size={16} />
-            {t('viewAnalytics', 'View Analytics')}
-          </button>
-          {hasPermission('CREATE_WASTAGE') && (
-            <button
-              className="btn btn-primary"
-              onClick={handleAddWastage}
-            >
-              <Plus size={16} />
-              {t('reportWastage', 'Report Wastage')}
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* Summary Cards */}
       <div className="summary-cards">
         <div className="summary-card">
-          <div className="card-icon warning">
-            <AlertTriangle size={24} />
+          <div className="summary-icon warning">
+            <AlertTriangle size={22} />
           </div>
-          <div className="card-content">
-            <div className="card-value">{summaryData.totalWastages}</div>
-            <div className="card-label">{t('totalWastages', 'Total Wastages')}</div>
+          <div>
+            <div className="summary-value">{summaryData.totalWastages}</div>
+            <div className="summary-label">{t('totalWastages', 'Total Wastages')}</div>
           </div>
         </div>
 
         <div className="summary-card">
-          <div className="card-icon danger">
-            <Banknote size={24} />
+          <div className="summary-icon danger">
+            <Banknote size={22} />
           </div>
-          <div className="card-content">
-            <div className="card-value">{formatCurrency(summaryData.totalCost)}</div>
-            <div className="card-label">{t('totalWasteCost', 'Total Waste Cost')}</div>
+          <div>
+            <div className="summary-value">{formatCurrency(summaryData.totalCost)}</div>
+            <div className="summary-label">{t('totalWasteCost', 'Total Waste Cost')}</div>
           </div>
         </div>
 
@@ -356,69 +331,36 @@ const Wastage = () => {
           onClick={handlePendingCardClick}
           title={hasPermission('APPROVE_WASTAGE') ? t('clickToFilter', 'Click to filter pending wastages') : ''}
         >
-          <div className="card-icon info">
-            <Clock size={24} />
+          <div className="summary-icon info">
+            <Clock size={22} />
           </div>
-          <div className="card-content">
-            <div className="card-value">{summaryData.pendingCount}</div>
-            <div className="card-label">{t('pendingApproval', 'Pending Approval')}</div>
+          <div>
+            <div className="summary-value">{summaryData.pendingCount}</div>
+            <div className="summary-label">{t('pendingApproval', 'Pending Approval')}</div>
           </div>
         </div>
 
         <div className="summary-card">
-          <div className="card-icon success">
-            <CheckCircle size={24} />
+          <div className="summary-icon success">
+            <CheckCircle size={22} />
           </div>
-          <div className="card-content">
-            <div className="card-value">{summaryData.approvedCount}</div>
-            <div className="card-label">{t('approved', 'Approved')}</div>
+          <div>
+            <div className="summary-value">{summaryData.approvedCount}</div>
+            <div className="summary-label">{t('approved', 'Approved')}</div>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="filter-group">
-          <label>{t('status', 'Status')}:</label>
-          <select
-            value={filters.status}
-            onChange={(e) => {
-              setFilters({...filters, status: e.target.value})
-              setPendingFilterActive(e.target.value === 'pending')
-            }}
-          >
-            <option value="all">{t('allStatus', 'All Status')}</option>
-            <option value="pending">{t('pendingApproval', 'Pending Approval')}</option>
-            <option value="approved">{t('approved', 'Approved')}</option>
-            <option value="rejected">{t('rejected', 'Rejected')}</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>{t('wasteType', 'Waste Type')}:</label>
-          <select
-            value={filters.wasteType}
-            onChange={(e) => setFilters({...filters, wasteType: e.target.value})}
-          >
-            <option value="all">{t('allTypes', 'All Types')}</option>
-            {wasteTypes.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Wastage Data Table */}
-      <div className="wastage-table">
-        <DataTable
-          data={filteredWastages.map(wastage => ({
-            ...wastage,
-            wasteTypeInfo: getWasteTypeInfo(wastage.wasteType),
-            statusInfo: getStatusBadge(wastage.status),
-            formattedDate: formatDate(wastage.wastageDate || wastage.date),
-            formattedCost: formatCurrency(wastage.totalCost || (wastage.quantity * wastage.unitCost))
-          }))}
-          columns={[
+      {/* Wastage Data Table - DataTable has built-in filtering */}
+      <DataTable
+        data={filteredWastages.map(wastage => ({
+          ...wastage,
+          wasteTypeInfo: getWasteTypeInfo(wastage.wasteType),
+          statusInfo: getStatusBadge(wastage.status),
+          formattedDate: formatDate(wastage.wastageDate || wastage.date),
+          formattedCost: formatCurrency(wastage.totalCost || (wastage.quantity * wastage.unitCost))
+        }))}
+        columns={[
             {
               key: 'materialCode',
               header: t('material', 'Material'),
@@ -427,9 +369,9 @@ const Wastage = () => {
               render: (value, row) => {
                 const material = materials.find(m => m.id === row.materialId || m.materialCode === value)
                 return (
-                  <div className="material-info">
-                    <div className="material-code">{value || row.materialCode || '-'}</div>
-                    {material && <div className="material-name">{material.name}</div>}
+                  <div className="cell-info">
+                    <span className="cell-code">{value || row.materialCode || '-'}</span>
+                    {material && <span className="cell-text-secondary">{material.name}</span>}
                   </div>
                 )
               }
@@ -440,13 +382,7 @@ const Wastage = () => {
               sortable: true,
               filterable: true,
               render: (value, row) => (
-                <span
-                  className="waste-type-badge"
-                  style={{
-                    backgroundColor: (WASTAGE_TYPE_COLORS[value] || WASTAGE_TYPE_COLORS.other) + '20',
-                    color: WASTAGE_TYPE_COLORS[value] || WASTAGE_TYPE_COLORS.other
-                  }}
-                >
+                <span className={`waste-type-badge ${value || 'other'}`}>
                   {row.wasteTypeInfo?.name || value}
                 </span>
               )
@@ -486,7 +422,7 @@ const Wastage = () => {
               header: t('actions', 'Actions'),
               sortable: false,
               render: (value, row) => (
-                <div className="action-buttons">
+                <div className="cell-actions">
                   <button
                     className="btn btn-outline btn-sm"
                     onClick={() => handleViewWastage(row)}
@@ -516,16 +452,36 @@ const Wastage = () => {
               )
             }
           ]}
-          title={t('wastageRecords', 'Wastage Records')}
-          loading={loading}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
-          emptyMessage={t('noWastageRecords', 'No wastage records found')}
-        />
-      </div>
+        title={t('wastageManagement', 'Wastage Management')}
+        subtitle={t('trackWastageAndLosses', 'Track material wastage and losses')}
+        headerActions={
+          <>
+            <button
+              className="btn btn-outline"
+              onClick={() => setShowAnalytics(true)}
+            >
+              <BarChart3 size={16} />
+              {t('viewAnalytics', 'View Analytics')}
+            </button>
+            {hasPermission('CREATE_WASTAGE') && (
+              <button
+                className="btn btn-primary"
+                onClick={handleAddWastage}
+              >
+                <Plus size={16} />
+                {t('reportWastage', 'Report Wastage')}
+              </button>
+            )}
+          </>
+        }
+        loading={loading}
+        searchable={true}
+        filterable={true}
+        sortable={true}
+        paginated={true}
+        exportable={true}
+        emptyMessage={t('noWastageRecords', 'No wastage records found')}
+      />
 
       {/* WastageForm Modal */}
       <WastageForm

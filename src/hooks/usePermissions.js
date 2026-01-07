@@ -1,23 +1,39 @@
 import { useMemo } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { 
-  USER_ROLES, 
-  PERMISSIONS, 
-  ROLE_PERMISSIONS, 
+import {
+  USER_ROLES,
+  PERMISSIONS,
   ROLE_HIERARCHY
 } from '../config/roles'
 import { MODULE_PERMISSIONS } from '../config/modules'
 
+/**
+ * usePermissions Hook
+ *
+ * Uses DYNAMIC permissions from JWT token stored in user object,
+ * NOT static frontend config. This ensures permissions are always
+ * in sync with the database.
+ */
 export const usePermissions = () => {
   const { user, selectedCompany } = useAuth()
 
   const userRole = user?.role || USER_ROLES.SALES_STAFF
 
+  // Use dynamic permissions from JWT token (user.permissions)
+  // Fall back to empty array if not available
   const userPermissions = useMemo(() => {
-    if (!userRole) return []
-    
-    let permissions = ROLE_PERMISSIONS[userRole] || []
-    
+    // Get permissions from JWT token (set by backend during login)
+    let permissions = user?.permissions || []
+
+    // Ensure it's an array
+    if (!Array.isArray(permissions)) {
+      try {
+        permissions = JSON.parse(permissions)
+      } catch {
+        permissions = []
+      }
+    }
+
     // Add module-specific permissions based on company configuration
     if (selectedCompany?.modules?.enabled) {
       const additionalPermissions = []
@@ -29,9 +45,9 @@ export const usePermissions = () => {
       })
       permissions = [...permissions, ...additionalPermissions]
     }
-    
+
     return [...new Set(permissions)] // Remove duplicates
-  }, [userRole, selectedCompany])
+  }, [user?.permissions, selectedCompany])
 
   const hasPermission = (permission) => {
     if (!permission) return false

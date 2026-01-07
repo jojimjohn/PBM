@@ -22,7 +22,6 @@ import roleService from '../services/roleService'
 import DataTable from '../components/ui/DataTable'
 import RoleManagement from './RoleManagement'
 import Modal from '../components/ui/Modal'
-import { Badge } from '../components/ui/Badge'
 import {
   Users,
   UserPlus,
@@ -126,10 +125,10 @@ const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
         aria-expanded={isExpanded}
       >
         <div className="role-info-summary">
-          <Shield size={16} style={{ color: role.color || '#6b7280' }} />
+          <Shield size={16} className="role-icon" />
           <span className="role-info-title">
             {role.label} - <strong>{permissions.length}</strong> {t('permissions', 'permissions')}
-            {role.is_system && <span className="system-badge">{t('system', 'System')}</span>}
+            {role.is_system && <span className="status-badge info">{t('system', 'System')}</span>}
           </span>
         </div>
         <span className={`chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
@@ -459,14 +458,34 @@ const UserManagement = () => {
       key: 'role',
       header: t('role', 'Role'),
       filterable: true,
-      render: (value) => (
-        <span
-          className="role-badge"
-          style={{ backgroundColor: getRoleColor(value) + '20', color: getRoleColor(value) }}
-        >
-          {getRoleDisplayName(value)}
-        </span>
-      )
+      render: (value) => {
+        // Map role to design-system badge variant
+        const roleVariantMap = {
+          'SUPER_ADMIN': 'danger',
+          'super-admin': 'danger',
+          'super_admin': 'danger',
+          'COMPANY_ADMIN': 'warning',
+          'company-admin': 'warning',
+          'company_admin': 'warning',
+          'MANAGER': 'info',
+          'manager': 'info',
+          'SALES_STAFF': 'success',
+          'sales-staff': 'success',
+          'sales_staff': 'success',
+          'PURCHASE_STAFF': 'success',
+          'purchase-staff': 'success',
+          'purchase_staff': 'success',
+          'ACCOUNTS_STAFF': 'success',
+          'accounts-staff': 'success',
+          'accounts_staff': 'success'
+        }
+        const variant = roleVariantMap[value] || 'neutral'
+        return (
+          <span className={`status-badge ${variant}`}>
+            {getRoleDisplayName(value)}
+          </span>
+        )
+      }
     },
     {
       key: 'isActive',
@@ -515,7 +534,7 @@ const UserManagement = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (_, row) => (
-        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="cell-actions">
           {canManageTargetUser(row) && (
             <>
               <button
@@ -531,7 +550,7 @@ const UserManagement = () => {
               </button>
 
               <button
-                className="btn btn-warning btn-sm"
+                className="btn btn-outline btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleResetPassword(row)
@@ -565,7 +584,7 @@ const UserManagement = () => {
                 </button>
               ) : (
                 <button
-                  className="btn btn-success btn-sm"
+                  className="btn btn-outline btn-sm"
                   onClick={(e) => {
                     e.stopPropagation()
                     handleReactivate(row)
@@ -579,11 +598,11 @@ const UserManagement = () => {
           )}
 
           {!canManageTargetUser(row) && row.id !== user?.id && (
-            <span className="no-actions">—</span>
+            <span className="text-muted">—</span>
           )}
 
           {row.id === user?.id && (
-            <span className="self-badge">You</span>
+            <span className="status-badge neutral">{t('you', 'You')}</span>
           )}
         </div>
       )
@@ -593,12 +612,7 @@ const UserManagement = () => {
   // Access denied
   if (!canViewUsers) {
     return (
-      <div className="user-management-page">
-        <div className="page-header">
-          <div className="page-title-section">
-            <h1><Users size={24} /> {t('userManagement', 'User Management')}</h1>
-          </div>
-        </div>
+      <div className="page-container">
         <div className="access-denied">
           <AlertTriangle size={48} />
           <h2>{t('accessDenied', 'Access Denied')}</h2>
@@ -609,102 +623,89 @@ const UserManagement = () => {
   }
 
   return (
-    <div className="user-management-page">
-      {/* Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1><Users size={24} /> {t('userManagement', 'User Management')}</h1>
-          <p>{t('manageUsersDescription', 'Create, edit, and manage user accounts and permissions')}</p>
+    <div className="page-container">
+      {/* Message Toast */}
+      {message && (
+        <div className={`message-toast ${message.type}`} onClick={() => setMessage(null)}>
+          {message.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+          <span>{message.text}</span>
+          <button className="toast-close">×</button>
         </div>
+      )}
 
-        {message && (
-          <div className={`alert alert-${message.type}`}>
-            {message.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-            {message.text}
-          </div>
+      {/* Error Banner */}
+      {error && (
+        <div className="error-banner">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="error-close">×</button>
+        </div>
+      )}
+
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          <Users size={18} />
+          {t('users', 'Users')}
+          <span className="tab-count">{users.length}</span>
+        </button>
+        {(hasPermission(PERMISSIONS.VIEW_ROLES) || hasPermission(PERMISSIONS.MANAGE_USERS)) && (
+          <button
+            className={`tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
+            onClick={() => setActiveTab('roles')}
+          >
+            <Shield size={18} />
+            {t('roles', 'Roles')}
+          </button>
         )}
       </div>
 
-      {/* Tab Navigation */}
-      <div className="tabs-container">
-        <div className="tabs-nav">
-          <button
-            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
-          >
-            <Users size={18} />
-            {t('users', 'Users')}
-            <span className="tab-badge">{users.length}</span>
-          </button>
-          {(hasPermission(PERMISSIONS.VIEW_ROLES) || hasPermission(PERMISSIONS.MANAGE_USERS)) && (
-            <button
-              className={`tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
-              onClick={() => setActiveTab('roles')}
-            >
-              <Shield size={18} />
-              {t('roles', 'Roles')}
-            </button>
-          )}
-        </div>
-
-        <div className="tabs-content">
-          {/* Users Tab */}
-          {activeTab === 'users' && (
-            <>
-              {/* Error state */}
-              {error && (
-                <div className="error-banner">
-                  <AlertTriangle size={20} />
-                  <span>{error}</span>
-                  <button onClick={loadUsers} className="btn btn-outline btn-sm">
-                    <RefreshCw size={14} /> Retry
-                  </button>
-                </div>
-              )}
-
-              {/* User Table */}
-              <DataTable
-        data={users}
-        columns={columns}
-        loading={loading}
-        searchable={true}
-        filterable={true}
-        sortable={true}
-        paginated={true}
-        exportable={canManageUsers}
-        initialPageSize={10}
-        emptyMessage={t('noUsersFound', 'No users found')}
-        headerActions={
-          <div className="header-actions-group">
-            <button
-              className="btn btn-outline"
-              onClick={loadUsers}
-              disabled={loading}
-              title={t('refresh', 'Refresh')}
-            >
-              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-            </button>
-            {canManageUsers && (
+      {/* Users Tab */}
+      {activeTab === 'users' && (
+        <DataTable
+          data={users}
+          columns={columns}
+          loading={loading}
+          title={t('userManagement', 'User Management')}
+          subtitle={t('manageUsersDescription', 'Create, edit, and manage user accounts and permissions')}
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={canManageUsers}
+          initialPageSize={10}
+          emptyMessage={t('noUsersFound', 'No users found')}
+          headerActions={
+            <div className="header-actions-group">
               <button
-                className="btn btn-primary"
-                onClick={() => setShowCreateModal(true)}
+                className="btn btn-outline"
+                onClick={loadUsers}
+                disabled={loading}
+                title={t('refresh', 'Refresh')}
               >
-                <UserPlus size={16} />
-                {t('createUser', 'Create User')}
+                <RefreshCw size={16} className={loading ? 'spinning' : ''} />
               </button>
-            )}
-          </div>
-        }
-      />
-            </>
-          )}
+              {canManageUsers && (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  <UserPlus size={16} />
+                  {t('createUser', 'Create User')}
+                </button>
+              )}
+            </div>
+          }
+        />
+      )}
 
-          {/* Roles Tab */}
-          {activeTab === 'roles' && (hasPermission(PERMISSIONS.VIEW_ROLES) || hasPermission(PERMISSIONS.MANAGE_USERS)) && (
-            <RoleManagement embedded={true} />
-          )}
-        </div>
-      </div>
+      {/* Roles Tab */}
+      {activeTab === 'roles' && (hasPermission(PERMISSIONS.VIEW_ROLES) || hasPermission(PERMISSIONS.MANAGE_USERS)) && (
+        <RoleManagement embedded={true} />
+      )}
 
       {/* Create User Modal */}
       <CreateUserModal
@@ -754,7 +755,8 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
     firstName: '',
     lastName: '',
     roleId: '',
-    sendWelcomeEmail: true
+    sendWelcomeEmail: true,
+    createPettyCashAccount: false
   })
   const [errors, setErrors] = useState({})
 
@@ -801,7 +803,8 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
         firstName: '',
         lastName: '',
         roleId: assignable.length > 0 ? assignable[assignable.length - 1].value : '',
-        sendWelcomeEmail: true
+        sendWelcomeEmail: true,
+        createPettyCashAccount: false
       })
       setErrors({})
     }
@@ -942,6 +945,21 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
             />
             <span>{t('sendWelcomeEmail', 'Send welcome email with temporary password')}</span>
           </label>
+        </div>
+
+        <div className="form-group checkbox-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={formData.createPettyCashAccount}
+              onChange={(e) => setFormData({ ...formData, createPettyCashAccount: e.target.checked })}
+              disabled={loading}
+            />
+            <span>{t('createPettyCashAccount', 'Create petty cash account')}</span>
+          </label>
+          <span className="checkbox-hint">
+            {t('pettyCashAccountHint', 'Account will be activated when a petty cash card is assigned')}
+          </span>
         </div>
 
         <div className="form-info">

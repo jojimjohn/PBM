@@ -549,96 +549,87 @@ const Banking = () => {
   ]
 
   return (
-    <div className="banking-page">
-      {/* Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <h1>
-            <Building2 size={28} />
-            Banking
-          </h1>
-          <p className="subtitle">Manage bank accounts and transactions</p>
-        </div>
-      </div>
-
+    <div className="page-container">
       {/* Message */}
       {message && (
-        <div className={`message-toast ${message.type}`}>
+        <div className={message.type === 'success' ? 'alert-success mb-4' : 'alert-error mb-4'}>
           {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
           {message.text}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="tab-buttons">
+      <div className="tab-navigation">
         <button
-          className={`tab-button ${activeTab === 'accounts' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'accounts' ? 'active' : ''}`}
           onClick={() => setActiveTab('accounts')}
         >
           <CreditCard size={18} />
-          Accounts
+          {t('accounts', 'Accounts')}
+          <span className="tab-count">{accounts.length}</span>
         </button>
         <button
-          className={`tab-button ${activeTab === 'transactions' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'transactions' ? 'active' : ''}`}
           onClick={() => setActiveTab('transactions')}
         >
           <FileText size={18} />
-          Transactions
+          {t('transactions', 'Transactions')}
+          <span className="tab-count">{transactions.length}</span>
         </button>
+      </div>
+
+      {/* Summary Cards - Shared across tabs */}
+      <div className="summary-cards">
+        <div className="summary-card">
+          <div className="summary-icon">
+            <CreditCard size={22} />
+          </div>
+          <div>
+            <div className="summary-value">{accountsSummary.totalAccounts || 0}</div>
+            <div className="summary-label">{t('totalAccounts', 'Total Accounts')}</div>
+          </div>
+        </div>
+        <div className="summary-card">
+          <div className="summary-icon success">
+            <Banknote size={22} />
+          </div>
+          <div>
+            <div className="summary-value">{formatCurrency(accountsSummary.totalBalance)}</div>
+            <div className="summary-label">{t('totalBalance', 'Total Balance')}</div>
+          </div>
+        </div>
+        <div className="summary-card">
+          <div className="summary-icon info">
+            <TrendingUp size={22} />
+          </div>
+          <div>
+            <div className="summary-value">{formatCurrency(transactionsSummary.totalCredits)}</div>
+            <div className="summary-label">{t('totalCredits', 'Total Credits')}</div>
+          </div>
+        </div>
+        <div className="summary-card">
+          <div className="summary-icon danger">
+            <TrendingDown size={22} />
+          </div>
+          <div>
+            <div className="summary-value">{formatCurrency(transactionsSummary.totalDebits)}</div>
+            <div className="summary-label">{t('totalDebits', 'Total Debits')}</div>
+          </div>
+        </div>
       </div>
 
       {/* Accounts Tab */}
       {activeTab === 'accounts' && (
-        <div className="accounts-tab">
-          {/* Summary Cards */}
-          <div className="summary-cards">
-            <div className="summary-card">
-              <div className="card-icon accounts">
-                <CreditCard size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Total Accounts</span>
-                <span className="value">{accountsSummary.totalAccounts || 0}</span>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="card-icon balance">
-                <Banknote size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Total Balance</span>
-                <span className="value">{formatCurrency(accountsSummary.totalBalance)}</span>
-              </div>
-            </div>
-            <div className="summary-card positive">
-              <div className="card-icon positive">
-                <TrendingUp size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Positive Balance</span>
-                <span className="value">{formatCurrency(accountsSummary.positiveBalance)}</span>
-              </div>
-            </div>
-            <div className="summary-card negative">
-              <div className="card-icon negative">
-                <TrendingDown size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Overdraft/Credit</span>
-                <span className="value">{formatCurrency(accountsSummary.negativeBalance)}</span>
-              </div>
-            </div>
-          </div>
-
+        <>
           {/* Actions Bar */}
           <div className="actions-bar">
             <button className="btn btn-primary" onClick={handleAddAccount} disabled={!canManage}>
-              <Plus size={18} />
-              Add Account
+              <Plus size={16} />
+              {t('addAccount', 'Add Account')}
             </button>
             <button className="btn btn-outline" onClick={loadAccounts}>
-              <RefreshCw size={18} />
-              Refresh
+              <RefreshCw size={16} />
+              {t('refresh', 'Refresh')}
             </button>
           </div>
 
@@ -652,10 +643,10 @@ const Banking = () => {
               {accounts.length === 0 ? (
                 <div className="empty-state">
                   <Building2 size={48} />
-                  <p>No bank accounts found</p>
+                  <p>{t('noBankAccountsFound', 'No bank accounts found')}</p>
                   {canManage && (
                     <button className="btn btn-primary" onClick={handleAddAccount}>
-                      Add Your First Account
+                      {t('addFirstAccount', 'Add Your First Account')}
                     </button>
                   )}
                 </div>
@@ -666,73 +657,31 @@ const Banking = () => {
               )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
-        <div className="transactions-tab">
-          {/* Summary Cards */}
-          <div className="summary-cards">
-            <div className="summary-card positive">
-              <div className="card-icon positive">
-                <ArrowDownRight size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Total Credits</span>
-                <span className="value">{formatCurrency(transactionsSummary.totalCredits)}</span>
-              </div>
-            </div>
-            <div className="summary-card negative">
-              <div className="card-icon negative">
-                <ArrowUpRight size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Total Debits</span>
-                <span className="value">{formatCurrency(transactionsSummary.totalDebits)}</span>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="card-icon balance">
-                <Banknote size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Net Flow</span>
-                <span className={`value ${(transactionsSummary.netFlow || 0) >= 0 ? 'positive' : 'negative'}`}>
-                  {formatCurrency(transactionsSummary.netFlow)}
-                </span>
-              </div>
-            </div>
-            <div className="summary-card">
-              <div className="card-icon pending">
-                <Clock size={24} />
-              </div>
-              <div className="card-content">
-                <span className="label">Unreconciled</span>
-                <span className="value">{transactionsSummary.unreconciledCount || 0}</span>
-              </div>
-            </div>
-          </div>
-
+        <>
           {/* Actions Bar */}
           <div className="actions-bar">
             <button className="btn btn-primary" onClick={handleAddTransaction} disabled={!canManage || accounts.length === 0}>
-              <Plus size={18} />
-              Record Transaction
+              <Plus size={16} />
+              {t('recordTransaction', 'Record Transaction')}
             </button>
             {selectedTransactions.length > 0 && (
               <button className="btn btn-success" onClick={handleReconcileSelected} disabled={saving}>
-                <Check size={18} />
-                Reconcile Selected ({selectedTransactions.length})
+                <Check size={16} />
+                {t('reconcileSelected', 'Reconcile Selected')} ({selectedTransactions.length})
               </button>
             )}
             <button className="btn btn-outline" onClick={() => setShowFilters(!showFilters)}>
-              <Filter size={18} />
-              Filters
+              <Filter size={16} />
+              {t('filters', 'Filters')}
             </button>
             <button className="btn btn-outline" onClick={() => loadTransactions()}>
-              <RefreshCw size={18} />
-              Refresh
+              <RefreshCw size={16} />
+              {t('refresh', 'Refresh')}
             </button>
           </div>
 
@@ -838,17 +787,19 @@ const Banking = () => {
               <LoadingSpinner />
             </div>
           ) : (
-            <div className="transactions-table-container">
-              <DataTable
-                columns={transactionColumns}
-                data={transactions}
-                emptyMessage="No transactions found"
-                pagination={transactionsPagination}
-                onPageChange={(page) => loadTransactions(page)}
-              />
-            </div>
+            <DataTable
+              columns={transactionColumns}
+              data={transactions}
+              title={t('bankTransactions', 'Bank Transactions')}
+              subtitle={`${t('viewAndManageTransactions', 'View and manage bank transactions')} - ${transactions.length} ${t('records', 'records')}`}
+              emptyMessage={t('noTransactionsFound', 'No transactions found')}
+              pagination={transactionsPagination}
+              onPageChange={(page) => loadTransactions(page)}
+              searchable={true}
+              sortable={true}
+            />
           )}
-        </div>
+        </>
       )}
 
       {/* Account Modal */}

@@ -32,6 +32,7 @@ import Reports from '../pages/Reports'
 import Banking from '../pages/Banking'
 import UserManagement from '../pages/UserManagement'
 import RoleManagement from '../pages/RoleManagement'
+import Projects from '../pages/Projects'
 
 const BusinessRouter = () => {
   const { selectedCompany } = useAuth()
@@ -58,6 +59,7 @@ const BusinessRouter = () => {
         <Route path="/settings" element={<OilTradingSettings />} />
         <Route path="/users" element={<UserManagement />} />
         <Route path="/roles" element={<RoleManagement />} />
+        <Route path="/projects" element={<Projects />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )

@@ -699,25 +699,6 @@ const Contracts = () => {
 
   return (
     <div className="contracts-page">
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1>{t('contractManagement')}</h1>
-          <p>{t('manageContracts', 'Manage oil trading contracts with suppliers')}</p>
-        </div>
-        
-        <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
-          <div className="page-actions">
-            <button
-              className="btn btn-primary"
-              onClick={openCreateContractForm}
-            >
-              <Plus size={20} />
-              {t('newContract')}
-            </button>
-          </div>
-        </PermissionGate>
-      </div>
-
       {/* Contract Summary Cards */}
       <div className="contracts-summary">
         <div className="summary-card">
@@ -770,26 +751,35 @@ const Contracts = () => {
       </div>
 
       {/* Contracts Table */}
-      <div className="contracts-table-container">
-        <DataTable
-          data={contracts}
-          columns={contractColumns}
-          title={t('contractManagement', 'Contract Management')}
-          subtitle={t('contractSubtitle', 'Manage contracts with oil suppliers')}
-          loading={loading}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
-          selectable={false}
-          emptyMessage={t('noContractsFound', 'No contracts found')}
-          className="contracts-table"
-          initialPageSize={10}
-          stickyHeader={true}
-          enableColumnToggle={true}
-        />
-      </div>
+      <DataTable
+        data={contracts}
+        columns={contractColumns}
+        title={t('contractManagement', 'Contract Management')}
+        subtitle={t('contractSubtitle', 'Manage contracts with oil suppliers')}
+        headerActions={
+          hasPermission(PERMISSIONS.MANAGE_CONTRACTS) && (
+            <button
+              className="btn btn-primary"
+              onClick={openCreateContractForm}
+            >
+              <Plus size={16} />
+              {t('newContract')}
+            </button>
+          )
+        }
+        loading={loading}
+        searchable={true}
+        filterable={true}
+        sortable={true}
+        paginated={true}
+        exportable={true}
+        selectable={false}
+        emptyMessage={t('noContractsFound', 'No contracts found')}
+        className="contracts-table"
+        initialPageSize={10}
+        stickyHeader={true}
+        enableColumnToggle={true}
+      />
 
       {/* Create Contract Modal */}
       {showCreateForm && (

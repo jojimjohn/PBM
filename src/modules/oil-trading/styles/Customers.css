@@ -1,2179 +1,468 @@
-/* Oil Trading Customers Styles */
+/* ==============================================
+   Oil Trading - Customers Module
+   Imports shared design system + module-specific styles
+   ============================================== */
 
-/* DataTable Customizations for Customers */
-.customers-table .customer-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+@import '../../../styles/design-system.css';
 
-.customers-table .customer-avatar-mini {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  flex-shrink: 0;
-}
+/* ==============================================
+   Page Layout
+   ============================================== */
 
-.customers-table .customer-name-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.customers-table .customer-name-info .name {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.customers-table .customer-name-info .code {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.customers-table .customer-type-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-/* Customer Type Badges - Standardized types: individual, business, project, contract */
-.customers-table .customer-type-badge.individual {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.customers-table .customer-type-badge.business {
-  background: #e0e7ff;
-  color: #3730a3;
-}
-
-.customers-table .customer-type-badge.project {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.customers-table .customer-type-badge.contract {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.customers-table .contact-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #374151;
-}
-
-.customers-table .contact-info svg {
-  color: #6b7280;
-  flex-shrink: 0;
-}
-
-.customers-table .sales-summary {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.customers-table .sales-summary .total-value {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.customers-table .sales-summary .order-count {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.customers-table .status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.customers-table .status-badge.active {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.customers-table .status-badge.inactive {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.customers-table .table-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.customers-table .btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.customers-table .btn-icon:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #374151;
-}
-
-.customers-table .btn-icon:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.customers-table .btn-icon.primary {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-}
-
-.customers-table .btn-icon.primary:hover:not(:disabled) {
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-.customers-table .btn-icon.secondary {
-  background: #6b7280;
-  border-color: #6b7280;
-  color: white;
-}
-
-.customers-table .btn-icon.secondary:hover:not(:disabled) {
-  background: #4b5563;
-  border-color: #4b5563;
-}
-
-.customers-table .btn-icon.success {
-  background: #22c55e;
-  border-color: #22c55e;
-  color: white;
-}
-
-.customers-table .btn-icon.success:hover:not(:disabled) {
-  background: #16a34a;
-  border-color: #16a34a;
-}
-
-/* Base Button Styles */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  border: 1px solid transparent;
-}
-
-.btn svg {
-  width: 1rem;
-  height: 1rem;
-  stroke-width: 2;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-.btn-outline {
-  background: white;
-  color: #374151;
-  border-color: #d1d5db;
-}
-
-.btn-outline:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.btn-sm {
-  padding: 0.375rem;
-  font-size: 0.8125rem;
-}
-
-.btn-success {
-  background: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.btn-success:hover:not(:disabled) {
-  background: #059669;
-  border-color: #059669;
-}
-
-.btn-warning {
-  background: #f59e0b;
-  color: white;
-  border-color: #f59e0b;
-}
-
-.btn-warning:hover:not(:disabled) {
-  background: #d97706;
-  border-color: #d97706;
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-  border-color: #ef4444;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #dc2626;
-  border-color: #dc2626;
-}
-
-/* Button disabled states */
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary:disabled,
-.btn-success:disabled,
-.btn-danger:disabled,
-.btn-warning:disabled {
-  transform: none;
-}
-
-.btn-outline:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-
-
-/* Professional Form Styles */
-.customer-form {
-  padding: 32px;
-  overflow-y: auto;
-  max-height: calc(90vh - 160px);
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group.full-width {
-  grid-column: 1 / -1;
-}
-
-.form-group label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 4px;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  background: white;
-  color: #1f2937;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group input:hover,
-.form-group select:hover,
-.form-group textarea:hover {
-  border-color: #d1d5db;
-}
-
-.form-group input[required]:invalid {
-  border-color: #ef4444;
-}
-
-.form-group input[required]:invalid:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-  font-family: inherit;
-  line-height: 1.5;
-}
-
-.form-group select {
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 12px center;
-  background-repeat: no-repeat;
-  background-size: 16px;
-  padding-right: 40px;
-  appearance: none;
-}
-
-/* Form Section Headers */
-.form-section {
-  margin-bottom: 24px;
-}
-
-.form-section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.form-section-title svg {
-  width: 20px;
-  height: 20px;
-  color: #3b82f6;
-}
-
-/* Form Actions */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 24px;
-  border-top: 1px solid #e5e7eb;
-  margin-top: 32px;
-}
-
-.form-actions .btn {
-  min-width: 120px;
-  justify-content: center;
-  font-weight: 600;
-  padding: 12px 24px;
-}
-
-/* Contract Terms Section */
-.contract-terms-section {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #f59e0b;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 16px;
-}
-
-.contract-terms-section .form-group label {
-  color: #92400e;
-}
-
-.contract-terms-section textarea {
-  background: white;
-  border-color: #f59e0b;
-}
-
-.contract-terms-section textarea:focus {
-  border-color: #d97706;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-}
-
-/* Input Icons - Fixed positioning */
-.input-with-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-with-icon input {
-  padding-left: 48px !important;
-  width: 100%;
-}
-
-.input-with-icon .input-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  color: #6b7280;
-  pointer-events: none;
-  z-index: 1;
-  flex-shrink: 0;
-}
-
-/* Additional responsive styles for customer cards */
-@media (max-width: 1200px) {
-  .oil-customers-page .customers-grid {
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  }
-  
-  .customer-actions .btn {
-    font-size: 0.7rem;
-    padding: 0.375rem 0.625rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .oil-customers-page .customers-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  }
-  
-  /* Stack buttons in 2 rows for better space usage */
-  .customer-actions {
-    gap: 0.375rem;
-  }
-  
-  .customer-actions .btn {
-    flex: 1 1 calc(50% - 0.1875rem);
-    min-width: calc(50% - 0.1875rem);
-    justify-content: center;
-    font-size: 0.7rem;
-    padding: 0.375rem 0.5rem;
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .modal-content {
-    max-width: 95vw;
-    margin: 20px;
-  }
-  
-  .customer-form {
-    padding: 20px;
-  }
-  
-  .modal-header {
-    padding: 20px;
-  }
-  
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-  
-  .form-actions .btn {
-    width: 100%;
-  }
-  
-  /* Single column layout for mobile */
-  .oil-customers-page .customers-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  /* Full width buttons on mobile */
-  .customer-actions .btn {
-    flex: 1 1 100%;
-    min-width: 100%;
-    margin-bottom: 0.25rem;
-  }
-}
-
-/* Customer Card - Fixed layout for button alignment */
-.customer-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 360px;
-}
-
-.customer-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.customer-card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.customer-status {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Page Header */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 2rem;
-}
-
-.page-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-}
-
-.page-header p {
-  color: #6b7280;
-  margin: 0;
-}
 .oil-customers-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--ds-bg);
   padding: 0;
 }
 
-/* Search Box and Filters */
-.filters-bar {
+.customers-content {
+  flex: 1;
+}
+
+/* ==============================================
+   Customer View Modal
+   ============================================== */
+
+.customer-view-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.customer-view-modal .customer-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--ds-accent) 0%, #1d4ed8 100%);
+  color: white;
+  margin: -20px -24px 24px -24px;
+  border-radius: var(--ds-radius-lg) var(--ds-radius-lg) 0 0;
+}
+
+.customer-view-modal .customer-avatar-large {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--ds-radius-lg);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.customer-view-modal .customer-identity h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.customer-view-modal .customer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.customer-view-modal .customer-meta .badge {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Info Grid */
+.customer-view-modal .info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.customer-view-modal .info-card {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  overflow: hidden;
+}
+
+.customer-view-modal .info-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--ds-bg);
+  border-bottom: 1px solid var(--ds-border);
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  font-size: 14px;
+}
+
+.customer-view-modal .info-card-header svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ds-accent);
+}
+
+.customer-view-modal .info-card-content {
+  padding: 16px;
+}
+
+.customer-view-modal .info-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ds-border-subtle);
 }
 
-.search-box {
-  position: relative;
-  flex: 1;
-  max-width: 300px;
+.customer-view-modal .info-row:last-child {
+  border-bottom: none;
 }
 
-.search-box svg {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-  stroke-width: 2;
+.customer-view-modal .info-label {
+  font-size: 13px;
+  color: var(--ds-text-muted);
 }
 
-.search-input {
-  width: 100%;
-  padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  transition: border-color 0.2s ease;
+.customer-view-modal .info-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-primary);
+  text-align: right;
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+/* ==============================================
+   Customer Form Modal
+   ============================================== */
+
+.customer-form-modal {
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
-.search-input::placeholder {
-  color: #9ca3af;
+.customer-form-modal .form-section {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  margin-bottom: 20px;
+  overflow: hidden;
 }
 
-.filter-buttons {
+.customer-form-modal .form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.customer-form-modal .form-section-title {
   display: flex;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--ds-bg);
+  border-bottom: 1px solid var(--ds-border);
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  font-size: 14px;
 }
 
-.filter-select {
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  background: white;
-  color: #374151;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
+.customer-form-modal .form-section-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--ds-accent);
 }
 
-.filter-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.customer-form-modal .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px;
 }
 
-/* Customer Avatar */
-.customer-avatar {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+.customer-form-modal .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.customer-form-modal .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.customer-form-modal .form-group label {
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+  font-size: 13px;
+}
+
+.customer-form-modal .form-group label .required {
+  color: var(--ds-danger);
+}
+
+/* ==============================================
+   Contract View Modal
+   ============================================== */
+
+.contract-view-modal .contract-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  margin: -20px -24px 24px -24px;
+  border-radius: var(--ds-radius-lg) var(--ds-radius-lg) 0 0;
+}
+
+.contract-view-modal .contract-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--ds-radius-lg);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contract-view-modal .contract-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.contract-view-modal .contract-identity h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.contract-view-modal .contract-identity .customer-name {
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.contract-view-modal .contract-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.contract-view-modal .contract-meta .badge {
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Location-Material Rates Table */
+.contract-view-modal .location-rates-section {
+  margin-top: 24px;
+}
+
+.contract-view-modal .location-rates-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  font-size: 15px;
+}
+
+.contract-view-modal .location-rates-header svg {
+  color: var(--ds-accent);
+}
+
+.contract-view-modal .location-card {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.contract-view-modal .location-card:last-child {
+  margin-bottom: 0;
+}
+
+.contract-view-modal .location-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--ds-bg);
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.contract-view-modal .location-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-success);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.contract-view-modal .location-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.contract-view-modal .location-info h4 {
+  font-size: 14px;
   font-weight: 600;
-  font-size: 1.125rem;
-  flex-shrink: 0;
+  color: var(--ds-text-primary);
+  margin: 0 0 2px 0;
 }
 
-.customer-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+.contract-view-modal .location-info .location-code {
+  font-size: 12px;
+  color: var(--ds-text-muted);
+  font-family: 'Monaco', 'Consolas', monospace;
 }
 
-.customer-info {
-  flex: 1;
+.contract-view-modal .rates-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.customer-info h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
+.contract-view-modal .rates-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--ds-text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  background: var(--ds-bg);
+  border-bottom: 1px solid var(--ds-border);
 }
 
-.customer-type {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
+.contract-view-modal .rates-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--ds-text-primary);
+  border-bottom: 1px solid var(--ds-border-subtle);
 }
 
-.oil-customers-page .customers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 1.5rem;
+.contract-view-modal .rates-table tr:last-child td {
+  border-bottom: none;
 }
 
-/* Customer Card Types */
-.customer-card.commercial {
-  border-top: 3px solid #3b82f6;
+.contract-view-modal .rates-table .rate-type-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
-.customer-card.industrial {
-  border-top: 3px solid #8b5cf6;
+.contract-view-modal .rates-table .rate-type-badge.fixed_rate {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
 }
 
-.customer-card.retail {
-  border-top: 3px solid #10b981;
+.contract-view-modal .rates-table .rate-type-badge.discount_percentage {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
 }
 
-/* Customer Status */
-.customer-status.active {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
+.contract-view-modal .rates-table .rate-type-badge.minimum_price_guarantee {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
 }
 
-.customer-status.expired {
+.contract-view-modal .rates-table .rate-type-badge.free {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+
+.contract-view-modal .rates-table .rate-type-badge.we_pay {
   background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
 }
 
-.customer-status.walk-in {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
+/* ==============================================
+   Contract Form Modal
+   ============================================== */
 
-/* Detail Rows */
-.detail-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.detail-row:last-child {
-  margin-bottom: 0;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.detail-item .label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.detail-item span:last-child {
-  font-size: 0.875rem;
-  color: #1f2937;
-}
-
-.detail-item .highlight {
-  font-weight: 600;
-  color: #3b82f6;
-}
-
-/* Customer Stats */
-.customer-stats {
-  margin-top: 2rem;
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.customer-stats .stat-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.customer-stats .stat-card h4 {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  margin: 0 0 0.5rem 0;
-}
-
-.customer-stats .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
-}
-
-.customer-stats .stat-value.warning {
-  color: #f59e0b;
-}
-
-.customer-stats .stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-/* Customer Actions - Fixed to stick to bottom with better overflow handling */
-.customer-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid #f3f4f6;
-  flex-shrink: 0;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-/* Ensure buttons don't overflow by making them responsive */
-.customer-actions .btn {
-  flex: 0 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  font-size: 0.75rem;
-  padding: 0.5rem 0.75rem;
-}
-
-.customer-actions .btn svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-.customer-card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.btn-secondary {
-  background: #6366f1;
-  color: white;
-  border-color: #6366f1;
-}
-
-.btn-secondary:hover {
-  background: #4f46e5;
-  border-color: #4f46e5;
-}
-
-/* Professional View Modal Styles */
-.view-modal-content {
-  padding: 2rem;
-  overflow-y: auto;
-  max-height: calc(90vh - 160px);
-}
-
-.view-modal-content .form-section-title {
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #e5e7eb;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.view-modal-content .form-section-title::before {
-  content: '';
-  width: 4px;
-  height: 28px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border-radius: 2px;
-}
-
-.view-modal-content .form-section-title svg {
-  width: 24px;
-  height: 24px;
-  color: #3b82f6;
-  margin-left: auto;
-}
-
-.view-modal-content .details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem 2rem;
-  margin-bottom: 2rem;
-}
-
-.view-modal-content .detail-item {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.view-modal-content .detail-item:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
-.view-modal-content .detail-item label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  margin-bottom: 0.5rem;
-}
-
-.view-modal-content .detail-item span {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  display: block;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.view-modal-content .detail-item.important {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #f59e0b;
-}
-
-.view-modal-content .detail-item.important label {
-  color: #92400e;
-}
-
-.view-modal-content .detail-item.success {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-  border-color: #22c55e;
-}
-
-.view-modal-content .detail-item.success label {
-  color: #15803d;
-}
-
-.view-modal-content .detail-item .badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.375rem 0.875rem;
-  border-radius: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  display: inline-block;
-  margin-top: 0.25rem;
-}
-
-.view-modal-content .detail-item .badge.active {
-  background: rgba(34, 197, 94, 0.15);
-  color: #16a34a;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.view-modal-content .detail-item .badge.expired {
-  background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.view-modal-content .detail-item .badge.contract {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.view-modal-content .detail-item .badge.walk-in {
-  background: rgba(107, 114, 128, 0.15);
-  color: #4b5563;
-  border: 1px solid rgba(107, 114, 128, 0.3);
-}
-
-.view-modal-content .highlight {
-  color: #3b82f6;
-  font-weight: 700;
-}
-
-.view-modal-content .highlight.large {
-  font-size: 1.875rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.view-modal-content .terms-text {
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: #4b5563;
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
-  border-left: 4px solid #3b82f6;
-}
-
-/* Professional Contract Rates Table */
-.view-modal-content .rates-section {
-  margin-top: 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  overflow: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  max-width: 100%;
-}
-
-.view-modal-content .rates-table {
+.contract-form-modal .location-rates-table {
   width: 100%;
-  min-width: 500px;
   border-collapse: collapse;
-  margin: 0;
-  table-layout: fixed;
+  margin-top: 16px;
 }
 
-.view-modal-content .rates-table thead {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-}
-
-.view-modal-content .rates-table thead th {
-  padding: 1rem;
+.contract-form-modal .location-rates-table th {
+  padding: 12px 16px;
   text-align: left;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  border: none;
-  position: relative;
+  font-weight: 500;
+  color: var(--ds-text-muted);
+  font-size: 12px;
+  background: var(--ds-bg);
+  border-bottom: 1px solid var(--ds-border);
 }
 
-.view-modal-content .rates-table thead th:nth-child(1) {
-  width: 40%;
-}
-
-.view-modal-content .rates-table thead th:nth-child(2),
-.view-modal-content .rates-table thead th:nth-child(3) {
-  width: 22.5%;
-  text-align: right;
-}
-
-.view-modal-content .rates-table thead th:nth-child(4) {
-  width: 15%;
-  text-align: center;
-}
-
-.view-modal-content .rates-table thead th:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 25%;
-  height: 50%;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.view-modal-content .rates-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s ease;
-}
-
-.view-modal-content .rates-table tbody tr:hover {
-  background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
-}
-
-.view-modal-content .rates-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.view-modal-content .rates-table tbody td {
-  padding: 1rem;
-  font-size: 0.8125rem;
-  color: #374151;
-  border: none;
+.contract-form-modal .location-rates-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ds-border-subtle);
   vertical-align: middle;
 }
 
-.view-modal-content .rates-table tbody td:nth-child(2),
-.view-modal-content .rates-table tbody td:nth-child(3) {
-  text-align: right;
+.contract-form-modal .location-rates-table input,
+.contract-form-modal .location-rates-table select {
+  padding: 8px 10px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  font-size: 13px;
+  width: 100%;
+  transition: all var(--ds-transition);
 }
 
-.view-modal-content .rates-table tbody td:nth-child(4) {
-  text-align: center;
-}
-
-/* Material Info Cell */
-.view-modal-content .material-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.view-modal-content .material-name {
-  font-weight: 700;
-  color: #1f2937;
-  font-size: 0.875rem;
-}
-
-.view-modal-content .material-unit {
-  font-size: 0.7rem;
-  color: #6b7280;
-  font-style: italic;
-}
-
-/* Rate Cells */
-.view-modal-content .rate-cell {
-  font-family: 'Monaco', 'Consolas', monospace;
-  white-space: nowrap;
-}
-
-.view-modal-content .rate-cell .currency {
-  font-size: 0.7rem;
-  color: #6b7280;
-  margin-right: 0.125rem;
-}
-
-.view-modal-content .rate-cell .amount {
-  font-weight: 700;
-  font-size: 0.875rem;
-}
-
-.view-modal-content .rate-cell.standard .amount {
-  color: #6b7280;
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.view-modal-content .rate-cell.contract .amount {
-  color: #059669;
-}
-
-/* Discount Badge */
-.view-modal-content .discount-cell {
-  text-align: center;
-}
-
-.view-modal-content .discount-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 1rem;
-  font-weight: 700;
-  font-size: 0.75rem;
-  transition: all 0.2s ease;
-}
-
-.view-modal-content .discount-badge svg {
-  width: 14px;
-  height: 14px;
-}
-
-.view-modal-content .discount-badge.high {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-  color: #15803d;
-  border: 1px solid #86efac;
-}
-
-.view-modal-content .discount-badge.medium {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #92400e;
-  border: 1px solid #fcd34d;
-}
-
-.view-modal-content .discount-badge.low {
-  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-  color: #4338ca;
-  border: 1px solid #a5b4fc;
-}
-
-/* Table Footer */
-.view-modal-content .rates-table tfoot {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-top: 2px solid #d1d5db;
-}
-
-.view-modal-content .rates-summary {
-  padding: 0.875rem 1rem !important;
-}
-
-.view-modal-content .summary-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: #4b5563;
-  font-size: 0.8125rem;
-}
-
-.view-modal-content .summary-content svg {
-  width: 18px;
-  height: 18px;
-  color: #3b82f6;
-}
-
-/* Empty State for Contract Rates */
-.view-modal-content .empty-rates {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 2px dashed #d1d5db;
-}
-
-.view-modal-content .empty-rates svg {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 1rem auto;
-  color: #9ca3af;
-}
-
-.view-modal-content .empty-rates h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  color: #374151;
-}
-
-.view-modal-content .empty-rates p {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-/* Customer History Section */
-.view-modal-content .history-section {
-  margin-top: 2rem;
-  background: linear-gradient(135deg, #fef7ff 0%, #f3e8ff 100%);
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #e879f9;
-}
-
-.view-modal-content .history-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.view-modal-content .history-item {
-  text-align: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e879f9;
-}
-
-.view-modal-content .history-item .history-number {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #a855f7;
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.view-modal-content .history-item .history-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #7c3aed;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-/* Responsive Design for View Modals */
-@media (max-width: 768px) {
-  .view-modal-content {
-    padding: 1.5rem;
-  }
-  
-  .view-modal-content .details-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .view-modal-content .form-section-title {
-    font-size: 1.125rem;
-  }
-  
-  .view-modal-content .rates-table {
-    min-width: 450px;
-  }
-  
-  .view-modal-content .rates-table thead th,
-  .view-modal-content .rates-table tbody td {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.75rem;
-  }
-  
-  .view-modal-content .material-name {
-    font-size: 0.8125rem;
-  }
-  
-  .view-modal-content .material-unit {
-    font-size: 0.65rem;
-  }
-  
-  .view-modal-content .rate-cell .amount {
-    font-size: 0.8125rem;
-  }
-  
-  .view-modal-content .discount-badge {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
-  }
-  
-  .view-modal-content .discount-badge svg {
-    width: 12px;
-    height: 12px;
-  }
-  
-  .view-modal-content .history-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Loading Section */
-.loading-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  text-align: center;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f3f4f6;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-section p {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-/* Contract Editor Styles */
-.rates-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.rate-item {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.2s ease;
-}
-
-.rate-item:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.rate-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.rate-header h4 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.form-section-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.form-section-title select {
-  margin-left: auto;
-  min-width: 200px;
-}
-
-.empty-rates {
-  text-align: center;
-  padding: 2rem;
-  color: #64748b;
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-}
-
-.empty-rates p {
-  margin: 0;
-  font-style: italic;
-}
-
-/* Error Section Styles */
-.error-section {
-  padding: 2rem;
-}
-
-.error-section .empty-rates {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #991b1b;
-}
-
-.error-section .empty-rates h3 {
-  color: #dc2626;
-  margin-bottom: 0.5rem;
-}
-
-/* Contract Edit Form Enhancements */
-.view-modal-content .form-group input,
-.view-modal-content .form-group select,
-.view-modal-content .form-group textarea {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.view-modal-content .form-group input:focus,
-.view-modal-content .form-group select:focus,
-.view-modal-content .form-group textarea:focus {
+.contract-form-modal .location-rates-table input:focus,
+.contract-form-modal .location-rates-table select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--ds-accent);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.view-modal-content .form-group label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.5rem;
+/* ==============================================
+   Dark Mode Support
+   ============================================== */
+
+[data-theme="dark"] .oil-customers-page {
+  --ds-bg: #0f172a;
+  --ds-surface: #1e293b;
+  --ds-border: rgba(255, 255, 255, 0.1);
+  --ds-text-primary: #f1f5f9;
+  --ds-text-secondary: #cbd5e1;
+  --ds-text-muted: #94a3b8;
 }
 
-.view-modal-content .form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+[data-theme="dark"] .customer-view-modal .customer-header,
+[data-theme="dark"] .contract-view-modal .contract-header {
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
 }
 
-.view-modal-content .form-group.full-width {
-  grid-column: 1 / -1;
-}
+/* ==============================================
+   Responsive
+   ============================================== */
 
-/* Wide Form Layout - For modal-xl sized modals */
-.wide-form {
-  padding: 24px 32px;
-}
-
-.wide-form .form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px 24px;
-  margin-bottom: 24px;
-}
-
-.wide-form .form-section {
-  margin-bottom: 20px;
-  padding-bottom: 8px;
-}
-
-.wide-form .form-section-title {
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-}
-
-/* Two column layout for specific sections that work better that way */
-.wide-form .form-section.two-col .form-grid {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-/* Make form groups span 2 columns when needed */
-.wide-form .form-group.span-2 {
-  grid-column: span 2;
-}
-
-/* Address section - street should be full width */
-.wide-form .form-group.full-width {
-  grid-column: 1 / -1;
-}
-
-/* Reduce max-height for better scrolling in wider modal */
-.wide-form {
-  max-height: calc(85vh - 120px);
-  overflow-y: auto;
-}
-
-/* Form actions for wide form */
-.wide-form .form-actions {
-  margin-top: 24px;
-  padding-top: 20px;
-}
-
-/* Contract terms section in wide form */
-.wide-form .contract-terms-section {
-  margin-top: 12px;
-}
-
-.wide-form .contract-terms-section .form-group.full-width textarea {
-  min-height: 100px;
-}
-
-/* Responsive - fall back to 2 columns on medium screens */
-@media (max-width: 900px) {
-  .wide-form .form-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .wide-form .form-group.span-2 {
-    grid-column: 1 / -1;
-  }
-}
-
-/* Responsive - single column on mobile */
-@media (max-width: 600px) {
-  .wide-form {
-    padding: 16px;
-  }
-
-  .wide-form .form-grid {
+@media (max-width: 768px) {
+  .customer-view-modal .info-grid {
     grid-template-columns: 1fr;
   }
 
-  .wide-form .form-group.span-2,
-  .wide-form .form-group.full-width {
+  .customer-form-modal .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-form-modal .form-group.full-width,
+  .customer-form-modal .form-group {
     grid-column: 1;
-  }
-}
-
-/* ============================================
-   Customer Details - Tabbed Interface
-   ============================================ */
-
-.customer-details-tabbed {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-height: calc(85vh - 60px);
-}
-
-/* Compact Header */
-.customer-details-header {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.customer-avatar-large {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.customer-header-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.customer-header-info h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.customer-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.customer-meta .customer-code {
-  font-family: 'Monaco', 'Consolas', monospace;
-  font-size: 0.8125rem;
-  color: #6b7280;
-  background: #e5e7eb;
-  padding: 0.25rem 0.625rem;
-  border-radius: 4px;
-}
-
-.customer-meta .customer-type-badge {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  padding: 0.25rem 0.625rem;
-  border-radius: 4px;
-}
-
-/* Customer Details Modal Type Badges - Standardized types */
-.customer-meta .customer-type-badge.individual {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.customer-meta .customer-type-badge.business {
-  background: #e0e7ff;
-  color: #3730a3;
-}
-
-.customer-meta .customer-type-badge.project {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.customer-meta .customer-type-badge.contract {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-pill {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.625rem;
-  border-radius: 20px;
-}
-
-.status-pill.active {
-  background: rgba(34, 197, 94, 0.15);
-  color: #16a34a;
-}
-
-.status-pill.inactive {
-  background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
-}
-
-.customer-header-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-/* Icon-only action buttons */
-.btn-icon-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-icon-action.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
-
-.btn-icon-action.primary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.btn-icon-action.secondary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.btn-icon-action.secondary:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-.btn-icon-action svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* Tab Navigation */
-.customer-tabs {
-  display: flex;
-  gap: 0;
-  padding: 0 2rem;
-  background: white;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.customer-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.customer-tab:hover {
-  color: #3b82f6;
-  background: #f8fafc;
-}
-
-.customer-tab.active {
-  color: #3b82f6;
-  font-weight: 600;
-}
-
-.customer-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #3b82f6;
-  border-radius: 2px 2px 0 0;
-}
-
-.customer-tab svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Tab Content */
-.customer-tab-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-}
-
-.tab-panel {
-  padding: 1.5rem 2rem;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Overview Grid */
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.overview-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.overview-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.overview-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-radius: 12px;
-  color: #3b82f6;
-  flex-shrink: 0;
-}
-
-.overview-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.overview-info label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  margin-bottom: 0.375rem;
-}
-
-.overview-info span {
-  display: block;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #1f2937;
-  word-break: break-word;
-}
-
-.overview-info .highlight {
-  color: #3b82f6;
-  font-weight: 700;
-}
-
-.overview-info .text-success {
-  color: #16a34a;
-}
-
-.overview-info .text-muted {
-  color: #9ca3af;
-}
-
-/* Contact Details Grid */
-.contact-details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.25rem;
-}
-
-.contact-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem;
-}
-
-.contact-card.full-width {
-  grid-column: 1 / -1;
-}
-
-.contact-card h4 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.75rem 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.contact-card h4 svg {
-  color: #3b82f6;
-}
-
-.contact-value {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.5;
-}
-
-/* Business Details Grid */
-.business-details-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.25rem;
-}
-
-.business-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-.business-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.business-card.highlight-card {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #93c5fd;
-}
-
-.business-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.business-value.text-success {
-  color: #16a34a;
-}
-
-.business-value.text-muted {
-  color: #9ca3af;
-}
-
-.business-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-/* Sales Stats Grid */
-.sales-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.sales-stat-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 16px;
-  transition: all 0.2s ease;
-}
-
-.sales-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.sales-stat-card.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-}
-
-.sales-stat-card.success {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: white;
-}
-
-.sales-stat-card.info {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-}
-
-.sales-stat-card .stat-icon {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-}
-
-.sales-stat-card .stat-content {
-  flex: 1;
-}
-
-.sales-stat-card .stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.sales-stat-card .stat-label {
-  font-size: 0.8125rem;
-  opacity: 0.9;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  background: #f8fafc;
-  border: 2px dashed #e2e8f0;
-  border-radius: 16px;
-  color: #6b7280;
-}
-
-.empty-state svg {
-  color: #d1d5db;
-  margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.empty-state p {
-  margin: 0 0 1.25rem 0;
-  font-size: 0.875rem;
-}
-
-/* Contract Summary Grid */
-.contract-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.contract-info-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  text-align: center;
-}
-
-.contract-info-card.highlight {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #fcd34d;
-}
-
-.contract-info-card label {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  margin-bottom: 0.5rem;
-}
-
-.contract-info-card span {
-  display: block;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.contract-info-card .contract-id {
-  font-family: 'Monaco', 'Consolas', monospace;
-  font-size: 0.875rem;
-  color: #3b82f6;
-}
-
-.contract-info-card .days-remaining {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #d97706;
-}
-
-.contract-terms-box {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #3b82f6;
-  border-radius: 8px;
-  padding: 1.25rem;
-}
-
-.contract-terms-box h4 {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.contract-terms-box p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #4b5563;
-  line-height: 1.6;
-}
-
-/* Footer */
-.customer-details-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  background: #f8fafc;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-  .customer-details-header {
-    flex-wrap: wrap;
-  }
-
-  .customer-header-actions {
-    width: 100%;
-    justify-content: flex-end;
-    margin-top: 0.5rem;
-  }
-
-  .overview-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .business-details-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .sales-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .contract-summary-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .customer-details-header {
-    padding: 1rem;
-  }
-
-  .customer-avatar-large {
-    width: 48px;
-    height: 48px;
-    font-size: 1.125rem;
-  }
-
-  .customer-header-info h2 {
-    font-size: 1.25rem;
-  }
-
-  .customer-tabs {
-    padding: 0 1rem;
-    overflow-x: auto;
-  }
-
-  .customer-tab {
-    padding: 0.75rem 1rem;
-    font-size: 0.8125rem;
-  }
-
-  .tab-panel {
-    padding: 1rem;
-  }
-
-  .overview-grid,
-  .contact-details-grid,
-  .business-details-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .contract-summary-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }

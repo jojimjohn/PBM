@@ -9,7 +9,7 @@ import SalesOrderForm from '../components/SalesOrderForm'
 import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
 import salesOrderService from '../../../services/salesOrderService'
 import customerService from '../../../services/customerService'
-import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle, Truck, XCircle, Clock, Trash2 } from 'lucide-react'
+import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle, Truck, XCircle, Clock, Trash2, Plus, Download, ClipboardList, Receipt } from 'lucide-react'
 import '../styles/Sales.css'
 
 const Sales = () => {
@@ -351,14 +351,12 @@ const Sales = () => {
         if (value || row.invoiceNumber) {
           return (
             <div className="invoice-info">
-              <FileText size={14} style={{ color: '#10b981' }} />
-              <span style={{ color: '#10b981', fontWeight: '500' }}>
-                {value || row.invoiceNumber}
-              </span>
+              <FileText size={14} />
+              <span>{value || row.invoiceNumber}</span>
             </div>
           )
         }
-        return <span style={{ color: '#6b7280' }}>-</span>
+        return <span className="text-muted">-</span>
       }
     },
     {
@@ -380,7 +378,7 @@ const Sales = () => {
       render: (value, row) => {
         const nextStatuses = getNextStatuses(row.status)
         return (
-          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="cell-actions">
             <button
               className="btn btn-outline btn-sm"
               title={t('view')}
@@ -426,9 +424,8 @@ const Sales = () => {
             {/* Delete Button - Only for draft/cancelled orders */}
             {canDeleteOrder(row) && (
               <button
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-danger btn-sm"
                 title={t('delete') || 'Delete'}
-                style={{ color: '#dc2626' }}
                 onClick={() => handleDeleteOrder(row)}
               >
                 <Trash2 size={14} />
@@ -438,9 +435,8 @@ const Sales = () => {
             {(row.status === 'confirmed' || row.status === 'delivered') && (
               row.invoiceNumber ? (
                 <button
-                  className="btn btn-outline btn-sm"
+                  className="btn btn-outline btn-success btn-sm"
                   title={`Invoice: ${row.invoiceNumber}`}
-                  style={{ color: '#10b981' }}
                 >
                   <FileText size={14} />
                 </button>
@@ -473,274 +469,195 @@ const Sales = () => {
         </div>
       )}
       
-      <div className="page-header">
-        <div className="header-left">
-          <h1>Sales Management</h1>
-          <p>Manage sales orders and invoices</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn btn-outline">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7,10 12,15 17,10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export
-          </button>
-          <button className="btn btn-primary" onClick={() => handleCreateOrder()} data-tour="new-sales-order-button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New Sale Order
-          </button>
-        </div>
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveTab('orders')}
+          data-tour="sales-orders-tab"
+        >
+          <ClipboardList size={16} />
+          {t('salesOrders', 'Sales Orders')}
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'invoices' ? 'active' : ''}`}
+          onClick={() => setActiveTab('invoices')}
+        >
+          <Receipt size={16} />
+          {t('invoices', 'Invoices')}
+        </button>
       </div>
 
-      <div className="sales-content">
-        <div className="tab-navigation">
-          <button
-            className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-            data-tour="sales-orders-tab"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14,2 14,8 20,8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10,9 9,9 8,9" />
-            </svg>
-            Sales Orders
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'invoices' ? 'active' : ''}`}
-            onClick={() => setActiveTab('invoices')}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14,2 14,8 20,8" />
-              <line x1="12" y1="11" x2="12" y2="17" />
-              <path d="M9 14h6" />
-            </svg>
-            Invoices
-          </button>
-        </div>
-
-        <div className="filters-bar">
-          <div className="search-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <input 
-              type="text" 
-              placeholder={t('searchSalesOrders')}
-              className="search-input"
-            />
-          </div>
-          <div className="filter-buttons">
-            <select className="filter-select">
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select className="filter-select">
-              <option value="all">All Customers</option>
-              <option value="almaha">Al Maha Petroleum</option>
-              <option value="gulf">Gulf Construction LLC</option>
-            </select>
-            <DatePicker
-              value={filterFromDate}
-              onChange={setFilterFromDate}
-              placeholder={t('fromDate') || 'From Date'}
-              className="filter-datepicker"
-              size="small"
-            />
-            <DatePicker
-              value={filterToDate}
-              onChange={setFilterToDate}
-              placeholder={t('toDate') || 'To Date'}
-              className="filter-datepicker"
-              size="small"
-            />
-          </div>
-        </div>
-
-        {activeTab === 'orders' && (
-          <div className="sales-orders">
-            <DataTable
-              data={salesOrders}
-              columns={salesOrderColumns}
-              title={t('salesOrders')}
-              subtitle={t('salesOrdersSubtitle')}
-              loading={loading}
-              searchable={true}
-              filterable={true}
-              sortable={true}
-              paginated={true}
-              exportable={true}
-              selectable={false}
-              emptyMessage={t('noOrdersFound')}
-              className="sales-orders-table"
-              initialPageSize={10}
-            />
-          </div>
-        )}
-
-        {activeTab === 'invoices' && (
-          <div className="sales-invoices">
-            <DataTable
-              data={salesOrders.filter(order => order.invoiceNumber)}
-              columns={[
-                {
-                  key: 'invoiceNumber',
-                  header: t('invoiceNumber'),
-                  sortable: true,
-                  render: (value) => (
-                    <div className="invoice-number">
-                      <FileText size={14} style={{ color: '#10b981' }} />
-                      <strong>{value}</strong>
-                    </div>
-                  )
-                },
-                {
-                  key: 'orderNumber',
-                  header: t('orderNumber'),
-                  sortable: true,
-                  render: (value) => <span style={{ color: '#6b7280' }}>{value}</span>
-                },
-                {
-                  key: 'customer',
-                  header: t('customer'),
-                  sortable: true,
-                  render: (value, row) => (
-                    <div className="customer-info">
-                      <User size={14} />
-                      <span>{value || row.customerName}</span>
-                    </div>
-                  )
-                },
-                {
-                  key: 'invoiceGeneratedAt',
-                  header: t('generatedDate'),
-                  type: 'date',
-                  sortable: true,
-                  render: (value) => {
-                    if (!value) return '-'
-                    const date = new Date(value)
-                    const formattedDate = formatDate ? formatDate(value) : date.toLocaleDateString()
-                    return formattedDate + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                  }
-                },
-                {
-                  key: 'total',
-                  header: t('amount'),
-                  type: 'currency',
-                  align: 'right',
-                  sortable: true,
-                  render: (value, row) => {
-                    const total = parseFloat(value || row.totalAmount) || 0
-                    return `OMR ${total.toFixed(2)}`
-                  }
-                },
-                {
-                  key: 'status',
-                  header: t('orderStatus'),
-                  sortable: true,
-                  render: (value) => (
-                    <span className={`status-badge ${value}`}>
-                      {value.charAt(0).toUpperCase() + value.slice(1)}
-                    </span>
-                  )
-                },
-                {
-                  key: 'actions',
-                  header: t('actions'),
-                  sortable: false,
-                  width: '120px',
-                  render: (value, row) => (
-                    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        title={t('view')}
-                        onClick={() => handleViewSalesOrder(row)}
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        title={t('downloadInvoice')}
-                        onClick={() => alert('Download invoice functionality coming soon')}
-                      >
-                        <FileText size={14} />
-                      </button>
-                    </div>
-                  )
-                }
-              ]}
-              title={t('invoices')}
-              subtitle="Generated sales invoices"
-              loading={loading}
-              searchable={true}
-              filterable={true}
-              sortable={true}
-              paginated={true}
-              exportable={true}
-              selectable={false}
-              emptyMessage="No invoices generated yet. Generate invoices from confirmed sales orders."
-              className="invoices-table"
-              initialPageSize={10}
-            />
-          </div>
-        )}
-
-        <div className="sales-summary">
-          <div className="summary-cards">
-            <div className="summary-card">
-              <div className="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect width="20" height="12" x="2" y="6" rx="2" />
-                  <circle cx="12" cy="12" r="2" />
-                  <path d="M6 12h.01M18 12h.01" />
-                </svg>
-              </div>
-              <div className="summary-info">
-                <p className="summary-value">OMR {(parseFloat(todaysSummary.totalSales) || 0).toFixed(2)}</p>
-                <p className="summary-label">Total Sales (Today)</p>
-              </div>
+      {/* Sales Summary Cards */}
+      <div className="sales-summary">
+        <div className="summary-cards">
+          <div className="summary-card">
+            <div className="summary-icon success">
+              <Banknote size={24} />
             </div>
-            
-            <div className="summary-card">
-              <div className="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14,2 14,8 20,8" />
-                </svg>
-              </div>
-              <div className="summary-info">
-                <p className="summary-value">{todaysSummary.totalOrders}</p>
-                <p className="summary-label">Orders (Today)</p>
-              </div>
+            <div className="summary-info">
+              <p className="summary-value">OMR {(parseFloat(todaysSummary.totalSales) || 0).toFixed(2)}</p>
+              <p className="summary-label">{t('totalSalesToday', 'Total Sales (Today)')}</p>
             </div>
-            
-            <div className="summary-card">
-              <div className="summary-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12,6 12,12 16,14" />
-                </svg>
-              </div>
-              <div className="summary-info">
-                <p className="summary-value">{todaysSummary.pendingOrders}</p>
-                <p className="summary-label">Pending Orders</p>
-              </div>
+          </div>
+
+          <div className="summary-card">
+            <div className="summary-icon primary">
+              <FileText size={24} />
+            </div>
+            <div className="summary-info">
+              <p className="summary-value">{todaysSummary.totalOrders}</p>
+              <p className="summary-label">{t('ordersToday', 'Orders (Today)')}</p>
+            </div>
+          </div>
+
+          <div className="summary-card">
+            <div className="summary-icon warning">
+              <Clock size={24} />
+            </div>
+            <div className="summary-info">
+              <p className="summary-value">{todaysSummary.pendingOrders}</p>
+              <p className="summary-label">{t('pendingOrders', 'Pending Orders')}</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Sales Orders Tab */}
+      {activeTab === 'orders' && (
+        <DataTable
+          data={salesOrders}
+          columns={salesOrderColumns}
+          title={t('salesOrders', 'Sales Orders')}
+          subtitle={`${t('salesOrdersSubtitle', 'Manage and track all sales orders')} - ${salesOrders.length} ${t('orders', 'orders')}`}
+          headerActions={
+            <button
+              className="btn btn-primary"
+              onClick={() => handleCreateOrder()}
+              data-tour="new-sales-order-button"
+            >
+              <Plus size={16} />
+              {t('newSaleOrder', 'New Sale Order')}
+            </button>
+          }
+          loading={loading}
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          selectable={false}
+          emptyMessage={t('noOrdersFound')}
+          className="sales-orders-table"
+          initialPageSize={10}
+        />
+      )}
+
+      {/* Invoices Tab */}
+      {activeTab === 'invoices' && (
+        <DataTable
+          data={salesOrders.filter(order => order.invoiceNumber)}
+          columns={[
+            {
+              key: 'invoiceNumber',
+              header: t('invoiceNumber'),
+              sortable: true,
+              render: (value) => (
+                <div className="invoice-number">
+                  <FileText size={14} />
+                  <strong>{value}</strong>
+                </div>
+              )
+            },
+            {
+              key: 'orderNumber',
+              header: t('orderNumber'),
+              sortable: true,
+              render: (value) => <span className="text-muted">{value}</span>
+            },
+            {
+              key: 'customer',
+              header: t('customer'),
+              sortable: true,
+              render: (value, row) => (
+                <div className="customer-info">
+                  <User size={14} />
+                  <span>{value || row.customerName}</span>
+                </div>
+              )
+            },
+            {
+              key: 'invoiceGeneratedAt',
+              header: t('generatedDate'),
+              type: 'date',
+              sortable: true,
+              render: (value) => {
+                if (!value) return '-'
+                const date = new Date(value)
+                const formattedDate = formatDate ? formatDate(value) : date.toLocaleDateString()
+                return formattedDate + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+              }
+            },
+            {
+              key: 'total',
+              header: t('amount'),
+              type: 'currency',
+              align: 'right',
+              sortable: true,
+              render: (value, row) => {
+                const total = parseFloat(value || row.totalAmount) || 0
+                return `OMR ${total.toFixed(2)}`
+              }
+            },
+            {
+              key: 'status',
+              header: t('orderStatus'),
+              sortable: true,
+              render: (value) => (
+                <span className={`status-badge ${value}`}>
+                  {value.charAt(0).toUpperCase() + value.slice(1)}
+                </span>
+              )
+            },
+            {
+              key: 'actions',
+              header: t('actions'),
+              sortable: false,
+              width: '120px',
+              render: (value, row) => (
+                <div className="cell-actions">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    title={t('view')}
+                    onClick={() => handleViewSalesOrder(row)}
+                  >
+                    <Eye size={14} />
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    title={t('downloadInvoice')}
+                    onClick={() => alert('Download invoice functionality coming soon')}
+                  >
+                    <FileText size={14} />
+                  </button>
+                </div>
+              )
+            }
+          ]}
+          title={t('invoices')}
+          subtitle={t('invoicesSubtitle', 'Generated sales invoices')}
+          loading={loading}
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          selectable={false}
+          emptyMessage={t('noInvoicesYet', 'No invoices generated yet. Generate invoices from confirmed sales orders.')}
+          className="invoices-table"
+          initialPageSize={10}
+        />
+      )}
 
       {/* Sales Order Form Modal */}
       <SalesOrderForm

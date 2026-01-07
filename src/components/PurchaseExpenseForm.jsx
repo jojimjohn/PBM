@@ -1,33 +1,37 @@
 import React, { useState, useEffect } from 'react'
 import Modal from './ui/Modal'
 import { useSystemSettings } from '../context/SystemSettingsContext'
+import { useLocalization } from '../context/LocalizationContext'
+import CategorySelect from './expenses/CategorySelect'
 import {
   Plus, Trash2, Save, Calculator, Truck, FileText,
   Package, Banknote, MapPin, Calendar, Upload, X, Image
 } from 'lucide-react'
 import './PurchaseExpenseForm.css'
 
-const EXPENSE_CATEGORIES = [
-  { id: 'transportation', name: 'Transportation', icon: Truck },
-  { id: 'loading_unloading', name: 'Loading/Unloading', icon: Package },
-  { id: 'customs_duty', name: 'Customs & Duty', icon: FileText },
-  { id: 'inspection', name: 'Inspection Fees', icon: Calendar },
-  { id: 'storage', name: 'Storage Costs', icon: MapPin },
-  { id: 'insurance', name: 'Insurance', icon: FileText },
-  { id: 'documentation', name: 'Documentation', icon: FileText },
-  { id: 'other', name: 'Other Expenses', icon: Banknote }
-]
+// Icon mapping for displaying selected category icons
+const CATEGORY_ICONS = {
+  transportation: Truck,
+  loading_unloading: Package,
+  customs_duty: FileText,
+  inspection: Calendar,
+  storage: MapPin,
+  insurance: FileText,
+  documentation: FileText,
+  other: Banknote
+}
 
-const PurchaseExpenseForm = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
+const PurchaseExpenseForm = ({
+  isOpen,
+  onClose,
+  onSave,
   purchaseOrder = null,
   initialData = null,
   title = "Add Purchase Expenses",
-  isEdit = false 
+  isEdit = false
 }) => {
   const { getInputDate, formatCurrency } = useSystemSettings()
+  const { t } = useLocalization()
   
   const [formData, setFormData] = useState({
     purchaseOrderId: '',
@@ -102,15 +106,24 @@ const PurchaseExpenseForm = ({
     const newExpenses = [...formData.expenses]
     newExpenses[index][field] = value
 
-    // Auto-generate description based on category
-    if (field === 'category') {
-      const categoryInfo = EXPENSE_CATEGORIES.find(cat => cat.id === value)
-      if (categoryInfo && purchaseOrder) {
-        newExpenses[index].description = `${categoryInfo.name} for PO ${purchaseOrder.orderNumber}`
+    // Auto-generate description based on category (when category object is passed)
+    if (field === 'category' && purchaseOrder) {
+      // If value is a category object (from CategorySelect with returnObject=true)
+      if (typeof value === 'object' && value?.name) {
+        newExpenses[index].description = `${value.name} for PO ${purchaseOrder.orderNumber}`
+        newExpenses[index].category = value.code // Store the code
+      } else if (typeof value === 'string') {
+        // If value is a string code, just update the description placeholder
+        newExpenses[index].description = `${value} expense for PO ${purchaseOrder.orderNumber}`
       }
     }
 
     setFormData(prev => ({ ...prev, expenses: newExpenses }))
+  }
+
+  // Handle category change from CategorySelect
+  const handleCategoryChange = (index, categoryCode) => {
+    handleExpenseChange(index, 'category', categoryCode)
   }
 
   const addExpense = () => {
@@ -184,8 +197,7 @@ const PurchaseExpenseForm = ({
   }
 
   const getCategoryIcon = (categoryId) => {
-    const category = EXPENSE_CATEGORIES.find(cat => cat.id === categoryId)
-    return category ? category.icon : Banknote
+    return CATEGORY_ICONS[categoryId] || Banknote
   }
 
   if (!purchaseOrder && !isEdit) return null
@@ -244,18 +256,13 @@ const PurchaseExpenseForm = ({
 
                 <div className="expense-fields">
                   <div className="field-group">
-                    <label>Category</label>
-                    <select
+                    <label>{t('category', 'Category')}</label>
+                    <CategorySelect
                       value={expense.category}
-                      onChange={(e) => handleExpenseChange(index, 'category', e.target.value)}
-                      className="form-select"
-                    >
-                      {EXPENSE_CATEGORIES.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(code) => handleCategoryChange(index, code)}
+                      type="purchase"
+                      placeholder={t('selectCategory', 'Select category')}
+                    />
                   </div>
 
                   <div className="field-group">

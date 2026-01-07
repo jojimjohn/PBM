@@ -373,9 +373,7 @@ const OilTradingSuppliers = () => {
       sortable: true,
       filterable: true,
       render: (value) => (
-        <div className="supplier-code">
-          <strong>{value}</strong>
-        </div>
+        <span className="cell-code accent">{value}</span>
       )
     },
     {
@@ -386,13 +384,13 @@ const OilTradingSuppliers = () => {
       render: (value, row) => {
         const supplierType = supplierTypes.find(t => t.code === row.type)
         return (
-          <div className="supplier-info">
-            <div className="supplier-avatar" style={{ backgroundColor: '#3b82f6' }}>
+          <div className="cell-row">
+            <div className="cell-avatar">
               {value.substring(0, 2).toUpperCase()}
             </div>
-            <div className="supplier-details">
-              <strong>{value}</strong>
-              <span className="supplier-type">{supplierType?.name || row.type}</span>
+            <div className="cell-info">
+              <span className="cell-text">{value}</span>
+              <span className="cell-text-secondary">{supplierType?.name || row.type}</span>
             </div>
           </div>
         )
@@ -403,7 +401,7 @@ const OilTradingSuppliers = () => {
       header: t('contactPerson'),
       sortable: true,
       render: (value, row) => (
-        <div className="contact-info">
+        <div className="cell-icon">
           <User size={14} />
           <span>{value || 'N/A'}</span>
         </div>
@@ -414,7 +412,7 @@ const OilTradingSuppliers = () => {
       header: t('phone'),
       sortable: false,
       render: (value, row) => (
-        <div className="phone-info">
+        <div className="cell-icon">
           <Phone size={14} />
           <span>{row.phone || row.contactPhone || row.contact?.phone || 'N/A'}</span>
         </div>
@@ -425,7 +423,7 @@ const OilTradingSuppliers = () => {
       header: t('city'),
       sortable: true,
       render: (value, row) => (
-        <div className="location-info">
+        <div className="cell-icon">
           <MapPin size={14} />
           <span>{row.city || row.contact?.address?.city || 'N/A'}</span>
         </div>
@@ -439,10 +437,7 @@ const OilTradingSuppliers = () => {
       render: (value, row) => {
         const isActive = value === true || value === 1 || value === '1';
         return (
-          <span 
-            className="supplier-status-badge"
-            style={{ backgroundColor: isActive ? '#10b981' : '#ef4444' }}
-          >
+          <span className={`supplier-status-badge ${isActive ? 'active' : 'inactive'}`}>
             {isActive ? 'Active' : 'Inactive'}
           </span>
         );
@@ -499,41 +494,20 @@ const OilTradingSuppliers = () => {
 
   return (
     <div className="oil-suppliers-page">
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1>{t('supplierManagement')}</h1>
-          <p>{t('manageOilSuppliers', 'Manage oil trading suppliers and collection locations')}</p>
-        </div>
-        
-        <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
-          <div className="page-actions">
-            {activeTab === 'suppliers' && (
-              <button 
-                className="btn btn-primary"
-                onClick={handleAddSupplier}
-              >
-                <Plus size={20} />
-                {t('addSupplier')}
-              </button>
-            )}
-          </div>
-        </PermissionGate>
-      </div>
-
       {/* Tab Navigation */}
       <div className="tab-navigation">
         <button
-          className={`tab-button ${activeTab === 'suppliers' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'suppliers' ? 'active' : ''}`}
           onClick={() => setActiveTab('suppliers')}
         >
-          <Users size={18} />
+          <Users size={16} />
           {t('suppliers', 'Suppliers')}
         </button>
         <button
-          className={`tab-button ${activeTab === 'locations' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'locations' ? 'active' : ''}`}
           onClick={() => setActiveTab('locations')}
         >
-          <MapPin size={18} />
+          <MapPin size={16} />
           {t('supplierLocations', 'Supplier Locations')}
         </button>
       </div>
@@ -594,7 +568,18 @@ const OilTradingSuppliers = () => {
               data={filteredSuppliers}
               columns={supplierColumns}
               title={t('supplierManagement', 'Supplier Management')}
-              subtitle={t('supplierSubtitle', 'Manage oil trading suppliers and collection partners')}
+              subtitle={`${t('supplierSubtitle', 'Manage oil trading suppliers and collection partners')} - ${suppliers.length} ${t('suppliers', 'suppliers')}`}
+              headerActions={
+                hasPermission('MANAGE_SUPPLIERS') && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleAddSupplier}
+                  >
+                    <Plus size={16} />
+                    {t('addSupplier')}
+                  </button>
+                )
+              }
               loading={loading}
               searchable={true}
               filterable={true}
@@ -1045,18 +1030,17 @@ const SupplierViewModal = ({
         {/* Professional Header Section */}
         <div className="supplier-header-section">
           <div className="supplier-main-info">
-            <div className="supplier-avatar-large" style={{ backgroundColor: supplierTypes.find(t => t.code === supplier.type)?.color || '#6366f1' }}>
+            <div className="supplier-avatar-large">
               {supplier.name.substring(0, 2).toUpperCase()}
             </div>
             <div className="supplier-identity">
               <h2 className="supplier-name-large">{supplier.name}</h2>
               <div className="supplier-meta">
                 <span className="supplier-code-badge">{supplier.code}</span>
-                <span className="supplier-type-badge">{supplierTypes.find(t => t.code === supplier.type)?.name || supplier.type}</span>
-                <span
-                  className="supplier-status-professional"
-                  style={{ backgroundColor: supplier.isActive ? '#10b981' : '#ef4444' }}
-                >
+                <span className="status-badge">
+                  {supplierTypes.find(t => t.code === supplier.type)?.name || supplier.type}
+                </span>
+                <span className={`status-badge ${supplier.isActive ? 'active' : 'inactive'}`}>
                   {supplier.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>

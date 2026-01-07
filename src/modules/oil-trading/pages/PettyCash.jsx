@@ -696,7 +696,7 @@ const PettyCash = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (value, row) => (
-        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+        <div className="flex-row-wrap">
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -851,12 +851,11 @@ const PettyCash = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (value, row) => (
-        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+        <div className="flex-row-wrap">
           <button
-            className={`btn btn-outline btn-sm ${row.hasReceipt || row.receiptPhoto ? '' : 'disabled'}`}
+            className={`btn btn-outline btn-sm ${row.hasReceipt || row.receiptPhoto ? '' : 'opacity-50'}`}
             title={t('viewReceipt', 'View Receipt')}
             onClick={() => handleViewReceipt(row)}
-            style={{ opacity: row.hasReceipt || row.receiptPhoto ? 1 : 0.5 }}
           >
             <Receipt size={14} />
           </button>
@@ -896,79 +895,84 @@ const PettyCash = () => {
   // Remove early return - let DataTable handle loading state with skeleton
 
   return (
-    <div className="petty-cash-page">
+    <div className="page-container">
       {/* Error Display */}
       {error && (
-        <div className="error-banner">
+        <div className="alert-error mb-4">
           <AlertCircle size={16} />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="error-close">×</button>
+          <button onClick={() => setError(null)} className="btn-icon-close">×</button>
         </div>
       )}
-      
-      {/* Header */}
-      <div className="page-header">
-        <div className="header-left">
-          <h1>{t('pettyCashManagement', 'Petty Cash Management')}</h1>
-          <p>{t('pettyCashSubtitle', 'Manage staff expense cards and track spending')}</p>
-        </div>
-        <div className="header-actions">
+
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          className={`tab-btn ${activeTab === 'cards' ? 'active' : ''}`}
+          onClick={() => setActiveTab('cards')}
+        >
+          <CreditCard size={18} />
+          {t('pettyCashCards', 'Petty Cash Cards')}
+          <span className="tab-count">{cards.length}</span>
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`}
+          onClick={() => setActiveTab('expenses')}
+        >
+          <Receipt size={18} />
+          {t('expenses', 'Expenses')}
+          <span className="tab-count">{expenses.length}</span>
+        </button>
+        {hasPermission('MANAGE_PETTY_CASH') && (
           <button
-            className="btn btn-outline"
-            onClick={loadPettyCashData}
-            disabled={loading}
-            title={t('refresh', 'Refresh')}
+            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
           >
-            <RefreshCw size={20} className={loading ? 'spinning' : ''} />
+            <Users size={18} />
+            {t('pettyCashUsers', 'Petty Cash Users')}
           </button>
-          {hasPermission('MANAGE_PETTY_CASH') && (
-            <button className="btn btn-primary" onClick={handleAddCard}>
-              <Plus size={20} />
-              {t('addCard', 'Add Card')}
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Statistics Cards */}
-      <div className="stats-grid">
-        <div className="stat-card primary">
-          <div className="stat-icon">
-            <CreditCard />
+      <div className="summary-cards">
+        <div className="summary-card">
+          <div className="summary-icon">
+            <CreditCard size={22} />
           </div>
-          <div className="stat-content">
-            <div className="stat-value">{cardStats.activeCards}</div>
-            <div className="stat-label">{t('activeCards', 'Active Cards')}</div>
-          </div>
-        </div>
-
-        <div className="stat-card success">
-          <div className="stat-icon">
-            <Banknote />
-          </div>
-          <div className="stat-content">
-            <div className="stat-value">{formatCurrency(cardStats.totalBalance)}</div>
-            <div className="stat-label">{t('totalBalance', 'Total Balance')}</div>
+          <div>
+            <div className="summary-value">{cardStats.activeCards}</div>
+            <div className="summary-label">{t('activeCards', 'Active Cards')}</div>
           </div>
         </div>
 
-        <div className="stat-card info">
-          <div className="stat-icon">
-            <TrendingUp />
+        <div className="summary-card">
+          <div className="summary-icon success">
+            <Banknote size={22} />
           </div>
-          <div className="stat-content">
-            <div className="stat-value">{formatCurrency(cardStats.totalSpent)}</div>
-            <div className="stat-label">{t('totalSpent', 'Total Spent')}</div>
+          <div>
+            <div className="summary-value">{formatCurrency(cardStats.totalBalance)}</div>
+            <div className="summary-label">{t('totalBalance', 'Total Balance')}</div>
           </div>
         </div>
 
-        <div className="stat-card warning">
-          <div className="stat-icon">
-            <Receipt />
+        <div className="summary-card">
+          <div className="summary-icon info">
+            <TrendingUp size={22} />
           </div>
-          <div className="stat-content">
-            <div className="stat-value">{cardStats.utilizationRate}%</div>
-            <div className="stat-label">{t('utilization', 'Utilization')}</div>
+          <div>
+            <div className="summary-value">{formatCurrency(cardStats.totalSpent)}</div>
+            <div className="summary-label">{t('totalSpent', 'Total Spent')}</div>
+          </div>
+        </div>
+
+        <div className="summary-card">
+          <div className="summary-icon warning">
+            <Receipt size={22} />
+          </div>
+          <div>
+            <div className="summary-value">{cardStats.utilizationRate}%</div>
+            <div className="summary-label">{t('utilization', 'Utilization')}</div>
           </div>
         </div>
       </div>
@@ -990,135 +994,109 @@ const PettyCash = () => {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="tabs-container">
-        <div className="tabs-nav">
-          <button
-            className={`tab-btn ${activeTab === 'cards' ? 'active' : ''}`}
-            onClick={() => setActiveTab('cards')}
-          >
-            <CreditCard size={18} />
-            {t('pettyCashCards', 'Petty Cash Cards')}
-            <span className="tab-badge">{cards.length}</span>
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`}
-            onClick={() => setActiveTab('expenses')}
-          >
-            <Receipt size={18} />
-            {t('expenses', 'Expenses')}
-            <span className="tab-badge">{expenses.length}</span>
-          </button>
-          {hasPermission('MANAGE_PETTY_CASH') && (
-            <button
-              className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => setActiveTab('users')}
-            >
-              <Users size={18} />
-              {t('pettyCashUsers', 'Petty Cash Users')}
-            </button>
-          )}
-        </div>
+      {/* Cards Tab */}
+      {activeTab === 'cards' && (
+        <DataTable
+          data={cards.filter(card => cardFilter === 'all' || card.status === cardFilter)}
+          columns={cardColumns}
+          title={t('pettyCashCards', 'Petty Cash Cards')}
+          subtitle={`${cards.length} ${t('cards', 'cards')}`}
+          headerActions={
+            <>
+              <select
+                value={cardFilter}
+                onChange={(e) => setCardFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">{t('allCards', 'All Cards')}</option>
+                <option value="active">{t('active', 'Active')}</option>
+                <option value="inactive">{t('inactive', 'Inactive')}</option>
+                <option value="blocked">{t('blocked', 'Blocked')}</option>
+              </select>
+              <button
+                className="btn btn-outline"
+                onClick={loadPettyCashData}
+                disabled={loading}
+                title={t('refresh', 'Refresh')}
+              >
+                <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+              </button>
+              {hasPermission('MANAGE_PETTY_CASH') && (
+                <button className="btn btn-primary" onClick={handleAddCard}>
+                  <Plus size={16} />
+                  {t('addCard', 'Add Card')}
+                </button>
+              )}
+            </>
+          }
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          loading={loading}
+          emptyMessage={t('noCardsFound', 'No cards found')}
+          className="cards-table"
+        />
+      )}
 
-        {/* Tab Content */}
-        <div className="tabs-content">
-          {/* Cards Tab */}
-          {activeTab === 'cards' && (
-            <div className="section">
-              <div className="section-header">
-                <h2>{t('pettyCashCards', 'Petty Cash Cards')}</h2>
-                <div className="section-filters">
-                  <select
-                    value={cardFilter}
-                    onChange={(e) => setCardFilter(e.target.value)}
-                    className="filter-select"
-                  >
-                    <option value="all">{t('allCards', 'All Cards')}</option>
-                    <option value="active">{t('active', 'Active')}</option>
-                    <option value="inactive">{t('inactive', 'Inactive')}</option>
-                    <option value="blocked">{t('blocked', 'Blocked')}</option>
-                  </select>
-                </div>
-              </div>
+      {/* Expenses Tab */}
+      {activeTab === 'expenses' && (
+        <DataTable
+          data={expenses.filter(expense => expenseFilter === 'all' || expense.status === expenseFilter)}
+          columns={expenseColumns}
+          title={t('recentExpenses', 'Recent Expenses')}
+          subtitle={`${t('trackAllExpenses', 'Track all expense submissions')} - ${expenses.length} ${t('expenses', 'expenses')}`}
+          headerActions={
+            <>
+              <select
+                value={expenseFilter}
+                onChange={(e) => setExpenseFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">{t('allExpenses', 'All Expenses')}</option>
+                <option value="approved">{t('approved', 'Approved')}</option>
+                <option value="pending">{t('pending', 'Pending')}</option>
+                <option value="rejected">{t('rejected', 'Rejected')}</option>
+              </select>
+              <button
+                className="btn btn-outline"
+                onClick={loadPettyCashData}
+                disabled={loading}
+                title={t('refresh', 'Refresh')}
+              >
+                <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+              </button>
+              {hasPermission('MANAGE_PETTY_CASH') && (
+                <button className="btn btn-primary" onClick={() => handleAddExpense()}>
+                  <Plus size={16} />
+                  {t('addExpense', 'Add Expense')}
+                </button>
+              )}
+            </>
+          }
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          loading={loading}
+          emptyMessage={t('noExpensesFound', 'No expenses found')}
+          className="expenses-table"
+        />
+      )}
 
-              <DataTable
-                data={cards.filter(card => cardFilter === 'all' || card.status === cardFilter)}
-                columns={cardColumns}
-                searchable={true}
-                filterable={true}
-                sortable={true}
-                paginated={true}
-                exportable={true}
-                loading={loading}
-                emptyMessage={t('noCardsFound', 'No cards found')}
-                className="cards-table"
-              />
-            </div>
-          )}
-
-          {/* Expenses Tab */}
-          {activeTab === 'expenses' && (
-            <div className="section">
-              <div className="section-header">
-                <h2>{t('recentExpenses', 'Recent Expenses')}</h2>
-                <div className="section-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={loadPettyCashData}
-                    disabled={loading}
-                    title={t('refresh', 'Refresh')}
-                  >
-                    <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-                  </button>
-                </div>
-                <div className="section-filters">
-                  <select
-                    value={expenseFilter}
-                    onChange={(e) => setExpenseFilter(e.target.value)}
-                    className="filter-select"
-                  >
-                    <option value="all">{t('allExpenses', 'All Expenses')}</option>
-                    <option value="approved">{t('approved', 'Approved')}</option>
-                    <option value="pending">{t('pending', 'Pending')}</option>
-                    <option value="rejected">{t('rejected', 'Rejected')}</option>
-                  </select>
-                  {hasPermission('MANAGE_PETTY_CASH') && (
-                    <button className="btn btn-primary" onClick={() => handleAddExpense()}>
-                      <Plus size={16} />
-                      {t('addExpense', 'Add Expense')}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <DataTable
-                data={expenses.filter(expense => expenseFilter === 'all' || expense.status === expenseFilter)}
-                columns={expenseColumns}
-                searchable={true}
-                filterable={true}
-                sortable={true}
-                paginated={true}
-                exportable={true}
-                loading={loading}
-                emptyMessage={t('noExpensesFound', 'No expenses found')}
-                className="expenses-table"
-              />
-            </div>
-          )}
-
-          {/* Petty Cash Users Tab */}
-          {activeTab === 'users' && hasPermission('MANAGE_PETTY_CASH') && (
-            <PettyCashUsersSection
-              cards={cards}
-              loading={loading}
-              t={t}
-              hasPermission={hasPermission}
-              formatCurrency={formatCurrency}
-              onRefresh={loadPettyCashData}
-            />
-          )}
-        </div>
-      </div>
+      {/* Petty Cash Users Tab */}
+      {activeTab === 'users' && hasPermission('MANAGE_PETTY_CASH') && (
+        <PettyCashUsersSection
+          cards={cards}
+          loading={loading}
+          t={t}
+          hasPermission={hasPermission}
+          formatCurrency={formatCurrency}
+          onRefresh={loadPettyCashData}
+        />
+      )}
 
       {/* Card Management Modal */}
       {showCardModal && (
@@ -1196,14 +1174,9 @@ const PettyCash = () => {
           className="modal-sm"
         >
           <form onSubmit={handleDeactivateCard} className="deactivation-form">
-            <div style={{
-              padding: '1rem',
-              background: '#fff3cd',
-              border: '1px solid #ffc107',
-              borderRadius: '8px',
-              marginBottom: '1rem'
-            }}>
-              <p style={{ margin: 0, color: '#856404' }}>
+            <div className="alert-warning mb-4">
+              <AlertCircle size={16} />
+              <p>
                 <strong>{t('warning', 'Warning')}:</strong>{' '}
                 {t(
                   'deactivateCardWarning',
@@ -1219,16 +1192,9 @@ const PettyCash = () => {
                 onChange={(e) => setCardDeactivationReason(e.target.value)}
                 placeholder={t('enterDeactivationReason', 'Enter the reason for deactivation...')}
                 rows={3}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  resize: 'vertical'
-                }}
                 required
               />
-              <span style={{ fontSize: '0.75rem', color: '#666' }}>
+              <span className="text-xs text-muted">
                 {t('minChars', 'Minimum 5 characters')}
               </span>
             </div>
@@ -1296,37 +1262,27 @@ const PettyCash = () => {
           title={t('viewReceipt', 'View Receipt')}
           className="receipt-preview-modal"
         >
-          <div className="receipt-preview-content" style={{ padding: '1rem' }}>
+          <div className="receipt-preview-content">
             {receiptLoading ? (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <div className="receipt-loading">
                 <Loader2 size={32} className="spinning" />
-                <p style={{ marginTop: '1rem', color: '#666' }}>
-                  {t('loadingReceipt', 'Loading receipt...')}
-                </p>
+                <p>{t('loadingReceipt', 'Loading receipt...')}</p>
               </div>
             ) : receiptPreview ? (
               <>
                 {/* Expense Info Header */}
-                <div style={{
-                  marginBottom: '1rem',
-                  padding: '0.75rem',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
+                <div className="receipt-expense-info">
                   <div>
                     <strong>{receiptPreview.expense?.expenseNumber}</strong>
-                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                    <div className="receipt-expense-details">
                       {receiptPreview.expense?.description}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#2563eb' }}>
+                  <div className="receipt-expense-amount">
+                    <div className="amount">
                       {formatCurrency(receiptPreview.expense?.amount)}
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                    <div className="date">
                       {formatDate(receiptPreview.expense?.expenseDate)}
                     </div>
                   </div>
@@ -1334,13 +1290,7 @@ const PettyCash = () => {
 
                 {/* Receipt Navigation (if multiple) */}
                 {receiptPreview.receipts.length > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    marginBottom: '1rem'
-                  }}>
+                  <div className="flex-center mb-4">
                     <button
                       className="btn btn-outline btn-sm"
                       disabled={receiptPreview.currentIndex === 0}
@@ -1373,45 +1323,27 @@ const PettyCash = () => {
                   const isPdf = currentReceipt?.contentType?.includes('pdf')
 
                   return (
-                    <div style={{
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      background: '#fff'
-                    }}>
+                    <div className="receipt-gallery-item">
                       {isPdf ? (
-                        <iframe
-                          src={currentReceipt.downloadUrl}
-                          title={currentReceipt.originalFilename || 'Receipt PDF'}
-                          style={{
-                            width: '100%',
-                            height: '500px',
-                            border: 'none'
-                          }}
-                        />
+                        <div className="pdf-preview-container">
+                          <iframe
+                            src={currentReceipt.downloadUrl}
+                            title={currentReceipt.originalFilename || 'Receipt PDF'}
+                            className="pdf-iframe"
+                          />
+                        </div>
                       ) : (
-                        <img
-                          src={currentReceipt.downloadUrl}
-                          alt={currentReceipt.originalFilename || 'Receipt'}
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '500px',
-                            display: 'block',
-                            margin: '0 auto'
-                          }}
-                        />
+                        <div className="receipt-image-container">
+                          <img
+                            src={currentReceipt.downloadUrl}
+                            alt={currentReceipt.originalFilename || 'Receipt'}
+                          />
+                        </div>
                       )}
 
                       {/* Receipt filename and actions */}
-                      <div style={{
-                        padding: '0.75rem',
-                        borderTop: '1px solid #eee',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: '#f8f9fa'
-                      }}>
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                      <div className="receipt-caption">
+                        <span className="receipt-filename">
                           {currentReceipt.originalFilename || 'Receipt'}
                         </span>
                         <button
@@ -1428,8 +1360,8 @@ const PettyCash = () => {
                 })()}
               </>
             ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-                <Receipt size={48} style={{ opacity: 0.3 }} />
+              <div className="no-receipts">
+                <Receipt size={48} className="opacity-30" />
                 <p>{t('noReceiptFound', 'No receipt found')}</p>
               </div>
             )}
@@ -1486,7 +1418,7 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
               </label>
             </div>
             {isPetrolCard && (
-              <div className="info-banner info-warning" style={{ marginTop: '12px' }}>
+              <div className="info-banner info-warning mt-3">
                 <span>⛽ {t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</span>
               </div>
             )}
@@ -1662,29 +1594,23 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           const selectedCard = cards.find(c => c.id === parseInt(formData.cardId));
           if (!selectedCard) return null;
           return (
-            <div className="selected-card-info" style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1rem'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="selected-info-panel">
+              <div className="flex-between">
                 <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '0.9rem', opacity: 0.9 }}>{selectedCard.cardNumber}</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '0.25rem' }}>
+                  <div className="info-label font-semibold">{selectedCard.cardNumber}</div>
+                  <div className="info-value mt-1">
                     {selectedCard.assignedStaff?.name || t('unassigned', 'Unassigned')}
                   </div>
                   {selectedCard.pettyCashUser && (
-                    <div style={{ fontSize: '0.8rem', opacity: 0.85, marginTop: '0.25rem' }}>
+                    <div className="info-label mt-1">
                       {selectedCard.pettyCashUser.department || selectedCard.department || 'N/A'}
                       {selectedCard.pettyCashUser.phone && ` • ${selectedCard.pettyCashUser.phone}`}
                     </div>
                   )}
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>{t('availableBalance', 'Available Balance')}</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>
+                <div className="text-right">
+                  <div className="info-label">{t('availableBalance', 'Available Balance')}</div>
+                  <div className="info-value large">
                     OMR {parseFloat(selectedCard.currentBalance || 0).toFixed(3)}
                   </div>
                 </div>
@@ -1805,7 +1731,8 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
         </div>
 
         {error && (
-          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+          <div className="alert-error">
+            <AlertCircle size={16} />
             {error}
           </div>
         )}
@@ -1914,7 +1841,8 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
         </div>
 
         {error && (
-          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+          <div className="alert-error">
+            <AlertCircle size={16} />
             {error}
           </div>
         )}
@@ -2061,20 +1989,11 @@ const EditExpenseFormModal = ({
     >
       <form onSubmit={handleSubmit} className="expense-form">
         {/* Expense ID Badge */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          marginBottom: '1rem',
-          padding: '0.5rem 0.75rem',
-          background: '#e9ecef',
-          borderRadius: '6px',
-          fontSize: '0.85rem'
-        }}>
+        <div className="expense-id-badge">
           <FileText size={16} />
           <span>{t('expenseNumber', 'Expense #')}: <strong>{expense.expenseNumber || expense.id}</strong></span>
           {expense.status && (
-            <span className={`expense-status ${expense.status}`} style={{ marginInlineStart: 'auto' }}>
+            <span className={`expense-status ${expense.status}`}>
               {expense.status === 'approved' && <CheckCircle size={14} />}
               {expense.status === 'pending' && <Clock size={14} />}
               {expense.status === 'rejected' && <AlertCircle size={14} />}
@@ -2101,7 +2020,7 @@ const EditExpenseFormModal = ({
 
         {/* Card Selection - Only for top_up_card payment method */}
         {(!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (
-          <div className="form-group" style={{ marginTop: '1rem' }}>
+          <div className="form-group mt-4">
             <label>{t('selectCard', 'Select Card')} *</label>
             <select
               value={formData.cardId}
@@ -2118,7 +2037,7 @@ const EditExpenseFormModal = ({
           </div>
         )}
 
-        <div className="form-grid" style={{ marginTop: '1rem' }}>
+        <div className="form-grid mt-4">
           <div className="form-group">
             <label>{t('expenseType', 'Expense Type')} *</label>
             <select
@@ -2181,94 +2100,54 @@ const EditExpenseFormModal = ({
         </div>
 
         {/* Receipt Section */}
-        <div className="form-section" style={{ marginTop: '1rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
-          <h4 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="receipt-management">
+          <div className="receipt-management-header">
+            <h4>
               <Receipt size={18} />
               {t('receiptAttachments', 'Receipt Attachments')}
-            </span>
-            <span style={{ fontSize: '0.8rem', color: '#6c757d', fontWeight: 'normal' }}>
+            </h4>
+            <span className="receipt-count">
               {receipts.length}/{maxReceipts} {t('attached', 'attached')}
             </span>
-          </h4>
+          </div>
 
           {/* Loading state */}
           {loadingReceipts && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '1rem',
-              color: '#6c757d'
-            }}>
-              <Loader2 size={20} className="spinning" style={{ marginRight: '0.5rem' }} />
+            <div className="receipt-loading-state">
+              <Loader2 size={20} className="spinning" />
               {t('loadingReceipts', 'Loading receipts...')}
             </div>
           )}
 
           {/* Existing Receipts List */}
           {!loadingReceipts && receipts.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <div className="file-list mb-3">
               {receipts.map((receipt, index) => (
                 <div
                   key={receipt.id || `legacy-${index}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    background: 'white',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '6px'
-                  }}
+                  className="receipt-item"
                 >
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    background: '#e9ecef',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
+                  <div className={`receipt-item-icon ${receipt.contentType?.includes('pdf') ? 'pdf' : 'image'}`}>
                     {receipt.contentType?.includes('pdf') ? (
-                      <FileText size={20} style={{ color: '#dc3545' }} />
+                      <FileText size={20} />
                     ) : (
-                      <Camera size={20} style={{ color: '#6c757d' }} />
+                      <Camera size={20} />
                     )}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontWeight: '500',
-                      fontSize: '0.85rem',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
+                  <div className="receipt-item-details">
+                    <div className="receipt-item-name">
                       {receipt.originalFilename || t('receipt', 'Receipt')}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                    <div className="receipt-item-meta">
                       {receipt.uploadedAt ? new Date(receipt.uploadedAt).toLocaleDateString() : ''}
                       {receipt.fileSize && ` • ${(receipt.fileSize / 1024).toFixed(1)} KB`}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div className="receipt-item-actions">
                     <button
                       type="button"
                       onClick={() => window.open(receipt.downloadUrl, '_blank')}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        background: '#0d6efd',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '0.35rem 0.6rem',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem'
-                      }}
+                      className="btn btn-primary btn-sm"
                       title={t('viewReceipt', 'View Receipt')}
                     >
                       <Eye size={14} />
@@ -2278,18 +2157,7 @@ const EditExpenseFormModal = ({
                       type="button"
                       onClick={() => handleDeleteReceipt(receipt.id)}
                       disabled={deletingReceiptId === receipt.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        background: deletingReceiptId === receipt.id ? '#6c757d' : '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '0.35rem 0.6rem',
-                        cursor: deletingReceiptId ? 'not-allowed' : 'pointer',
-                        fontSize: '0.8rem'
-                      }}
+                      className="btn btn-danger btn-sm"
                       title={t('deleteReceipt', 'Delete Receipt')}
                     >
                       {deletingReceiptId === receipt.id ? (
@@ -2306,17 +2174,9 @@ const EditExpenseFormModal = ({
 
           {/* No receipts message */}
           {!loadingReceipts && receipts.length === 0 && (
-            <div style={{
-              padding: '1rem',
-              background: 'white',
-              border: '1px dashed #dee2e6',
-              borderRadius: '6px',
-              textAlign: 'center',
-              color: '#6c757d',
-              marginBottom: '0.75rem'
-            }}>
-              <Receipt size={24} style={{ opacity: 0.5, marginBottom: '0.5rem' }} />
-              <div>{t('noReceiptsAttached', 'No receipts attached')}</div>
+            <div className="upload-placeholder mb-3">
+              <Receipt size={24} className="opacity-50" />
+              <p>{t('noReceiptsAttached', 'No receipts attached')}</p>
             </div>
           )}
 
@@ -2332,20 +2192,14 @@ const EditExpenseFormModal = ({
 
           {/* Max reached message */}
           {!loadingReceipts && receipts.length >= maxReceipts && (
-            <div style={{
-              padding: '0.5rem 0.75rem',
-              background: '#fff3cd',
-              border: '1px solid #ffc107',
-              borderRadius: '4px',
-              fontSize: '0.85rem',
-              color: '#856404'
-            }}>
+            <div className="alert-warning">
+              <AlertCircle size={14} />
               {t('maxReceiptsReached', 'Maximum number of receipts reached. Delete an existing receipt to upload a new one.')}
             </div>
           )}
         </div>
 
-        <div className="form-group" style={{ marginTop: '1rem' }}>
+        <div className="form-group mt-4">
           <label>{t('notes', 'Additional Notes')}</label>
           <textarea
             value={formData.notes}
@@ -2356,7 +2210,8 @@ const EditExpenseFormModal = ({
         </div>
 
         {error && (
-          <div className="form-error" style={{ color: '#dc3545', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f8d7da', borderRadius: '4px' }}>
+          <div className="alert-error">
+            <AlertCircle size={16} />
             {error}
           </div>
         )}
@@ -2605,121 +2460,18 @@ const CardViewModal = ({
             </div>
           )}
 
-          {/* Transaction History Section */}
-          <div className="detail-section">
-            <h3 className="section-title">
-              <History size={18} />
-              {t('transactionHistory', 'Transaction History')}
-            </h3>
-
-            {transactionsLoading ? (
-              <div style={{ textAlign: 'center', padding: '1rem' }}>
-                <Loader2 size={24} className="spinning" />
-                <p style={{ marginTop: '0.5rem', color: '#666' }}>
-                  {t('loadingTransactions', 'Loading transactions...')}
-                </p>
-              </div>
-            ) : transactions.length > 0 ? (
-              <div className="transaction-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                {transactions.map((txn) => {
-                  const typeInfo = getTransactionTypeInfo(txn.transaction_type);
-                  return (
-                    <div key={txn.id} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      padding: '0.75rem',
-                      borderBottom: '1px solid #e9ecef',
-                      background: 'white'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                        <div style={{
-                          color: typeInfo.color,
-                          marginTop: '2px'
-                        }}>
-                          {typeInfo.icon}
-                        </div>
-                        <div>
-                          <div style={{
-                            fontWeight: '500',
-                            color: '#333',
-                            marginBottom: '0.25rem'
-                          }}>
-                            {typeInfo.label}
-                          </div>
-                          {txn.description && (
-                            <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                              {txn.description}
-                            </div>
-                          )}
-                          <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
-                            {txn.transaction_date
-                              ? new Date(txn.transaction_date).toLocaleString('en-GB', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })
-                              : '-'}
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{
-                          fontWeight: '600',
-                          color: txn.amount >= 0 ? '#28a745' : '#dc3545'
-                        }}>
-                          {txn.amount >= 0 ? '+' : ''}{formatCurrency(txn.amount)}
-                        </div>
-                        {txn.balance_after !== null && (
-                          <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                            {t('balance', 'Balance')}: {formatCurrency(txn.balance_after)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '1.5rem',
-                color: '#666',
-                background: '#f8f9fa',
-                borderRadius: '4px'
-              }}>
-                <History size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
-                <p>{t('noTransactionsFound', 'No transactions found')}</p>
-              </div>
-            )}
-          </div>
-
           {/* Deactivation Info (if suspended) */}
           {card.status === 'suspended' && card.deactivation_reason && (
-            <div style={{
-              marginTop: '1rem',
-              padding: '1rem',
-              background: '#fff3cd',
-              border: '1px solid #ffc107',
-              borderRadius: '8px'
-            }}>
-              <h4 style={{
-                marginBottom: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#856404'
-              }}>
+            <div className="alert-block warning mt-4">
+              <h4>
                 <Ban size={16} />
                 {t('deactivationInfo', 'Deactivation Information')}
               </h4>
-              <p style={{ margin: 0, color: '#856404' }}>
+              <p>
                 <strong>{t('reason', 'Reason')}:</strong> {card.deactivation_reason}
               </p>
               {card.deactivated_at && (
-                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#856404' }}>
+                <p>
                   <strong>{t('deactivatedOn', 'Deactivated on')}:</strong>{' '}
                   {new Date(card.deactivated_at).toLocaleString('en-GB')}
                 </p>

@@ -17,8 +17,7 @@ import branchService from '../../../services/branchService'
 import materialCompositionService from '../../../services/materialCompositionService'
 import transactionService from '../../../services/transactionService'
 import TimelineView from '../components/TimelineView'
-import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, Banknote, BarChart3, ChevronDown, ChevronRight, Building, Layers, Clock } from 'lucide-react'
-import '../../../styles/theme.css'
+import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, Banknote, BarChart3, ChevronDown, ChevronRight, Building, Layers, Clock, X } from 'lucide-react'
 import '../styles/Inventory.css'
 
 const Inventory = () => {
@@ -35,7 +34,7 @@ const Inventory = () => {
   const [branches, setBranches] = useState([])
   const [stockMovements, setStockMovements] = useState([])
   const [alerts, setAlerts] = useState([])
-  const [showAllAlerts, setShowAllAlerts] = useState(false)
+  const [showAlertDropdown, setShowAlertDropdown] = useState(false)
   const [showPurchaseForm, setShowPurchaseForm] = useState(false)
   const [showStockHistory, setShowStockHistory] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
@@ -92,35 +91,6 @@ const Inventory = () => {
     }
   }
 
-  // Sample inventory data based on PRD material types
-  const sampleInventoryData = {
-    'ENG-001': { currentStock: 250, unit: 'L', reorderLevel: 100, status: 'sealed', category: 'engine-oils' },
-    'ENG-002': { currentStock: 180, unit: 'L', reorderLevel: 150, status: 'used', category: 'engine-oils' },
-    'ENG-003': { currentStock: 45, unit: 'L', reorderLevel: 80, status: 'sealed', category: 'engine-oils' }, // Low stock
-    'DSL-001': { currentStock: 1500, unit: 'L', reorderLevel: 500, status: 'unused', category: 'diesel' },
-    'DSL-002': { currentStock: 300, unit: 'L', reorderLevel: 200, status: 'used', category: 'diesel' },
-    'DRM-001': { currentStock: 150, unit: 'pcs', reorderLevel: 200, status: 'collected', category: 'drums' }, // Low stock
-    'CRD-001': { currentStock: 2500, unit: 'kg', reorderLevel: 1000, status: 'raw', category: 'crude-sludge' }
-  }
-
-  const sampleMaterials = [
-    { id: 'ENG-001', name: 'Engine Oil 20W-50 (with drums)', category: 'engine-oils', unit: 'L', standardPrice: 2.500 },
-    { id: 'ENG-002', name: 'Engine Oil 10W-40 (without drums)', category: 'engine-oils', unit: 'L', standardPrice: 2.200 },
-    { id: 'ENG-003', name: 'Transformer Oil', category: 'engine-oils', unit: 'L', standardPrice: 1.800 },
-    { id: 'DSL-001', name: 'Diesel Fuel', category: 'diesel', unit: 'L', standardPrice: 0.450 },
-    { id: 'DSL-002', name: 'Used Diesel', category: 'diesel', unit: 'L', standardPrice: 0.300 },
-    { id: 'DRM-001', name: 'Empty Oil Drums', category: 'drums', unit: 'pcs', standardPrice: 5.000 },
-    { id: 'CRD-001', name: 'Crude Sludge', category: 'crude-sludge', unit: 'kg', standardPrice: 0.150 }
-  ]
-
-  const sampleMovements = [
-    { id: 1, materialId: 'ENG-001', type: 'in', quantity: 100, date: '2024-01-20', reason: 'Purchase Order PO-2024-045', reference: 'PO-2024-045' },
-    { id: 2, materialId: 'DSL-001', type: 'out', quantity: 500, date: '2024-01-19', reason: 'Sales Order SO-2024-089', reference: 'SO-2024-089' },
-    { id: 3, materialId: 'ENG-003', type: 'out', quantity: 35, date: '2024-01-18', reason: 'Sales Order SO-2024-088', reference: 'SO-2024-088' },
-    { id: 4, materialId: 'DRM-001', type: 'in', quantity: 50, date: '2024-01-17', reason: 'Customer Return - Al Maha Petroleum', reference: 'RET-2024-012' },
-    { id: 5, materialId: 'CRD-001', type: 'in', quantity: 1000, date: '2024-01-16', reason: 'Purchase Order PO-2024-044', reference: 'PO-2024-044' }
-  ]
-
   useEffect(() => {
     loadInventoryData()
     loadMaterialCategories()
@@ -129,10 +99,20 @@ const Inventory = () => {
   // Load stock movements when Transactions tab is activated
   useEffect(() => {
     if (activeTab === 'transactions') {
-      // Always load when tab is activated to ensure fresh data
       loadStockMovements()
     }
   }, [activeTab])
+
+  // Close alert dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showAlertDropdown && !e.target.closest('.alert-dropdown-container')) {
+        setShowAlertDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showAlertDropdown])
 
   const loadMaterialCategories = async () => {
     try {
@@ -156,7 +136,6 @@ const Inventory = () => {
       // Transform array to object keyed by materialId, aggregating multiple batches
       const inventoryByMaterial = {}
       for (const item of inventoryArray) {
-        // Ensure consistent numeric key type
         const matId = Number(item.materialId)
         if (!inventoryByMaterial[matId]) {
           inventoryByMaterial[matId] = {
@@ -177,7 +156,6 @@ const Inventory = () => {
             batches: []
           }
         }
-        // Aggregate quantities across all batches for this material
         inventoryByMaterial[matId].currentStock += parseFloat(item.currentStock || item.quantity || 0)
         inventoryByMaterial[matId].reservedQuantity += parseFloat(item.reservedQuantity || 0)
         inventoryByMaterial[matId].availableQuantity += parseFloat(item.availableQuantity || item.currentStock || 0)
@@ -202,7 +180,6 @@ const Inventory = () => {
         if (material.is_composite) {
           const compResult = await materialCompositionService.getByComposite(material.id)
           if (compResult.success && compResult.data) {
-            // Attach stock levels to each component
             compositions[material.id] = compResult.data.map(comp => {
               const compStock = inventoryByMaterial[comp.component_material_id]
               return {
@@ -226,8 +203,7 @@ const Inventory = () => {
         setBranches([])
       }
 
-      // Load supplier/vendor data using API service (Al Ramrami may not have suppliers)
-      // Check if company uses suppliers before attempting to load
+      // Load supplier/vendor data using API service
       if (selectedCompany?.id !== 'al_ramrami') {
         try {
           const suppliersResult = await supplierService.getAll()
@@ -238,7 +214,6 @@ const Inventory = () => {
           setVendors([])
         }
       } else {
-        // Al Ramrami doesn't use suppliers in their business model
         setVendors([])
       }
 
@@ -264,13 +239,10 @@ const Inventory = () => {
     }
   }
 
-  // Load stock movements for the Transactions tab
   const loadStockMovements = async () => {
     try {
       setLoadingMovements(true)
-      console.log('Loading stock movements...')
       const movements = await transactionService.getStockMovements({ limit: 100 })
-      console.log('Stock movements loaded:', movements.length, 'records', movements)
       setStockMovements(movements)
     } catch (error) {
       console.error('Error loading stock movements:', error)
@@ -299,17 +271,14 @@ const Inventory = () => {
     return { totalItems, totalValue, lowStockCount }
   }
 
-  // Calculate effective stock for a material (handles composite materials)
   const getEffectiveStock = (materialId) => {
     const matId = Number(materialId)
     const material = materials.find(m => Number(m.id) === matId)
 
-    // For composite materials, calculate available units from components
     if (material?.is_composite) {
       const components = materialCompositions[matId] || []
       if (components.length === 0) return { currentStock: 0, reorderLevel: 0 }
 
-      // Calculate how many complete composite units we can make
       let minUnits = Infinity
       for (const comp of components) {
         const compStock = inventory[comp.component_material_id]?.currentStock || 0
@@ -324,7 +293,6 @@ const Inventory = () => {
       }
     }
 
-    // For regular materials, get from inventory
     const stock = inventory[matId]
     return stock || { currentStock: 0, reorderLevel: 0 }
   }
@@ -345,25 +313,20 @@ const Inventory = () => {
     return `OMR ${numAmount.toFixed(3)}`
   }
 
-  // Handler functions for button functionality
   const handleCreatePurchaseOrder = (materialId = null) => {
-    console.log('Creating purchase order for material:', materialId)
     setShowPurchaseForm(true)
   }
 
   const handleViewAllCategory = (categoryKey) => {
-    console.log('Viewing all materials for category:', categoryKey)
     setActiveTab('master')
   }
 
   const handleAdjustStock = async (material) => {
     const matId = Number(material.id)
 
-    // Check if material is composite - show component adjustment modal instead
     if (material.is_composite) {
       const components = materialCompositions[matId] || []
       if (components.length > 0) {
-        // Build component data with current stock levels
         const componentData = components.map(comp => ({
           componentId: comp.component_material_id,
           componentName: comp.component_material_name || comp.componentName,
@@ -387,7 +350,6 @@ const Inventory = () => {
       return
     }
 
-    // Regular (non-composite) material adjustment
     const currentStock = inventory[matId]?.currentStock || 0
     const newStock = prompt(`Enter new stock level for ${material.name}:`, currentStock)
 
@@ -399,7 +361,6 @@ const Inventory = () => {
         let result
 
         if (!inventoryRecord?.batches?.length) {
-          // NO EXISTING INVENTORY - Create new inventory record via opening stock
           result = await inventoryService.setOpeningStock(matId, {
             quantity: newQuantity,
             batchNumber: `MANUAL-${Date.now()}`,
@@ -408,7 +369,6 @@ const Inventory = () => {
             notes: 'Created via manual stock adjustment'
           })
         } else {
-          // EXISTING INVENTORY - Adjust the first batch
           const batchToUpdate = inventoryRecord.batches[0]
           result = await inventoryService.adjustStock(batchToUpdate.id, {
             adjustmentType: 'set',
@@ -432,7 +392,6 @@ const Inventory = () => {
     }
   }
 
-  // Handle composite component stock adjustment from modal
   const handleCompositeStockSave = async () => {
     if (!compositeAdjustData) return
 
@@ -441,14 +400,12 @@ const Inventory = () => {
     let errorCount = 0
 
     for (const comp of compositeAdjustData.components) {
-      // Skip if no change
       if (comp.newStock === comp.currentStock) continue
 
       try {
         let result
 
         if (!comp.inventoryRecord?.batches?.length) {
-          // Create new inventory record
           result = await inventoryService.setOpeningStock(comp.componentId, {
             quantity: comp.newStock,
             batchNumber: `MANUAL-${Date.now()}-${comp.componentId}`,
@@ -457,7 +414,6 @@ const Inventory = () => {
             notes: `Created via composite adjustment (${compositeAdjustData.compositeMaterial.name})`
           })
         } else {
-          // Adjust existing inventory
           const batchToUpdate = comp.inventoryRecord.batches[0]
           result = await inventoryService.adjustStock(batchToUpdate.id, {
             adjustmentType: 'set',
@@ -498,20 +454,16 @@ const Inventory = () => {
     setLoadingMaterialMovements(true)
 
     try {
-      // Load batch movements specifically for this material (FIFO-accurate source)
       const response = await inventoryService.getBatchMovements({
         materialId: material.id,
         limit: 50
       })
 
       if (response.success && response.data?.movements) {
-        // Transform batch movements to the format expected by the modal
         const transformedMovements = response.data.movements.map(movement => {
-          // Determine type based on movement quantity (positive = in, negative = out)
           const isInflow = movement.quantity > 0
           const type = isInflow ? 'in' : 'out'
 
-          // Build reference string from referenceType and batchNumber
           let reference = ''
           if (movement.batchNumber) {
             reference = movement.batchNumber
@@ -520,7 +472,6 @@ const Inventory = () => {
             reference = reference ? `${reference} (${movement.referenceType})` : movement.referenceType
           }
 
-          // Build reason from movementType and notes
           const movementTypeLabels = {
             'receipt': 'Stock Receipt',
             'sale': 'Sale',
@@ -540,7 +491,6 @@ const Inventory = () => {
             reason,
             reference,
             date: movement.movementDate,
-            // Additional fields for enhanced display
             runningBalance: movement.runningBalance,
             unitCost: movement.unitCost,
             totalValue: movement.totalValue,
@@ -580,12 +530,10 @@ const Inventory = () => {
   }
 
   const handleSavePurchaseOrder = (orderData) => {
-    console.log('Saving purchase order:', orderData)
-    alert('✅ Purchase order created successfully!')
+    alert('Purchase order created successfully!')
     setShowPurchaseForm(false)
   }
 
-  // Material composition handlers
   const toggleExpandRow = (materialId) => {
     const newExpanded = new Set(expandedRows)
     if (newExpanded.has(materialId)) {
@@ -597,12 +545,9 @@ const Inventory = () => {
   }
 
   const getFilteredMaterials = () => {
-    // Always hide component materials from main list - they appear only under their parent composite
-    // Convert m.id to Number for consistent comparison with API integer IDs
     return materials.filter(m => !componentMaterialIds.includes(Number(m.id)))
   }
 
-  // Material management handlers
   const handleAddMaterial = () => {
     setEditingMaterial(null)
     setShowMaterialForm(true)
@@ -610,7 +555,6 @@ const Inventory = () => {
 
   const handleEditMaterial = async (material) => {
     try {
-      // Load full material data with compositions
       const materialResult = await materialService.getById(material.id)
       if (materialResult.success) {
         setEditingMaterial(materialResult.data)
@@ -630,10 +574,8 @@ const Inventory = () => {
     try {
       let response
       if (materialId) {
-        // Update existing material
         response = await materialService.update(materialId, materialData)
       } else {
-        // Create new material
         response = await materialService.create(materialData)
       }
 
@@ -643,8 +585,6 @@ const Inventory = () => {
           text: materialId ? 'Material updated successfully' : 'Material created successfully'
         })
         setTimeout(() => setMessage(null), 3000)
-
-        // Reload materials
         await loadInventoryData()
         setShowMaterialForm(false)
         setEditingMaterial(null)
@@ -653,114 +593,124 @@ const Inventory = () => {
       }
     } catch (error) {
       console.error('Error saving material:', error)
-      throw error // Re-throw to let modal handle the error
+      throw error
     }
   }
 
-  // Remove early return - let DataTable handle loading state with skeleton
+  // Calculate stats for header
+  const totalMaterials = materials.filter(m => !m.is_composite).length
+  const totalInventoryValue = Object.entries(inventory).reduce((sum, [id, stock]) => {
+    const materialId = Number(id)
+    const material = materials.find(m => Number(m.id) === materialId)
+    if (material?.is_composite) return sum
+    return sum + (stock.currentStock * (material?.standardPrice || 0))
+  }, 0)
+  const criticalAlerts = alerts.filter(a => a.severity === 'critical').length
 
-  return (
-    <div className="inventory-page">
-      <div className="page-header">
-        <div className="header-left">
-          <h1>Inventory Management</h1>
-          <p>Track stock levels, movements, and material status</p>
+  // Header actions for Stock Overview tab
+  const stockOverviewHeaderActions = (
+    <div className="inventory-toolbar">
+      {/* Alert Dropdown */}
+      {alerts.length > 0 && (
+        <div className="alert-dropdown-container">
+          <button
+            className={`btn btn-outline alert-trigger ${criticalAlerts > 0 ? 'has-critical' : ''}`}
+            onClick={() => setShowAlertDropdown(!showAlertDropdown)}
+          >
+            <AlertTriangle size={16} />
+            <span>{alerts.length} Alert{alerts.length !== 1 ? 's' : ''}</span>
+            {criticalAlerts > 0 && <span className="critical-badge">{criticalAlerts}</span>}
+            <ChevronDown size={14} className={showAlertDropdown ? 'rotated' : ''} />
+          </button>
+
+          {showAlertDropdown && (
+            <div className="alert-dropdown">
+              <div className="alert-dropdown-header">
+                <span>Stock Alerts</span>
+                <button className="close-btn" onClick={() => setShowAlertDropdown(false)}>
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="alert-dropdown-list">
+                {alerts.slice(0, 5).map(alert => (
+                  <div key={alert.id} className={`alert-dropdown-item ${alert.severity}`}>
+                    <div className="alert-item-content">
+                      <span className={`alert-severity-dot ${alert.severity}`}></span>
+                      <div className="alert-item-info">
+                        <span className="alert-item-material">{alert.material}</span>
+                        <span className="alert-item-stock">
+                          {alert.currentStock} / {alert.reorderLevel} {alert.unit}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => {
+                        handleCreatePurchaseOrder(alert.id)
+                        setShowAlertDropdown(false)
+                      }}
+                    >
+                      <ShoppingCart size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {alerts.length > 5 && (
+                <div className="alert-dropdown-footer">
+                  <span className="more-alerts">+{alerts.length - 5} more alerts</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <div className="header-actions">
-          <button
-            className="btn btn-outline"
-            onClick={() => setShowCharts(!showCharts)}
-          >
-            <BarChart3 size={16} />
-            {showCharts ? t('hideCharts') : t('showCharts', 'Show Charts')}
-          </button>
-          <button
-            className="btn btn-outline"
-            onClick={() => setShowStockReport(true)}
-          >
-            <TrendingUp size={16} />
-            {t('stockReport', 'Stock Report')}
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setAdjustmentMaterialId('')
-              setShowStockAdjustment(true)
-            }}
-          >
-            <Plus size={16} />
-            {t('stockAdjustment', 'Stock Adjustment')}
-          </button>
+      )}
+
+      {/* Quick Stats */}
+      <div className="quick-stats">
+        <div className="quick-stat">
+          <Package size={14} />
+          <span>{totalMaterials} Materials</span>
+        </div>
+        <div className="quick-stat">
+          <Banknote size={14} />
+          <span>{formatCurrency(totalInventoryValue)}</span>
         </div>
       </div>
 
+      {/* Action Buttons */}
+      <button
+        className="btn btn-outline"
+        onClick={() => setShowCharts(!showCharts)}
+      >
+        <BarChart3 size={16} />
+        {showCharts ? 'Hide Charts' : 'Charts'}
+      </button>
+      <button
+        className="btn btn-outline"
+        onClick={() => setShowStockReport(true)}
+      >
+        <TrendingUp size={16} />
+        Report
+      </button>
+      <button
+        className="btn btn-primary"
+        onClick={() => {
+          setAdjustmentMaterialId('')
+          setShowStockAdjustment(true)
+        }}
+      >
+        <Plus size={16} />
+        Adjustment
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="oil-inventory-page">
       {/* Message Display */}
       {message && (
-        <div className={`message ${message.type}`} style={{ marginBottom: '1rem' }}>
+        <div className={`message ${message.type}`}>
           {message.text}
-        </div>
-      )}
-
-      {/* Alerts Section */}
-      {alerts.length > 0 && (
-        <div className="alerts-section">
-          <div className="alerts-header">
-            <h3 className="alerts-title">
-              <AlertTriangle size={20} />
-              Stock Alerts ({alerts.length})
-            </h3>
-            {alerts.length > 3 && (
-              <button
-                className="alerts-toggle-btn"
-                onClick={() => setShowAllAlerts(!showAllAlerts)}
-              >
-                {showAllAlerts ? (
-                  <>
-                    <ChevronDown size={14} />
-                    Show Less
-                  </>
-                ) : (
-                  <>
-                    <ChevronRight size={14} />
-                    Show All ({alerts.length})
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-          <div className="alerts-grid">
-            {(showAllAlerts ? alerts : alerts.slice(0, 3)).map(alert => (
-              <div key={alert.id} className={`alert-card ${alert.severity}`}>
-                <div className="alert-content">
-                  <div className="alert-header">
-                    <span className="alert-type">Low Stock Alert</span>
-                    <span className={`alert-badge ${alert.severity}`}>
-                      {alert.severity === 'critical' ? 'Critical' : 'Warning'}
-                    </span>
-                  </div>
-                  <p className="alert-material">{alert.material}</p>
-                  <p className="alert-details">
-                    Current: {alert.currentStock} {alert.unit} |
-                    Reorder Level: {alert.reorderLevel} {alert.unit}
-                  </p>
-                </div>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => handleCreatePurchaseOrder(alert.id)}
-                >
-                  <ShoppingCart size={14} />
-                  Create Purchase Order
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Charts Section - New Analytics Dashboard */}
-      {showCharts && (
-        <div className="charts-section">
-          <InventoryCharts materials={materials} />
         </div>
       )}
 
@@ -796,657 +746,513 @@ const Inventory = () => {
         </button>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'stock' && (
-        <div className="inventory-overview">
-          {/* Summary Stats */}
-          <div className="overview-stats">
-            <div className="stat-card">
-              <div className="stat-icon">
-                <Package size={24} />
-              </div>
-              <div className="stat-info">
-                <p className="stat-value">{materials.filter(m => !m.is_composite).length}</p>
-                <p className="stat-label">Total Materials</p>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon warning">
-                <AlertTriangle size={24} />
-              </div>
-              <div className="stat-info">
-                <p className="stat-value">{alerts.length}</p>
-                <p className="stat-label">Low Stock Alerts</p>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon success">
-                <Banknote size={24} />
-              </div>
-              <div className="stat-info">
-                <p className="stat-value">{formatCurrency(
-                  Object.entries(inventory).reduce((sum, [id, stock]) => {
-                    const materialId = Number(id)
-                    const material = materials.find(m => Number(m.id) === materialId)
-                    // Only count actual materials, not composite groupings
-                    if (material?.is_composite) return sum
-                    return sum + (stock.currentStock * (material?.standardPrice || 0))
-                  }, 0)
-                )}</p>
-                <p className="stat-label">Total Inventory Value</p>
-              </div>
-            </div>
-          </div>
-
-          {/* All Materials DataTable */}
-          <DataTable
-            data={getFilteredMaterials().flatMap(material => {
-              const stock = inventory[Number(material.id)]
-              const status = getStockStatus(material.id)
-              const stockValue = stock ? stock.currentStock * material.standardPrice : 0
-              const category = categoryDisplayConfig[material.category]
-
-              const rows = [{
-                ...material,
-                stock: stock || { currentStock: 0, unit: material.unit, reorderLevel: 0 },
-                status,
-                stockValue,
-                categoryInfo: category,
-                isComponent: false
-              }]
-
-              // If composite material is expanded, add component rows
-              if (material.is_composite && expandedRows.has(material.id)) {
-                const components = materialCompositions[material.id] || []
-                components.forEach(comp => {
-                  const compStock = inventory[comp.component_material_id]
-                  const compCurrentStock = compStock?.currentStock || 0
-                  const compReorderLevel = compStock?.reorderLevel || 0
-                  // Calculate component status
-                  let compStatus = 'good'
-                  if (compCurrentStock === 0) compStatus = 'out-of-stock'
-                  else if (compReorderLevel > 0) {
-                    if (compCurrentStock <= compReorderLevel * 0.5) compStatus = 'critical'
-                    else if (compCurrentStock <= compReorderLevel) compStatus = 'low'
-                  }
-
-                  rows.push({
-                    id: `${material.id}-comp-${comp.component_material_id}`,
-                    componentMaterialId: comp.component_material_id, // Store the actual ID for lookups
-                    parentId: material.id,
-                    name: comp.component_material_name,
-                    code: comp.component_material_code,
-                    category: '',
-                    stock: { currentStock: compCurrentStock, unit: comp.unit, reorderLevel: compReorderLevel },
-                    status: compStatus,
-                    stockValue: 0,
-                    componentType: comp.component_type,
-                    categoryInfo: null,
-                    isComponent: true
-                  })
-                })
-              }
-
-              return rows
-            })}
-            columns={[
-              {
-                key: 'name',
-                header: t('material'),
-                sortable: true,
-                filterable: true,
-                render: (value, row) => {
-                  if (row.isComponent) {
-                    // Component row - indented with type badge
-                    return (
-                      <div className="material-info component-row" style={{ paddingLeft: '40px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span className="material-name">{value}</span>
-                          <span className={`component-type-badge component-type-${row.componentType}`}>
-                            {row.componentType === 'container' ? '📦 container' : '🛢️ content'}
-                          </span>
-                        </div>
-                        <span className="component-details" style={{ color: '#6b7280', fontSize: '0.85em' }}>
-                          Stock: {row.stock.currentStock} {row.stock.unit}
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  // Regular material row
-                  const isComposite = !!row.is_composite
-                  const isExpanded = expandedRows.has(row.id)
-                  const hasComponents = isComposite && materialCompositions[row.id]?.length > 0
-
-                  return (
-                    <div className="material-info">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {isComposite && hasComponents ? (
-                          <span
-                            className="expand-icon"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleExpandRow(row.id)
-                            }}
-                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                          >
-                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          </span>
-                        ) : null}
-                        <div>
-                          <span className="material-name">{value}</span>
-                          <span className="material-code" style={{ display: 'block', fontSize: '0.75rem', color: '#6b7280' }}>{row.code}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-              },
-              {
-                key: 'category',
-                header: t('category'),
-                sortable: true,
-                filterable: true,
-                render: (value, row) => {
-                  if (row.isComponent) {
-                    return null // No category for component rows
-                  }
-                  if (!row.categoryInfo?.icon) {
-                    return <span>{value || 'N/A'}</span>
-                  }
-                  const CategoryIcon = row.categoryInfo.icon
-                  return (
-                    <div className="category-badge">
-                      <CategoryIcon size={14} />
-                      {row.categoryInfo.name}
-                    </div>
-                  )
-                }
-              },
-              {
-                key: 'branchName',
-                header: 'Branch/Location',
-                sortable: true,
-                filterable: true,
-                render: (value, row) => {
-                  if (row.isComponent) {
-                    return null // No branch for component rows
-                  }
-                  // Get branch name from inventory data or default to 'Main'
-                  const branchName = row.stock?.branchName || branches.find(b => b.id === row.stock?.branch_id)?.name || 'Main'
-                  return (
-                    <span style={{ fontSize: '0.9em', color: '#6b7280' }}>
-                      <Building size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                      {branchName}
-                    </span>
-                  )
-                }
-              },
-              {
-                key: 'stock.currentStock',
-                header: t('currentStock'),
-                type: 'number',
-                sortable: true,
-                render: (value, row) => {
-                  // For composite materials, show "See components" instead of qty
-                  if (row.is_composite && !row.isComponent) {
-                    return (
-                      <span className="stock-quantity composite-stock" style={{ color: '#6b7280', fontStyle: 'italic' }}>
-                        See components
-                      </span>
-                    )
-                  }
-                  return (
-                    <span className="stock-quantity">
-                      {value} {row.stock.unit}
-                    </span>
-                  )
-                }
-              },
-              {
-                key: 'stock.reorderLevel',
-                header: t('reorderLevel'),
-                type: 'number',
-                sortable: true,
-                render: (value, row) => {
-                  // For composite materials, hide reorder level
-                  if (row.is_composite && !row.isComponent) {
-                    return <span className="reorder-level" style={{ color: '#9ca3af' }}>—</span>
-                  }
-                  return (
-                    <span className="reorder-level">
-                      {value > 0 ? `${value} ${row.stock.unit}` : 'Not set'}
-                    </span>
-                  )
-                }
-              },
-              {
-                key: 'status',
-                header: t('status'),
-                sortable: true,
-                filterable: true,
-                render: (value) => (
-                  <span className={`status-badge ${value}`}>
-                    {value === 'good' ? t('goodStock') : 
-                     value === 'low' ? t('lowStock') :
-                     value === 'critical' ? t('critical') : t('outOfStock')}
-                  </span>
-                )
-              },
-              {
-                key: 'stockValue',
-                header: t('stockValue'),
-                type: 'currency',
-                align: 'right',
-                sortable: true,
-                render: (value) => formatCurrency(value)
-              },
-              {
-                key: 'actions',
-                header: t('actions'),
-                sortable: false,
-                render: (value, row) => {
-                  // Don't show actions for composite materials (they're virtual, no physical stock)
-                  // DO show actions for component rows (they have actual physical stock)
-                  if (row.is_composite && !row.isComponent) {
-                    return <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>—</span>
-                  }
-
-                  // For component rows, we need to get the actual material data with correct ID
-                  const materialForAction = row.isComponent
-                    ? {
-                        ...row,
-                        id: row.componentMaterialId, // Use the stored component material ID
-                        name: row.name,
-                        code: row.code,
-                        unit: row.stock?.unit || 'units'
-                      }
-                    : row
-
-                  return (
-                    <div className="action-buttons" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleViewBatches(materialForAction)
-                        }}
-                        title="View Batches"
-                      >
-                        <Layers size={14} />
-                      </button>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleAdjustStock(materialForAction)
-                        }}
-                        title="Adjust Stock"
-                      >
-                        <Edit size={14} />
-                      </button>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleViewHistory(materialForAction)
-                        }}
-                        title="View History"
-                      >
-                        <FileText size={14} />
-                      </button>
-                    </div>
-                  )
-                }
-              }
-            ]}
-            title="Current Inventory Stock"
-            subtitle="Physical stock levels, locations, and values"
-            loading={loading}
-            searchable={true}
-            filterable={true}
-            sortable={true}
-            paginated={true}
-            exportable={true}
-            selectable={false}
-            emptyMessage={t('noMaterialsFound')}
-            className="inventory-overview-table"
-            initialPageSize={20}
-            stickyHeader={true}
-            enableColumnToggle={true}
-          />
+      {/* Charts Section */}
+      {showCharts && activeTab === 'stock' && (
+        <div className="charts-section">
+          <InventoryCharts materials={materials} />
         </div>
       )}
 
+      {/* Tab Content */}
+      {activeTab === 'stock' && (
+        <DataTable
+          data={getFilteredMaterials().flatMap(material => {
+            const stock = inventory[Number(material.id)]
+            const status = getStockStatus(material.id)
+            const stockValue = stock ? stock.currentStock * material.standardPrice : 0
+            const category = categoryDisplayConfig[material.category]
+
+            const rows = [{
+              ...material,
+              stock: stock || { currentStock: 0, unit: material.unit, reorderLevel: 0 },
+              status,
+              stockValue,
+              categoryInfo: category,
+              isComponent: false
+            }]
+
+            if (material.is_composite && expandedRows.has(material.id)) {
+              const components = materialCompositions[material.id] || []
+              components.forEach(comp => {
+                const compStock = inventory[comp.component_material_id]
+                const compCurrentStock = compStock?.currentStock || 0
+                const compReorderLevel = compStock?.reorderLevel || 0
+                let compStatus = 'good'
+                if (compCurrentStock === 0) compStatus = 'out-of-stock'
+                else if (compReorderLevel > 0) {
+                  if (compCurrentStock <= compReorderLevel * 0.5) compStatus = 'critical'
+                  else if (compCurrentStock <= compReorderLevel) compStatus = 'low'
+                }
+
+                rows.push({
+                  id: `${material.id}-comp-${comp.component_material_id}`,
+                  componentMaterialId: comp.component_material_id,
+                  parentId: material.id,
+                  name: comp.component_material_name,
+                  code: comp.component_material_code,
+                  category: '',
+                  stock: { currentStock: compCurrentStock, unit: comp.unit, reorderLevel: compReorderLevel },
+                  status: compStatus,
+                  stockValue: 0,
+                  componentType: comp.component_type,
+                  categoryInfo: null,
+                  isComponent: true
+                })
+              })
+            }
+
+            return rows
+          })}
+          columns={[
+            {
+              key: 'name',
+              header: t('material'),
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                if (row.isComponent) {
+                  return (
+                    <div className="cell-row component-row">
+                      <span className="cell-text">{value}</span>
+                      <span className={`status-badge ${row.componentType}`}>
+                        {row.componentType === 'container' ? 'Container' : 'Content'}
+                      </span>
+                    </div>
+                  )
+                }
+
+                const isComposite = !!row.is_composite
+                const isExpanded = expandedRows.has(row.id)
+                const hasComponents = isComposite && materialCompositions[row.id]?.length > 0
+
+                return (
+                  <div className="cell-row">
+                    {isComposite && hasComponents && (
+                      <span
+                        className="expand-icon"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleExpandRow(row.id)
+                        }}
+                      >
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </span>
+                    )}
+                    <div className="cell-info">
+                      <span className="cell-text">{value}</span>
+                      <span className="cell-code">{row.code}</span>
+                    </div>
+                  </div>
+                )
+              }
+            },
+            {
+              key: 'category',
+              header: t('category'),
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                if (row.isComponent) return null
+                if (!row.categoryInfo?.icon) {
+                  return <span className="category-text">{value || 'N/A'}</span>
+                }
+                const CategoryIcon = row.categoryInfo.icon
+                return (
+                  <div className="cell-icon">
+                    <CategoryIcon size={14} />
+                    {row.categoryInfo.name}
+                  </div>
+                )
+              }
+            },
+            {
+              key: 'branchName',
+              header: 'Location',
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                if (row.isComponent) return null
+                const branchName = row.stock?.branchName || branches.find(b => b.id === row.stock?.branch_id)?.name || 'Main'
+                return (
+                  <span className="location-cell">
+                    <Building size={14} />
+                    {branchName}
+                  </span>
+                )
+              }
+            },
+            {
+              key: 'stock.currentStock',
+              header: t('currentStock'),
+              type: 'number',
+              sortable: true,
+              render: (value, row) => {
+                if (row.is_composite && !row.isComponent) {
+                  return <span className="cell-number muted">See components</span>
+                }
+                return (
+                  <span className="cell-number">
+                    {value} {row.stock.unit}
+                  </span>
+                )
+              }
+            },
+            {
+              key: 'stock.reorderLevel',
+              header: t('reorderLevel'),
+              type: 'number',
+              sortable: true,
+              render: (value, row) => {
+                if (row.is_composite && !row.isComponent) {
+                  return <span className="reorder-level muted">—</span>
+                }
+                return (
+                  <span className="reorder-level">
+                    {value > 0 ? `${value} ${row.stock.unit}` : 'Not set'}
+                  </span>
+                )
+              }
+            },
+            {
+              key: 'status',
+              header: t('status'),
+              sortable: true,
+              filterable: true,
+              render: (value) => (
+                <span className={`status-badge ${value}`}>
+                  {value === 'good' ? 'In Stock' :
+                   value === 'low' ? 'Low Stock' :
+                   value === 'critical' ? 'Critical' : 'Out of Stock'}
+                </span>
+              )
+            },
+            {
+              key: 'stockValue',
+              header: t('stockValue'),
+              type: 'currency',
+              align: 'right',
+              sortable: true,
+              render: (value) => <span className="cell-number">{formatCurrency(value)}</span>
+            },
+            {
+              key: 'actions',
+              header: t('actions'),
+              sortable: false,
+              render: (value, row) => {
+                if (row.is_composite && !row.isComponent) {
+                  return <span className="no-actions">—</span>
+                }
+
+                const materialForAction = row.isComponent
+                  ? { ...row, id: row.componentMaterialId, name: row.name, code: row.code, unit: row.stock?.unit || 'units' }
+                  : row
+
+                return (
+                  <div className="cell-actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="btn btn-icon" onClick={() => handleViewBatches(materialForAction)} title="View Batches">
+                      <Layers size={14} />
+                    </button>
+                    <button className="btn btn-icon" onClick={() => handleAdjustStock(materialForAction)} title="Adjust Stock">
+                      <Edit size={14} />
+                    </button>
+                    <button className="btn btn-icon" onClick={() => handleViewHistory(materialForAction)} title="View History">
+                      <FileText size={14} />
+                    </button>
+                  </div>
+                )
+              }
+            }
+          ]}
+          title="Inventory Management"
+          subtitle="Track stock levels, movements, and material status"
+          headerActions={stockOverviewHeaderActions}
+          loading={loading}
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          selectable={false}
+          emptyMessage={t('noMaterialsFound')}
+          className="inventory-table"
+          initialPageSize={20}
+        />
+      )}
+
       {activeTab === 'movements' && (
-        <div className="movements-timeline-view">
+        <div className="movements-timeline-view data-table-container">
+          <div className="data-table-header">
+            <h2 className="data-table-title">{t('transactions', 'Transactions')}</h2>
+            <p className="data-table-subtitle">{t('transactionsSubtitle', 'View and filter all inventory transactions')}</p>
+          </div>
           <TimelineView />
         </div>
       )}
 
       {activeTab === 'master' && (
-        <div className="materials-view">
-          <div className="materials-header" style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <DataTable
+          data={getFilteredMaterials().flatMap(material => {
+            const category = categoryDisplayConfig[material.category]
+            const rows = [{ ...material, categoryInfo: category, isComponent: false }]
+
+            if (material.is_composite && expandedRows.has(material.id)) {
+              const components = materialCompositions[material.id] || []
+              components.forEach(comp => {
+                rows.push({
+                  id: `${material.id}-comp-${comp.component_material_id}`,
+                  componentMaterialId: comp.component_material_id,
+                  parentId: material.id,
+                  name: comp.component_material_name,
+                  code: comp.component_material_code,
+                  category: '',
+                  unit: comp.unit,
+                  standardPrice: 0,
+                  currentStock: comp.currentStock,
+                  componentType: comp.component_type,
+                  categoryInfo: null,
+                  isComponent: true
+                })
+              })
+            }
+
+            return rows
+          })}
+          columns={[
+            {
+              key: 'name',
+              header: t('material'),
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                if (row.isComponent) {
+                  return (
+                    <div className="cell-row component-row">
+                      <span className="cell-text">{value}</span>
+                      <span className={`status-badge ${row.componentType}`}>
+                        {row.componentType === 'container' ? 'Container' : 'Content'}
+                      </span>
+                    </div>
+                  )
+                }
+
+                const isComposite = !!row.is_composite
+                const isExpanded = expandedRows.has(row.id)
+                const hasComponents = isComposite && materialCompositions[row.id]?.length > 0
+
+                return (
+                  <div className="cell-row">
+                    {isComposite && hasComponents && (
+                      <span
+                        className="expand-icon"
+                        onClick={(e) => { e.stopPropagation(); toggleExpandRow(row.id) }}
+                      >
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </span>
+                    )}
+                    <div className="cell-info">
+                      <span className="cell-text">{value}</span>
+                      <span className="cell-code">{row.code}</span>
+                    </div>
+                  </div>
+                )
+              }
+            },
+            {
+              key: 'category',
+              header: t('category'),
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                if (!row.categoryInfo?.icon) {
+                  return <span className="category-text">{value || 'N/A'}</span>
+                }
+                const CategoryIcon = row.categoryInfo.icon
+                return (
+                  <div className="cell-icon">
+                    <CategoryIcon size={14} />
+                    {row.categoryInfo.name}
+                  </div>
+                )
+              }
+            },
+            {
+              key: 'code',
+              header: 'Material Code',
+              sortable: true,
+              filterable: true,
+              render: (value) => <span className="cell-code accent">{value}</span>
+            },
+            {
+              key: 'unit',
+              header: 'Unit',
+              sortable: true,
+              render: (value) => <span className="status-badge">{value}</span>
+            },
+            {
+              key: 'standardPrice',
+              header: 'Standard Price',
+              type: 'currency',
+              sortable: true,
+              render: (value, row) => (
+                <span className="cell-number">
+                  {formatCurrency(value)} / {row.unit}
+                </span>
+              )
+            },
+            {
+              key: 'actions',
+              header: 'Actions',
+              sortable: false,
+              render: (value, row) => {
+                if (row.isComponent) return null
+
+                return (
+                  <div className="cell-actions">
+                    <button className="btn btn-icon" onClick={() => handleEditMaterial(row)} title="Edit Material">
+                      <Edit size={14} />
+                    </button>
+                    <button className="btn btn-icon" onClick={() => handleViewHistory(row)} title="View Details">
+                      <FileText size={14} />
+                    </button>
+                  </div>
+                )
+              }
+            }
+          ]}
+          title="Materials Catalog"
+          subtitle="Manage material definitions and pricing"
+          headerActions={
             <button className="btn btn-primary" onClick={handleAddMaterial}>
               <Plus size={16} />
-              {t('addMaterial', 'Add Material')}
+              Add Material
             </button>
-          </div>
-          <DataTable
-            data={getFilteredMaterials().flatMap(material => {
-              const category = categoryDisplayConfig[material.category]
-              const rows = [{
-                ...material,
-                categoryInfo: category,
-                isComponent: false
-              }]
-
-              // If composite material is expanded, add component rows
-              if (material.is_composite && expandedRows.has(material.id)) {
-                const components = materialCompositions[material.id] || []
-                components.forEach(comp => {
-                  rows.push({
-                    id: `${material.id}-comp-${comp.component_material_id}`,
-                    componentMaterialId: comp.component_material_id, // Store the actual ID for lookups
-                    parentId: material.id,
-                    name: comp.component_material_name,
-                    code: comp.component_material_code,
-                    category: '',
-                    unit: comp.unit,
-                    standardPrice: 0,
-                    currentStock: comp.currentStock,
-                    componentType: comp.component_type,
-                    categoryInfo: null,
-                    isComponent: true
-                  })
-                })
-              }
-
-              return rows
-            })}
-            columns={[
-              {
-                key: 'name',
-                header: t('material'),
-                sortable: true,
-                filterable: true,
-                render: (value, row) => {
-                  if (row.isComponent) {
-                    // Component row - indented with type badge
-                    return (
-                      <div className="material-info component-row" style={{ paddingLeft: '40px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span className="material-name">{value}</span>
-                          <span className={`component-type-badge component-type-${row.componentType}`}>
-                            {row.componentType === 'container' ? '📦 container' : '🛢️ content'}
-                          </span>
-                        </div>
-                        <span className="component-details" style={{ color: '#6b7280', fontSize: '0.85em' }}>
-                          Stock: {row.currentStock} {row.unit}
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  // Regular material row
-                  const isComposite = !!row.is_composite
-                  const isExpanded = expandedRows.has(row.id)
-                  const hasComponents = isComposite && materialCompositions[row.id]?.length > 0
-
-                  return (
-                    <div className="material-info">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {isComposite && hasComponents ? (
-                          <span
-                            className="expand-icon"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleExpandRow(row.id)
-                            }}
-                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                          >
-                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          </span>
-                        ) : null}
-                        <div>
-                          <span className="material-name">{value}</span>
-                          <span className="material-code" style={{ display: 'block', fontSize: '0.75rem', color: '#6b7280' }}>{row.code}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-              },
-              {
-                key: 'category',
-                header: t('category'),
-                sortable: true,
-                filterable: true,
-                render: (value, row) => {
-                  if (!row.categoryInfo?.icon) {
-                    return <span>{value || 'N/A'}</span>
-                  }
-                  const CategoryIcon = row.categoryInfo.icon
-                  return (
-                    <div className="category-badge">
-                      <CategoryIcon size={14} />
-                      {row.categoryInfo.name}
-                    </div>
-                  )
-                }
-              },
-              {
-                key: 'code',
-                header: 'Material Code',
-                sortable: true,
-                filterable: true,
-                render: (value) => (
-                  <span className="material-code">{value}</span>
-                )
-              },
-              {
-                key: 'unit',
-                header: 'Unit',
-                sortable: true,
-                render: (value) => (
-                  <span className="unit-badge">{value}</span>
-                )
-              },
-              {
-                key: 'standardPrice',
-                header: 'Standard Price',
-                type: 'currency',
-                sortable: true,
-                render: (value, row) => (
-                  <span className="price-display">
-                    {formatCurrency(value)} / {row.unit}
-                  </span>
-                )
-              },
-              {
-                key: 'actions',
-                header: 'Actions',
-                sortable: false,
-                render: (value, row) => {
-                  // Don't show actions for component rows
-                  if (row.isComponent) {
-                    return null
-                  }
-
-                  return (
-                    <div className="action-buttons">
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => handleEditMaterial(row)}
-                        title="Edit Material"
-                      >
-                        <Edit size={14} />
-                      </button>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => handleViewHistory(row)}
-                        title="View Material Details"
-                      >
-                        <FileText size={14} />
-                      </button>
-                    </div>
-                  )
-                }
-              }
-            ]}
-            title="Materials Catalog"
-            subtitle="Available materials for purchase and trading"
-            loading={loading}
-            searchable={true}
-            filterable={true}
-            sortable={true}
-            paginated={true}
-            exportable={true}
-            selectable={false}
-            emptyMessage={t('noMaterialsFound')}
-            className="inventory-table"
-            initialPageSize={10}
-            stickyHeader={true}
-            enableColumnToggle={true}
-          />
-        </div>
+          }
+          loading={loading}
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          selectable={false}
+          emptyMessage={t('noMaterialsFound')}
+          className="materials-table"
+          initialPageSize={10}
+        />
       )}
 
       {activeTab === 'transactions' && (
-        <div className="movements-view">
-          <DataTable
-            data={stockMovements
-              // Filter out transactions without valid materials (keep if material found OR has materialName)
-              .filter(movement => {
-                const material = materials.find(m => Number(m.id) === Number(movement.materialId))
-                // Keep if we found the material in our list, or if the backend returned a materialName
-                return material || movement.materialName
-              })
-              .map(movement => {
-                // Find material with type-safe comparison (handle string/number mismatch)
-                const material = materials.find(m => Number(m.id) === Number(movement.materialId))
-                const resolvedMaterial = material || {
-                  name: movement.materialName || 'Unknown',
-                  code: movement.materialCode || '',
-                  unit: ''
-                }
-                return {
-                  ...movement,
-                  // Add top-level materialName for filtering
-                  materialName: resolvedMaterial.name,
-                  // Use material from lookup, or fallback to movement's materialName/materialCode
-                  material: resolvedMaterial
-                }
-              })}
-            columns={[
-              {
-                key: 'date',
-                header: t('date', 'Date'),
-                type: 'date',
-                sortable: true,
-                filterable: true,
-                render: (value) => (
-                  <span className="movement-date">
-                    {value ? formatDate(new Date(value)) : '-'}
+        <DataTable
+          data={stockMovements
+            .filter(movement => {
+              const material = materials.find(m => Number(m.id) === Number(movement.materialId))
+              return material || movement.materialName
+            })
+            .map(movement => {
+              const material = materials.find(m => Number(m.id) === Number(movement.materialId))
+              const resolvedMaterial = material || {
+                name: movement.materialName || 'Unknown',
+                code: movement.materialCode || '',
+                unit: ''
+              }
+              return {
+                ...movement,
+                materialName: resolvedMaterial.name,
+                material: resolvedMaterial
+              }
+            })}
+          columns={[
+            {
+              key: 'date',
+              header: t('date', 'Date'),
+              type: 'date',
+              sortable: true,
+              filterable: true,
+              render: (value) => (
+                <span className="movement-date">
+                  {value ? formatDate(new Date(value)) : '-'}
+                </span>
+              )
+            },
+            {
+              key: 'materialName',
+              header: t('material'),
+              sortable: true,
+              filterable: true,
+              render: (value, row) => (
+                <div className="cell-info">
+                  <span className="cell-text">{row.material.name}</span>
+                  <span className="cell-code">{row.material.code}</span>
+                </div>
+              )
+            },
+            {
+              key: 'type',
+              header: t('type', 'Type'),
+              sortable: true,
+              filterable: true,
+              render: (value) => (
+                <span className={`movement-type ${value}`}>
+                  {value === 'in' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  {value === 'in' ? 'Stock In' : 'Stock Out'}
+                </span>
+              )
+            },
+            {
+              key: 'branchName',
+              header: 'Location',
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                const branchName = row.branchName || branches.find(b => b.id === row.branchId)?.name || 'Main'
+                return (
+                  <span className="location-cell">
+                    <Building size={14} />
+                    {branchName}
                   </span>
-                )
-              },
-              {
-                key: 'materialName',
-                header: t('material'),
-                sortable: true,
-                filterable: true,
-                render: (value, row) => (
-                  <div className="material-info">
-                    <span className="material-name">{row.material.name}</span>
-                    <span className="material-code">{row.material.code}</span>
-                  </div>
-                )
-              },
-              {
-                key: 'type',
-                header: t('type', 'Type'),
-                sortable: true,
-                filterable: true,
-                render: (value) => (
-                  <span className={`movement-type ${value}`}>
-                    {value === 'in' ? (
-                      <>
-                        <TrendingUp size={14} />
-                        {t('stockIn', 'Stock In')}
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown size={14} />
-                        {t('stockOut', 'Stock Out')}
-                      </>
-                    )}
-                  </span>
-                )
-              },
-              {
-                key: 'branchName',
-                header: 'Branch/Location',
-                sortable: true,
-                filterable: true,
-                render: (value, row) => {
-                  const branchName = row.branchName || branches.find(b => b.id === row.branchId)?.name || 'Main'
-                  return (
-                    <span style={{ fontSize: '0.9em', color: '#6b7280' }}>
-                      <Building size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                      {branchName}
-                    </span>
-                  )
-                }
-              },
-              {
-                key: 'quantity',
-                header: t('quantity', 'Quantity'),
-                type: 'number',
-                sortable: true,
-                render: (value, row) => (
-                  <span className="movement-quantity">
-                    {value} {row.material.unit}
-                  </span>
-                )
-              },
-              {
-                key: 'reason',
-                header: t('reason', 'Reason'),
-                sortable: true,
-                filterable: true,
-                render: (value) => (
-                  <span className="movement-reason">{value}</span>
-                )
-              },
-              {
-                key: 'reference',
-                header: t('reference', 'Reference'),
-                sortable: true,
-                render: (value) => (
-                  <span className="movement-reference">{value}</span>
                 )
               }
-            ]}
-            title={t('stockMovements', 'Stock Movements')}
-            subtitle={t('stockMovementsSubtitle', 'Track inventory in and out movements')}
-            loading={loadingMovements}
-            searchable={true}
-            filterable={true}
-            sortable={true}
-            paginated={true}
-            exportable={true}
-            selectable={false}
-            emptyMessage={t('noMovementsFound', 'No stock movements found')}
-            className="movements-table"
-            initialPageSize={10}
-            stickyHeader={true}
-            enableColumnToggle={true}
-          />
-        </div>
+            },
+            {
+              key: 'quantity',
+              header: t('quantity', 'Quantity'),
+              type: 'number',
+              sortable: true,
+              render: (value, row) => (
+                <span className="movement-quantity">
+                  {value} {row.material.unit}
+                </span>
+              )
+            },
+            {
+              key: 'reason',
+              header: t('reason', 'Reason'),
+              sortable: true,
+              filterable: true,
+              render: (value) => <span className="movement-reason">{value}</span>
+            },
+            {
+              key: 'reference',
+              header: t('reference', 'Reference'),
+              sortable: true,
+              render: (value) => value ? <code className="reference-code">{value}</code> : '-'
+            }
+          ]}
+          title="Stock Movements"
+          subtitle="Track inventory inflows and outflows"
+          loading={loadingMovements}
+          searchable={true}
+          filterable={true}
+          sortable={true}
+          paginated={true}
+          exportable={true}
+          selectable={false}
+          emptyMessage={t('noMovementsFound', 'No stock movements found')}
+          className="movements-table"
+          initialPageSize={10}
+        />
       )}
 
-      {/* Purchase Order Form Modal */}
+      {/* Modals */}
       {showPurchaseForm && (
         <PurchaseOrderForm
           isOpen={showPurchaseForm}
@@ -1458,7 +1264,6 @@ const Inventory = () => {
         />
       )}
 
-      {/* Stock History Modal */}
       {showStockHistory && selectedMaterial && (
         <Modal
           isOpen={true}
@@ -1466,147 +1271,95 @@ const Inventory = () => {
           onClose={() => setShowStockHistory(false)}
           size="lg"
         >
-          <div className="stock-history-content">
-            {/* Summary Header */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1rem',
-              marginBottom: '1.5rem',
-              padding: '1rem',
-              backgroundColor: '#f8fafc',
-              borderRadius: '8px'
-            }}>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>{t('materialCode')}</label>
-                <span style={{ fontWeight: '600' }}>{selectedMaterial.code}</span>
+          <div className="stock-history-modal">
+            <div className="history-summary">
+              <div className="summary-item">
+                <label>Material Code</label>
+                <span>{selectedMaterial.code}</span>
               </div>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>{t('currentStock')}</label>
-                <span style={{ fontWeight: '600', color: '#059669' }}>
+              <div className="summary-item">
+                <label>Current Stock</label>
+                <span className="stock-value">
                   {inventory[Number(selectedMaterial.id)]?.currentStock || 0} {selectedMaterial.unit}
                 </span>
               </div>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>{t('status')}</label>
+              <div className="summary-item">
+                <label>Status</label>
                 <span className={`status-badge ${getStockStatus(selectedMaterial.id)}`}>
                   {getStockStatus(selectedMaterial.id)}
                 </span>
               </div>
             </div>
 
-            {/* Movements Table */}
             {loadingMaterialMovements ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+              <div className="loading-state">
                 <p>{t('loading')}</p>
               </div>
             ) : materialMovements.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="movements-table-container">
+                <table className="history-table">
                   <thead>
-                    <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
-                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('type')}</th>
-                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>{t('quantity')}</th>
-                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>{t('balance', 'Balance')}</th>
-                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('reason')}</th>
-                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('reference')}</th>
-                      <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>{t('date')}</th>
+                    <tr>
+                      <th>{t('type')}</th>
+                      <th className="text-right">{t('quantity')}</th>
+                      <th className="text-right">Balance</th>
+                      <th>{t('reason')}</th>
+                      <th>{t('reference')}</th>
+                      <th>{t('date')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {materialMovements.map((movement, index) => (
-                      <tr
-                        key={movement.id}
-                        style={{
-                          borderBottom: '1px solid #e2e8f0',
-                          backgroundColor: index % 2 === 0 ? '#fff' : '#f8fafc'
-                        }}
-                      >
-                        <td style={{ padding: '0.75rem' }}>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.85rem',
-                            fontWeight: '500',
-                            backgroundColor: movement.type === 'in' ? '#dcfce7' : '#fee2e2',
-                            color: movement.type === 'in' ? '#166534' : '#991b1b'
-                          }}>
+                      <tr key={movement.id} className={index % 2 === 0 ? 'even' : 'odd'}>
+                        <td>
+                          <span className={`movement-type-badge ${movement.type}`}>
                             {movement.type === 'in' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                            {movement.type === 'in' ? t('stockIn') : t('stockOut')}
+                            {movement.type === 'in' ? 'In' : 'Out'}
                           </span>
                         </td>
-                        <td style={{
-                          padding: '0.75rem',
-                          textAlign: 'right',
-                          fontWeight: '600',
-                          color: movement.type === 'in' ? '#059669' : '#dc2626'
-                        }}>
+                        <td className={`text-right quantity ${movement.type}`}>
                           {movement.type === 'in' ? '+' : '-'}{movement.quantity} {selectedMaterial.unit}
                         </td>
-                        <td style={{
-                          padding: '0.75rem',
-                          textAlign: 'right',
-                          fontWeight: '500',
-                          color: '#374151',
-                          backgroundColor: '#f8fafc'
-                        }}>
+                        <td className="text-right balance">
                           {movement.runningBalance !== undefined
                             ? `${movement.runningBalance.toFixed(2)} ${selectedMaterial.unit}`
                             : '-'}
                         </td>
-                        <td style={{ padding: '0.75rem', color: '#374151' }}>
-                          {movement.reason || '-'}
+                        <td className="reason">{movement.reason || '-'}</td>
+                        <td>
+                          {movement.reference ? <code className="reference-code">{movement.reference}</code> : '-'}
                         </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          {movement.reference ? (
-                            <code style={{
-                              backgroundColor: '#e0f2fe',
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '4px',
-                              fontSize: '0.85rem',
-                              color: '#0369a1'
-                            }}>
-                              {movement.reference}
-                            </code>
-                          ) : '-'}
-                        </td>
-                        <td style={{ padding: '0.75rem', color: '#6b7280', fontSize: '0.85rem' }}>
-                          {movement.date ? formatDate(new Date(movement.date)) : '-'}
-                        </td>
+                        <td className="date">{movement.date ? formatDate(new Date(movement.date)) : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-                <Clock size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+              <div className="empty-state">
+                <Clock size={48} />
                 <p>{t('noMovementsFound')}</p>
               </div>
             )}
-          </div>
 
-          <div className="modal-actions" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-            <button className="btn btn-outline" onClick={() => setShowStockHistory(false)}>
-              {t('close')}
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setShowStockHistory(false)
-                handleAdjustStock(selectedMaterial)
-              }}
-            >
-              {t('adjustStock')}
-            </button>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setShowStockHistory(false)}>
+                {t('close')}
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setShowStockHistory(false)
+                  handleAdjustStock(selectedMaterial)
+                }}
+              >
+                {t('adjustStock')}
+              </button>
+            </div>
           </div>
         </Modal>
       )}
 
-      {/* Stock Report Modal */}
       <StockReportModal
         isOpen={showStockReport}
         onClose={() => setShowStockReport(false)}
@@ -1616,20 +1369,15 @@ const Inventory = () => {
         formatCurrency={formatCurrency}
       />
 
-      {/* Stock Adjustment Modal */}
       <StockAdjustmentModal
         isOpen={showStockAdjustment}
         onClose={() => setShowStockAdjustment(false)}
         materials={materials}
         inventory={inventory}
         preselectedMaterialId={adjustmentMaterialId}
-        onSuccess={() => {
-          // Reload inventory data after successful adjustment
-          loadInventoryData()
-        }}
+        onSuccess={() => loadInventoryData()}
       />
 
-      {/* Material Form Modal */}
       <MaterialFormModal
         isOpen={showMaterialForm}
         onClose={() => {
@@ -1642,7 +1390,6 @@ const Inventory = () => {
         allMaterials={materials}
       />
 
-      {/* Batch Details Modal */}
       {showBatchModal && selectedMaterialBatches && (
         <Modal
           isOpen={true}
@@ -1653,92 +1400,54 @@ const Inventory = () => {
           }}
           size="lg"
         >
-          <div className="batch-modal-content">
-            {/* Summary Header */}
-            <div className="batch-summary" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1rem',
-              marginBottom: '1.5rem',
-              padding: '1rem',
-              backgroundColor: '#f8fafc',
-              borderRadius: '8px'
-            }}>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>Material Code</label>
-                <span style={{ fontWeight: '600' }}>{selectedMaterialBatches.material.code}</span>
+          <div className="batch-modal">
+            <div className="batch-summary">
+              <div className="summary-item">
+                <label>Material Code</label>
+                <span>{selectedMaterialBatches.material.code}</span>
               </div>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>Total Stock</label>
-                <span style={{ fontWeight: '600', color: '#059669' }}>
+              <div className="summary-item">
+                <label>Total Stock</label>
+                <span className="stock-value">
                   {selectedMaterialBatches.totalStock} {selectedMaterialBatches.unit}
                 </span>
               </div>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>Number of Batches</label>
-                <span style={{ fontWeight: '600' }}>{selectedMaterialBatches.batches.length}</span>
+              <div className="summary-item">
+                <label>Batches</label>
+                <span>{selectedMaterialBatches.batches.length}</span>
               </div>
             </div>
 
-            {/* Batch Table */}
-            <div className="batch-table-container" style={{ overflowX: 'auto' }}>
-              <table className="batch-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="batch-table-container">
+              <table className="batch-table">
                 <thead>
-                  <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>Batch Number</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>Quantity</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>Cost/Unit</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>Total Value</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>Location</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>Notes</th>
+                  <tr>
+                    <th>Batch Number</th>
+                    <th className="text-right">Quantity</th>
+                    <th className="text-right">Cost/Unit</th>
+                    <th className="text-right">Total Value</th>
+                    <th>Location</th>
+                    <th>Notes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedMaterialBatches.batches.map((batch, index) => (
-                    <tr
-                      key={batch.id || index}
-                      style={{
-                        borderBottom: '1px solid #e2e8f0',
-                        backgroundColor: index % 2 === 0 ? '#fff' : '#f8fafc'
-                      }}
-                    >
-                      <td style={{ padding: '0.75rem' }}>
-                        <code style={{
-                          backgroundColor: '#e0f2fe',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.85rem',
-                          color: '#0369a1'
-                        }}>
-                          {batch.batchNumber || 'N/A'}
-                        </code>
-                      </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '500' }}>
-                        {parseFloat(batch.quantity || batch.currentStock || 0).toFixed(2)} {selectedMaterialBatches.unit}
-                      </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                        OMR {parseFloat(batch.averageCost || batch.lastPurchasePrice || 0).toFixed(3)}
-                      </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '500' }}>
-                        OMR {(parseFloat(batch.quantity || batch.currentStock || 0) * parseFloat(batch.averageCost || batch.lastPurchasePrice || 0)).toFixed(3)}
-                      </td>
-                      <td style={{ padding: '0.75rem', color: '#6b7280' }}>
-                        {batch.location || 'Main Warehouse'}
-                      </td>
-                      <td style={{ padding: '0.75rem', color: '#6b7280', fontSize: '0.85rem' }}>
-                        {batch.notes || '-'}
-                      </td>
+                    <tr key={batch.id || index} className={index % 2 === 0 ? 'even' : 'odd'}>
+                      <td><code className="batch-code">{batch.batchNumber || 'N/A'}</code></td>
+                      <td className="text-right">{parseFloat(batch.quantity || batch.currentStock || 0).toFixed(2)} {selectedMaterialBatches.unit}</td>
+                      <td className="text-right">OMR {parseFloat(batch.averageCost || batch.lastPurchasePrice || 0).toFixed(3)}</td>
+                      <td className="text-right">OMR {(parseFloat(batch.quantity || batch.currentStock || 0) * parseFloat(batch.averageCost || batch.lastPurchasePrice || 0)).toFixed(3)}</td>
+                      <td className="location">{batch.location || 'Main Warehouse'}</td>
+                      <td className="notes">{batch.notes || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr style={{ backgroundColor: '#f1f5f9', fontWeight: '600' }}>
-                    <td style={{ padding: '0.75rem' }}>Total</td>
-                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                      {selectedMaterialBatches.totalStock} {selectedMaterialBatches.unit}
-                    </td>
-                    <td style={{ padding: '0.75rem' }}></td>
-                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                  <tr>
+                    <td>Total</td>
+                    <td className="text-right">{selectedMaterialBatches.totalStock} {selectedMaterialBatches.unit}</td>
+                    <td></td>
+                    <td className="text-right">
                       OMR {selectedMaterialBatches.batches.reduce((sum, b) =>
                         sum + (parseFloat(b.quantity || b.currentStock || 0) * parseFloat(b.averageCost || b.lastPurchasePrice || 0)), 0
                       ).toFixed(3)}
@@ -1750,28 +1459,27 @@ const Inventory = () => {
             </div>
 
             {selectedMaterialBatches.batches.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-                <Layers size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+              <div className="empty-state">
+                <Layers size={48} />
                 <p>No batch records found for this material.</p>
               </div>
             )}
-          </div>
 
-          <div className="modal-actions" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              className="btn btn-outline"
-              onClick={() => {
-                setShowBatchModal(false)
-                setSelectedMaterialBatches(null)
-              }}
-            >
-              Close
-            </button>
+            <div className="modal-footer">
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  setShowBatchModal(false)
+                  setSelectedMaterialBatches(null)
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </Modal>
       )}
 
-      {/* Composite Stock Adjustment Modal */}
       {showCompositeAdjustModal && compositeAdjustData && (
         <Modal
           isOpen={true}
@@ -1783,89 +1491,53 @@ const Inventory = () => {
           size="lg"
         >
           <div className="composite-adjust-modal">
-            {/* Info Banner */}
-            <div style={{
-              backgroundColor: '#fef3c7',
-              border: '1px solid #f59e0b',
-              borderRadius: '8px',
-              padding: '1rem',
-              marginBottom: '1.5rem',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem'
-            }}>
-              <AlertTriangle size={20} style={{ color: '#d97706', flexShrink: 0, marginTop: '2px' }} />
+            <div className="composite-info-banner">
+              <AlertTriangle size={20} />
               <div>
-                <strong style={{ color: '#92400e' }}>Composite Material</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#92400e', fontSize: '0.875rem' }}>
-                  This material is composed of multiple components. Adjust each component's stock level below.
-                  The composite material itself is not stored in inventory - only its components are tracked.
-                </p>
+                <strong>Composite Material</strong>
+                <p>This material is composed of multiple components. Adjust each component's stock level below.</p>
               </div>
             </div>
 
-            {/* Composite Summary */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '1rem',
-              marginBottom: '1.5rem',
-              padding: '1rem',
-              backgroundColor: '#f8fafc',
-              borderRadius: '8px'
-            }}>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>Composite Material</label>
-                <span style={{ fontWeight: '600' }}>{compositeAdjustData.compositeMaterial.name}</span>
+            <div className="composite-summary">
+              <div className="summary-item">
+                <label>Composite Material</label>
+                <span>{compositeAdjustData.compositeMaterial.name}</span>
               </div>
-              <div>
-                <label style={{ color: '#6b7280', fontSize: '0.85rem', display: 'block' }}>Material Code</label>
-                <span style={{ fontWeight: '600' }}>{compositeAdjustData.compositeMaterial.code}</span>
+              <div className="summary-item">
+                <label>Material Code</label>
+                <span>{compositeAdjustData.compositeMaterial.code}</span>
               </div>
             </div>
 
-            {/* Component Stock Inputs */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '600' }}>
-                Component Stock Levels
-              </h4>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="component-stocks">
+              <h4>Component Stock Levels</h4>
+              <table className="component-table">
                 <thead>
-                  <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left' }}>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>Component</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>Type</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>Current Stock</th>
-                    <th style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0', textAlign: 'right' }}>New Stock</th>
+                  <tr>
+                    <th>Component</th>
+                    <th>Type</th>
+                    <th className="text-right">Current Stock</th>
+                    <th className="text-right">New Stock</th>
                   </tr>
                 </thead>
                 <tbody>
                   {compositeAdjustData.components.map((comp, index) => (
-                    <tr key={comp.componentId} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '0.75rem' }}>
-                        <div>
-                          <span style={{ fontWeight: '500' }}>{comp.componentName}</span>
-                          <span style={{ display: 'block', fontSize: '0.8rem', color: '#6b7280' }}>
-                            {comp.componentCode}
-                          </span>
+                    <tr key={comp.componentId}>
+                      <td>
+                        <div className="component-info">
+                          <span className="name">{comp.componentName}</span>
+                          <span className="code">{comp.componentCode}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
-                        <span style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          fontWeight: '500',
-                          backgroundColor: comp.componentType === 'container' ? '#dbeafe' : '#dcfce7',
-                          color: comp.componentType === 'container' ? '#1e40af' : '#166534'
-                        }}>
+                      <td>
+                        <span className={`component-type-badge ${comp.componentType}`}>
                           {comp.componentType === 'container' ? 'Container' : 'Content'}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right', color: '#6b7280' }}>
-                        {comp.currentStock} {comp.unit}
-                      </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <td className="text-right muted">{comp.currentStock} {comp.unit}</td>
+                      <td className="text-right">
+                        <div className="stock-input">
                           <input
                             type="number"
                             min="0"
@@ -1873,26 +1545,11 @@ const Inventory = () => {
                             value={comp.newStock}
                             onChange={(e) => {
                               const newComponents = [...compositeAdjustData.components]
-                              newComponents[index] = {
-                                ...newComponents[index],
-                                newStock: parseFloat(e.target.value) || 0
-                              }
-                              setCompositeAdjustData({
-                                ...compositeAdjustData,
-                                components: newComponents
-                              })
-                            }}
-                            style={{
-                              width: '100px',
-                              padding: '0.5rem',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '6px',
-                              textAlign: 'right'
+                              newComponents[index] = { ...newComponents[index], newStock: parseFloat(e.target.value) || 0 }
+                              setCompositeAdjustData({ ...compositeAdjustData, components: newComponents })
                             }}
                           />
-                          <span style={{ color: '#6b7280', fontSize: '0.875rem', minWidth: '40px' }}>
-                            {comp.unit}
-                          </span>
+                          <span className="unit">{comp.unit}</span>
                         </div>
                       </td>
                     </tr>
@@ -1901,8 +1558,7 @@ const Inventory = () => {
               </table>
             </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <div className="modal-footer">
               <button
                 className="btn btn-outline"
                 onClick={() => {
@@ -1912,11 +1568,7 @@ const Inventory = () => {
               >
                 Cancel
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleCompositeStockSave}
-                disabled={loading}
-              >
+              <button className="btn btn-primary" onClick={handleCompositeStockSave} disabled={loading}>
                 {loading ? 'Saving...' : 'Save All Changes'}
               </button>
             </div>

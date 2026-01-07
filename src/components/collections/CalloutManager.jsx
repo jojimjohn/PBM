@@ -307,20 +307,21 @@ const CalloutManager = () => {
 
   // Get item type for badge display
   // Note: No 'pending' status in collection_orders - starts at 'scheduled'
+  // Using design-system badge classes: success, warning, info, danger, neutral
   const getItemType = useCallback((row) => {
     if (row.status === 'scheduled') {
-      return { type: 'scheduled', label: t('scheduled') || 'Scheduled', icon: Calendar, color: 'yellow' };
+      return { type: 'scheduled', label: t('scheduled') || 'Scheduled', icon: Calendar, badgeClass: 'warning' };
     }
     if (['in_transit', 'collecting'].includes(row.status)) {
-      return { type: 'collection', label: t('inProgress') || 'In Progress', icon: Truck, color: 'blue' };
+      return { type: 'collection', label: t('inProgress') || 'In Progress', icon: Truck, badgeClass: 'info' };
     }
     if (row.status === 'completed' && !checkIsFinalized(row)) {
-      return { type: 'wcn-ready', label: t('wcnReady') || 'WCN Ready', icon: FileCheck, color: 'green' };
+      return { type: 'wcn-ready', label: t('wcnReady') || 'WCN Ready', icon: FileCheck, badgeClass: 'success' };
     }
     if (checkIsFinalized(row)) {
-      return { type: 'finalized', label: t('finalized') || 'Finalized', icon: CheckCircle, color: 'indigo' };
+      return { type: 'finalized', label: t('finalized') || 'Finalized', icon: CheckCircle, badgeClass: 'confirmed' };
     }
-    return { type: 'unknown', label: row.status, icon: AlertCircle, color: 'gray' };
+    return { type: 'unknown', label: row.status, icon: AlertCircle, badgeClass: 'neutral' };
   }, [t, checkIsFinalized]);
 
   const getStatusIcon = (status) => {
@@ -405,11 +406,9 @@ const CalloutManager = () => {
       header: t('calloutNumber'),
       render: (value, row) => (
         <div>
-          <div className="font-medium text-blue-600">{value}</div>
+          <strong>{value}</strong>
           {row.scheduledDate && (
-            <div className="text-xs text-gray-500">
-              {formatDate(row.scheduledDate)}
-            </div>
+            <div className="text-muted">{formatDate(row.scheduledDate)}</div>
           )}
         </div>
       )
@@ -419,11 +418,10 @@ const CalloutManager = () => {
       header: t('contract') + ' & ' + t('location'),
       render: (value, row) => (
         <div>
-          <div className="font-medium">{value}</div>
-          <div className="text-sm text-gray-600">{row.supplierName}</div>
-          <div className="text-xs text-gray-500 flex items-center mt-1">
-            <MapPin className="w-3 h-3 mr-1" />
-            {row.locationName}
+          <strong>{value}</strong>
+          <div className="text-muted">{row.supplierName}</div>
+          <div className="text-muted">
+            <MapPin size={12} /> {row.locationName}
           </div>
         </div>
       )
@@ -435,14 +433,14 @@ const CalloutManager = () => {
         const itemType = getItemType(row);
         const TypeIcon = itemType.icon;
 
-        // Single badge showing the workflow stage - cleaner than multiple badges
+        // Single badge showing the workflow stage - using design-system status-badge
         return (
           <span
-            className={`type-badge type-badge-${itemType.color}`}
+            className={`status-badge ${itemType.badgeClass}`}
             title={`${itemType.label}${checkIsFinalized(row) ? ' - ' + (t('wcnFinalized') || 'WCN Finalized') : ''}`}
           >
-            <TypeIcon className="w-3.5 h-3.5" />
-            <span>{itemType.label}</span>
+            <TypeIcon size={12} />
+            {itemType.label}
           </span>
         );
       }
@@ -454,13 +452,13 @@ const CalloutManager = () => {
         <div>
           {value ? (
             <div>
-              <div className="text-sm font-medium">{value}</div>
+              <strong>{value}</strong>
               {row.vehiclePlateNumber && (
-                <div className="text-xs text-gray-500">{row.vehiclePlateNumber}</div>
+                <div className="text-muted">{row.vehiclePlateNumber}</div>
               )}
             </div>
           ) : (
-            <span className="text-gray-400 text-xs">{t('notAssigned')}</span>
+            <span className="text-muted">{t('notAssigned')}</span>
           )}
         </div>
       )
@@ -470,27 +468,36 @@ const CalloutManager = () => {
       header: t('actions'),
       render: (value, row) => {
         const primaryAction = getPrimaryAction(row);
+        // Map variant to button class
+        const getButtonClass = (variant) => {
+          switch (variant) {
+            case 'primary': return 'btn btn-primary btn-sm';
+            case 'success': return 'btn btn-success btn-sm';
+            case 'danger': return 'btn btn-danger btn-sm';
+            default: return 'btn btn-outline btn-sm';
+          }
+        };
 
         return (
-          <div className="table-actions-compact">
+          <div className="cell-actions">
             {/* Primary "Next Step" Action - Icon only with tooltip */}
             {primaryAction && (
               <button
                 onClick={primaryAction.handler}
-                className={`action-btn action-btn-${primaryAction.variant}`}
+                className={getButtonClass(primaryAction.variant)}
                 title={primaryAction.label}
               >
-                <primaryAction.icon size={16} />
+                <primaryAction.icon size={14} />
               </button>
             )}
 
             {/* View Details */}
             <button
               onClick={() => handleViewCallout(row)}
-              className="action-btn action-btn-secondary"
+              className="btn btn-outline btn-sm"
               title={t('viewDetails')}
             >
-              <Eye size={16} />
+              <Eye size={14} />
             </button>
 
             {/* Edit/Delete - only for pending and scheduled orders */}
@@ -498,14 +505,14 @@ const CalloutManager = () => {
               <>
                 <button
                   onClick={() => handleEditCallout(row)}
-                  className="action-btn action-btn-secondary"
+                  className="btn btn-outline btn-sm"
                   title={t('edit')}
                 >
-                  <Edit size={16} />
+                  <Edit size={14} />
                 </button>
                 <button
                   onClick={() => handleDeleteCallout(row.id)}
-                  className="action-btn action-btn-danger"
+                  className="btn btn-outline btn-sm btn-danger"
                   title={t('delete')}
                 >
                   <Trash2 size={14} />

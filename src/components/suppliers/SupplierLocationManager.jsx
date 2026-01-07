@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../../config/api';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
-import '../../modules/scrap-materials/styles/Suppliers.css';
+import '../../modules/oil-trading/styles/Suppliers.css';
 
 const SupplierLocationManager = () => {
   const { t, isRTL } = useLocalization();
@@ -277,7 +277,7 @@ const SupplierLocationManager = () => {
       filterable: true,
       render: (value, row) => (
         <div className="supplier-info">
-          <div className="supplier-avatar" style={{ backgroundColor: '#3b82f6' }}>
+          <div className="supplier-avatar primary">
             {value ? value.substring(0, 2).toUpperCase() : '??'}
           </div>
           <div className="supplier-details">
@@ -366,10 +366,7 @@ const SupplierLocationManager = () => {
         // Handle boolean values (true/false) and integer values (1/0)
         const isActive = value === true || value === 1 || value === '1';
         return (
-          <span 
-            className="supplier-status-badge"
-            style={{ backgroundColor: isActive ? '#10b981' : '#ef4444' }}
-          >
+          <span className={`supplier-status-badge ${isActive ? 'active' : 'inactive'}`}>
             {isActive ? t('active', 'Active') : t('inactive', 'Inactive')}
           </span>
         );
@@ -421,25 +418,6 @@ const SupplierLocationManager = () => {
 
   return (
     <div className="supplier-locations-page">
-      {/* Page Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1>{t('supplierLocations', 'Supplier Locations')}</h1>
-          <p>{t('manageCollectionPoints', 'Manage supplier collection points and locations')}</p>
-        </div>
-        
-        <div className="page-actions">
-          <button 
-            className="btn btn-primary"
-            onClick={handleCreateLocation}
-          >
-            <Plus size={20} />
-            {t('addLocation', 'Add Location')}
-          </button>
-        </div>
-      </div>
-
-
       {/* Data Table Container */}
       <div className="locations-table-container">
         {loading && (
@@ -451,7 +429,16 @@ const SupplierLocationManager = () => {
           data={locations}
           columns={columns}
           title={t('supplierLocations', 'Supplier Locations')}
-          subtitle={t('manageCollectionPointsSubtitle', 'View and manage all supplier collection points')}
+          subtitle={`${t('manageCollectionPointsSubtitle', 'View and manage all supplier collection points')} - ${locations.length} ${t('locations', 'locations')}`}
+          headerActions={
+            <button
+              className="btn btn-primary"
+              onClick={handleCreateLocation}
+            >
+              <Plus size={16} />
+              {t('addLocation', 'Add Location')}
+            </button>
+          }
           loading={loading}
           searchable={true}
           filterable={true}
@@ -463,8 +450,6 @@ const SupplierLocationManager = () => {
           emptyMessage={t('noLocationsFound', 'No supplier locations found')}
           className="locations-table"
           initialPageSize={10}
-          stickyHeader={true}
-          enableColumnToggle={true}
         />
       </div>
 

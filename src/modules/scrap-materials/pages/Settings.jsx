@@ -7,6 +7,7 @@ import { PERMISSIONS } from '../../../config/roles'
 import systemSettingsService from '../../../services/systemSettingsService'
 import branchService from '../../../services/branchService'
 import MFASetup from '../../../components/MFASetup'
+import ExpenseCategoryManager from '../../../components/ExpenseCategoryManager'
 import {
   Settings as SettingsIcon,
   Globe,
@@ -29,7 +30,8 @@ import {
   Trash2,
   X,
   MapPin,
-  Lock
+  Lock,
+  Tag
 } from 'lucide-react'
 import '../../../pages/Settings.css'
 
@@ -306,6 +308,7 @@ const Settings = () => {
     { id: 'system', label: t('generalSettings'), icon: SettingsIcon },
     { id: 'security', label: t('securitySettings', 'Security'), icon: Lock },
     { id: 'branches', label: t('branchManagement', 'Branch Management'), icon: Building },
+    { id: 'expense-categories', label: t('expenseCategories', 'Expense Categories'), icon: Tag },
     { id: 'appearance', label: t('appearanceSettings'), icon: Palette },
     { id: 'notifications', label: t('notificationSettings'), icon: Bell }
   ]
@@ -809,6 +812,13 @@ const Settings = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Expense Categories Settings */}
+          {activeTab === 'expense-categories' && (
+            <div className="settings-section">
+              <ExpenseCategoryManager />
             </div>
           )}
 

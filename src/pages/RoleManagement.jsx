@@ -18,7 +18,7 @@ import { PERMISSIONS } from '../config/roles'
 import roleService from '../services/roleService'
 import DataTable from '../components/ui/DataTable'
 import Modal from '../components/ui/Modal'
-import { Badge } from '../components/ui/Badge'
+import PermissionMatrix from '../components/ui/PermissionMatrix'
 import {
   Shield,
   ShieldPlus,
@@ -31,10 +31,10 @@ import {
   XCircle,
   Lock,
   Unlock,
-  ChevronDown,
-  ChevronUp,
   Eye,
-  RefreshCw
+  RefreshCw,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react'
 import './RoleManagement.css'
 
@@ -70,6 +70,7 @@ const RoleManagement = ({ embedded = false }) => {
     permissions: []
   })
   const [cloneName, setCloneName] = useState('')
+  const [cloneSuccess, setCloneSuccess] = useState(false)
 
   // Check permissions
   const canManageRoles = hasPermission(PERMISSIONS.MANAGE_ROLES)
@@ -222,22 +223,34 @@ const RoleManagement = ({ embedded = false }) => {
 
   // Handle clone role
   const handleCloneRole = async () => {
+    if (cloneSuccess) return  // Prevent double-click after success
+
     try {
       setActionLoading(true)
+      console.log('Cloning role:', selectedRole?.id, 'with name:', cloneName)
       const result = await roleService.clone(selectedRole.id, cloneName)
+      console.log('Clone result:', result)
 
       if (result.success) {
-        setShowCloneModal(false)
-        showMessage('success', result.message || 'Role cloned successfully')
+        console.log('Clone successful, setting cloneSuccess to true')
+        setCloneSuccess(true)  // Show success state instead of closing
         loadRoles()
       } else {
         showMessage('error', result.error || 'Failed to clone role')
       }
     } catch (err) {
+      console.error('Clone error:', err)
       showMessage('error', err.message || 'Failed to clone role')
     } finally {
       setActionLoading(false)
     }
+  }
+
+  // Handle closing clone modal
+  const handleCloseCloneModal = () => {
+    setShowCloneModal(false)
+    setCloneSuccess(false)
+    setCloneName('')
   }
 
   // Handle delete role
@@ -260,44 +273,38 @@ const RoleManagement = ({ embedded = false }) => {
     }
   }
 
-  // Toggle permission in form
-  const togglePermission = (permissionKey) => {
-    setFormData(prev => ({
-      ...prev,
-      permissions: prev.permissions.includes(permissionKey)
-        ? prev.permissions.filter(p => p !== permissionKey)
-        : [...prev.permissions, permissionKey]
-    }))
-  }
+  // Handle toggle role status
+  const handleToggleStatus = async (role) => {
+    try {
+      const newStatus = !role.is_active
+      const result = await roleService.toggleActive(role.id, newStatus)
 
-  // Toggle all permissions in a module
-  const toggleModulePermissions = (module) => {
-    const modulePermissionKeys = module.permissions.map(p => p.key)
-    const allSelected = modulePermissionKeys.every(key => formData.permissions.includes(key))
-
-    setFormData(prev => ({
-      ...prev,
-      permissions: allSelected
-        ? prev.permissions.filter(p => !modulePermissionKeys.includes(p))
-        : [...new Set([...prev.permissions, ...modulePermissionKeys])]
-    }))
+      if (result.success) {
+        showMessage('success', `Role ${newStatus ? 'activated' : 'deactivated'} successfully`)
+        loadRoles()
+      } else {
+        showMessage('error', result.error || 'Failed to update role status')
+      }
+    } catch (err) {
+      showMessage('error', err.message || 'Failed to update role status')
+    }
   }
 
   // Get role type badge
   const getRoleTypeBadge = (role) => {
     if (!role) return null
     if (role.is_system) {
-      return <Badge variant="info" size="sm"><Lock size={12} /> System</Badge>
+      return <span className="status-badge info"><Lock size={12} /> System</span>
     }
-    return <Badge variant="secondary" size="sm"><Unlock size={12} /> Custom</Badge>
+    return <span className="status-badge neutral"><Unlock size={12} /> Custom</span>
   }
 
   // Get status badge
   const getStatusBadge = (isActive) => {
     if (isActive === undefined || isActive === null) return null
     return isActive
-      ? <Badge variant="success" size="sm"><CheckCircle size={12} /> Active</Badge>
-      : <Badge variant="danger" size="sm"><XCircle size={12} /> Inactive</Badge>
+      ? <span className="status-badge success"><CheckCircle size={12} /> Active</span>
+      : <span className="status-badge danger"><XCircle size={12} /> Inactive</span>
   }
 
   // Table columns
@@ -390,53 +397,64 @@ const RoleManagement = ({ embedded = false }) => {
       render: (value, row) => {
         if (!row) return null
         return (
-          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+          <div className="cell-actions">
             {canManageRoles && !row.is_system && (
-            <>
+              <>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openEditModal(row)
+                  }}
+                  title={t('edit') || 'Edit'}
+                >
+                  <Edit size={14} />
+                </button>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openCloneModal(row)
+                  }}
+                  title={t('clone') || 'Clone'}
+                >
+                  <Copy size={14} />
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openDeleteModal(row)
+                  }}
+                  title={t('delete') || 'Delete'}
+                  disabled={row.user_count > 0}
+                >
+                  <Trash2 size={14} />
+                </button>
+                <button
+                  className={`btn btn-sm ${row.is_active ? 'btn-warning' : 'btn-success'}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleToggleStatus(row)
+                  }}
+                  title={row.is_active ? (t('deactivate') || 'Deactivate') : (t('activate') || 'Activate')}
+                >
+                  {row.is_active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                </button>
+              </>
+            )}
+            {canManageRoles && row.is_system && (
               <button
                 className="btn btn-outline btn-sm"
                 onClick={(e) => {
                   e.stopPropagation()
                   openEditModal(row)
                 }}
-                title={t('edit') || 'Edit'}
+                title={t('viewPermissions') || 'View Permissions'}
               >
-                <Edit size={14} />
+                <Eye size={14} />
               </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  openCloneModal(row)
-                }}
-                title={t('clone') || 'Clone'}
-              >
-                <Copy size={14} />
-              </button>
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  openDeleteModal(row)
-                }}
-                title={t('delete') || 'Delete'}
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
-          )}
-          {canManageRoles && row.is_system && (
-            <button
-              className="btn btn-outline btn-sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                openEditModal(row)
-              }}
-              title={t('viewPermissions') || 'View Permissions'}
-            >
-              <Eye size={14} />
-            </button>
-          )}
+            )}
           </div>
         )
       }
@@ -446,7 +464,7 @@ const RoleManagement = ({ embedded = false }) => {
   // Access denied state
   if (!canViewRoles) {
     return (
-      <div className="role-management-page">
+      <div className="page-container">
         <div className="access-denied">
           <AlertTriangle size={48} />
           <h2>{t('accessDenied') || 'Access Denied'}</h2>
@@ -457,41 +475,22 @@ const RoleManagement = ({ embedded = false }) => {
   }
 
   return (
-    <div className={`role-management-page ${embedded ? 'embedded' : ''}`}>
-      {/* Header - Only show when not embedded */}
-      {!embedded && (
-        <div className="page-header">
-          <div className="page-title-section">
-            <h1>
-              <Shield size={24} />
-              {t('roleManagement') || 'Role Management'}
-            </h1>
-            <p>{t('roleManagementDescription') || 'Manage roles and their permissions'}</p>
-          </div>
-
-          {canManageRoles && (
-            <button className="btn-primary" onClick={openCreateModal}>
-              <ShieldPlus size={18} />
-              {t('createRole') || 'Create Role'}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Messages */}
+    <div className={embedded ? 'role-management-embedded' : 'page-container'}>
+      {/* Message Toast */}
       {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-          {message.text}
+        <div className={`message-toast ${message.type}`} onClick={() => setMessage(null)}>
+          {message.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+          <span>{message.text}</span>
+          <button className="toast-close">×</button>
         </div>
       )}
 
       {/* Error Banner */}
       {error && (
         <div className="error-banner">
-          <AlertTriangle size={20} />
+          <AlertTriangle size={16} />
           <span>{error}</span>
-          <button onClick={loadRoles} className="retry-btn">Retry</button>
+          <button onClick={() => setError(null)} className="error-close">×</button>
         </div>
       )}
 
@@ -537,27 +536,72 @@ const RoleManagement = ({ embedded = false }) => {
           setShowCreateModal(false)
           setShowEditModal(false)
         }}
-        title={showCreateModal ? (t('createRole') || 'Create Role') : (t('editRole') || 'Edit Role')}
+        title={
+          <div className="role-modal-title">
+            <Shield size={20} />
+            <span>{showCreateModal ? (t('createRole') || 'Create Role') : (t('editRole') || 'Edit Role')}</span>
+            {selectedRole?.is_system && (
+              <span className="status-badge info">{t('systemRole') || 'System Role'}</span>
+            )}
+          </div>
+        }
         size="large"
       >
         <div className="role-form">
-          <div className="form-section">
-            <h3>{t('roleDetails') || 'Role Details'}</h3>
+          {/* System Role Info Banner */}
+          {selectedRole?.is_system && (
+            <div className="system-role-banner">
+              <Lock size={16} />
+              <span>{t('cannotEditSystemRole') || 'System roles cannot be edited'} - {t('viewOnly') || 'View Only'}</span>
+            </div>
+          )}
 
-            <div className="form-group">
-              <label>{t('roleName') || 'Role Name'} *</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={t('enterRoleName') || 'Enter role name'}
-                disabled={selectedRole?.is_system}
-              />
+          {/* Role Details Section */}
+          <div className="form-section">
+            <div className="section-header">
+              <h3>{t('roleDetails') || 'Role Details'}</h3>
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label className="form-label">
+                  {t('roleName') || 'Role Name'}
+                  {!selectedRole?.is_system && <span className="required">*</span>}
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={t('enterRoleName') || 'Enter role name'}
+                  disabled={selectedRole?.is_system}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('hierarchyLevel') || 'Hierarchy Level'}</label>
+                <select
+                  className="form-select"
+                  value={formData.hierarchyLevel}
+                  onChange={(e) => setFormData({ ...formData, hierarchyLevel: parseInt(e.target.value) })}
+                  disabled={selectedRole?.is_system}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(level => (
+                    <option key={level} value={level}>
+                      {t('level') || 'Level'} {level} {level === 1 ? `(${t('levelLowest') || 'Lowest'})` : level === 8 ? `(${t('levelHighestCustom') || 'Highest Custom'})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <span className="form-hint">
+                  {t('hierarchyLevelHint') || 'Users can only manage roles with lower hierarchy levels'}
+                </span>
+              </div>
             </div>
 
             <div className="form-group">
-              <label>{t('description') || 'Description'}</label>
+              <label className="form-label">{t('description') || 'Description'}</label>
               <textarea
+                className="form-textarea"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder={t('enterDescription') || 'Enter description'}
@@ -565,63 +609,56 @@ const RoleManagement = ({ embedded = false }) => {
                 disabled={selectedRole?.is_system}
               />
             </div>
-
-            <div className="form-group">
-              <label>{t('hierarchyLevel') || 'Hierarchy Level'}</label>
-              <select
-                value={formData.hierarchyLevel}
-                onChange={(e) => setFormData({ ...formData, hierarchyLevel: parseInt(e.target.value) })}
-                disabled={selectedRole?.is_system}
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map(level => (
-                  <option key={level} value={level}>
-                    Level {level} {level === 1 ? '(Lowest)' : level === 8 ? '(Highest Custom)' : ''}
-                  </option>
-                ))}
-              </select>
-              <span className="form-hint">
-                {t('hierarchyLevelHint') || 'Users can only manage roles with lower hierarchy levels'}
-              </span>
-            </div>
           </div>
 
-          <div className="form-section">
-            <h3>{t('permissions') || 'Permissions'}</h3>
-            <p className="form-hint">
+          {/* Permissions Section */}
+          <div className="form-section permissions-section">
+            <div className="section-header">
+              <h3>{t('permissions') || 'Permissions'}</h3>
+              {formData.permissions.length > 0 && (
+                <span className="permissions-counter">
+                  {formData.permissions.length} {t('permissionsSelected') || 'permissions selected'}
+                </span>
+              )}
+            </div>
+            <p className="form-hint section-hint">
               {t('selectPermissionsHint') || 'Select the permissions this role should have'}
             </p>
 
-            <div className="permissions-grid">
-              {permissionGroups.map((module) => (
-                <PermissionModule
-                  key={module.key}
-                  module={module}
-                  selectedPermissions={formData.permissions}
-                  onTogglePermission={togglePermission}
-                  onToggleModule={toggleModulePermissions}
-                  disabled={selectedRole?.is_system}
-                />
-              ))}
-            </div>
+            <PermissionMatrix
+              permissions={permissionGroups}
+              selectedPermissions={formData.permissions}
+              onChange={(perms) => setFormData({ ...formData, permissions: perms })}
+              readonly={selectedRole?.is_system}
+              loading={permissionGroups.length === 0}
+            />
           </div>
 
+          {/* Modal Actions */}
           <div className="modal-actions">
             <button
-              className="btn-secondary"
+              className="btn btn-outline"
               onClick={() => {
                 setShowCreateModal(false)
                 setShowEditModal(false)
               }}
             >
-              {t('cancel') || 'Cancel'}
+              {selectedRole?.is_system ? (t('close') || 'Close') : (t('cancel') || 'Cancel')}
             </button>
             {!selectedRole?.is_system && (
               <button
-                className="btn-primary"
+                className="btn btn-primary"
                 onClick={showCreateModal ? handleCreateRole : handleUpdateRole}
                 disabled={actionLoading || !formData.name.trim()}
               >
-                {actionLoading ? (t('saving') || 'Saving...') : (showCreateModal ? (t('create') || 'Create') : (t('save') || 'Save'))}
+                {actionLoading ? (
+                  <>
+                    <RefreshCw size={14} className="spinning" />
+                    {t('saving') || 'Saving...'}
+                  </>
+                ) : (
+                  showCreateModal ? (t('create') || 'Create') : (t('save') || 'Save')
+                )}
               </button>
             )}
           </div>
@@ -631,37 +668,57 @@ const RoleManagement = ({ embedded = false }) => {
       {/* Clone Modal */}
       <Modal
         isOpen={showCloneModal}
-        onClose={() => setShowCloneModal(false)}
-        title={t('cloneRole') || 'Clone Role'}
+        onClose={handleCloseCloneModal}
+        title={cloneSuccess ? (t('roleCloned') || 'Role Cloned') : (t('cloneRole') || 'Clone Role')}
         size="small"
       >
         <div className="clone-form">
-          <p>
-            {t('cloneRoleDescription') || 'Create a copy of'} <strong>{selectedRole?.name}</strong>
-          </p>
+          {cloneSuccess ? (
+            <>
+              <div className="success-message">
+                <CheckCircle size={48} className="success-icon" />
+                <p>{t('roleClonedSuccess') || 'Role cloned successfully!'}</p>
+                <p className="text-muted">
+                  {t('newRoleCreated') || 'New role'} <strong>{cloneName}</strong> {t('hasBeenCreated') || 'has been created.'}
+                </p>
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-primary" onClick={handleCloseCloneModal}>
+                  {t('close') || 'Close'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-muted">
+                {t('cloneRoleDescription') || 'Create a copy of'} <strong>{selectedRole?.name}</strong>
+              </p>
 
-          <div className="form-group">
-            <label>{t('newRoleName') || 'New Role Name'} *</label>
-            <input
-              type="text"
-              value={cloneName}
-              onChange={(e) => setCloneName(e.target.value)}
-              placeholder={t('enterNewName') || 'Enter new name'}
-            />
-          </div>
+              <div className="form-group">
+                <label>{t('newRoleName') || 'New Role Name'} *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={cloneName}
+                  onChange={(e) => setCloneName(e.target.value)}
+                  placeholder={t('enterNewName') || 'Enter new name'}
+                />
+              </div>
 
-          <div className="modal-actions">
-            <button className="btn-secondary" onClick={() => setShowCloneModal(false)}>
-              {t('cancel') || 'Cancel'}
-            </button>
-            <button
-              className="btn-primary"
-              onClick={handleCloneRole}
-              disabled={actionLoading || !cloneName.trim()}
-            >
-              {actionLoading ? (t('cloning') || 'Cloning...') : (t('clone') || 'Clone')}
-            </button>
-          </div>
+              <div className="modal-actions">
+                <button className="btn btn-outline" onClick={handleCloseCloneModal}>
+                  {t('cancel') || 'Cancel'}
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleCloneRole}
+                  disabled={actionLoading || !cloneName.trim() || cloneSuccess}
+                >
+                  {actionLoading ? (t('cloning') || 'Cloning...') : (t('clone') || 'Clone')}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
 
@@ -685,11 +742,11 @@ const RoleManagement = ({ embedded = false }) => {
           )}
 
           <div className="modal-actions">
-            <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>
+            <button className="btn btn-outline" onClick={() => setShowDeleteModal(false)}>
               {t('cancel') || 'Cancel'}
             </button>
             <button
-              className="btn-danger"
+              className="btn btn-danger"
               onClick={handleDeleteRole}
               disabled={actionLoading}
             >
@@ -709,83 +766,35 @@ const RoleManagement = ({ embedded = false }) => {
         title={`${t('usersWithRole') || 'Users with role'}: ${selectedRole?.name}`}
         size="medium"
       >
-        <div className="role-users-list">
+        <div className="role-users-modal">
           {roleUsers.length === 0 ? (
-            <p className="no-users">{t('noUsersWithRole') || 'No users have this role'}</p>
+            <div className="empty-users">
+              <Users size={32} />
+              <p>{t('noUsersWithRole') || 'No users have this role'}</p>
+            </div>
           ) : (
-            <div className="users-table">
+            <div className="users-list">
               {roleUsers.map(user => (
-                <div key={user.id} className="user-row">
+                <div key={user.id} className="user-item">
                   <div className="user-info">
                     <span className="user-name">{user.firstName} {user.lastName}</span>
                     <span className="user-email">{user.email}</span>
                   </div>
-                  <Badge variant={user.is_active ? 'success' : 'secondary'} size="sm">
-                    {user.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <span className={`status-badge ${user.is_active ? 'success' : 'neutral'}`}>
+                    {user.is_active ? t('active') || 'Active' : t('inactive') || 'Inactive'}
+                  </span>
                 </div>
               ))}
             </div>
           )}
 
           <div className="modal-actions">
-            <button className="btn-secondary" onClick={() => setShowUsersModal(false)}>
+            <button className="btn btn-outline" onClick={() => setShowUsersModal(false)}>
               {t('close') || 'Close'}
             </button>
           </div>
         </div>
       </Modal>
-    </div>
-  )
-}
-
-// Permission Module Component with collapsible sections
-const PermissionModule = ({ module, selectedPermissions, onTogglePermission, onToggleModule, disabled }) => {
-  const [expanded, setExpanded] = useState(false)
-
-  const modulePermissionKeys = module.permissions.map(p => p.key)
-  const selectedCount = modulePermissionKeys.filter(key => selectedPermissions.includes(key)).length
-  const allSelected = selectedCount === modulePermissionKeys.length
-
-  return (
-    <div className={`permission-module ${expanded ? 'expanded' : ''}`}>
-      <div className="module-header" onClick={() => setExpanded(!expanded)}>
-        <div className="module-title">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={() => !disabled && onToggleModule(module)}
-            onClick={(e) => e.stopPropagation()}
-            disabled={disabled}
-          />
-          <span>{module.label}</span>
-          <span className="selected-count">
-            ({selectedCount}/{module.permissions.length})
-          </span>
-        </div>
-        {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-      </div>
-
-      {expanded && (
-        <div className="module-permissions">
-          {module.permissions.map((perm) => (
-            <label key={perm.key} className="permission-item">
-              <input
-                type="checkbox"
-                checked={selectedPermissions.includes(perm.key)}
-                onChange={() => onTogglePermission(perm.key)}
-                disabled={disabled}
-              />
-              <div className="permission-info">
-                <span className="permission-label">{perm.label}</span>
-                {perm.description && (
-                  <span className="permission-description">{perm.description}</span>
-                )}
-              </div>
-            </label>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

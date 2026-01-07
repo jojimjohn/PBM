@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'oil',
           logo: '/images/alramrami-logo.png',
           modules: {
-            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'users', 'settings']
+            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'projects', 'users', 'settings']
           }
         },
         {
