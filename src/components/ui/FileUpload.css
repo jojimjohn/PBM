@@ -24,7 +24,7 @@
 .file-upload-dropzone {
   position: relative;
   border: 2px dashed var(--gray-300);
-  border-radius: var(--radius-xl);
+  border-radius: var(--ds-form-radius);
   padding: var(--space-8);
   text-align: center;
   cursor: pointer;
@@ -105,7 +105,7 @@
   padding: var(--space-3);
   background-color: var(--gray-50);
   border: 1px solid var(--gray-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   transition: all var(--transition-normal);
 }
 
@@ -124,7 +124,7 @@
   height: 48px;
   flex-shrink: 0;
   background-color: var(--gray-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   overflow: hidden;
 }
 
@@ -204,7 +204,7 @@
   padding: var(--space-1);
   background: transparent;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   color: var(--gray-400);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -224,7 +224,7 @@
   padding: var(--space-3) var(--space-4);
   background-color: var(--error-50);
   border: 1px solid var(--error-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   color: var(--error-700);
 }
@@ -249,7 +249,7 @@
   font-size: var(--text-sm);
   color: var(--gray-500);
   background-color: var(--gray-50);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
 }
 
 /* Dark Theme Support */

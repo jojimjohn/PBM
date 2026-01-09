@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Modal from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import { useLocalization } from '../../../context/LocalizationContext'
 import wastageService from '../../../services/wastageService'
@@ -276,17 +276,17 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
 
             {dateRange === 'custom' && (
               <div className="custom-date-pickers">
-                <DatePicker
+                <DateInput
                   value={customDateFrom}
                   onChange={setCustomDateFrom}
-                  max={customDateTo || new Date().toISOString().split('T')[0]}
+                  maxDate={customDateTo || new Date().toISOString().split('T')[0]}
                 />
                 <span className="date-separator">-</span>
-                <DatePicker
+                <DateInput
                   value={customDateTo}
                   onChange={setCustomDateTo}
-                  min={customDateFrom}
-                  max={new Date().toISOString().split('T')[0]}
+                  minDate={customDateFrom}
+                  maxDate={new Date().toISOString().split('T')[0]}
                 />
               </div>
             )}

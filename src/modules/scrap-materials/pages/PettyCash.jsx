@@ -5,6 +5,7 @@ import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
+import DateInput from '../../../components/ui/DateInput'
 import StockChart from '../../../components/StockChart'
 import ImageUpload from '../../../components/ui/ImageUpload'
 import FileUpload from '../../../components/ui/FileUpload'
@@ -12,6 +13,7 @@ import PaymentMethodSelect from '../../../components/ui/PaymentMethodSelect'
 import pettyCashService from '../../../services/pettyCashService'
 import uploadService from '../../../services/uploadService'
 import userService from '../../../services/userService'
+import dataCacheService from '../../../services/dataCacheService'
 import {
   CreditCard,
   Plus,
@@ -77,46 +79,53 @@ const PettyCash = () => {
       setLoading(true)
       setError(null)
       
-      // Load petty cash cards from backend
-      const cardsResult = await pettyCashService.getAllCards()
-      if (cardsResult.success) {
-        setCards(cardsResult.data || [])
-      } else {
-        throw new Error(cardsResult.error || 'Failed to load petty cash cards')
-      }
-      
-      // Load expenses from backend
-      const expensesResult = await pettyCashService.getAllExpenses()
-      if (expensesResult.success) {
-        setExpenses(expensesResult.data || [])
-      } else {
-        console.warn('Failed to load expenses:', expensesResult.error)
-        setExpenses([])
-      }
-      
-      // Load expense types
-      const typesResult = await pettyCashService.getExpenseTypes()
+      // PERFORMANCE FIX: Load all data in parallel using dataCacheService for instant loading
+      const [cardsData, expensesData, typesResult, statsResult, usersResult] = await Promise.all([
+        // Petty cash cards - CACHED (2 min TTL)
+        dataCacheService.getPettyCashCards().catch(err => {
+          console.error('Error loading petty cash cards:', err)
+          return []
+        }),
+        // Petty cash expenses - CACHED (2 min TTL)
+        dataCacheService.getPettyCashExpenses().catch(err => {
+          console.error('Error loading expenses:', err)
+          return []
+        }),
+        // Expense types (not cached as rarely called)
+        pettyCashService.getExpenseTypes().catch(err => {
+          console.warn('Failed to load expense types:', err)
+          return { success: false, data: [] }
+        }),
+        // Analytics (not cached - dynamic data)
+        pettyCashService.getAnalytics().catch(err => {
+          console.warn('Failed to load analytics:', err)
+          return { success: false, data: {} }
+        }),
+        // Users (not cached for now)
+        userService.getAll().catch(err => {
+          console.error('Failed to load users:', err)
+          return { success: false, data: [] }
+        })
+      ])
+
+      // Process cached data (arrays returned directly)
+      setCards(cardsData || [])
+      setExpenses(expensesData || [])
+
+      // Process non-cached results
       if (typesResult.success) {
         setExpenseTypes(typesResult.data || [])
       } else {
-        console.warn('Failed to load expense types:', typesResult.error)
         setExpenseTypes([])
       }
-      
-      // Load statistics
-      const statsResult = await pettyCashService.getAnalytics()
+
       if (statsResult.success) {
         setStats(statsResult.data || {})
       }
 
-      // Load users
-      const usersResult = await userService.getAll()
-      console.log('📋 Users API Result:', usersResult)
       if (usersResult.success) {
-        console.log('✅ Users loaded:', usersResult.data?.length, 'users')
         setUsers(usersResult.data || [])
       } else {
-        console.error('❌ Failed to load users:', usersResult.error)
         setUsers([])
       }
 
@@ -948,21 +957,21 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
           <h3>{t('validityPeriod', 'Validity Period')}</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>{t('issueDate', 'Issue Date')} *</label>
-              <input
-                type="date"
+              <DateInput
                 value={formData.issueDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, issueDate: e.target.value }))}
+                onChange={(value) => setFormData(prev => ({ ...prev, issueDate: value }))}
+                label={t('issueDate', 'Issue Date')}
                 required
+                isClearable
               />
             </div>
             <div className="form-group">
-              <label>{t('expiryDate', 'Expiry Date')}</label>
-              <input
-                type="date"
+              <DateInput
                 value={formData.expiryDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
-                min={formData.issueDate}
+                onChange={(value) => setFormData(prev => ({ ...prev, expiryDate: value }))}
+                label={t('expiryDate', 'Expiry Date')}
+                minDate={formData.issueDate}
+                isClearable
               />
             </div>
           </div>
@@ -1068,12 +1077,12 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           </div>
 
           <div className="form-group">
-            <label>{t('transactionDate', 'Transaction Date')} *</label>
-            <input
-              type="date"
+            <DateInput
               value={formData.transactionDate}
-              onChange={(e) => setFormData(prev => ({ ...prev, transactionDate: e.target.value }))}
+              onChange={(value) => setFormData(prev => ({ ...prev, transactionDate: value }))}
+              label={t('transactionDate', 'Transaction Date')}
               required
+              isClearable
             />
           </div>
         </div>
@@ -1237,12 +1246,12 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
         </div>
 
         <div className="form-group">
-          <label>{t('reloadDate', 'Reload Date')} *</label>
-          <input
-            type="date"
+          <DateInput
             value={formData.reloadDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, reloadDate: e.target.value }))}
+            onChange={(value) => setFormData(prev => ({ ...prev, reloadDate: value }))}
+            label={t('reloadDate', 'Reload Date')}
             required
+            isClearable
           />
         </div>
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play, FileCheck, FileEdit, Navigation, PackageSearch, ClipboardList } from 'lucide-react';
+import { AlertCircle, Plus, RefreshCw, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play, FileCheck, FileEdit, Navigation, PackageSearch, ClipboardList } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useSystemSettings } from '../../context/SystemSettingsContext';
 import { calloutService } from '../../services/collectionService';
-import LoadingSpinner from '../LoadingSpinner';
+import dataCacheService from '../../services/dataCacheService';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
 import CalloutFormModal from './CalloutFormModal';
@@ -30,9 +30,7 @@ const CalloutManager = () => {
   const { formatDate } = useSystemSettings();
   const [loading, setLoading] = useState(false);
   const [callouts, setCallouts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [workflowStage, setWorkflowStage] = useState('all'); // Workflow stage filter
-  const [priorityFilter, setPriorityFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedCallout, setSelectedCallout] = useState(null);
@@ -89,117 +87,114 @@ const CalloutManager = () => {
     return val === true || val === 1 || val === '1';
   }, []);
 
-  // Load global stats by loading all data and counting client-side
-  // This ensures accurate counts including the is_finalized split
-  const loadGlobalStats = useCallback(async () => {
+  // Calculate stats from loaded data (avoids duplicate API call)
+  const calculateGlobalStats = useCallback((allData) => {
+    const scheduled = allData.filter(c => c.status === 'scheduled').length;
+    const inTransit = allData.filter(c => c.status === 'in_transit').length;
+    const collecting = allData.filter(c => c.status === 'collecting').length;
+    const inProgress = inTransit + collecting;
+    const completedNotFinalized = allData.filter(c =>
+      c.status === 'completed' && !checkIsFinalized(c)
+    ).length;
+    const finalized = allData.filter(c => checkIsFinalized(c)).length;
+
+    setGlobalStats({
+      pending: 0,
+      scheduled,
+      inProgress,
+      completed: completedNotFinalized,
+      finalized,
+      total: allData.length
+    });
+  }, [checkIsFinalized]);
+
+  // Combined data loading - PERFORMANCE FIX: Use dataCacheService for instant loading
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        // PERFORMANCE FIX: Use dataCacheService for cached collection orders (2 min TTL)
+        // This provides instant loading after the first fetch
+        const allData = await dataCacheService.getCollectionOrders({
+          page: 1,
+          limit: 200
+        }).catch(err => {
+          console.error('Error loading callouts:', err);
+          return [];
+        });
+
+        // Calculate stats from full dataset (before filtering by workflow stage)
+        calculateGlobalStats(allData);
+
+        // Now filter by workflow stage for display
+        let filteredData = allData;
+        const statusFilter = getStatusFilterFromWorkflowStage(workflowStage);
+
+        if (statusFilter) {
+          const statuses = statusFilter.split(',');
+          filteredData = filteredData.filter(c => statuses.includes(c.status));
+        }
+
+        // Client-side filtering for completed vs finalized
+        if (workflowStage === 'completed') {
+          filteredData = filteredData.filter(c => c.status === 'completed' && !checkIsFinalized(c));
+        } else if (workflowStage === 'finalized') {
+          filteredData = filteredData.filter(c => checkIsFinalized(c));
+        }
+
+        setCallouts(filteredData);
+        setPagination(prev => ({
+          ...prev,
+          total: filteredData.length,
+          totalPages: Math.ceil(filteredData.length / prev.limit)
+        }));
+      } catch (error) {
+        console.error('Error loading callouts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [workflowStage, getStatusFilterFromWorkflowStage, checkIsFinalized, calculateGlobalStats]);
+
+  // Refresh function - invalidates cache and reloads fresh data
+  const loadCallouts = async () => {
     try {
-      // Load ALL collection orders (up to 1000) to get accurate counts
+      setLoading(true);
+
+      // Invalidate cache to force fresh data fetch on explicit refresh
+      dataCacheService.invalidateCollectionOrders();
+
       const response = await calloutService.getCallouts({
         page: 1,
-        limit: 1000
+        limit: 200
       });
 
       if (response.success) {
         const allData = response.data || [];
+        calculateGlobalStats(allData);
 
-        // Count each status
-        // Note: There is NO 'pending' status in collection_orders table
-        // Workflow is: scheduled -> in_transit -> collecting -> completed
-        // 'Pending' in UI means scheduled items without driver assigned (we'll show all scheduled)
-        const scheduled = allData.filter(c => c.status === 'scheduled').length;
-        const inTransit = allData.filter(c => c.status === 'in_transit').length;
-        const collecting = allData.filter(c => c.status === 'collecting').length;
-        const inProgress = inTransit + collecting;
+        let filteredData = allData;
+        const statusFilter = getStatusFilterFromWorkflowStage(workflowStage);
 
-        // For completed vs finalized:
-        // - "Completed" stage = status is 'completed' AND NOT finalized
-        // - "Finalized" stage = is_finalized flag is true (any status with is_finalized=1)
-        const completedNotFinalized = allData.filter(c =>
-          c.status === 'completed' && !checkIsFinalized(c)
-        ).length;
-        const finalized = allData.filter(c => checkIsFinalized(c)).length;
-
-        // Also count cancelled/failed for completeness
-        const cancelled = allData.filter(c => c.status === 'cancelled').length;
-        const failed = allData.filter(c => c.status === 'failed').length;
-
-        // Debug: Show what statuses exist in the data
-        const statusBreakdown = allData.reduce((acc, c) => {
-          const key = `${c.status}${checkIsFinalized(c) ? ' (finalized)' : ''}`;
-          acc[key] = (acc[key] || 0) + 1;
-          return acc;
-        }, {});
-
-        console.log('Stats Debug:', {
-          total: allData.length,
-          scheduled,
-          inTransit,
-          collecting,
-          inProgress,
-          completedNotFinalized,
-          finalized,
-          cancelled,
-          failed,
-          sum: scheduled + inProgress + completedNotFinalized + finalized + cancelled + failed,
-          statusBreakdown
-        });
-
-        // For UI: We're merging "Pending" stage with "Scheduled" since there's no pending in DB
-        // The workflow bar should show: Scheduled -> In Progress -> Completed -> Finalized
-        setGlobalStats({
-          pending: 0, // No pending in collection_orders - they start as scheduled
-          scheduled,
-          inProgress,
-          completed: completedNotFinalized,
-          finalized,
-          total: allData.length
-        });
-      }
-    } catch (error) {
-      console.error('Error loading global stats:', error);
-    }
-  }, [checkIsFinalized]);
-
-  useEffect(() => {
-    loadGlobalStats(); // Load stats on mount
-  }, [loadGlobalStats]);
-
-  useEffect(() => {
-    loadCallouts();
-    // DataTable handles pagination internally, so no need for pagination.page dependency
-  }, [workflowStage, priorityFilter, searchTerm]);
-
-  const loadCallouts = async () => {
-    try {
-      setLoading(true);
-      const statusFilter = getStatusFilterFromWorkflowStage(workflowStage);
-
-      // Load all data - DataTable handles pagination internally
-      const response = await calloutService.getCallouts({
-        page: 1,
-        limit: 1000, // Load all records
-        status: statusFilter,
-        priority: priorityFilter === 'all' ? undefined : priorityFilter,
-        search: searchTerm || undefined
-      });
-
-      if (response.success) {
-        let data = response.data || [];
-
-        // Client-side filtering for completed vs finalized
-        // API can't filter by is_finalized flag
-        if (workflowStage === 'completed') {
-          data = data.filter(c => c.status === 'completed' && !checkIsFinalized(c));
-        } else if (workflowStage === 'finalized') {
-          data = data.filter(c => checkIsFinalized(c));
+        if (statusFilter) {
+          const statuses = statusFilter.split(',');
+          filteredData = filteredData.filter(c => statuses.includes(c.status));
         }
 
-        // Pass all filtered data to DataTable - it handles pagination internally
-        setCallouts(data);
+        if (workflowStage === 'completed') {
+          filteredData = filteredData.filter(c => c.status === 'completed' && !checkIsFinalized(c));
+        } else if (workflowStage === 'finalized') {
+          filteredData = filteredData.filter(c => checkIsFinalized(c));
+        }
+
+        setCallouts(filteredData);
         setPagination(prev => ({
           ...prev,
-          total: data.length,
-          totalPages: Math.ceil(data.length / 25) // For reference only
+          total: filteredData.length,
+          totalPages: Math.ceil(filteredData.length / 25)
         }));
       }
     } catch (error) {
@@ -400,6 +395,17 @@ const CalloutManager = () => {
     }
   }, [t, checkIsFinalized]);
 
+  // Priority badge styles
+  const getPriorityBadgeClass = (priority) => {
+    switch (priority) {
+      case 'urgent': return 'status-badge danger';
+      case 'high': return 'status-badge warning';
+      case 'normal': return 'status-badge info';
+      case 'low': return 'status-badge secondary';
+      default: return 'status-badge secondary';
+    }
+  };
+
   const columns = [
     {
       key: 'orderNumber',
@@ -411,6 +417,22 @@ const CalloutManager = () => {
             <div className="text-muted">{formatDate(row.scheduledDate)}</div>
           )}
         </div>
+      )
+    },
+    {
+      key: 'priority',
+      header: t('priority'),
+      filterable: true,
+      filterOptions: [
+        { value: 'urgent', label: t('urgent') },
+        { value: 'high', label: t('high') },
+        { value: 'normal', label: t('normal') || 'Normal' },
+        { value: 'low', label: t('low') }
+      ],
+      render: (value) => (
+        <span className={getPriorityBadgeClass(value)}>
+          {t(value) || value}
+        </span>
       )
     },
     {
@@ -512,7 +534,7 @@ const CalloutManager = () => {
                 </button>
                 <button
                   onClick={() => handleDeleteCallout(row.id)}
-                  className="btn btn-outline btn-sm btn-danger"
+                  className="btn btn-danger btn-sm"
                   title={t('delete')}
                 >
                   <Trash2 size={14} />
@@ -582,84 +604,49 @@ const CalloutManager = () => {
 
   return (
     <div className={`callout-manager ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Compact Header with Workflow Bar */}
-      <div className="manager-header-compact">
-        <div className="header-left">
-          <h2 className="page-title">
-            <Truck className="w-5 h-5" />
-            {t('collectionOrders')}
-          </h2>
-        </div>
-        <div className="header-actions-compact">
-          <button
-            className="btn-icon"
-            onClick={() => loadCallouts()}
-            title={t('refresh')}
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-              <path d="M16 21h5v-5" />
-            </svg>
-          </button>
-          <button
-            className="btn-primary btn-sm"
-            onClick={handleCreateCallout}
-          >
-            <Plus className="w-4 h-4" />
-            {t('newCollectionOrder')}
-          </button>
-        </div>
-      </div>
-
-      {/* Workflow Progress Bar - Compact with integrated search */}
-      <div className="workflow-search-row">
+      {/* Workflow Progress Bar - Stage-based filtering unique to collections workflow */}
+      <div style={{ marginBottom: '16px' }}>
         <WorkflowProgressBar
           activeStage={workflowStage}
           onStageChange={handleWorkflowStageChange}
           stats={globalStats}
           compact={true}
         />
-        <div className="inline-filters">
-          <div className="search-input-compact">
-            <Search className="w-4 h-4 search-icon" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('searchCallouts')}
-            />
-          </div>
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="filter-select-compact"
-          >
-            <option value="all">{t('allPriorities')}</option>
-            <option value="urgent">{t('urgent')}</option>
-            <option value="high">{t('high')}</option>
-            <option value="normal">{t('normal') || 'Normal'}</option>
-            <option value="low">{t('low')}</option>
-          </select>
-        </div>
       </div>
 
-      {/* Callouts Table */}
+      {/* Collection Orders Table */}
       <div className="callouts-table">
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner size="large" />
-          </div>
-        ) : callouts.length === 0 ? (
+        {!loading && callouts.length === 0 ? (
           <EmptyStateGuidance stage={workflowStage} />
         ) : (
           <DataTable
             data={callouts}
             columns={columns}
+            loading={loading}
+            title={t('collectionOrders')}
+            subtitle={`${t('materialCollectionWorkflow') || 'Material collection workflow'} - ${callouts.length} ${t('orders') || 'orders'}`}
+            headerActions={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  className="btn btn-icon"
+                  onClick={() => loadCallouts()}
+                  title={t('refresh')}
+                >
+                  <RefreshCw size={16} />
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleCreateCallout}
+                >
+                  <Plus size={16} />
+                  {t('newCollectionOrder')}
+                </button>
+              </div>
+            }
             initialPageSize={25}
             paginated={true}
-            searchable={false}
+            searchable={true}
+            filterable={true}
             emptyMessage={t('noCalloutsFound')}
           />
         )}

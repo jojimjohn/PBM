@@ -7,14 +7,14 @@ import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import FileUpload from '../../../components/ui/FileUpload'
 import contractService from '../../../services/contractService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import supplierLocationService from '../../../services/supplierLocationService'
 import uploadService from '../../../services/uploadService'
-import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, Banknote, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin } from 'lucide-react'
+import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, Banknote, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import '../styles/Contracts.css'
 import '../styles/ContractForm.css'
@@ -571,7 +571,7 @@ const Contracts = () => {
     },
     {
       key: 'title',
-      header: t('contractTitle'),
+      header: t('contractTitle', 'Contract Title'),
       sortable: true,
       filterable: true,
       render: (value) => (
@@ -684,12 +684,12 @@ const Contracts = () => {
           </PermissionGate>
           
           <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
-            <button 
-              className="btn btn-outline btn-sm btn-danger" 
+            <button
+              className="btn btn-danger btn-sm"
               onClick={() => handleDeleteContract(row.id)}
               title={t('delete')}
             >
-              <X size={14} />
+              <Trash2 size={14} />
             </button>
           </PermissionGate>
         </div>
@@ -1613,26 +1613,20 @@ const ContractFormModal = ({
             </div>
 
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label={`${t('startDate')} *`}
-                value={formData.startDate ? new Date(formData.startDate) : null}
-                onChange={(date) => {
-                  const dateStr = date ? date.toISOString().split('T')[0] : ''
-                  setFormData(prev => ({ ...prev, startDate: dateStr }))
-                }}
+                value={formData.startDate || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, startDate: value || '' }))}
                 required
               />
             </div>
 
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label={`${t('endDate')} *`}
-                value={formData.endDate ? new Date(formData.endDate) : null}
-                onChange={(date) => {
-                  const dateStr = date ? date.toISOString().split('T')[0] : ''
-                  setFormData(prev => ({ ...prev, endDate: dateStr }))
-                }}
-                minDate={formData.startDate ? new Date(formData.startDate) : null}
+                value={formData.endDate || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, endDate: value || '' }))}
+                minDate={formData.startDate || ''}
                 required
               />
             </div>

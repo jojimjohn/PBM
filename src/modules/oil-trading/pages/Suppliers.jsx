@@ -10,6 +10,7 @@ import DataTable from '../../../components/ui/DataTable'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import typesService from '../../../services/typesService'
+import dataCacheService from '../../../services/dataCacheService'
 import SupplierLocationManager from '../../../components/suppliers/SupplierLocationManager'
 import { 
   Plus, 
@@ -248,6 +249,7 @@ const OilTradingSuppliers = () => {
     try {
       const result = await supplierService.delete(supplierId)
       if (result.success) {
+        dataCacheService.invalidateSuppliers() // Clear cache
         setSuppliers(prev => prev.filter(s => s.id !== supplierId))
         alert(t('supplierDeleted'))
       } else {
@@ -317,6 +319,9 @@ const OilTradingSuppliers = () => {
       }
 
       if (result.success) {
+        // Clear suppliers cache so other pages see the updated data
+        dataCacheService.invalidateSuppliers()
+
         // Update local state
         if (isEdit) {
           setSuppliers(prev => prev.map(s => s.id === result.data.id ? result.data : s))
@@ -476,8 +481,8 @@ const OilTradingSuppliers = () => {
           </PermissionGate>
           
           <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
-            <button 
-              className="btn btn-outline btn-sm btn-danger" 
+            <button
+              className="btn btn-danger btn-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 handleDeleteSupplier(row.id)
@@ -865,17 +870,17 @@ const SupplierFormModal = ({
           <div className="form-grid">
             <div className="form-group full-width">
               <label>{t('specialization', 'Specialization')}</label>
-              <div className="checkbox-grid">
+              <div className="ds-checkbox-grid">
                 {specializations.map(spec => (
-                  <label key={spec.id} className="checkbox-card">
+                  <label key={spec.id} className="ds-checkbox-card">
                     <input
                       type="checkbox"
                       checked={(formData.specialization || []).includes(spec.id)}
                       onChange={() => handleSpecializationChange(spec.id)}
                     />
-                    <div className="checkbox-content">
-                      <span className="checkbox-title">{spec.name}</span>
-                      <span className="checkbox-description">{spec.description}</span>
+                    <div className="ds-checkbox-content">
+                      <span className="ds-checkbox-title">{spec.name}</span>
+                      <span className="ds-checkbox-description">{spec.description}</span>
                     </div>
                   </label>
                 ))}

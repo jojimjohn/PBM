@@ -8,7 +8,7 @@ import inventoryService from '../../services/inventoryService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
-import DatePicker from '../ui/DatePicker';
+import DateInput from '../ui/DateInput';
 import Autocomplete from '../ui/Autocomplete';
 import Input, { Textarea } from '../ui/Input';
 import WastageForm from '../../modules/oil-trading/components/WastageForm';
@@ -449,19 +449,14 @@ const CollectionOrderManager = () => {
 
       {/* Collection Orders Table */}
       <div className="orders-table">
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner size="large" />
-          </div>
-        ) : (
-          <DataTable
-            data={orders}
-            columns={columns}
-            pagination={pagination}
-            onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
-            emptyMessage={t('noOrdersFound')}
-          />
-        )}
+        <DataTable
+          data={orders}
+          columns={columns}
+          loading={loading}
+          pagination={pagination}
+          onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+          emptyMessage={t('noOrdersFound')}
+        />
       </div>
 
       {/* Create/Edit Order Modal */}
@@ -966,12 +961,11 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
             
             {/* Collection Date & Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DatePicker
+              <DateInput
                 label={`${t('scheduledDate')} *`}
-                value={formData.scheduledDate ? new Date(formData.scheduledDate) : null}
-                onChange={(date) => handleInputChange('scheduledDate', date ? date.toISOString().split('T')[0] : '')}
-                dateFormat="dd/MM/yyyy"
-                minDate={new Date()}
+                value={formData.scheduledDate || ''}
+                onChange={(value) => handleInputChange('scheduledDate', value || '')}
+                minDate={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>

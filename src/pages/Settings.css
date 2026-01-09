@@ -40,7 +40,7 @@
   max-width: 1200px;
   margin: 1rem auto;
   padding: 1rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--ds-form-radius);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -179,7 +179,7 @@
 .setting-group input {
   padding: 0.75rem 1rem;
   border: 2px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: var(--ds-form-radius);
   font-size: 0.95rem;
   transition: all 0.2s ease;
   background: white;
@@ -202,7 +202,7 @@
 /* Settings Info Section */
 .setting-info {
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: var(--ds-form-radius);
   padding: 1.5rem;
   border: 1px solid #e2e8f0;
   grid-column: 1 / -1;
@@ -278,7 +278,7 @@
   gap: 0.75rem;
   padding: 1rem;
   border: 2px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: var(--ds-form-radius);
   background: white;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -310,7 +310,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--ds-form-radius);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -545,7 +545,7 @@
   border: none;
   cursor: pointer;
   color: #6b7280;
-  border-radius: 4px;
+  border-radius: var(--ds-form-radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -637,7 +637,7 @@
   cursor: pointer;
   color: #6b7280;
   padding: 0.5rem;
-  border-radius: 4px;
+  border-radius: var(--ds-form-radius);
   display: flex;
   align-items: center;
   transition: all 0.2s;
@@ -686,7 +686,7 @@
 .form-group select {
   padding: 0.625rem;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: var(--ds-form-radius);
   font-size: 0.875rem;
   transition: all 0.2s;
 }

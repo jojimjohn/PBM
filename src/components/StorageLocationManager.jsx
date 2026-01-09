@@ -512,8 +512,8 @@ const StorageLocationManager = ({
                           >
                             <Edit size={14} />
                           </button>
-                          <button 
-                            className="btn btn-outline btn-sm btn-danger"
+                          <button
+                            className="btn btn-danger btn-sm"
                             onClick={() => handleDeleteLocation(row)}
                             title="Delete Location"
                             disabled={row.currentStock > 0}

@@ -39,10 +39,14 @@
   /* Transitions */
   --ds-transition: 150ms cubic-bezier(0.25, 1, 0.5, 1);
 
-  /* Border Radius */
+  /* Border Radius - General UI components */
   --ds-radius-sm: 4px;
   --ds-radius-md: 6px;
   --ds-radius-lg: 8px;
+  --ds-radius-full: 9999px;
+
+  /* Form Border Radius - Sharp edges for professional forms */
+  --ds-form-radius: 0;
 }
 
 /* Dark Mode Support */
@@ -334,6 +338,31 @@
   color: #166534;
   font-size: 10px;
   padding: 2px 6px;
+}
+
+/* Material Type Variants */
+.status-badge.disposable {
+  background: #ecfdf5;
+  color: #047857;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.status-badge.composite {
+  background: #e0e7ff;
+  color: #4338ca;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.status-badge.standard {
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 11px;
 }
 
 /* Stock Status Variants */
@@ -777,30 +806,31 @@
 }
 
 /* ==============================================
-   Summary Cards
+   Summary Cards (Compact Design)
    ============================================== */
 
 .summary-cards,
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
 }
 
 .summary-cards.auto-fit {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 .summary-card,
 .stat-card {
   background: var(--ds-surface);
   border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-lg);
-  padding: 20px;
+  border-radius: var(--ds-radius-md);
+  padding: 12px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   transition: border-color var(--ds-transition);
 }
 
@@ -817,14 +847,13 @@
 
 .summary-card.clickable:hover,
 .stat-card.clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--ds-accent);
 }
 
 .summary-card.active,
 .stat-card.active {
   border-color: var(--ds-warning);
-  box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.2);
+  box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.15);
 }
 
 .summary-card.active .summary-icon,
@@ -835,9 +864,9 @@
 
 .summary-icon,
 .stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--ds-radius-md);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -848,8 +877,8 @@
 
 .summary-icon svg,
 .stat-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
 }
 
 .summary-icon.success,
@@ -880,19 +909,205 @@
 
 .summary-value,
 .stat-value {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--ds-text-primary);
-  margin: 0 0 2px 0;
+  margin: 0;
   font-feature-settings: 'tnum';
+  line-height: 1.2;
 }
 
 .summary-label,
 .stat-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ds-text-muted);
   margin: 0;
   font-weight: 500;
+}
+
+/* ==============================================
+   Entity Cards (Compact Design)
+   Shared card system for all entity types:
+   accounts, contracts, projects, suppliers, etc.
+   ============================================== */
+
+.entity-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.entity-card {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  overflow: hidden;
+  transition: border-color var(--ds-transition);
+  cursor: pointer;
+}
+
+.entity-card:hover {
+  border-color: var(--ds-accent);
+}
+
+.entity-card.selected {
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.entity-card.inactive {
+  opacity: 0.7;
+  background: var(--ds-bg);
+}
+
+/* Entity Card Header - Gradient or Solid */
+.entity-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.entity-card-header.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.entity-card-header.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.entity-card-header.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.entity-card-header.neutral {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.entity-card-header.flat {
+  background: var(--ds-bg);
+  color: var(--ds-text-primary);
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.entity-card-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--ds-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.entity-card-header.flat .entity-card-icon {
+  background: var(--ds-accent);
+  color: white;
+}
+
+.entity-card-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.entity-card-title {
+  flex: 1;
+  margin-left: 10px;
+  min-width: 0;
+}
+
+.entity-card-title h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entity-card-title p {
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entity-card-header.flat .entity-card-title h3 {
+  color: var(--ds-text-primary);
+}
+
+.entity-card-header.flat .entity-card-title p {
+  color: var(--ds-text-muted);
+}
+
+.entity-card-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Entity Card Body */
+.entity-card-body {
+  padding: 12px;
+}
+
+.entity-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.entity-card-row:last-child {
+  margin-bottom: 0;
+}
+
+.entity-card-row .label {
+  font-size: 11px;
+  color: var(--ds-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+
+.entity-card-row .value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-primary);
+  font-feature-settings: 'tnum';
+}
+
+.entity-card-row .value.mono {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--ds-text-secondary);
+}
+
+.entity-card-row .value.large {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.entity-card-row .value.positive {
+  color: var(--ds-success);
+}
+
+.entity-card-row .value.negative {
+  color: var(--ds-danger);
+}
+
+/* Entity Card Footer */
+.entity-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--ds-bg);
+  border-top: 1px solid var(--ds-border);
 }
 
 /* ==============================================
@@ -1583,6 +1798,805 @@
 .text-danger { color: var(--ds-danger); }
 .text-warning { color: var(--ds-warning); }
 
+/* ==============================================
+   SHARED FORM MODAL SYSTEM
+   Professional form styling - use .ds-form-modal
+   on modal containers to get consistent styling
+   ============================================== */
+
+/* -----------------------------------------------------------------------------
+   Form Modal Container
+   ----------------------------------------------------------------------------- */
+.ds-form-modal {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-form-modal.ds-modal-sm { max-width: 480px; }
+.ds-form-modal.ds-modal-md { max-width: 640px; }
+.ds-form-modal.ds-modal-lg { max-width: 900px; }
+.ds-form-modal.ds-modal-xl { max-width: 1100px; }
+
+/* -----------------------------------------------------------------------------
+   Modal Header
+   ----------------------------------------------------------------------------- */
+.ds-form-modal .modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--ds-border);
+  background-color: var(--ds-surface);
+  flex-shrink: 0;
+}
+
+.ds-form-modal .modal-header h3,
+.ds-form-modal .modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ds-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.ds-form-modal .modal-header h3 svg,
+.ds-form-modal .modal-title svg {
+  width: 20px;
+  height: 20px;
+  color: var(--ds-accent);
+}
+
+/* -----------------------------------------------------------------------------
+   Form Element (for flex scroll behavior)
+   ----------------------------------------------------------------------------- */
+.ds-form-modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* -----------------------------------------------------------------------------
+   Modal Body
+   ----------------------------------------------------------------------------- */
+.ds-form-modal .modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  background-color: var(--ds-bg);
+}
+
+/* Custom scrollbar */
+.ds-form-modal .modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ds-form-modal .modal-body::-webkit-scrollbar-track {
+  background: var(--ds-bg);
+}
+
+.ds-form-modal .modal-body::-webkit-scrollbar-thumb {
+  background: var(--ds-text-faint);
+  border-radius: 3px;
+}
+
+.ds-form-modal .modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--ds-text-muted);
+}
+
+/* -----------------------------------------------------------------------------
+   Form Sections - Card Style
+   ----------------------------------------------------------------------------- */
+.ds-form-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: var(--ds-surface);
+  border-radius: var(--ds-form-radius);
+  border: 1px solid var(--ds-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ds-form-section:last-child {
+  margin-bottom: 0;
+}
+
+.ds-form-section-title,
+.ds-form-section h4 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-text-secondary);
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--ds-border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ds-form-section-title svg,
+.ds-form-section h4 svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ds-accent);
+}
+
+/* Section Variants */
+.ds-form-section.success {
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.05);
+}
+
+.ds-form-section.success h4,
+.ds-form-section.success .ds-form-section-title {
+  color: #047857;
+}
+
+.ds-form-section.info {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.05);
+}
+
+.ds-form-section.warning {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.05);
+}
+
+/* Section Header with Inline Action (title + toggle/button) */
+.ds-form-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.ds-form-section-header h4,
+.ds-form-section-header h5 {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ds-form-section-header h5 {
+  font-size: 0.875rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Section header without bottom border (for nested use) */
+.ds-form-section-header.no-border {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Form Grid Layouts
+   ----------------------------------------------------------------------------- */
+.ds-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.875rem 1rem;
+}
+
+.ds-form-grid.three-col {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ds-form-grid.four-col {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.ds-form-grid.compact {
+  gap: 0.75rem 0.875rem;
+}
+
+/* -----------------------------------------------------------------------------
+   Form Groups
+   ----------------------------------------------------------------------------- */
+.ds-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.ds-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.ds-form-group.span-2 {
+  grid-column: span 2;
+}
+
+.ds-form-group.span-3 {
+  grid-column: span 3;
+}
+
+.ds-form-group.checkbox-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 1.5rem;
+}
+
+/* -----------------------------------------------------------------------------
+   Labels
+   ----------------------------------------------------------------------------- */
+.ds-form-label,
+.ds-form-group label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ds-form-group label small {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--ds-text-faint);
+}
+
+.ds-form-group label .required,
+.ds-form-label .required {
+  color: var(--ds-danger);
+}
+
+/* -----------------------------------------------------------------------------
+   Input Fields
+   ----------------------------------------------------------------------------- */
+.ds-form-input,
+.ds-form-select,
+.ds-form-textarea,
+.ds-form-group input[type="text"],
+.ds-form-group input[type="number"],
+.ds-form-group input[type="email"],
+.ds-form-group input[type="tel"],
+.ds-form-group input[type="date"],
+.ds-form-group input[type="time"],
+.ds-form-group input[type="datetime-local"],
+.ds-form-group select,
+.ds-form-group textarea {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-form-radius);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  color: var(--ds-text-primary);
+  background-color: var(--ds-surface);
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.ds-form-input::placeholder,
+.ds-form-textarea::placeholder,
+.ds-form-group input::placeholder,
+.ds-form-group textarea::placeholder {
+  color: var(--ds-text-faint);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Focus State */
+.ds-form-input:focus,
+.ds-form-select:focus,
+.ds-form-textarea:focus,
+.ds-form-group input:focus,
+.ds-form-group select:focus,
+.ds-form-group textarea:focus {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Hover State */
+.ds-form-input:hover:not(:focus),
+.ds-form-select:hover:not(:focus),
+.ds-form-textarea:hover:not(:focus),
+.ds-form-group input:hover:not(:focus),
+.ds-form-group select:hover:not(:focus),
+.ds-form-group textarea:hover:not(:focus) {
+  border-color: var(--ds-text-faint);
+}
+
+/* Error State */
+.ds-form-input.error,
+.ds-form-select.error,
+.ds-form-textarea.error,
+.ds-form-group input.error,
+.ds-form-group select.error,
+.ds-form-group textarea.error {
+  border-color: var(--ds-danger);
+}
+
+.ds-form-input.error:focus,
+.ds-form-select.error:focus,
+.ds-form-textarea.error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Disabled State */
+.ds-form-input:disabled,
+.ds-form-select:disabled,
+.ds-form-textarea:disabled,
+.ds-form-group input:disabled,
+.ds-form-group select:disabled,
+.ds-form-group textarea:disabled {
+  background-color: var(--ds-bg);
+  color: var(--ds-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Textarea Specific */
+.ds-form-textarea,
+.ds-form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+/* Select Specific */
+.ds-form-select,
+.ds-form-group select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  padding-right: 2.25rem;
+  appearance: none;
+}
+
+/* -----------------------------------------------------------------------------
+   Helper Text & Error Messages
+   ----------------------------------------------------------------------------- */
+.ds-form-helper,
+.ds-form-group small {
+  font-size: 0.6875rem;
+  color: var(--ds-text-muted);
+  margin-top: -0.125rem;
+}
+
+.ds-form-error,
+.ds-form-group small.error-text {
+  color: var(--ds-danger);
+  font-weight: 500;
+}
+
+/* Error Message Box */
+.ds-form-error-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--ds-form-radius);
+  color: #991b1b;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.ds-form-error-box svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Success Message Box */
+.ds-form-success-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--ds-form-radius);
+  color: #065f46;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+/* Info Box */
+.ds-form-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--ds-form-radius);
+  margin-bottom: 1rem;
+}
+
+.ds-form-info-box svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: var(--ds-accent);
+  width: 16px;
+  height: 16px;
+}
+
+.ds-form-info-box p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.ds-form-info-box.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.ds-form-info-box.success svg { color: var(--ds-success); }
+.ds-form-info-box.success p { color: #047857; }
+
+.ds-form-info-box.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.ds-form-info-box.warning svg { color: var(--ds-warning); }
+.ds-form-info-box.warning p { color: #92400e; }
+
+/* -----------------------------------------------------------------------------
+   Checkbox & Toggle Switch
+   ----------------------------------------------------------------------------- */
+.ds-form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ds-form-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: var(--ds-accent);
+}
+
+/* Toggle Switch */
+.ds-toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ds-toggle-switch input[type="checkbox"] {
+  display: none;
+}
+
+.ds-toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: var(--ds-text-faint);
+  border-radius: 12px;
+  transition: background-color 0.3s ease;
+}
+
+.ds-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.ds-toggle-switch input[type="checkbox"]:checked + .ds-toggle-slider {
+  background-color: var(--ds-accent);
+}
+
+.ds-toggle-switch input[type="checkbox"]:checked + .ds-toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.ds-toggle-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ds-text-secondary);
+}
+
+/* Toggle Variants */
+.ds-toggle-switch.success input[type="checkbox"]:checked + .ds-toggle-slider {
+  background-color: var(--ds-success);
+}
+
+.ds-toggle-switch.warning input[type="checkbox"]:checked + .ds-toggle-slider {
+  background-color: var(--ds-warning);
+}
+
+/* -----------------------------------------------------------------------------
+   Inline Table in Forms (for compositions, rates, etc.)
+   ----------------------------------------------------------------------------- */
+.ds-form-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 0.5rem;
+  border-radius: var(--ds-form-radius);
+  border: 1px solid var(--ds-border);
+}
+
+.ds-form-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--ds-surface);
+}
+
+.ds-form-table thead {
+  background-color: var(--ds-bg);
+}
+
+.ds-form-table th {
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--ds-border);
+  white-space: nowrap;
+}
+
+.ds-form-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--ds-border-subtle);
+  font-size: 0.8125rem;
+  vertical-align: middle;
+}
+
+.ds-form-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ds-form-table tbody tr:hover {
+  background-color: var(--ds-bg);
+}
+
+.ds-form-table .empty-row {
+  text-align: center;
+  padding: 2rem;
+  color: var(--ds-text-muted);
+  font-size: 0.875rem;
+}
+
+/* Table Inputs */
+.ds-form-table input,
+.ds-form-table select {
+  width: 100%;
+  padding: 0.4rem 0.625rem;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-form-radius);
+  font-size: 0.8125rem;
+  background-color: var(--ds-surface);
+  transition: all 0.15s ease;
+}
+
+.ds-form-table input:focus,
+.ds-form-table select:focus {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ds-form-table input[type="number"] {
+  text-align: right;
+}
+
+/* -----------------------------------------------------------------------------
+   Modal Footer
+   ----------------------------------------------------------------------------- */
+.ds-form-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--ds-border);
+  background-color: var(--ds-surface);
+  flex-shrink: 0;
+}
+
+.ds-form-modal .modal-footer .btn {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--ds-form-radius);
+  transition: all 0.15s ease;
+}
+
+/* -----------------------------------------------------------------------------
+   Hint Text
+   ----------------------------------------------------------------------------- */
+.ds-form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ds-text-muted);
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* -----------------------------------------------------------------------------
+   Icon Button (for table actions)
+   ----------------------------------------------------------------------------- */
+.ds-form-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--ds-form-radius);
+  transition: all 0.15s ease;
+  color: var(--ds-text-muted);
+}
+
+.ds-form-btn-icon:hover {
+  background-color: var(--ds-bg);
+  color: var(--ds-text-secondary);
+}
+
+.ds-form-btn-icon.danger {
+  color: var(--ds-danger);
+}
+
+.ds-form-btn-icon.danger:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.ds-form-btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ds-form-btn-icon:disabled:hover {
+  background-color: transparent;
+}
+
+/* -----------------------------------------------------------------------------
+   Form Modal Responsive
+   ----------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .ds-form-modal {
+    max-width: 95vw;
+    margin: 0.5rem;
+  }
+
+  .ds-form-modal .modal-header,
+  .ds-form-modal .modal-footer {
+    padding: 1rem;
+  }
+
+  .ds-form-modal .modal-body {
+    padding: 1rem;
+  }
+
+  .ds-form-grid,
+  .ds-form-grid.three-col,
+  .ds-form-grid.four-col {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-form-group.full-width,
+  .ds-form-group.span-2,
+  .ds-form-group.span-3 {
+    grid-column: 1;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Form Modal RTL Support
+   ----------------------------------------------------------------------------- */
+[dir="rtl"] .ds-form-modal .modal-header h3,
+[dir="rtl"] .ds-form-modal .modal-title {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ds-form-section-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ds-form-section-header h4,
+[dir="rtl"] .ds-form-section-header h5 {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ds-form-modal .modal-footer {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ds-form-group label {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ds-form-select,
+[dir="rtl"] .ds-form-group select {
+  background-position: left 0.75rem center;
+  padding-right: 0.75rem;
+  padding-left: 2.25rem;
+}
+
+[dir="rtl"] .ds-toggle-slider::before {
+  left: auto;
+  right: 2px;
+}
+
+[dir="rtl"] .ds-toggle-switch input[type="checkbox"]:checked + .ds-toggle-slider::before {
+  transform: translateX(-20px);
+}
+
+[dir="rtl"] .ds-form-info-box,
+[dir="rtl"] .ds-form-error-box,
+[dir="rtl"] .ds-form-success-box {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ds-form-table th,
+[dir="rtl"] .ds-form-table td {
+  text-align: right;
+}
+
+[dir="rtl"] .ds-form-table input[type="number"] {
+  text-align: left;
+}
+
+/* -----------------------------------------------------------------------------
+   Dark Mode Support for Forms
+   ----------------------------------------------------------------------------- */
+[data-theme="dark"] .ds-form-modal .modal-header,
+[data-theme="dark"] .ds-form-modal .modal-footer {
+  background-color: var(--ds-surface);
+  border-color: var(--ds-border);
+}
+
+[data-theme="dark"] .ds-form-section {
+  background-color: var(--ds-surface-elevated);
+  border-color: var(--ds-border);
+}
+
+[data-theme="dark"] .ds-form-input,
+[data-theme="dark"] .ds-form-select,
+[data-theme="dark"] .ds-form-textarea,
+[data-theme="dark"] .ds-form-group input,
+[data-theme="dark"] .ds-form-group select,
+[data-theme="dark"] .ds-form-group textarea {
+  background-color: var(--ds-surface);
+  border-color: var(--ds-border);
+  color: var(--ds-text-primary);
+}
+
+[data-theme="dark"] .ds-form-table {
+  background-color: var(--ds-surface);
+}
+
+[data-theme="dark"] .ds-form-table thead {
+  background-color: var(--ds-bg);
+}
+
 /* Opacity */
 .opacity-50 { opacity: 0.5; }
 .opacity-30 { opacity: 0.3; }
@@ -1726,6 +2740,96 @@
 }
 
 /* ==============================================
+   Checkbox Grid (Multi-select lists)
+   Use for specializations, categories, features
+   ============================================== */
+
+.ds-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.ds-checkbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--ds-bg);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-form-radius);
+  cursor: pointer;
+  transition: all var(--ds-transition);
+}
+
+.ds-checkbox-card:hover {
+  border-color: var(--ds-accent);
+  background: var(--ds-surface);
+}
+
+.ds-checkbox-card:has(input:checked) {
+  border-color: var(--ds-accent);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.ds-checkbox-card input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--ds-accent);
+}
+
+.ds-checkbox-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-checkbox-title {
+  font-weight: 500;
+  color: var(--ds-text-primary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.ds-checkbox-card:has(input:checked) .ds-checkbox-title {
+  font-weight: 600;
+  color: var(--ds-accent);
+}
+
+.ds-checkbox-description {
+  font-size: 0.6875rem;
+  color: var(--ds-text-muted);
+  line-height: 1.4;
+}
+
+/* Scrollbar styling for checkbox grid */
+.ds-checkbox-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ds-checkbox-grid::-webkit-scrollbar-track {
+  background: var(--ds-bg);
+  border-radius: 3px;
+}
+
+.ds-checkbox-grid::-webkit-scrollbar-thumb {
+  background: var(--ds-border);
+  border-radius: 3px;
+}
+
+.ds-checkbox-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--ds-text-faint);
+}
+
+/* ==============================================
    Responsive Breakpoints
    ============================================== */
 
@@ -1765,5 +2869,24 @@
 
   .form-actions .btn {
     width: 100%;
+  }
+
+  /* Checkbox grid responsive */
+  .ds-checkbox-grid {
+    grid-template-columns: 1fr;
+    max-height: 200px;
+  }
+
+  .ds-checkbox-card {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .ds-checkbox-title {
+    font-size: 0.8125rem;
+  }
+
+  .ds-checkbox-description {
+    font-size: 0.625rem;
   }
 }

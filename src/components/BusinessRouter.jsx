@@ -1,38 +1,59 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import PageLoader from './ui/PageLoader'
 
-// Oil Trading Module Components
-import OilTradingDashboard from '../modules/oil-trading/pages/Dashboard'
+// ============================================================================
+// EAGERLY LOADED - Dashboard pages (first page after login, instant display)
+// ============================================================================
 import WorkflowDashboard from '../modules/oil-trading/pages/WorkflowDashboard'
-import OilTradingCustomers from '../modules/oil-trading/pages/Customers'
-import OilTradingSuppliers from '../modules/oil-trading/pages/Suppliers'
-import OilTradingInventory from '../modules/oil-trading/pages/Inventory'
-import OilTradingContracts from '../modules/oil-trading/pages/Contracts'
-import OilTradingPurchase from '../modules/oil-trading/pages/Purchase'
-import OilTradingSales from '../modules/oil-trading/pages/Sales'
-import OilTradingWastage from '../modules/oil-trading/pages/Wastage'
-import OilTradingPettyCash from '../modules/oil-trading/pages/PettyCash'
-import OilTradingSettings from '../modules/oil-trading/pages/Settings'
-import OilTradingStockAdjustment from '../modules/oil-trading/pages/StockAdjustment'
-
-// Scrap Materials Module Components
 import ScrapMaterialsDashboard from '../modules/scrap-materials/pages/Dashboard'
-import ScrapMaterialsSuppliers from '../modules/scrap-materials/pages/Suppliers'
-import ScrapMaterialsInventory from '../modules/scrap-materials/pages/Inventory'
-import ScrapMaterialsSales from '../modules/scrap-materials/pages/Sales'
-import ScrapMaterialsPurchase from '../modules/scrap-materials/pages/Purchase'
-import ScrapMaterialsCollections from '../modules/scrap-materials/pages/Collections'
-import ScrapMaterialsWastage from '../modules/scrap-materials/pages/Wastage'
-import ScrapMaterialsPettyCash from '../modules/scrap-materials/pages/PettyCash'
-import ScrapMaterialsSettings from '../modules/scrap-materials/pages/Settings'
 
-// Shared components (used by both businesses)
-import Reports from '../pages/Reports'
-import Banking from '../pages/Banking'
-import UserManagement from '../pages/UserManagement'
-import RoleManagement from '../pages/RoleManagement'
-import Projects from '../pages/Projects'
+// ============================================================================
+// LAZY LOADED - Oil Trading Module Components
+// ============================================================================
+const OilTradingDashboard = lazy(() => import('../modules/oil-trading/pages/Dashboard'))
+const OilTradingCustomers = lazy(() => import('../modules/oil-trading/pages/Customers'))
+const OilTradingSuppliers = lazy(() => import('../modules/oil-trading/pages/Suppliers'))
+const OilTradingInventory = lazy(() => import('../modules/oil-trading/pages/Inventory'))
+const OilTradingContracts = lazy(() => import('../modules/oil-trading/pages/Contracts'))
+const OilTradingPurchase = lazy(() => import('../modules/oil-trading/pages/Purchase'))
+const OilTradingSales = lazy(() => import('../modules/oil-trading/pages/Sales'))
+const OilTradingWastage = lazy(() => import('../modules/oil-trading/pages/Wastage'))
+const OilTradingPettyCash = lazy(() => import('../modules/oil-trading/pages/PettyCash'))
+const OilTradingSettings = lazy(() => import('../modules/oil-trading/pages/Settings'))
+const OilTradingStockAdjustment = lazy(() => import('../modules/oil-trading/pages/StockAdjustment'))
+
+// ============================================================================
+// LAZY LOADED - Scrap Materials Module Components
+// ============================================================================
+const ScrapMaterialsSuppliers = lazy(() => import('../modules/scrap-materials/pages/Suppliers'))
+const ScrapMaterialsInventory = lazy(() => import('../modules/scrap-materials/pages/Inventory'))
+const ScrapMaterialsSales = lazy(() => import('../modules/scrap-materials/pages/Sales'))
+const ScrapMaterialsPurchase = lazy(() => import('../modules/scrap-materials/pages/Purchase'))
+const ScrapMaterialsCollections = lazy(() => import('../modules/scrap-materials/pages/Collections'))
+const ScrapMaterialsWastage = lazy(() => import('../modules/scrap-materials/pages/Wastage'))
+const ScrapMaterialsPettyCash = lazy(() => import('../modules/scrap-materials/pages/PettyCash'))
+const ScrapMaterialsSettings = lazy(() => import('../modules/scrap-materials/pages/Settings'))
+
+// ============================================================================
+// LAZY LOADED - Shared Components (used by both businesses)
+// ============================================================================
+const Reports = lazy(() => import('../pages/Reports'))
+const Banking = lazy(() => import('../pages/Banking'))
+const UserManagement = lazy(() => import('../pages/UserManagement'))
+const RoleManagement = lazy(() => import('../pages/RoleManagement'))
+const Projects = lazy(() => import('../pages/Projects'))
+
+/**
+ * LazyRoute - Wrapper component for lazy-loaded routes
+ * Provides consistent Suspense fallback across all routes
+ */
+const LazyRoute = ({ children }) => (
+  <Suspense fallback={<PageLoader />}>
+    {children}
+  </Suspense>
+)
 
 const BusinessRouter = () => {
   const { selectedCompany } = useAuth()
@@ -43,23 +64,26 @@ const BusinessRouter = () => {
     return (
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Dashboard is eagerly loaded - no Suspense needed */}
         <Route path="/dashboard" element={<WorkflowDashboard />} />
-        <Route path="/customers" element={<OilTradingCustomers />} />
-        <Route path="/suppliers" element={<OilTradingSuppliers />} />
-        <Route path="/inventory" element={<OilTradingInventory />} />
-        <Route path="/stock-adjustment" element={<OilTradingStockAdjustment />} />
-        <Route path="/contracts" element={<OilTradingContracts />} />
-        <Route path="/sales" element={<OilTradingSales />} />
-        <Route path="/purchase" element={<OilTradingPurchase />} />
+
+        {/* All other routes are lazy loaded with Suspense */}
+        <Route path="/customers" element={<LazyRoute><OilTradingCustomers /></LazyRoute>} />
+        <Route path="/suppliers" element={<LazyRoute><OilTradingSuppliers /></LazyRoute>} />
+        <Route path="/inventory" element={<LazyRoute><OilTradingInventory /></LazyRoute>} />
+        <Route path="/stock-adjustment" element={<LazyRoute><OilTradingStockAdjustment /></LazyRoute>} />
+        <Route path="/contracts" element={<LazyRoute><OilTradingContracts /></LazyRoute>} />
+        <Route path="/sales" element={<LazyRoute><OilTradingSales /></LazyRoute>} />
+        <Route path="/purchase" element={<LazyRoute><OilTradingPurchase /></LazyRoute>} />
         <Route path="/collections" element={<Navigate to="/purchase" replace />} />
-        <Route path="/wastage" element={<OilTradingWastage />} />
-        <Route path="/petty-cash" element={<OilTradingPettyCash />} />
-        <Route path="/banking" element={<Banking />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<OilTradingSettings />} />
-        <Route path="/users" element={<UserManagement />} />
-        <Route path="/roles" element={<RoleManagement />} />
-        <Route path="/projects" element={<Projects />} />
+        <Route path="/wastage" element={<LazyRoute><OilTradingWastage /></LazyRoute>} />
+        <Route path="/petty-cash" element={<LazyRoute><OilTradingPettyCash /></LazyRoute>} />
+        <Route path="/banking" element={<LazyRoute><Banking /></LazyRoute>} />
+        <Route path="/reports" element={<LazyRoute><Reports /></LazyRoute>} />
+        <Route path="/settings" element={<LazyRoute><OilTradingSettings /></LazyRoute>} />
+        <Route path="/users" element={<LazyRoute><UserManagement /></LazyRoute>} />
+        <Route path="/roles" element={<LazyRoute><RoleManagement /></LazyRoute>} />
+        <Route path="/projects" element={<LazyRoute><Projects /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )
@@ -68,19 +92,22 @@ const BusinessRouter = () => {
     return (
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Dashboard is eagerly loaded - no Suspense needed */}
         <Route path="/dashboard" element={<ScrapMaterialsDashboard />} />
-        <Route path="/suppliers" element={<ScrapMaterialsSuppliers />} />
-        <Route path="/inventory" element={<ScrapMaterialsInventory />} />
-        <Route path="/sales" element={<ScrapMaterialsSales />} />
-        <Route path="/purchase" element={<ScrapMaterialsPurchase />} />
-        <Route path="/collections" element={<ScrapMaterialsCollections />} />
-        <Route path="/wastage" element={<ScrapMaterialsWastage />} />
-        <Route path="/petty-cash" element={<ScrapMaterialsPettyCash />} />
-        <Route path="/banking" element={<Banking />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<ScrapMaterialsSettings />} />
-        <Route path="/users" element={<UserManagement />} />
-        <Route path="/roles" element={<RoleManagement />} />
+
+        {/* All other routes are lazy loaded with Suspense */}
+        <Route path="/suppliers" element={<LazyRoute><ScrapMaterialsSuppliers /></LazyRoute>} />
+        <Route path="/inventory" element={<LazyRoute><ScrapMaterialsInventory /></LazyRoute>} />
+        <Route path="/sales" element={<LazyRoute><ScrapMaterialsSales /></LazyRoute>} />
+        <Route path="/purchase" element={<LazyRoute><ScrapMaterialsPurchase /></LazyRoute>} />
+        <Route path="/collections" element={<LazyRoute><ScrapMaterialsCollections /></LazyRoute>} />
+        <Route path="/wastage" element={<LazyRoute><ScrapMaterialsWastage /></LazyRoute>} />
+        <Route path="/petty-cash" element={<LazyRoute><ScrapMaterialsPettyCash /></LazyRoute>} />
+        <Route path="/banking" element={<LazyRoute><Banking /></LazyRoute>} />
+        <Route path="/reports" element={<LazyRoute><Reports /></LazyRoute>} />
+        <Route path="/settings" element={<LazyRoute><ScrapMaterialsSettings /></LazyRoute>} />
+        <Route path="/users" element={<LazyRoute><UserManagement /></LazyRoute>} />
+        <Route path="/roles" element={<LazyRoute><RoleManagement /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )

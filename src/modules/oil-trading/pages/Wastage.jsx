@@ -81,8 +81,14 @@ const Wastage = () => {
       setLoading(true)
       setError(null)
 
-      // Load wastage data from backend
-      const wastageResult = await wastageService.getAll()
+      // PERFORMANCE: Run ALL API calls in parallel
+      const [wastageResult, typesResult, materialsResult] = await Promise.all([
+        wastageService.getAll(),
+        wastageService.getTypes().catch(() => ({ success: false, data: [] })),
+        materialService.getAll().catch(() => ({ success: false, data: [] }))
+      ])
+
+      // Process wastage data
       if (wastageResult.success) {
         const wastageData = wastageResult.data || []
         setWastages(wastageData)
@@ -102,17 +108,14 @@ const Wastage = () => {
         throw new Error(wastageResult.error || 'Failed to load wastages')
       }
 
-      // Load wastage types
-      const typesResult = await wastageService.getTypes()
+      // Process wastage types
       if (typesResult.success && typesResult.data) {
-        // Convert to array format for dropdowns
         const typesArray = typesResult.data.map(type => ({
           value: type.key || type.value,
           label: type.name || type.label
         }))
         setWasteTypes(typesArray)
 
-        // Also create a map for quick lookup
         const typesObj = {}
         typesResult.data.forEach(type => {
           typesObj[type.key || type.value] = {
@@ -123,8 +126,7 @@ const Wastage = () => {
         setWasteTypesMap(typesObj)
       }
 
-      // Load materials
-      const materialsResult = await materialService.getAll()
+      // Process materials
       if (materialsResult.success) {
         setMaterials(materialsResult.data || [])
       }
@@ -441,7 +443,7 @@ const Wastage = () => {
                   )}
                   {hasPermission('DELETE_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
                     <button
-                      className="btn btn-outline btn-sm btn-danger"
+                      className="btn btn-danger btn-sm"
                       onClick={() => handleDeleteWastage(row.id)}
                       title={t('delete', 'Delete')}
                     >

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
-import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import inventoryService from '../../../services/inventoryService'
 import financialService from '../../../services/financialService'
-import supplierService from '../../../services/supplierService'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import expenseService from '../../../services/expenseService'
-import { calloutService } from '../../../services/collectionService'
+import dataCacheService from '../../../services/dataCacheService'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import Collections from './Collections'
 import PurchaseOrderViewModal from '../../../components/PurchaseOrderViewModal'
@@ -61,53 +59,46 @@ const Purchase = () => {
     try {
       setLoading(true)
 
-      // Task 3.4: Load all tab data in parallel using Promise.all for instant tab switching
-      const [suppliersResult, ordersResult, collectionsResult, expensesResult] = await Promise.all([
-        supplierService.getAll(),
+      // PERFORMANCE FIX: Use dataCacheService for instant loading of cached data
+      const [suppliersData, ordersResult, collectionsData, expensesResult] = await Promise.all([
+        // Suppliers - CACHED (5 min TTL)
+        dataCacheService.getSuppliers().catch(err => {
+          console.error('Error loading suppliers:', err)
+          return []
+        }),
         purchaseOrderService.getAll(),
-        calloutService.getCallouts(),
+        // Collection orders - CACHED (2 min TTL)
+        dataCacheService.getCollectionOrders().catch(err => {
+          console.error('Error loading collections:', err)
+          return []
+        }),
         expenseService.getPurchaseExpenses()
       ])
 
-      // Process suppliers
-      if (suppliersResult.success) {
-        setSuppliers(suppliersResult.data)
-        console.log('Suppliers loaded:', suppliersResult.data.length)
-      } else {
-        console.error('Failed to load suppliers:', suppliersResult.error)
-        alert(`Failed to load suppliers: ${suppliersResult.error}`)
-      }
+      // Process suppliers (dataCacheService returns array directly)
+      setSuppliers(suppliersData || [])
 
       // Process purchase orders
       if (ordersResult.success) {
         setPurchaseOrders(ordersResult.data)
-        console.log('Purchase orders loaded:', ordersResult.data.length)
       } else {
         console.error('Failed to load purchase orders:', ordersResult.error)
-        alert(`Failed to load purchase orders: ${ordersResult.error}`)
+        setPurchaseOrders([])
       }
 
-      // Process collection orders
-      if (collectionsResult.success) {
-        setCollectionOrders(collectionsResult.data)
-        console.log('Collection orders loaded:', collectionsResult.data.length)
-      } else {
-        console.error('Failed to load collection orders:', collectionsResult.error)
-        // Don't show alert for collections as it's not critical
-      }
+      // Process collection orders (dataCacheService returns array directly)
+      setCollectionOrders(collectionsData || [])
 
       // Process purchase expenses
       if (expensesResult.success) {
         setExpenses(expensesResult.data)
-        console.log('Purchase expenses loaded:', expensesResult.data.length)
       } else {
         console.error('Failed to load purchase expenses:', expensesResult.error)
-        // Don't show alert for expenses as it's not critical
+        setExpenses([])
       }
 
     } catch (error) {
       console.error('Error loading purchase data:', error)
-      alert('Failed to load purchase data')
     } finally {
       setLoading(false)
     }
@@ -285,14 +276,6 @@ const Purchase = () => {
       default:
         return null
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <LoadingSpinner message="Loading purchase data..." size="large" />
-      </div>
-    )
   }
 
   return (

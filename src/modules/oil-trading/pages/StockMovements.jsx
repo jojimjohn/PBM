@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useLocalization } from '../../../context/LocalizationContext';
 import inventoryService, { calculateStockStatus, stockStatusConfig } from '../../../services/inventoryService';
+import dataCacheService from '../../../services/dataCacheService';
 import ViewToggle from '../components/ViewToggle';
 import TimelineView from '../components/TimelineView';
 import '../styles/StockMovements.css';
@@ -120,16 +121,24 @@ const StockMovements = () => {
   // Available categories (derived from data)
   const [categories, setCategories] = useState([]);
 
-  // Fetch inventory data
-  const fetchInventory = useCallback(async () => {
+  // Fetch inventory data - PERFORMANCE FIX: Use dataCacheService for instant loading
+  const fetchInventory = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await inventoryService.getAll();
+      // If force refresh requested, invalidate cache first
+      if (forceRefresh) {
+        dataCacheService.invalidateInventory();
+      }
 
-      if (response.success) {
-        const data = response.data || [];
+      // Use dataCacheService for cached inventory (2 min TTL)
+      const data = await dataCacheService.getInventory().catch(err => {
+        console.error('Error loading inventory:', err);
+        return [];
+      });
+
+      if (data) {
         setInventory(data);
 
         // Extract unique categories
@@ -149,8 +158,6 @@ const StockMovements = () => {
           totalQuantity,
           lowStockCount
         });
-      } else {
-        setError(response.error || 'Failed to load inventory');
       }
     } catch (err) {
       setError(err.message || 'Failed to load inventory');

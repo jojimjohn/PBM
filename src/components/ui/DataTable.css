@@ -121,6 +121,14 @@
   flex-wrap: wrap;
 }
 
+/* Custom Filters (passed via prop) */
+.custom-filters-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .filter-select {
   padding: 0.5rem 0.75rem;
   border: 2px solid #d1d5db;

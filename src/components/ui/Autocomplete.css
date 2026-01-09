@@ -24,7 +24,7 @@
   width: 100%;
   background-color: white;
   border: 1px solid var(--gray-300);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   transition: all var(--transition-fast);
   cursor: pointer;
   gap: var(--space-2);
@@ -104,7 +104,7 @@
   padding: var(--space-1) var(--space-2);
   background-color: var(--primary-100);
   color: var(--primary-700);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   white-space: nowrap;
@@ -186,7 +186,7 @@
   padding: var(--space-1);
   background: transparent;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   color: var(--gray-400);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -213,7 +213,7 @@
   z-index: 9999;
   background-color: white;
   border: 1px solid var(--gray-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   box-shadow: var(--shadow-xl);
   max-height: 300px;
   overflow-y: auto;
@@ -232,7 +232,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   cursor: pointer;
   transition: all var(--transition-fast);
   color: var(--gray-700);
@@ -365,12 +365,12 @@
 
 .autocomplete-menu::-webkit-scrollbar-track {
   background: var(--gray-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
 }
 
 .autocomplete-menu::-webkit-scrollbar-thumb {
   background: var(--gray-400);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
 }
 
 .autocomplete-menu::-webkit-scrollbar-thumb:hover {

@@ -30,7 +30,7 @@
   max-height: calc(100vh - 2rem); /* Prevent vertical overflow */
   margin: auto !important; /* Extra centering safeguard */
   background-color: white;
-  border-radius: var(--radius-xl);
+  border-radius: var(--ds-form-radius);
   box-shadow: var(--shadow-2xl);
   overflow: hidden;
   outline: none;
@@ -112,7 +112,7 @@
   border: none;
   background-color: transparent;
   color: var(--gray-500);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -259,7 +259,7 @@
     width: 100%;
     max-width: 100%;
     max-height: 90vh;
-    border-radius: var(--radius-lg);
+    border-radius: var(--ds-form-radius);
   }
 
   .modal-sm,

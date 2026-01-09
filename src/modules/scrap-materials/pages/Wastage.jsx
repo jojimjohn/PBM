@@ -135,34 +135,37 @@ const Wastage = () => {
     try {
       setLoading(true)
       setError(null)
-      
-      // Load wastage data from backend
-      const wastageResult = await wastageService.getAll()
+
+      // PERFORMANCE: Run ALL API calls in parallel
+      const [wastageResult, typesResult, materialsResult] = await Promise.all([
+        wastageService.getAll(),
+        wastageService.getTypes().catch(() => ({ success: false, data: [] })),
+        materialService.getAll().catch(() => ({ success: false, data: [] }))
+      ])
+
+      // Process wastage data
       if (wastageResult.success) {
         setWastages(wastageResult.data || [])
       } else {
         throw new Error(wastageResult.error || 'Failed to load wastages')
       }
-      
-      // Load wastage types
-      const typesResult = await wastageService.getTypes()
-      if (typesResult.success) {
-        // Convert array to object format for compatibility
+
+      // Process wastage types
+      if (typesResult.success && typesResult.data) {
         const typesObj = {}
         typesResult.data.forEach(type => {
           typesObj[type.key] = { name: type.name, color: type.color }
         })
         setWasteTypes(typesObj)
       }
-      
-      // Load materials
-      const materialsResult = await materialService.getAll()
+
+      // Process materials
       if (materialsResult.success) {
         setMaterials(materialsResult.data || [])
       } else {
         console.warn('Failed to load materials:', materialsResult.error)
       }
-      
+
     } catch (error) {
       console.error('Error loading wastage data:', error)
       setError(error.message)

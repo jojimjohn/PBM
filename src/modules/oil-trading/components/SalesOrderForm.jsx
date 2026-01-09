@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
 import FIFOPreviewModal from '../../../components/FIFOPreviewModal'
 import FileUpload from '../../../components/ui/FileUpload'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
@@ -767,19 +767,19 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               />
             </div>
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label="Order Date"
-                value={formData.orderDate ? new Date(formData.orderDate) : null}
-                onChange={(date) => setFormData(prev => ({ ...prev, orderDate: date ? date.toISOString().split('T')[0] : '' }))}
+                value={formData.orderDate || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, orderDate: value || '' }))}
                 required
               />
             </div>
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label="Expected Delivery Date"
-                value={formData.deliveryDate ? new Date(formData.deliveryDate) : null}
-                onChange={(date) => setFormData(prev => ({ ...prev, deliveryDate: date ? date.toISOString().split('T')[0] : '' }))}
-                minDate={formData.orderDate ? new Date(formData.orderDate) : null}
+                value={formData.deliveryDate || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, deliveryDate: value || '' }))}
+                minDate={formData.orderDate || ''}
               />
             </div>
             <div className="form-group">

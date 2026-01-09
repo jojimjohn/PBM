@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { useLocalization } from '../context/LocalizationContext'
-import { X, Plus, Trash2, Layers, Package, AlertCircle } from 'lucide-react'
+import { X, Plus, Trash2, Layers, Package, AlertCircle, Recycle } from 'lucide-react'
 import './MaterialFormModal.css'
+
+// Valid waste types for disposable materials
+const WASTE_TYPES = [
+  { value: 'waste', label: 'Waste' },
+  { value: 'spillage', label: 'Spillage' },
+  { value: 'contamination', label: 'Contamination' },
+  { value: 'expiry', label: 'Expiry' },
+  { value: 'damage', label: 'Damage' },
+  { value: 'theft', label: 'Theft' },
+  { value: 'evaporation', label: 'Evaporation' },
+  { value: 'sorting_loss', label: 'Sorting Loss' },
+  { value: 'quality_rejection', label: 'Quality Rejection' },
+  { value: 'transport_loss', label: 'Transport Loss' },
+  { value: 'handling_damage', label: 'Handling Damage' },
+  { value: 'other', label: 'Other' }
+]
 
 const MaterialFormModal = ({
   isOpen,
@@ -27,7 +43,11 @@ const MaterialFormModal = ({
     barcode: '',
     trackBatches: false,
     isActive: true,
-    is_composite: false
+    is_composite: false,
+    // Disposable material fields
+    is_disposable: false,
+    default_waste_type: 'waste',
+    auto_wastage_percentage: 100
   })
 
   const [compositions, setCompositions] = useState([])
@@ -80,7 +100,11 @@ const MaterialFormModal = ({
           barcode: editingMaterial.barcode || '',
           trackBatches: editingMaterial.trackBatches || false,
           isActive: editingMaterial.isActive !== undefined ? editingMaterial.isActive : true,
-          is_composite: editingMaterial.is_composite || editingMaterial.compositions?.length > 0 || false
+          is_composite: editingMaterial.is_composite || editingMaterial.compositions?.length > 0 || false,
+          // Load disposable material fields
+          is_disposable: editingMaterial.is_disposable || false,
+          default_waste_type: editingMaterial.default_waste_type || 'waste',
+          auto_wastage_percentage: editingMaterial.auto_wastage_percentage ?? 100
         })
 
         // Load existing compositions if any
@@ -118,7 +142,10 @@ const MaterialFormModal = ({
       barcode: '',
       trackBatches: false,
       isActive: true,
-      is_composite: false
+      is_composite: false,
+      is_disposable: false,
+      default_waste_type: 'waste',
+      auto_wastage_percentage: 100
     })
     setCompositions([])
   }
@@ -246,7 +273,11 @@ const MaterialFormModal = ({
         shelfLifeDays: formData.shelfLifeDays ? parseInt(formData.shelfLifeDays) : null,
         isActive: Boolean(formData.isActive),
         trackBatches: Boolean(formData.trackBatches),
-        is_composite: Boolean(formData.is_composite)
+        is_composite: Boolean(formData.is_composite),
+        // Disposable material fields
+        is_disposable: Boolean(formData.is_disposable),
+        default_waste_type: formData.is_disposable ? (formData.default_waste_type || 'waste') : null,
+        auto_wastage_percentage: formData.is_disposable ? (parseFloat(formData.auto_wastage_percentage) || 100) : 100
       }
 
       // Add compositions if composite material
@@ -289,7 +320,7 @@ const MaterialFormModal = ({
 
   return (
     <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
-      <div className="modal-content material-form-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content ds-form-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>
             <Package size={20} />
@@ -307,17 +338,17 @@ const MaterialFormModal = ({
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             {errors.submit && (
-              <div className="error-message">
+              <div className="ds-form-error-box">
                 <AlertCircle size={16} />
                 {errors.submit}
               </div>
             )}
 
             {/* Basic Material Information */}
-            <div className="form-section">
+            <div className="ds-form-section">
               <h4>{t('basicInformation', 'Basic Information')}</h4>
-              <div className="form-grid">
-                <div className="form-group">
+              <div className="ds-form-grid">
+                <div className="ds-form-group">
                   <label htmlFor="code">
                     {t('materialCode', 'Material Code')} <span className="required">*</span>
                   </label>
@@ -333,7 +364,7 @@ const MaterialFormModal = ({
                   {errors.code && <small className="error-text">{errors.code}</small>}
                 </div>
 
-                <div className="form-group">
+                <div className="ds-form-group">
                   <label htmlFor="name">
                     {t('materialName', 'Material Name')} <span className="required">*</span>
                   </label>
@@ -349,7 +380,7 @@ const MaterialFormModal = ({
                   {errors.name && <small className="error-text">{errors.name}</small>}
                 </div>
 
-                <div className="form-group full-width">
+                <div className="ds-form-group full-width">
                   <label htmlFor="description">{t('description', 'Description')}</label>
                   <textarea
                     id="description"
@@ -361,7 +392,7 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="ds-form-group">
                   <label htmlFor="category_id">
                     {t('category', 'Category')} <span className="required">*</span>
                   </label>
@@ -382,7 +413,7 @@ const MaterialFormModal = ({
                   {errors.category_id && <small className="error-text">{errors.category_id}</small>}
                 </div>
 
-                <div className="form-group">
+                <div className="ds-form-group">
                   <label htmlFor="unit">
                     {t('unit', 'Unit')} <span className="required">*</span>
                   </label>
@@ -402,8 +433,8 @@ const MaterialFormModal = ({
                   {errors.unit && <small className="error-text">{errors.unit}</small>}
                 </div>
 
-                <div className="form-group">
-                  <label>
+                <div className="ds-form-group">
+                  <label className="ds-form-checkbox">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
@@ -418,10 +449,10 @@ const MaterialFormModal = ({
             </div>
 
             {/* Pricing Information */}
-            <div className="form-section pricing">
+            <div className="ds-form-section">
               <h4>{t('pricingInformation', 'Pricing Information')}</h4>
-              <div className="form-grid">
-                <div className="form-group">
+              <div className="ds-form-grid">
+                <div className="ds-form-group">
                   <label htmlFor="standardPrice">
                     {t('standardPrice', 'Standard Price')} <small>(OMR{formData.unit ? `/${formData.unit}` : ''})</small>
                   </label>
@@ -439,7 +470,7 @@ const MaterialFormModal = ({
                   {errors.standardPrice && <small className="error-text">{errors.standardPrice}</small>}
                 </div>
 
-                <div className="form-group">
+                <div className="ds-form-group">
                   <label htmlFor="minimumPrice">
                     {t('minimumPrice', 'Minimum Price')} <small>(OMR{formData.unit ? `/${formData.unit}` : ''})</small>
                   </label>
@@ -460,10 +491,10 @@ const MaterialFormModal = ({
             </div>
 
             {/* Additional Properties */}
-            <div className="form-section compact">
+            <div className="ds-form-section">
               <h4>{t('additionalProperties', 'Additional Properties')}</h4>
-              <div className="form-grid">
-                <div className="form-group">
+              <div className="ds-form-grid three-col">
+                <div className="ds-form-group">
                   <label htmlFor="density">{t('density', 'Density')} <small>(kg/L)</small></label>
                   <input
                     type="number"
@@ -477,7 +508,7 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="ds-form-group">
                   <label htmlFor="shelfLifeDays">{t('shelfLife', 'Shelf Life')} <small>(days)</small></label>
                   <input
                     type="number"
@@ -490,7 +521,7 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="ds-form-group">
                   <label htmlFor="barcode">{t('barcode', 'Barcode')}</label>
                   <input
                     type="text"
@@ -502,7 +533,7 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="form-group span-2">
+                <div className="ds-form-group span-2">
                   <label htmlFor="specifications">{t('specifications', 'Specifications')}</label>
                   <textarea
                     id="specifications"
@@ -514,8 +545,8 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="form-group checkbox-group">
-                  <label>
+                <div className="ds-form-group">
+                  <label className="ds-form-checkbox">
                     <input
                       type="checkbox"
                       checked={formData.trackBatches}
@@ -528,22 +559,88 @@ const MaterialFormModal = ({
               </div>
             </div>
 
-            {/* Composite Material Section */}
-            <div className="form-section composite-section">
-              <div className="composite-header">
+            {/* Disposable Material Section */}
+            <div className="ds-form-section success disposable-section">
+              <div className="ds-form-section-header">
                 <h4>
-                  <Layers size={18} />
+                  <Recycle size={16} />
+                  {t('disposableMaterial', 'Disposable Material')}
+                </h4>
+                <label className="ds-toggle-switch success">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_disposable}
+                    onChange={(e) => handleInputChange('is_disposable', e.target.checked)}
+                    disabled={saving || formData.is_composite}
+                  />
+                  <span className="ds-toggle-slider"></span>
+                  <span className="ds-toggle-label">
+                    {formData.is_disposable ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
+                  </span>
+                </label>
+              </div>
+
+              {formData.is_composite && (
+                <div className="ds-form-info-box warning">
+                  <AlertCircle size={16} />
+                  <p>
+                    {t('disposableCompositeConflict', 'Composite materials cannot be marked as disposable. The composite components are tracked individually.')}
+                  </p>
+                </div>
+              )}
+
+              {formData.is_disposable && !formData.is_composite && (
+                <>
+                  <div className="ds-form-info-box success">
+                    <AlertCircle size={16} />
+                    <p>
+                      {t('disposableInfo', 'Disposable materials are automatically converted to 100% wastage during WCN finalization. They represent items collected but NOT stored in inventory (e.g., contaminated material, water/sludge, packaging waste).')}
+                    </p>
+                  </div>
+
+                  <div className="ds-form-grid">
+                    <div className="ds-form-group full-width">
+                      <label htmlFor="default_waste_type">
+                        {t('defaultWasteType', 'Default Waste Type')} <span className="required">*</span>
+                      </label>
+                      <select
+                        id="default_waste_type"
+                        value={formData.default_waste_type}
+                        onChange={(e) => handleInputChange('default_waste_type', e.target.value)}
+                        disabled={saving}
+                      >
+                        <option value="">{t('selectWasteType', 'Select waste type...')}</option>
+                        {WASTE_TYPES.map(type => (
+                          <option key={type.value} value={type.value}>
+                            {t(`wasteType_${type.value}`, type.label)}
+                          </option>
+                        ))}
+                      </select>
+                      <small className="ds-form-hint">
+                        {t('wasteTypeHint', 'The waste type applied when this material is finalized in a WCN. All collected quantity goes to wastage.')}
+                      </small>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Composite Material Section */}
+            <div className="ds-form-section info composite-section">
+              <div className="ds-form-section-header">
+                <h4>
+                  <Layers size={16} />
                   {t('compositeMaterial', 'Composite Material')}
                 </h4>
-                <label className="toggle-switch">
+                <label className="ds-toggle-switch">
                   <input
                     type="checkbox"
                     checked={formData.is_composite}
                     onChange={(e) => handleCompositeToggle(e.target.checked)}
                     disabled={saving}
                   />
-                  <span className="toggle-slider"></span>
-                  <span className="toggle-label">
+                  <span className="ds-toggle-slider"></span>
+                  <span className="ds-toggle-label">
                     {formData.is_composite ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
                   </span>
                 </label>
@@ -551,7 +648,7 @@ const MaterialFormModal = ({
 
               {formData.is_composite && (
                 <>
-                  <div className="composite-info">
+                  <div className="ds-form-info-box">
                     <AlertCircle size={16} />
                     <p>
                       {t('compositeInfo', 'Composite materials automatically split into components when received in purchase orders. Example: "Oil with Drum" splits into "Oil" and "Drum" in inventory.')}
@@ -559,7 +656,7 @@ const MaterialFormModal = ({
                   </div>
 
                   <div className="compositions-builder">
-                    <div className="builder-header">
+                    <div className="ds-form-section-header">
                       <h5>{t('components', 'Components')}</h5>
                       <button
                         type="button"
@@ -573,14 +670,14 @@ const MaterialFormModal = ({
                     </div>
 
                     {errors.compositions && (
-                      <div className="error-message">
+                      <div className="ds-form-error-box">
                         <AlertCircle size={16} />
                         {errors.compositions}
                       </div>
                     )}
 
-                    <div className="compositions-table">
-                      <table>
+                    <div className="ds-form-table-wrapper">
+                      <table className="ds-form-table">
                         <thead>
                           <tr>
                             <th>{t('componentMaterial', 'Component Material')} *</th>
@@ -605,7 +702,6 @@ const MaterialFormModal = ({
                                     value={comp.component_material_id}
                                     onChange={(e) => updateComposition(index, 'component_material_id', e.target.value)}
                                     disabled={saving}
-                                    className="component-select"
                                   >
                                     <option value="">{t('selectMaterial', 'Select material...')}</option>
                                     {availableComponentMaterials.map(material => (
@@ -637,7 +733,6 @@ const MaterialFormModal = ({
                                     step="0.001"
                                     min="0"
                                     placeholder="200"
-                                    className="capacity-input"
                                   />
                                 </td>
                                 <td>
@@ -645,7 +740,6 @@ const MaterialFormModal = ({
                                     value={comp.capacity_unit}
                                     onChange={(e) => updateComposition(index, 'capacity_unit', e.target.value)}
                                     disabled={saving}
-                                    className="unit-input"
                                   >
                                     <option value="">{t('selectUnit', 'Select...')}</option>
                                     {capacityUnits.map(unit => (
@@ -658,7 +752,7 @@ const MaterialFormModal = ({
                                 <td>
                                   <button
                                     type="button"
-                                    className="btn-icon danger"
+                                    className="ds-form-btn-icon danger"
                                     onClick={() => removeCompositionRow(index)}
                                     disabled={saving || compositions.length <= 1}
                                     title={t('removeComponent', 'Remove component')}
@@ -673,7 +767,7 @@ const MaterialFormModal = ({
                       </table>
                     </div>
 
-                    <small className="hint-text">
+                    <small className="ds-form-hint">
                       {t('capacityHint', 'Capacity is for reference only (e.g., 200L drum capacity). Actual quantities are determined at purchase order receipt.')}
                     </small>
                   </div>

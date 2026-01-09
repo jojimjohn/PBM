@@ -9,6 +9,7 @@ import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
+import dataCacheService from '../../../services/dataCacheService'
 import { 
   Plus, 
   Search, 
@@ -218,6 +219,7 @@ const ScrapMaterialsSuppliers = () => {
     try {
       const result = await supplierService.delete(supplierId)
       if (result.success) {
+        dataCacheService.invalidateSuppliers() // Clear cache
         setSuppliers(prev => prev.filter(s => s.id !== supplierId))
         alert(t('supplierDeleted'))
       } else {
@@ -274,6 +276,9 @@ const ScrapMaterialsSuppliers = () => {
       }
 
       if (result.success) {
+        // Invalidate cache so other pages see updated data
+        dataCacheService.invalidateSuppliers()
+
         // Update local state
         if (isEdit) {
           setSuppliers(prev => prev.map(s => s.id === result.data.id ? result.data : s))
@@ -285,7 +290,7 @@ const ScrapMaterialsSuppliers = () => {
         setShowAddForm(false)
         setShowEditForm(false)
         setSelectedSupplier(null)
-        
+
         alert(t(isEdit ? 'supplierUpdated' : 'supplierCreated', isEdit ? 'Supplier updated successfully!' : 'Supplier created successfully!'))
       } else {
         console.error('Error saving supplier:', result.error)
@@ -864,17 +869,17 @@ const SupplierFormModal = ({
           <div className="form-grid">
             <div className="form-group">
               <label>{t('specialization', 'Specialization')}</label>
-              <div className="checkbox-grid">
+              <div className="ds-checkbox-grid">
                 {specializations.map(spec => (
-                  <label key={spec.id} className="checkbox-card">
+                  <label key={spec.id} className="ds-checkbox-card">
                     <input
                       type="checkbox"
                       checked={(formData.specialization || []).includes(spec.id)}
                       onChange={() => handleSpecializationChange(spec.id)}
                     />
-                    <div className="checkbox-content">
-                      <span className="checkbox-title">{spec.name}</span>
-                      <span className="checkbox-description">{spec.description}</span>
+                    <div className="ds-checkbox-content">
+                      <span className="ds-checkbox-title">{spec.name}</span>
+                      <span className="ds-checkbox-description">{spec.description}</span>
                     </div>
                   </label>
                 ))}

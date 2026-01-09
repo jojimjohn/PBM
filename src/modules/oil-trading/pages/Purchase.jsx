@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { usePermissions } from '../../../hooks/usePermissions'
@@ -7,6 +7,7 @@ import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
 import Modal from '../../../components/ui/Modal'
+import DateInput from '../../../components/ui/DateInput'
 import PurchaseOrderForm from '../components/PurchaseOrderForm'
 import PurchaseOrderReceipt from '../../../components/PurchaseOrderReceipt'
 import PurchaseExpenseForm from '../../../components/PurchaseExpenseForm'
@@ -24,10 +25,9 @@ import ExpenseViewModal from '../../../components/expenses/ExpenseViewModal'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import purchaseOrderAmendmentService from '../../../services/purchaseOrderAmendmentService'
 import purchaseInvoiceService from '../../../services/purchaseInvoiceService'
-import supplierService from '../../../services/supplierService'
-import materialService from '../../../services/materialService'
 import expenseService from '../../../services/expenseService'
 import purchaseOrderExpenseService from '../../../services/purchaseOrderExpenseService'
+import dataCacheService from '../../../services/dataCacheService'
 import {
   Plus, Search, Filter, Eye, Edit, Edit3, Truck, Package,
   CheckCircle, Clock, AlertTriangle, FileText, Download,
@@ -66,6 +66,18 @@ const Purchase = () => {
   const [orderStatuses, setOrderStatuses] = useState({})
   const [loading, setLoading] = useState(true)
   const [billsLoading, setBillsLoading] = useState(false)
+
+  // Server-side pagination state for purchase orders
+  const [ordersPagination, setOrdersPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    search: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+    status: ''
+  })
   
   // Modal states
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -99,54 +111,50 @@ const Purchase = () => {
     loadPurchaseData()
   }, [selectedCompany])
 
+  // Load purchase orders with server-side pagination
+  const loadPurchaseOrders = useCallback(async (paginationParams = {}) => {
+    try {
+      setLoading(true)
+
+      // Merge current pagination with new params
+      const params = {
+        page: paginationParams.page ?? ordersPagination.page,
+        limit: paginationParams.limit ?? ordersPagination.limit,
+        search: paginationParams.search ?? ordersPagination.search,
+        status: paginationParams.status ?? ordersPagination.status,
+        sortBy: paginationParams.sortBy ?? ordersPagination.sortBy,
+        sortOrder: paginationParams.sortOrder ?? ordersPagination.sortOrder
+      }
+
+      const ordersResult = await purchaseOrderService.getAll(params)
+
+      if (ordersResult.success) {
+        setPurchaseOrders(ordersResult.data || [])
+        // Update pagination state with server response
+        if (ordersResult.pagination) {
+          setOrdersPagination(prev => ({
+            ...prev,
+            ...params,
+            total: ordersResult.pagination.total || 0,
+            totalPages: ordersResult.pagination.totalPages || 0
+          }))
+        }
+      } else {
+        setPurchaseOrders([])
+      }
+    } catch (error) {
+      console.error('Error loading purchase orders:', error)
+      setPurchaseOrders([])
+    } finally {
+      setLoading(false)
+    }
+  }, [ordersPagination])
+
   const loadPurchaseData = async () => {
     try {
       setLoading(true)
-      
-      // Load purchase orders using API service
-      const ordersResult = await purchaseOrderService.getAll()
-      const companyOrders = ordersResult.success ? ordersResult.data : []
-      setPurchaseOrders(companyOrders)
 
-      // Sprint 4: Load purchase expenses from unified_expenses API
-      try {
-        const expensesResult = await expenseService.getAll({ expenseType: 'purchase' })
-        const expenses = expensesResult.success ? expensesResult.data : []
-        // Normalize expense data for consistent filtering
-        // - Look up PO number from companyOrders for proper filter display
-        // - Ensure vendor field is populated from vendorName/supplierName if empty
-        // - Ensure status field has a value (default based on referenceType)
-        const normalizedExpenses = expenses.map(expense => {
-          // Find the PO to get the actual order number for filtering
-          const po = companyOrders.find(p => p.id === expense.referenceId)
-          return {
-            ...expense,
-            orderNumber: po?.orderNumber || expense.orderNumber || `PO #${expense.referenceId}`,
-            vendor: expense.vendor || expense.vendorName || expense.supplierName || '',
-            status: expense.status || (expense.referenceType === 'purchase_order' ? 'recorded' : 'pending')
-          }
-        })
-        setPurchaseExpenses(normalizedExpenses)
-      } catch (error) {
-        console.error('Error loading purchase expenses:', error)
-        setPurchaseExpenses([])
-      }
-
-      // Sprint 4: Load amendment counts for all purchase orders in a single request
-      // Uses bulk endpoint to avoid N+1 query problem (was making 100+ API calls)
-      try {
-        const countsResult = await purchaseOrderAmendmentService.getAllCounts()
-        if (countsResult.success && countsResult.data) {
-          setAmendmentCounts(countsResult.data)
-        } else {
-          setAmendmentCounts({})
-        }
-      } catch (error) {
-        console.error('Error loading amendment counts:', error)
-        setAmendmentCounts({})
-      }
-
-      // Set default order statuses
+      // Set default order statuses immediately (no API call needed)
       setOrderStatuses({
         draft: { name: 'Draft', color: '#6b7280' },
         pending: { name: 'Pending Approval', color: '#f59e0b' },
@@ -157,29 +165,92 @@ const Purchase = () => {
         cancelled: { name: 'Cancelled', color: '#ef4444' }
       })
 
-      // Load suppliers using API service (vendors = suppliers for oil business)
-      const suppliersResult = await supplierService.getAll()
-      if (suppliersResult.success) {
-        // Map suppliers to vendor format for compatibility
-        const supplierVendors = suppliersResult.data.map(supplier => ({
-          id: supplier.id,
-          name: supplier.name,
-          vendorCode: supplier.supplierCode || `VEN-${supplier.id.toString().padStart(3, '0')}`,
-          contactPerson: supplier.contactPerson,
-          phone: supplier.phone,
-          email: supplier.email
+      // PERFORMANCE FIX: Use dataCacheService for instant loading of cached data
+      // Suppliers and materials use 5-min cache, purchase orders use 2-min cache
+      const [
+        ordersResult,
+        expensesResult,
+        countsResult,
+        suppliersData,
+        materialsData
+      ] = await Promise.all([
+        // 1. Purchase orders with pagination (no cache for paginated data)
+        purchaseOrderService.getAll({
+          page: ordersPagination.page,
+          limit: ordersPagination.limit,
+          search: ordersPagination.search,
+          status: ordersPagination.status,
+          sortBy: ordersPagination.sortBy,
+          sortOrder: ordersPagination.sortOrder
+        }),
+        // 2. Purchase expenses
+        expenseService.getAll({ expenseType: 'purchase' }).catch(err => {
+          console.error('Error loading purchase expenses:', err)
+          return { success: false, data: [] }
+        }),
+        // 3. Amendment counts
+        purchaseOrderAmendmentService.getAllCounts().catch(err => {
+          console.error('Error loading amendment counts:', err)
+          return { success: false, data: {} }
+        }),
+        // 4. Suppliers (vendors) - CACHED (5 min TTL)
+        dataCacheService.getSuppliers().catch(err => {
+          console.error('Error loading suppliers:', err)
+          return []
+        }),
+        // 5. Materials - CACHED (5 min TTL)
+        dataCacheService.getMaterials().catch(err => {
+          console.error('Error loading materials:', err)
+          return []
+        })
+      ])
+
+      // Process purchase orders result
+      const companyOrders = ordersResult.success ? ordersResult.data : []
+      setPurchaseOrders(companyOrders)
+
+      // Update pagination from server response
+      if (ordersResult.success && ordersResult.pagination) {
+        setOrdersPagination(prev => ({
+          ...prev,
+          total: ordersResult.pagination.total || 0,
+          totalPages: ordersResult.pagination.totalPages || 0
         }))
-        setVendors(supplierVendors)
-        console.log('Suppliers loaded as vendors:', supplierVendors.length)
-      } else {
-        console.error('Failed to load suppliers:', suppliersResult.error)
-        setVendors([]) // Set empty array on failure
       }
 
-      // Load materials using API service
-      const materialsResult = await materialService.getAll()
-      const companyMaterials = materialsResult.success ? materialsResult.data : []
-      setMaterials(companyMaterials)
+      // Process expenses result
+      const expenses = expensesResult.success ? expensesResult.data : []
+      const normalizedExpenses = expenses.map(expense => {
+        const po = companyOrders.find(p => p.id === expense.referenceId)
+        return {
+          ...expense,
+          orderNumber: po?.orderNumber || expense.orderNumber || `PO #${expense.referenceId}`,
+          vendor: expense.vendor || expense.vendorName || expense.supplierName || '',
+          status: expense.status || (expense.referenceType === 'purchase_order' ? 'recorded' : 'pending')
+        }
+      })
+      setPurchaseExpenses(normalizedExpenses)
+
+      // Process amendment counts result
+      if (countsResult.success && countsResult.data) {
+        setAmendmentCounts(countsResult.data)
+      } else {
+        setAmendmentCounts({})
+      }
+
+      // Process suppliers result (dataCacheService returns array directly)
+      const supplierVendors = (suppliersData || []).map(supplier => ({
+        id: supplier.id,
+        name: supplier.name,
+        vendorCode: supplier.supplierCode || `VEN-${supplier.id.toString().padStart(3, '0')}`,
+        contactPerson: supplier.contactPerson,
+        phone: supplier.phone,
+        email: supplier.email
+      }))
+      setVendors(supplierVendors)
+
+      // Process materials result (dataCacheService returns array directly)
+      setMaterials(materialsData || [])
       
     } catch (error) {
       console.error('Error loading purchase data:', error)
@@ -752,13 +823,31 @@ const Purchase = () => {
     alert(`✅ Downloading purchase order ${order.orderNumber}`)
   }
 
+  // Server-side pagination handlers for DataTable
+  const handleOrdersPageChange = useCallback((newPage) => {
+    loadPurchaseOrders({ page: newPage })
+  }, [loadPurchaseOrders])
+
+  const handleOrdersSort = useCallback((sortBy, sortOrder) => {
+    loadPurchaseOrders({ sortBy, sortOrder, page: 1 })
+  }, [loadPurchaseOrders])
+
+  const handleOrdersSearch = useCallback((search) => {
+    loadPurchaseOrders({ search, page: 1 })
+  }, [loadPurchaseOrders])
+
+  const handleOrdersPageSizeChange = useCallback((limit) => {
+    loadPurchaseOrders({ limit, page: 1 })
+  }, [loadPurchaseOrders])
+
   const calculateOrderSummary = () => {
     const summary = {
-      total: purchaseOrders.length,
-      // Draft orders are pending approval
+      // Use server-provided total for accurate count (not just current page)
+      total: ordersPagination.total || purchaseOrders.length,
+      // Note: These counts are from the current page only when using server-side pagination
+      // For accurate totals, these would need to come from the server
       pending: purchaseOrders.filter(o => o.status === 'draft' || o.status === 'pending').length,
       approved: purchaseOrders.filter(o => o.status === 'approved' || o.status === 'sent').length,
-      // Received/completed orders are delivered
       delivered: purchaseOrders.filter(o => o.status === 'received' || o.status === 'completed').length,
       totalValue: purchaseOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
       totalExpenses: purchaseExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0)
@@ -798,17 +887,6 @@ const Purchase = () => {
   ]
 
   const billSummary = calculateBillSummary()
-
-  if (loading && purchaseOrders.length === 0) {
-    return (
-      <div className="purchase-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading purchase data...</p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="page-container">
@@ -1089,6 +1167,14 @@ const Purchase = () => {
               selectable={false}
               emptyMessage="No purchase orders found"
               className="purchase-orders-table"
+              // Server-side pagination props - data comes pre-paginated from API
+              serverSide={true}
+              totalRows={ordersPagination.total}
+              currentServerPage={ordersPagination.page}
+              onPageChange={handleOrdersPageChange}
+              onSort={handleOrdersSort}
+              onSearch={handleOrdersSearch}
+              onPageSizeChange={handleOrdersPageSizeChange}
             />
           </div>
         )}
@@ -1331,7 +1417,7 @@ const Purchase = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(row.id)}
-                        className="btn btn-outline btn-sm btn-danger"
+                        className="btn btn-danger btn-sm"
                         title="Delete Expense"
                       >
                         <Trash2 size={14} />
@@ -1687,14 +1773,13 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
       </div>
 
       <div className="form-group">
-        <label htmlFor="paymentDate">Payment Date *</label>
-        <input
-          type="date"
+        <DateInput
           id="paymentDate"
           value={paymentDate}
-          onChange={(e) => setPaymentDate(e.target.value)}
+          onChange={setPaymentDate}
+          label="Payment Date"
           required
-          className="form-input"
+          isClearable
         />
       </div>
 

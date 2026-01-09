@@ -18,7 +18,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--ds-form-radius);
   font-size: 0.8125rem;
   font-weight: 500;
 }
@@ -51,7 +51,7 @@
   margin-bottom: 2rem;
   padding: 1.5rem;
   background: white;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   border: 1px solid var(--gray-200);
 }
 
@@ -110,7 +110,7 @@
 .form-group textarea {
   padding: 0.75rem;
   border: 2px solid var(--gray-300);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   transition: all var(--transition-fast);
   background: white;
@@ -153,7 +153,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   margin-bottom: 0.75rem;
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
@@ -186,7 +186,7 @@
 /* Items Table */
 .items-table {
   background: var(--gray-50);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   overflow: hidden;
   border: 1px solid var(--gray-200);
 }
@@ -231,7 +231,7 @@
 .item-field select {
   padding: 0.5rem;
   border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   margin: 0;
 }
@@ -245,7 +245,7 @@
 .unit-display {
   padding: 0.5rem;
   background: var(--gray-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   text-align: center;
   color: var(--gray-600);
@@ -254,7 +254,7 @@
 .amount-display {
   padding: 0.5rem;
   background: var(--gray-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   text-align: right;
   font-weight: var(--font-medium);
@@ -314,7 +314,7 @@
 .contract-terms-display {
   background: linear-gradient(135deg, var(--blue-50), var(--green-50));
   border: 2px solid var(--blue-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
 }
 
 .contract-terms-display .form-section-title {
@@ -332,7 +332,7 @@
   transition: all var(--transition-fast);
   padding: 0.75rem;
   margin: -0.75rem -1.5rem 1.5rem -1.5rem;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--ds-form-radius) var(--ds-form-radius) 0 0;
 }
 
 .contract-terms-display .form-section-title.clickable:hover {
@@ -362,7 +362,7 @@
 
 .contract-summary {
   background: white;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   padding: 1.5rem;
   border: 1px solid var(--blue-200);
 }
@@ -415,7 +415,7 @@
 .special-terms {
   background: var(--amber-50);
   border: 1px solid var(--amber-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   padding: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -455,7 +455,7 @@
   gap: 0.5rem;
   background: white;
   padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   border: 1px solid var(--blue-200);
   font-size: var(--text-sm);
   cursor: help;
@@ -514,7 +514,7 @@
   font-size: var(--text-xs);
   font-weight: var(--font-bold);
   padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   white-space: nowrap;
 }
 
@@ -540,7 +540,7 @@
 .totals-section {
   background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
   padding: 1.5rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   border: 1px solid var(--gray-200);
   max-width: 400px;
   margin-left: auto;
@@ -590,7 +590,7 @@
   padding: 0.25rem 0.5rem !important;
   margin: 0 0.25rem !important;
   border: 1px solid var(--gray-300) !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--ds-form-radius) !important;
   font-size: var(--text-sm) !important;
   text-align: center;
 }
@@ -603,7 +603,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   cursor: pointer;
@@ -659,7 +659,7 @@
   border-top: 1px solid var(--gray-200);
   background: var(--gray-50);
   margin: 2rem -1.5rem -1.5rem -1.5rem;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: 0 0 var(--ds-form-radius) var(--ds-form-radius);
 }
 
 /* Responsive Design */
@@ -723,7 +723,7 @@
 
 .override-modal {
   background: white;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
@@ -845,7 +845,7 @@
   width: 100%;
   padding: 0.75rem;
   border: 2px solid var(--gray-300);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   font-size: 0.875rem;
   transition: all var(--transition-fast);
   font-family: inherit;

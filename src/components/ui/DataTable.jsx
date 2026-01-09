@@ -64,6 +64,7 @@ const DataTable = ({
   title,
   subtitle,
   headerActions = null,
+  customFilters = null, // Custom filter elements to render next to search
   searchable = true,
   filterable = true,
   sortable = true,
@@ -77,7 +78,15 @@ const DataTable = ({
   className = '',
   initialPageSize = 10,
   stickyHeader = false,
-  enableColumnToggle = true
+  enableColumnToggle = true,
+  // Server-side pagination props
+  serverSide = false,
+  totalRows = 0,
+  currentServerPage = 1,
+  onPageChange = null,
+  onSort = null,
+  onSearch = null,
+  onPageSizeChange = null
 }) => {
   const { t, isRTL } = useLocalization()
 
@@ -105,6 +114,22 @@ const DataTable = ({
   const [showColumnToggle, setShowColumnToggle] = useState(false)
   const [showMobileCards, setShowMobileCards] = useState(false)
   const tableRef = useRef(null)
+  const searchDebounceRef = useRef(null)
+
+  // Debounced search handler for server-side mode
+  const handleSearchChange = useCallback((value) => {
+    setSearchTerm(value)
+
+    // SERVER-SIDE MODE: Debounce and call parent search callback
+    if (serverSide && onSearch) {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current)
+      }
+      searchDebounceRef.current = setTimeout(() => {
+        onSearch(value)
+      }, 300) // 300ms debounce for server requests
+    }
+  }, [serverSide, onSearch])
 
   // Get visible columns
   const activeColumns = useMemo(() => {
@@ -112,8 +137,16 @@ const DataTable = ({
   }, [columns, visibleColumns])
 
   // Filter and search data
+  // In server-side mode, data is already filtered/searched by the server
   const filteredData = useMemo(() => {
     if (!data || !Array.isArray(data)) return []
+
+    // SERVER-SIDE MODE: Skip client-side filtering - data already filtered by server
+    if (serverSide) {
+      return data
+    }
+
+    // CLIENT-SIDE MODE: Apply all filters locally
     let filtered = [...data]
 
     // Apply search
@@ -146,7 +179,7 @@ const DataTable = ({
         Object.entries(advancedFilters).forEach(([key, filter]) => {
           if (filter && filter.enabled) {
             const column = columns.find(col => col.key === key)
-            
+
             if (column?.type === 'date' && filter.dateRange) {
               filtered = filtered.filter(row => {
                 const value = getNestedProperty(row, key)
@@ -155,13 +188,13 @@ const DataTable = ({
                 if (isNaN(date.getTime())) return false
                 const from = filter.dateRange.from ? new Date(filter.dateRange.from) : null
                 const to = filter.dateRange.to ? new Date(filter.dateRange.to) : null
-                
+
                 if (from && !isNaN(from.getTime()) && date < from) return false
                 if (to && !isNaN(to.getTime()) && date > to) return false
                 return true
               })
             }
-            
+
             if ((column?.type === 'currency' || column?.type === 'number') && (filter.min !== undefined || filter.max !== undefined)) {
               filtered = filtered.filter(row => {
                 const value = getNestedProperty(row, key)
@@ -172,7 +205,7 @@ const DataTable = ({
                 return true
               })
             }
-            
+
             if (filter.values && Array.isArray(filter.values) && filter.values.length > 0) {
               filtered = filtered.filter(row => {
                 const value = getNestedProperty(row, key)
@@ -188,10 +221,17 @@ const DataTable = ({
     }
 
     return filtered
-  }, [data, searchTerm, filters, advancedFilters, activeColumns, searchable, columns])
+  }, [data, searchTerm, filters, advancedFilters, activeColumns, searchable, columns, serverSide])
 
   // Sort data
+  // In server-side mode, data is already sorted by the server
   const sortedData = useMemo(() => {
+    // SERVER-SIDE MODE: Skip client-side sorting - data already sorted by server
+    if (serverSide) {
+      return filteredData
+    }
+
+    // CLIENT-SIDE MODE: Sort locally
     if (!sortConfig.key || !sortable) return filteredData
 
     const sorted = [...filteredData].sort((a, b) => {
@@ -207,7 +247,7 @@ const DataTable = ({
 
       const aStr = String(aValue).toLowerCase()
       const bStr = String(bValue).toLowerCase()
-      
+
       if (sortConfig.direction === 'asc') {
         return aStr.localeCompare(bStr)
       }
@@ -215,29 +255,44 @@ const DataTable = ({
     })
 
     return sorted
-  }, [filteredData, sortConfig, sortable])
+  }, [filteredData, sortConfig, sortable, serverSide])
 
   // Paginate data
+  // In server-side mode, data is already paginated by the server
   const paginatedData = useMemo(() => {
     if (!paginated) return sortedData
 
+    // SERVER-SIDE MODE: Data is already paginated by server - use as-is
+    if (serverSide) {
+      return sortedData
+    }
+
+    // CLIENT-SIDE MODE: Slice locally
     const startIndex = (currentPage - 1) * pageSize
     return sortedData.slice(startIndex, startIndex + pageSize)
-  }, [sortedData, currentPage, pageSize, paginated])
+  }, [sortedData, currentPage, pageSize, paginated, serverSide])
 
   // Pagination calculations
-  const totalPages = Math.ceil(sortedData.length / pageSize)
-  const startRow = paginated ? (currentPage - 1) * pageSize + 1 : 1
-  const endRow = paginated ? Math.min(currentPage * pageSize, sortedData.length) : sortedData.length
+  // In server-side mode, use totalRows from server; otherwise use local data length
+  const effectiveTotalRows = serverSide ? totalRows : sortedData.length
+  const effectiveCurrentPage = serverSide ? currentServerPage : currentPage
+  const totalPages = Math.ceil(effectiveTotalRows / pageSize)
+  const startRow = paginated ? (effectiveCurrentPage - 1) * pageSize + 1 : 1
+  const endRow = paginated ? Math.min(effectiveCurrentPage * pageSize, effectiveTotalRows) : effectiveTotalRows
 
   // Handle sorting
   const handleSort = (key) => {
     if (!sortable) return
-    
-    setSortConfig(prevConfig => ({
-      key,
-      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
-    }))
+
+    const newDirection = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+
+    // SERVER-SIDE MODE: Call parent callback to trigger server-side sort
+    if (serverSide && onSort) {
+      onSort(key, newDirection)
+    }
+
+    // Always update local state (for UI indicators)
+    setSortConfig({ key, direction: newDirection })
   }
 
   // Handle row selection
@@ -286,34 +341,42 @@ const DataTable = ({
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!tableRef.current || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-      
+
+      const navigateToPage = (page) => {
+        if (serverSide && onPageChange) {
+          onPageChange(page)
+        } else {
+          setCurrentPage(page)
+        }
+      }
+
       switch (e.key) {
         case 'ArrowLeft':
-          if (currentPage > 1) {
-            setCurrentPage(prev => prev - 1)
+          if (effectiveCurrentPage > 1) {
+            navigateToPage(effectiveCurrentPage - 1)
           }
           break
         case 'ArrowRight':
-          if (currentPage < totalPages) {
-            setCurrentPage(prev => prev + 1)
+          if (effectiveCurrentPage < totalPages) {
+            navigateToPage(effectiveCurrentPage + 1)
           }
           break
         case 'Home':
           if (e.ctrlKey) {
-            setCurrentPage(1)
+            navigateToPage(1)
           }
           break
         case 'End':
           if (e.ctrlKey) {
-            setCurrentPage(totalPages)
+            navigateToPage(totalPages)
           }
           break
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [currentPage, totalPages])
+  }, [effectiveCurrentPage, totalPages, serverSide, onPageChange])
 
   // Render cell content
   const renderCell = (row, column) => {
@@ -483,13 +546,20 @@ const DataTable = ({
                 type="text"
                 placeholder={t('search')}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="search-input"
               />
             </div>
           )}
 
-          {/* Filters */}
+          {/* Custom Filters (passed as prop) */}
+          {customFilters && (
+            <div className="custom-filters-container">
+              {customFilters}
+            </div>
+          )}
+
+          {/* Auto-generated Column Filters */}
           {filterable && activeColumns && activeColumns.some(col => col && col.filterable) && (
             <div className="filters-container">
               {activeColumns
@@ -872,17 +942,22 @@ const DataTable = ({
       )}
 
       {/* Pagination */}
-      {paginated && sortedData.length > 0 && (
+      {paginated && effectiveTotalRows > 0 && (
         <div className="data-table-pagination">
           <div className="pagination-info">
             <span>
-              {t('showing')} {startRow} {t('to')} {endRow} {t('of')} {sortedData.length} {t('results')}
+              {t('showing')} {startRow} {t('to')} {endRow} {t('of')} {effectiveTotalRows} {t('results')}
             </span>
             <select
               value={pageSize}
               onChange={(e) => {
-                setPageSize(Number(e.target.value))
+                const newSize = Number(e.target.value)
+                setPageSize(newSize)
                 setCurrentPage(1)
+                // SERVER-SIDE MODE: Notify parent of page size change
+                if (serverSide && onPageSizeChange) {
+                  onPageSizeChange(newSize)
+                }
               }}
               className="page-size-select"
             >
@@ -896,40 +971,59 @@ const DataTable = ({
 
           <div className="pagination-controls">
             <button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (serverSide && onPageChange) {
+                  onPageChange(1)
+                } else {
+                  setCurrentPage(1)
+                }
+              }}
+              disabled={effectiveCurrentPage === 1}
               className="pagination-btn"
               title={t('firstPage')}
             >
               <ChevronsLeft size={16} />
             </button>
             <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              onClick={() => {
+                const newPage = Math.max(1, effectiveCurrentPage - 1)
+                if (serverSide && onPageChange) {
+                  onPageChange(newPage)
+                } else {
+                  setCurrentPage(newPage)
+                }
+              }}
+              disabled={effectiveCurrentPage === 1}
               className="pagination-btn"
               title={t('previousPage')}
             >
               <ChevronLeft size={16} />
             </button>
-            
+
             <div className="page-numbers">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum
                 if (totalPages <= 5) {
                   pageNum = i + 1
-                } else if (currentPage <= 3) {
+                } else if (effectiveCurrentPage <= 3) {
                   pageNum = i + 1
-                } else if (currentPage >= totalPages - 2) {
+                } else if (effectiveCurrentPage >= totalPages - 2) {
                   pageNum = totalPages - 4 + i
                 } else {
-                  pageNum = currentPage - 2 + i
+                  pageNum = effectiveCurrentPage - 2 + i
                 }
 
                 return (
                   <button
                     key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                    onClick={() => {
+                      if (serverSide && onPageChange) {
+                        onPageChange(pageNum)
+                      } else {
+                        setCurrentPage(pageNum)
+                      }
+                    }}
+                    className={`pagination-btn ${effectiveCurrentPage === pageNum ? 'active' : ''}`}
                   >
                     {pageNum}
                   </button>
@@ -938,16 +1032,29 @@ const DataTable = ({
             </div>
 
             <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                const newPage = Math.min(totalPages, effectiveCurrentPage + 1)
+                if (serverSide && onPageChange) {
+                  onPageChange(newPage)
+                } else {
+                  setCurrentPage(newPage)
+                }
+              }}
+              disabled={effectiveCurrentPage === totalPages}
               className="pagination-btn"
               title={t('nextPage')}
             >
               <ChevronRight size={16} />
             </button>
             <button
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (serverSide && onPageChange) {
+                  onPageChange(totalPages)
+                } else {
+                  setCurrentPage(totalPages)
+                }
+              }}
+              disabled={effectiveCurrentPage === totalPages}
               className="pagination-btn"
               title={t('lastPage')}
             >
@@ -960,4 +1067,6 @@ const DataTable = ({
   )
 }
 
-export default DataTable
+// Wrap with React.memo to prevent unnecessary re-renders
+// Only re-renders when props actually change
+export default React.memo(DataTable)

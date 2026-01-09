@@ -6,7 +6,7 @@ import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import StockChart from '../../../components/StockChart'
 import ImageUpload from '../../../components/ui/ImageUpload'
 import FileUpload from '../../../components/ui/FileUpload'
@@ -16,6 +16,7 @@ import pettyCashService from '../../../services/pettyCashService'
 import uploadService from '../../../services/uploadService'
 import userService from '../../../services/userService'
 import pettyCashUsersService from '../../../services/pettyCashUsersService'
+import dataCacheService from '../../../services/dataCacheService'
 import PettyCashUsersSection from '../../../components/petty-cash/PettyCashUsersSection'
 import {
   CreditCard,
@@ -104,47 +105,54 @@ const PettyCash = () => {
     try {
       setLoading(true)
       setError(null)
-      
-      // Load petty cash cards from backend
-      const cardsResult = await pettyCashService.getAllCards()
-      if (cardsResult.success) {
-        setCards(cardsResult.data || [])
-      } else {
-        throw new Error(cardsResult.error || 'Failed to load petty cash cards')
-      }
-      
-      // Load expenses from backend
-      const expensesResult = await pettyCashService.getAllExpenses()
-      if (expensesResult.success) {
-        setExpenses(expensesResult.data || [])
-      } else {
-        console.warn('Failed to load expenses:', expensesResult.error)
-        setExpenses([])
-      }
-      
-      // Load expense types
-      const typesResult = await pettyCashService.getExpenseTypes()
+
+      // PERFORMANCE FIX: Load all data in parallel using dataCacheService for instant loading
+      const [cardsData, expensesData, typesResult, statsResult, usersResult] = await Promise.all([
+        // Petty cash cards - CACHED (2 min TTL)
+        dataCacheService.getPettyCashCards().catch(err => {
+          console.error('Error loading petty cash cards:', err)
+          return []
+        }),
+        // Petty cash expenses - CACHED (2 min TTL)
+        dataCacheService.getPettyCashExpenses().catch(err => {
+          console.error('Error loading expenses:', err)
+          return []
+        }),
+        // Expense types (not cached as rarely called)
+        pettyCashService.getExpenseTypes().catch(err => {
+          console.warn('Failed to load expense types:', err)
+          return { success: false, data: [] }
+        }),
+        // Analytics (not cached - dynamic data)
+        pettyCashService.getAnalytics().catch(err => {
+          console.warn('Failed to load analytics:', err)
+          return { success: false, data: {} }
+        }),
+        // Users (not cached for now - could be added)
+        userService.getAll().catch(err => {
+          console.error('Failed to load users:', err)
+          return { success: false, data: [] }
+        })
+      ])
+
+      // Process cached data (arrays returned directly)
+      setCards(cardsData || [])
+      setExpenses(expensesData || [])
+
+      // Process non-cached results
       if (typesResult.success) {
         setExpenseTypes(typesResult.data || [])
       } else {
-        console.warn('Failed to load expense types:', typesResult.error)
         setExpenseTypes([])
       }
-      
-      // Load statistics
-      const statsResult = await pettyCashService.getAnalytics()
+
       if (statsResult.success) {
         setStats(statsResult.data || {})
       }
 
-      // Load users
-      const usersResult = await userService.getAll()
-      console.log('📋 Users API Result:', usersResult)
       if (usersResult.success) {
-        console.log('✅ Users loaded:', usersResult.data?.length, 'users')
         setUsers(usersResult.data || [])
       } else {
-        console.error('❌ Failed to load users:', usersResult.error)
         setUsers([])
       }
 
@@ -911,25 +919,23 @@ const PettyCash = () => {
           className={`tab-btn ${activeTab === 'cards' ? 'active' : ''}`}
           onClick={() => setActiveTab('cards')}
         >
-          <CreditCard size={18} />
-          {t('pettyCashCards', 'Petty Cash Cards')}
-          <span className="tab-count">{cards.length}</span>
+          <CreditCard size={16} />
+          {t('pettyCashCards', 'Cards')}
         </button>
         <button
           className={`tab-btn ${activeTab === 'expenses' ? 'active' : ''}`}
           onClick={() => setActiveTab('expenses')}
         >
-          <Receipt size={18} />
+          <Receipt size={16} />
           {t('expenses', 'Expenses')}
-          <span className="tab-count">{expenses.length}</span>
         </button>
         {hasPermission('MANAGE_PETTY_CASH') && (
           <button
             className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
-            <Users size={18} />
-            {t('pettyCashUsers', 'Petty Cash Users')}
+            <Users size={16} />
+            {t('users', 'Users')}
           </button>
         )}
       </div>
@@ -1003,21 +1009,12 @@ const PettyCash = () => {
           subtitle={`${cards.length} ${t('cards', 'cards')}`}
           headerActions={
             <>
-              <select
-                value={cardFilter}
-                onChange={(e) => setCardFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">{t('allCards', 'All Cards')}</option>
-                <option value="active">{t('active', 'Active')}</option>
-                <option value="inactive">{t('inactive', 'Inactive')}</option>
-                <option value="blocked">{t('blocked', 'Blocked')}</option>
-              </select>
               <button
                 className="btn btn-outline"
                 onClick={loadPettyCashData}
                 disabled={loading}
                 title={t('refresh', 'Refresh')}
+                style={{ marginRight: '8px' }}
               >
                 <RefreshCw size={16} className={loading ? 'spinning' : ''} />
               </button>
@@ -1028,6 +1025,18 @@ const PettyCash = () => {
                 </button>
               )}
             </>
+          }
+          customFilters={
+            <select
+              value={cardFilter}
+              onChange={(e) => setCardFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">{t('allCards', 'All Cards')}</option>
+              <option value="active">{t('active', 'Active')}</option>
+              <option value="inactive">{t('inactive', 'Inactive')}</option>
+              <option value="blocked">{t('blocked', 'Blocked')}</option>
+            </select>
           }
           searchable={true}
           filterable={true}
@@ -1049,21 +1058,12 @@ const PettyCash = () => {
           subtitle={`${t('trackAllExpenses', 'Track all expense submissions')} - ${expenses.length} ${t('expenses', 'expenses')}`}
           headerActions={
             <>
-              <select
-                value={expenseFilter}
-                onChange={(e) => setExpenseFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">{t('allExpenses', 'All Expenses')}</option>
-                <option value="approved">{t('approved', 'Approved')}</option>
-                <option value="pending">{t('pending', 'Pending')}</option>
-                <option value="rejected">{t('rejected', 'Rejected')}</option>
-              </select>
               <button
                 className="btn btn-outline"
                 onClick={loadPettyCashData}
                 disabled={loading}
                 title={t('refresh', 'Refresh')}
+                style={{ marginRight: '8px' }}
               >
                 <RefreshCw size={16} className={loading ? 'spinning' : ''} />
               </button>
@@ -1074,6 +1074,18 @@ const PettyCash = () => {
                 </button>
               )}
             </>
+          }
+          customFilters={
+            <select
+              value={expenseFilter}
+              onChange={(e) => setExpenseFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">{t('allExpenses', 'All Expenses')}</option>
+              <option value="approved">{t('approved', 'Approved')}</option>
+              <option value="pending">{t('pending', 'Pending')}</option>
+              <option value="rejected">{t('rejected', 'Rejected')}</option>
+            </select>
           }
           searchable={true}
           filterable={true}
@@ -1491,25 +1503,19 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
           <h3>{t('validityPeriod', 'Validity Period')}</h3>
           <div className="form-grid">
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label={`${t('issueDate', 'Issue Date')} *`}
-                value={formData.issueDate ? new Date(formData.issueDate) : null}
-                onChange={(date) => {
-                  const dateStr = date ? date.toISOString().split('T')[0] : ''
-                  setFormData(prev => ({ ...prev, issueDate: dateStr }))
-                }}
+                value={formData.issueDate || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, issueDate: value || '' }))}
                 required
               />
             </div>
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label={t('expiryDate', 'Expiry Date')}
-                value={formData.expiryDate ? new Date(formData.expiryDate) : null}
-                onChange={(date) => {
-                  const dateStr = date ? date.toISOString().split('T')[0] : ''
-                  setFormData(prev => ({ ...prev, expiryDate: dateStr }))
-                }}
-                minDate={formData.issueDate ? new Date(formData.issueDate) : null}
+                value={formData.expiryDate || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, expiryDate: value || '' }))}
+                minDate={formData.issueDate || ''}
               />
             </div>
           </div>
@@ -1661,13 +1667,10 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           </div>
 
           <div className="form-group">
-            <DatePicker
+            <DateInput
               label={`${t('transactionDate', 'Transaction Date')} *`}
-              value={formData.transactionDate ? new Date(formData.transactionDate) : null}
-              onChange={(date) => {
-                const dateStr = date ? date.toISOString().split('T')[0] : ''
-                setFormData(prev => ({ ...prev, transactionDate: dateStr }))
-              }}
+              value={formData.transactionDate || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, transactionDate: value || '' }))}
               required
             />
           </div>
@@ -1804,13 +1807,10 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
         </div>
 
         <div className="form-group">
-          <DatePicker
+          <DateInput
             label={`${t('reloadDate', 'Reload Date')} *`}
-            value={formData.reloadDate ? new Date(formData.reloadDate) : null}
-            onChange={(date) => {
-              const dateStr = date ? date.toISOString().split('T')[0] : ''
-              setFormData(prev => ({ ...prev, reloadDate: dateStr }))
-            }}
+            value={formData.reloadDate || ''}
+            onChange={(value) => setFormData(prev => ({ ...prev, reloadDate: value || '' }))}
             required
           />
         </div>
@@ -2066,13 +2066,10 @@ const EditExpenseFormModal = ({
           </div>
 
           <div className="form-group">
-            <DatePicker
+            <DateInput
               label={`${t('transactionDate', 'Transaction Date')} *`}
-              value={formData.transactionDate ? new Date(formData.transactionDate) : null}
-              onChange={(date) => {
-                const dateStr = date ? date.toISOString().split('T')[0] : ''
-                setFormData(prev => ({ ...prev, transactionDate: dateStr }))
-              }}
+              value={formData.transactionDate || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, transactionDate: value || '' }))}
               required
             />
           </div>

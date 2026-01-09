@@ -6,6 +6,7 @@ import { usePermissions } from '../../../hooks/usePermissions'
 import { PERMISSIONS } from '../../../config/roles'
 import systemSettingsService from '../../../services/systemSettingsService'
 import branchService from '../../../services/branchService'
+import dataCacheService from '../../../services/dataCacheService'
 import MFASetup from '../../../components/MFASetup'
 import ExpenseCategoryManager from '../../../components/ExpenseCategoryManager'
 import {
@@ -242,6 +243,7 @@ const Settings = () => {
       }
 
       if (response.success) {
+        dataCacheService.invalidateBranches() // Clear cache
         setMessage({
           type: 'success',
           text: `Branch ${editingBranch ? 'updated' : 'created'} successfully`
@@ -271,6 +273,7 @@ const Settings = () => {
       const response = await branchService.delete(branch.id)
 
       if (response.success) {
+        dataCacheService.invalidateBranches() // Clear cache
         setMessage({ type: 'success', text: response.message || 'Branch deleted successfully' })
         loadBranches()
       } else {

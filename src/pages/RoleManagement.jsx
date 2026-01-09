@@ -16,6 +16,7 @@ import { useLocalization } from '../context/LocalizationContext'
 import { usePermissions } from '../hooks/usePermissions'
 import { PERMISSIONS } from '../config/roles'
 import roleService from '../services/roleService'
+import dataCacheService from '../services/dataCacheService'
 import DataTable from '../components/ui/DataTable'
 import Modal from '../components/ui/Modal'
 import PermissionMatrix from '../components/ui/PermissionMatrix'
@@ -77,21 +78,30 @@ const RoleManagement = ({ embedded = false }) => {
   const canManageUsers = hasPermission(PERMISSIONS.MANAGE_USERS)
   const canViewRoles = hasPermission(PERMISSIONS.VIEW_ROLES) || canManageRoles || canManageUsers
 
-  // Load roles
-  const loadRoles = useCallback(async () => {
+  // Load roles - PERFORMANCE FIX: Use dataCacheService for cached roles (5 min TTL)
+  const loadRoles = useCallback(async (forceRefresh = false) => {
     if (!canViewRoles) return
 
     try {
       setLoading(true)
       setError(null)
 
-      const result = await roleService.getAll()
+      // If force refresh requested, invalidate cache first
+      if (forceRefresh) {
+        dataCacheService.invalidateRoles()
+      }
 
-      if (result.success) {
-        // Backend returns data as array directly, not nested as { roles: [...] }
-        setRoles(Array.isArray(result.data) ? result.data : result.data?.roles || [])
+      // Use dataCacheService for instant loading after first fetch
+      const rolesData = await dataCacheService.getRoles().catch(err => {
+        console.error('Error loading roles:', err)
+        return null
+      })
+
+      if (rolesData) {
+        // dataCacheService returns result.data which can be array or object with roles
+        setRoles(Array.isArray(rolesData) ? rolesData : rolesData?.roles || [])
       } else {
-        setError(result.error || 'Failed to load roles')
+        setError('Failed to load roles')
       }
     } catch (err) {
       console.error('Error loading roles:', err)
@@ -504,6 +514,8 @@ const RoleManagement = ({ embedded = false }) => {
         sortable={true}
         paginated={true}
         initialPageSize={10}
+        title={!embedded ? t('roles', 'Roles') : undefined}
+        subtitle={!embedded ? t('manageUsersDescription', 'Manage user accounts, roles, and permissions') : undefined}
         emptyMessage={t('noRolesFound') || 'No roles found'}
         onRowClick={(row) => !row.is_system && canManageRoles && openEditModal(row)}
         headerActions={

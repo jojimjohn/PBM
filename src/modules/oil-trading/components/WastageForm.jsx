@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone'
 import Modal from '../../../components/ui/Modal'
 import Input, { Textarea } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import wastageService from '../../../services/wastageService'
@@ -735,10 +735,10 @@ const WastageForm = ({
             <div className="form-row">
               <div className="form-group">
                 <label>{t('wastageDate', 'Wastage Date')} *</label>
-                <DatePicker
+                <DateInput
                   value={formData.wastageDate}
                   onChange={(value) => handleChange('wastageDate', value)}
-                  max={new Date().toISOString().split('T')[0]}
+                  maxDate={new Date().toISOString().split('T')[0]}
                   error={errors.wastageDate}
                 />
                 {errors.wastageDate && <span className="error-text">{errors.wastageDate}</span>}

@@ -16,6 +16,7 @@ import supplierService from '../../../services/supplierService'
 import branchService from '../../../services/branchService'
 import materialCompositionService from '../../../services/materialCompositionService'
 import transactionService from '../../../services/transactionService'
+import dataCacheService from '../../../services/dataCacheService'
 import TimelineView from '../components/TimelineView'
 import { Package, Plus, AlertTriangle, TrendingUp, TrendingDown, Droplets, Drum, Fuel, Factory, ShoppingCart, Edit, FileText, Banknote, BarChart3, ChevronDown, ChevronRight, Building, Layers, Clock, X } from 'lucide-react'
 import '../styles/Inventory.css'
@@ -129,11 +130,26 @@ const Inventory = () => {
     try {
       setLoading(true)
 
-      // Load inventory data using API service
-      const inventoryResult = await inventoryService.getAll()
-      const inventoryArray = inventoryResult.success ? inventoryResult.data : []
+      // PERFORMANCE: Run ALL independent API calls in parallel
+      // Use cache service for frequently accessed static data (materials, branches, suppliers)
+      const [
+        inventoryResult,
+        companyMaterials,
+        componentIds,
+        companyBranches,
+        companyVendors
+      ] = await Promise.all([
+        inventoryService.getAll(),
+        dataCacheService.getMaterials(), // Cached for 5 minutes
+        materialCompositionService.getComponentMaterialIds().catch(() => []),
+        dataCacheService.getBranches(), // Cached for 10 minutes
+        selectedCompany?.id !== 'al_ramrami'
+          ? dataCacheService.getSuppliers() // Cached for 5 minutes
+          : Promise.resolve([])
+      ])
 
-      // Transform array to object keyed by materialId, aggregating multiple batches
+      // Process inventory data
+      const inventoryArray = inventoryResult.success ? inventoryResult.data : []
       const inventoryByMaterial = {}
       for (const item of inventoryArray) {
         const matId = Number(item.materialId)
@@ -162,25 +178,34 @@ const Inventory = () => {
         inventoryByMaterial[matId].totalValue += parseFloat(item.totalValue || 0)
         inventoryByMaterial[matId].batches.push(item)
       }
-
       setInventory(inventoryByMaterial)
 
-      // Load materials data using API service
-      const materialsResult = await materialService.getAll()
-      const companyMaterials = materialsResult.success ? materialsResult.data : []
-      setMaterials(companyMaterials)
+      // Set materials data (already resolved from cache)
+      setMaterials(companyMaterials || [])
 
-      // Load component material IDs for filtering
-      const componentIds = await materialCompositionService.getComponentMaterialIds()
+      // Set component IDs
       setComponentMaterialIds(componentIds)
 
-      // Load compositions for composite materials
-      const compositions = {}
-      for (const material of companyMaterials) {
-        if (material.is_composite) {
-          const compResult = await materialCompositionService.getByComposite(material.id)
-          if (compResult.success && compResult.data) {
-            compositions[material.id] = compResult.data.map(comp => {
+      // Set branches (already resolved from cache)
+      setBranches(companyBranches || [])
+
+      // Set vendors (already resolved from cache)
+      setVendors(companyVendors || [])
+
+      // PERFORMANCE: Load ALL composite material compositions in parallel (not sequential loop)
+      const compositeMaterials = (companyMaterials || []).filter(m => m.is_composite)
+      if (compositeMaterials.length > 0) {
+        const compositionPromises = compositeMaterials.map(material =>
+          materialCompositionService.getByComposite(material.id)
+            .then(compResult => ({ materialId: material.id, result: compResult }))
+            .catch(() => ({ materialId: material.id, result: { success: false, data: [] } }))
+        )
+        const compositionResults = await Promise.all(compositionPromises)
+
+        const compositions = {}
+        for (const { materialId, result } of compositionResults) {
+          if (result.success && result.data) {
+            compositions[materialId] = result.data.map(comp => {
               const compStock = inventoryByMaterial[comp.component_material_id]
               return {
                 ...comp,
@@ -190,31 +215,9 @@ const Inventory = () => {
             })
           }
         }
-      }
-      setMaterialCompositions(compositions)
-
-      // Load branches data using API service
-      try {
-        const branchesResult = await branchService.getAll()
-        const companyBranches = branchesResult.success ? branchesResult.data : []
-        setBranches(companyBranches)
-      } catch (branchError) {
-        console.error('Error loading branches:', branchError)
-        setBranches([])
-      }
-
-      // Load supplier/vendor data using API service
-      if (selectedCompany?.id !== 'al_ramrami') {
-        try {
-          const suppliersResult = await supplierService.getAll()
-          const companyVendors = suppliersResult.success ? suppliersResult.data : []
-          setVendors(companyVendors)
-        } catch (vendorError) {
-          console.error('Error loading vendors:', vendorError)
-          setVendors([])
-        }
+        setMaterialCompositions(compositions)
       } else {
-        setVendors([])
+        setMaterialCompositions({})
       }
 
       // Create alerts for low stock items
@@ -580,6 +583,9 @@ const Inventory = () => {
       }
 
       if (response.success) {
+        // Invalidate materials cache so other pages see the new/updated material
+        dataCacheService.invalidateMaterials()
+
         setMessage({
           type: 'success',
           text: materialId ? 'Material updated successfully' : 'Material created successfully'
@@ -1053,6 +1059,12 @@ const Inventory = () => {
                       <span className="cell-text">{value}</span>
                       <span className="cell-code">{row.code}</span>
                     </div>
+                    {row.is_disposable && (
+                      <span className="status-badge disposable" title="Disposable material - auto-converted to wastage">
+                        <Recycle size={12} />
+                        Disposable
+                      </span>
+                    )}
                   </div>
                 )
               }
@@ -1073,6 +1085,32 @@ const Inventory = () => {
                     {row.categoryInfo.name}
                   </div>
                 )
+              }
+            },
+            {
+              key: 'is_disposable',
+              header: 'Type',
+              sortable: true,
+              filterable: true,
+              render: (value, row) => {
+                if (row.isComponent) return null
+                if (row.is_composite) {
+                  return (
+                    <span className="status-badge composite">
+                      <Layers size={12} />
+                      Composite
+                    </span>
+                  )
+                }
+                if (value) {
+                  return (
+                    <span className="status-badge disposable">
+                      <Recycle size={12} />
+                      Disposable
+                    </span>
+                  )
+                }
+                return <span className="status-badge standard">Standard</span>
               }
             },
             {

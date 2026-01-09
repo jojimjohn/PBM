@@ -84,71 +84,8 @@
 }
 
 /* ==============================================
-   Order Cards (List View)
+   Order Items Grid (Sales-specific)
    ============================================== */
-
-.orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.order-card {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-lg);
-  padding: 20px;
-  transition: all var(--ds-transition);
-}
-
-.order-card:hover {
-  border-color: var(--ds-text-faint);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.order-info h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ds-text-primary);
-  margin: 0 0 4px 0;
-}
-
-.customer-name {
-  font-size: 14px;
-  color: var(--ds-text-muted);
-  margin: 0 0 4px 0;
-}
-
-.order-date {
-  font-size: 13px;
-  color: var(--ds-text-faint);
-  margin: 0;
-}
-
-.order-status {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-/* Order Items Grid */
-.order-items {
-  margin-bottom: 16px;
-}
-
-.order-items h4 {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ds-text-secondary);
-  margin: 0 0 12px 0;
-}
 
 .item-row {
   display: grid;
@@ -179,97 +116,6 @@
   text-align: right;
 }
 
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 16px;
-  border-top: 1px solid var(--ds-border-subtle);
-}
-
-.order-total {
-  font-size: 16px;
-  color: var(--ds-text-primary);
-  font-weight: 600;
-}
-
-.order-actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* ==============================================
-   Sales Summary Section
-   ============================================== */
-
-.sales-summary {
-  margin-top: 24px;
-}
-
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.summary-card {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-radius-lg);
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.summary-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--ds-radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.summary-icon.success {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--ds-success);
-}
-
-.summary-icon.warning {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--ds-warning);
-}
-
-.summary-icon.primary {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--ds-accent);
-}
-
-.summary-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.summary-info {
-  flex: 1;
-}
-
-.summary-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--ds-text-primary);
-  margin: 0 0 4px 0;
-  letter-spacing: -0.02em;
-}
-
-.summary-label {
-  font-size: 14px;
-  color: var(--ds-text-muted);
-  margin: 0;
-}
-
 /* ==============================================
    Sales Invoices Section
    ============================================== */
@@ -291,20 +137,5 @@
 
   .item-amount {
     text-align: left;
-  }
-
-  .order-footer {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
-
-  .order-actions {
-    justify-content: stretch;
-  }
-
-  .order-actions .btn {
-    flex: 1;
-    justify-content: center;
   }
 }

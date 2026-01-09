@@ -4,7 +4,6 @@ import { useLocalization } from '../../context/LocalizationContext';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/authService';
 import { API_BASE_URL } from '../../config/api';
-import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
 import '../../modules/oil-trading/styles/Suppliers.css';
@@ -389,8 +388,8 @@ const SupplierLocationManager = () => {
             <Edit size={14} />
           </button>
           {row.isActive ? (
-            <button 
-              className="btn btn-outline btn-sm btn-danger" 
+            <button
+              className="btn btn-danger btn-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 handleDeleteLocation(row)
@@ -420,11 +419,6 @@ const SupplierLocationManager = () => {
     <div className="supplier-locations-page">
       {/* Data Table Container */}
       <div className="locations-table-container">
-        {loading && (
-          <div className="page-loading">
-            <LoadingSpinner message="Loading locations..." size="large" />
-          </div>
-        )}
         <DataTable
           data={locations}
           columns={columns}

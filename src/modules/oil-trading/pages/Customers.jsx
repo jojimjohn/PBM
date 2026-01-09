@@ -8,6 +8,7 @@ import DataTable from '../../../components/ui/DataTable'
 import customerService from '../../../services/customerService'
 import typesService from '../../../services/typesService'
 import materialService from '../../../services/materialService'
+import dataCacheService from '../../../services/dataCacheService'
 import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, Banknote, AlertTriangle, Trash, RotateCcw } from 'lucide-react'
 import '../styles/Customers.css'
 
@@ -73,6 +74,7 @@ const OilTradingCustomers = () => {
       const result = await customerService.create(customerData)
       
       if (result.success) {
+        dataCacheService.invalidateCustomers() // Clear cache
         // Refresh customer list
         const listResult = await customerService.getAll()
         if (listResult.success) {
@@ -95,8 +97,9 @@ const OilTradingCustomers = () => {
     try {
       setLoading(true)
       const result = await customerService.update(customerId, customerData)
-      
+
       if (result.success) {
+        dataCacheService.invalidateCustomers() // Clear cache
         // Refresh customer list
         const listResult = await customerService.getAll()
         if (listResult.success) {
@@ -122,6 +125,7 @@ const OilTradingCustomers = () => {
         const result = await customerService.delete(customerId)
 
         if (result.success) {
+          dataCacheService.invalidateCustomers() // Clear cache
           // Refresh customer list
           const listResult = await customerService.getAll()
           if (listResult.success) {
@@ -165,6 +169,7 @@ const OilTradingCustomers = () => {
       const result = await customerService.updateStatus(customerId, !customer.isActive)
 
       if (result.success) {
+        dataCacheService.invalidateCustomers() // Clear cache
         // Refresh customer list to get properly transformed data
         const listResult = await customerService.getAll()
         if (listResult.success) {

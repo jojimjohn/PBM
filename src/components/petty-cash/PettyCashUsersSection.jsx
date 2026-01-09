@@ -660,6 +660,7 @@ const PettyCashUsersSection = ({
             className="btn btn-secondary"
             onClick={loadUsers}
             disabled={loading}
+            style={{ marginRight: '8px' }}
           >
             <RefreshCw size={16} className={loading ? 'spinning' : ''} />
           </button>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
+import dataCacheService from '../services/dataCacheService';
 
 const AuthContext = createContext();
 
@@ -78,6 +79,10 @@ export const AuthProvider = ({ children }) => {
       const companyDetails = await loadCompanyDetails(currentUser.companyId);
       setSelectedCompany(companyDetails);
       setIsAuthenticated(true);
+
+      // Set company ID and prefetch transactional data for instant cross-module navigation
+      dataCacheService.setCompanyId(companyDetails?.id);
+      dataCacheService.prefetchTransactional();
     } else {
       setUser(null);
       setSelectedCompany(null);
@@ -161,6 +166,12 @@ export const AuthProvider = ({ children }) => {
         setSelectedCompany(companyDetails);
         setIsAuthenticated(true);
 
+        // Set company ID in cache service for multi-tenant isolation
+        dataCacheService.setCompanyId(companyDetails?.id);
+
+        // Prefetch transactional data for instant cross-module navigation
+        dataCacheService.prefetchTransactional();
+
         return {
           success: true,
           requiresMfa: false,
@@ -218,6 +229,12 @@ export const AuthProvider = ({ children }) => {
         setSelectedCompany(companyDetails);
         setIsAuthenticated(true);
 
+        // Set company ID in cache service for multi-tenant isolation
+        dataCacheService.setCompanyId(companyDetails?.id);
+
+        // Prefetch transactional data for instant cross-module navigation
+        dataCacheService.prefetchTransactional();
+
         return {
           success: true,
           user: result.user,
@@ -252,6 +269,9 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Clear data cache on logout
+      dataCacheService.clearAll();
+
       // Always clear local state
       setUser(null);
       setSelectedCompany(null);
@@ -302,6 +322,9 @@ export const AuthProvider = ({ children }) => {
       if (user.role === 'SUPER_ADMIN' || user.role === 'super-admin' || user.companyId === newCompanyId) {
         const companyDetails = await loadCompanyDetails(newCompanyId);
         setSelectedCompany(companyDetails);
+
+        // Clear and reset cache for new company (prevents stale data from previous company)
+        dataCacheService.setCompanyId(companyDetails?.id);
 
         // Update user object to reflect new company context
         const updatedUser = { ...user, currentCompanyContext: newCompanyId };

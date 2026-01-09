@@ -187,10 +187,22 @@ const Projects = () => {
     setShowUsersModal(true)
   }
 
-  // Open assign user modal
-  const openAssignModal = (project) => {
+  // Open assign user modal (loads project users to filter already-assigned)
+  const openAssignModal = async (project) => {
     setSelectedProject(project)
     setAssignFormData({ userId: '', roleInProject: 'contributor' })
+    setActionLoading(true)
+    try {
+      // Load current project users to filter them out from available users
+      const result = await projectsService.getProjectUsers(project.id)
+      if (result.success) {
+        setProjectUsers(result.data || [])
+      }
+    } catch (err) {
+      console.error('Error loading project users:', err)
+    } finally {
+      setActionLoading(false)
+    }
     setShowAssignModal(true)
   }
 
@@ -205,7 +217,14 @@ const Projects = () => {
         return
       }
 
-      const result = await projectsService.create(formData)
+      // Clean up empty date strings to null for backend validation
+      const cleanedData = {
+        ...formData,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null
+      }
+
+      const result = await projectsService.create(cleanedData)
 
       if (result.success) {
         setShowCreateModal(false)
@@ -225,7 +244,15 @@ const Projects = () => {
   const handleUpdateProject = async () => {
     try {
       setActionLoading(true)
-      const result = await projectsService.update(selectedProject.id, formData)
+
+      // Clean up empty date strings to null for backend validation
+      const cleanedData = {
+        ...formData,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null
+      }
+
+      const result = await projectsService.update(selectedProject.id, cleanedData)
 
       if (result.success) {
         setShowEditModal(false)
@@ -402,14 +429,15 @@ const Projects = () => {
         if (!row) return null
         return (
           <button
-            className="btn btn-outline btn-sm"
+            className="btn btn-outline btn-sm user-count-btn"
             onClick={(e) => {
               e.stopPropagation()
               openUsersModal(row)
             }}
+            title={t('viewProjectUsers') || 'View Project Users'}
           >
             <Users size={14} />
-            {row.userCount || 0}
+            <span className="user-count-badge">{row.userCount || 0}</span>
           </button>
         )
       }
@@ -465,7 +493,7 @@ const Projects = () => {
                 </button>
                 {!isGeneral && (
                   <button
-                    className="btn btn-outline btn-sm btn-danger"
+                    className="btn btn-danger btn-sm"
                     onClick={(e) => {
                       e.stopPropagation()
                       openDeleteModal(row)
@@ -595,15 +623,14 @@ const Projects = () => {
         size="md"
       >
         <div className="project-form">
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-group">
-              <label>{t('projectCode') || 'Project Code'} *</label>
+              <label>{t('projectCode') || 'Project Code'} <span className="required">*</span></label>
               <input
                 type="text"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                 placeholder="e.g., PROJ-001"
-                className="form-input"
               />
               <span className="form-hint">{t('projectCodeHint') || 'Uppercase letters, numbers, underscores, hyphens only'}</span>
             </div>
@@ -612,7 +639,6 @@ const Projects = () => {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="form-select"
               >
                 <option value="active">{t('active') || 'Active'}</option>
                 <option value="pending">{t('pending') || 'Pending'}</option>
@@ -622,13 +648,12 @@ const Projects = () => {
           </div>
 
           <div className="form-group">
-            <label>{t('projectName') || 'Project Name'} *</label>
+            <label>{t('projectName') || 'Project Name'} <span className="required">*</span></label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder={t('enterProjectName') || 'Enter project name'}
-              className="form-input"
             />
           </div>
 
@@ -638,19 +663,17 @@ const Projects = () => {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t('enterDescription') || 'Enter project description'}
-              className="form-textarea"
               rows={3}
             />
           </div>
 
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-group">
               <label>{t('startDate') || 'Start Date'}</label>
               <input
                 type="date"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="form-input"
               />
             </div>
             <div className="form-group">
@@ -659,13 +682,12 @@ const Projects = () => {
                 type="date"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="form-input"
                 min={formData.start_date}
               />
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="form-actions">
             <button
               className="btn btn-outline"
               onClick={() => setShowCreateModal(false)}
@@ -692,14 +714,13 @@ const Projects = () => {
         size="md"
       >
         <div className="project-form">
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-group">
               <label>{t('projectCode') || 'Project Code'}</label>
               <input
                 type="text"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                className="form-input"
                 disabled={selectedProject?.code === 'GENERAL'}
               />
             </div>
@@ -708,7 +729,6 @@ const Projects = () => {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="form-select"
               >
                 <option value="active">{t('active') || 'Active'}</option>
                 <option value="pending">{t('pending') || 'Pending'}</option>
@@ -719,12 +739,11 @@ const Projects = () => {
           </div>
 
           <div className="form-group">
-            <label>{t('projectName') || 'Project Name'} *</label>
+            <label>{t('projectName') || 'Project Name'} <span className="required">*</span></label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="form-input"
             />
           </div>
 
@@ -733,19 +752,17 @@ const Projects = () => {
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="form-textarea"
               rows={3}
             />
           </div>
 
-          <div className="form-row">
+          <div className="form-grid">
             <div className="form-group">
               <label>{t('startDate') || 'Start Date'}</label>
               <input
                 type="date"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="form-input"
               />
             </div>
             <div className="form-group">
@@ -754,13 +771,12 @@ const Projects = () => {
                 type="date"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="form-input"
                 min={formData.start_date}
               />
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="form-actions">
             <button
               className="btn btn-outline"
               onClick={() => setShowEditModal(false)}
@@ -824,14 +840,15 @@ const Projects = () => {
           {canManageProjects && selectedProject?.code !== 'GENERAL' && (
             <div className="users-header">
               <button
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary"
                 onClick={() => {
                   setShowUsersModal(false)
                   openAssignModal(selectedProject)
                 }}
+                title={t('assignUser') || 'Assign User'}
               >
-                <UserPlus size={14} />
-                {t('assignUser') || 'Assign User'}
+                <UserPlus size={16} />
+                <span>{t('assignUser') || 'Assign User'}</span>
               </button>
             </div>
           )}
@@ -856,7 +873,7 @@ const Projects = () => {
                   </span>
                   {canManageProjects && selectedProject?.code !== 'GENERAL' && (
                     <button
-                      className="btn btn-outline btn-sm btn-danger"
+                      className="btn btn-danger btn-sm"
                       onClick={() => handleRemoveUser(user.id)}
                       disabled={actionLoading}
                       title={t('removeUser') || 'Remove User'}
@@ -880,11 +897,10 @@ const Projects = () => {
       >
         <div className="assign-user-form">
           <div className="form-group">
-            <label>{t('selectUser') || 'Select User'} *</label>
+            <label>{t('selectUser') || 'Select User'} <span className="required">*</span></label>
             <select
               value={assignFormData.userId}
               onChange={(e) => setAssignFormData({ ...assignFormData, userId: e.target.value })}
-              className="form-select"
             >
               <option value="">{t('selectUser') || 'Select a user...'}</option>
               {availableUsers.map((user) => (
@@ -900,7 +916,6 @@ const Projects = () => {
             <select
               value={assignFormData.roleInProject}
               onChange={(e) => setAssignFormData({ ...assignFormData, roleInProject: e.target.value })}
-              className="form-select"
             >
               <option value="lead">{t('lead') || 'Lead'}</option>
               <option value="contributor">{t('contributor') || 'Contributor'}</option>
@@ -913,7 +928,7 @@ const Projects = () => {
             </span>
           </div>
 
-          <div className="modal-actions">
+          <div className="form-actions">
             <button
               className="btn btn-outline"
               onClick={() => setShowAssignModal(false)}

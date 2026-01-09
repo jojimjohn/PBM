@@ -395,19 +395,19 @@ const Banking = () => {
   // Account card component
   const AccountCard = ({ account }) => (
     <div
-      className={`account-card ${selectedAccount?.id === account.id ? 'selected' : ''}`}
+      className={`entity-card ${selectedAccount?.id === account.id ? 'selected' : ''} ${!account.is_active ? 'inactive' : ''}`}
       onClick={() => setSelectedAccount(account)}
     >
-      <div className="account-card-header">
-        <div className="account-icon">
-          <Building2 size={24} />
+      <div className={`entity-card-header ${!account.is_active ? 'neutral' : ''}`}>
+        <div className="entity-card-icon">
+          <Building2 size={16} />
         </div>
-        <div className="account-info">
-          <h4>{account.account_name}</h4>
-          <p className="bank-name">{account.bank_name}</p>
+        <div className="entity-card-title">
+          <h3>{account.account_name}</h3>
+          <p>{account.bank_name}</p>
         </div>
         {canManage && (
-          <div className="account-actions">
+          <div className="entity-card-actions">
             <button onClick={(e) => { e.stopPropagation(); handleEditAccount(account) }} className="btn-icon">
               <Edit size={14} />
             </button>
@@ -417,19 +417,19 @@ const Banking = () => {
           </div>
         )}
       </div>
-      <div className="account-card-body">
-        <div className="account-number">
+      <div className="entity-card-body">
+        <div className="entity-card-row">
           <span className="label">Account</span>
-          <span className="value">{account.account_number}</span>
+          <span className="value mono">{account.account_number}</span>
         </div>
-        <div className="account-balance">
+        <div className="entity-card-row">
           <span className="label">Balance</span>
-          <span className={`value ${parseFloat(account.current_balance) >= 0 ? 'positive' : 'negative'}`}>
+          <span className={`value large ${parseFloat(account.current_balance) >= 0 ? 'positive' : 'negative'}`}>
             {formatCurrency(account.current_balance)}
           </span>
         </div>
       </div>
-      <div className="account-card-footer">
+      <div className="entity-card-footer">
         <span className={`account-type-badge ${account.account_type}`}>
           {account.account_type}
         </span>
@@ -639,7 +639,7 @@ const Banking = () => {
               <LoadingSpinner />
             </div>
           ) : (
-            <div className="accounts-grid">
+            <div className="entity-cards-grid">
               {accounts.length === 0 ? (
                 <div className="empty-state">
                   <Building2 size={48} />

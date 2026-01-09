@@ -9,18 +9,46 @@ import { API_BASE_URL } from '../config/api.js';
 
 class PurchaseOrderService {
   /**
-   * Get all purchase orders for the current company
+   * Get purchase orders for the current company with optional pagination
+   * @param {Object} options - Pagination and filter options
+   * @param {number} options.page - Page number (default: 1)
+   * @param {number} options.limit - Items per page (default: 10, use 0 for all)
+   * @param {string} options.search - Search term
+   * @param {string} options.status - Filter by status
+   * @param {string} options.sortBy - Sort field
+   * @param {string} options.sortOrder - Sort direction (asc/desc)
+   * @returns {Promise<Object>} { success, data, pagination }
    */
-  async getAll() {
+  async getAll(options = {}) {
     try {
-      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/purchase-orders`);
+      const {
+        page = 1,
+        limit = 10,
+        search = '',
+        status = '',
+        sortBy = 'created_at',
+        sortOrder = 'desc'
+      } = options;
+
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', limit);
+      if (search) params.append('search', search);
+      if (status) params.append('status', status);
+      if (sortBy) params.append('sortBy', sortBy);
+      if (sortOrder) params.append('sortOrder', sortOrder);
+
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/purchase-orders?${params.toString()}`
+      );
       return data;
     } catch (error) {
       console.error('Error fetching purchase orders:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch purchase orders',
-        data: []
+        data: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }
       };
     }
   }

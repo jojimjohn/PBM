@@ -3,6 +3,9 @@
  * Handles all financial transaction recording and profit calculations
  */
 
+import authService from './authService'
+import { API_BASE_URL } from '../config/api'
+
 class FinancialService {
   constructor() {
     this.transactions = []
@@ -25,15 +28,13 @@ class FinancialService {
   async loadTransactions() {
     try {
       // Check if user is authenticated before making request
-      const authService = await import('./authService')
-      if (!authService.default.isAuthenticated()) {
+      if (!authService.isAuthenticated()) {
         // Not authenticated yet, silently skip loading
         console.debug('FinancialService: Skipping load - user not authenticated')
         return []
       }
 
-      const { API_BASE_URL } = await import('../config/api')
-      const response = await authService.default.makeAuthenticatedRequest(`${API_BASE_URL}/transactions`)
+      const response = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/transactions`)
       this.transactions = response.data || []
       this._loaded = true
       return this.transactions

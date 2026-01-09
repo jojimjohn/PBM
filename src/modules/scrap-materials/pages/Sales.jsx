@@ -4,7 +4,7 @@ import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import SalesOrderForm from '../components/SalesOrderForm'
 import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
 import salesOrderService from '../../../services/salesOrderService'
@@ -32,17 +32,21 @@ const Sales = () => {
   const loadSalesData = async () => {
     try {
       setError(null)
-      
-      // Load sales orders
-      const ordersResult = await salesOrderService.getAll()
+
+      // PERFORMANCE: Run both API calls in parallel
+      const [ordersResult, summaryResult] = await Promise.all([
+        salesOrderService.getAll(),
+        salesOrderService.getTodaysSummary().catch(() => ({ success: false, data: null }))
+      ])
+
+      // Process orders
       if (ordersResult.success) {
         setSalesOrders(ordersResult.data || [])
       } else {
         throw new Error(ordersResult.error || 'Failed to load sales orders')
       }
-      
-      // Load today's summary
-      const summaryResult = await salesOrderService.getTodaysSummary()
+
+      // Process summary
       if (summaryResult.success && summaryResult.data) {
         setTodaysSummary({
           totalSales: summaryResult.data.totalSales || 0,
@@ -50,7 +54,7 @@ const Sales = () => {
           pendingOrders: summaryResult.data.pendingOrders || 0
         })
       }
-      
+
     } catch (error) {
       console.error('Error loading sales data:', error)
       setError(error.message)
@@ -445,14 +449,14 @@ const Sales = () => {
               <option value="almaha">Al Maha Petroleum</option>
               <option value="gulf">Gulf Construction LLC</option>
             </select>
-            <DatePicker
+            <DateInput
               value={filterFromDate}
               onChange={setFilterFromDate}
               placeholder={t('fromDate') || 'From Date'}
               className="filter-datepicker"
               size="small"
             />
-            <DatePicker
+            <DateInput
               value={filterToDate}
               onChange={setFilterToDate}
               placeholder={t('toDate') || 'To Date'}

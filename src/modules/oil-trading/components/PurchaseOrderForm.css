@@ -9,7 +9,7 @@
   margin-bottom: 2rem;
   padding: 1.5rem;
   background: white;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   border: 1px solid var(--gray-200);
 }
 
@@ -74,7 +74,7 @@
 .purchase-order-form .form-group textarea {
   padding: 0.75rem;
   border: 2px solid var(--gray-300);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   transition: all var(--transition-fast);
   background: white;
@@ -115,7 +115,7 @@
   background: var(--error-50);
   color: var(--error-700);
   border: 1px solid var(--error-200);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   margin-bottom: 1rem;
   font-size: var(--text-sm);
 }
@@ -133,7 +133,7 @@
   gap: 0.25rem;
   padding: 0.75rem;
   background: var(--gray-50);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
 }
 
 .vendor-detail label {
@@ -153,7 +153,7 @@
 /* Items Table */
 .items-table {
   background: var(--gray-50);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   overflow: hidden;
   border: 1px solid var(--gray-200);
 }
@@ -203,7 +203,7 @@
 .item-field select {
   padding: 0.5rem;
   border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   margin: 0;
   width: 100%;
@@ -229,7 +229,7 @@
 .unit-display {
   padding: 0.5rem;
   background: var(--gray-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   text-align: center;
   color: var(--gray-600);
@@ -238,7 +238,7 @@
 .amount-display {
   padding: 0.5rem;
   background: var(--gray-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   text-align: right;
   font-weight: var(--font-medium);
@@ -268,7 +268,7 @@
 .totals-section {
   background: linear-gradient(135deg, var(--gray-50), var(--gray-100));
   padding: 1.5rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   border: 1px solid var(--gray-200);
   max-width: 400px;
   margin-left: auto;
@@ -318,7 +318,7 @@
   padding: 0.25rem 0.5rem !important;
   margin: 0 0.25rem !important;
   border: 1px solid var(--gray-300) !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--ds-form-radius) !important;
   font-size: var(--text-sm) !important;
   text-align: center;
 }
@@ -331,7 +331,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ds-form-radius);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   cursor: pointer;
@@ -387,7 +387,7 @@
   border-top: 1px solid var(--gray-200);
   background: var(--gray-50);
   margin: 2rem -1.5rem -1.5rem -1.5rem;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-radius: var(--ds-form-radius);
 }
 
 /* Loading Spinner */

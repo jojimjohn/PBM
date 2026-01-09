@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Modal from '../ui/Modal'
-import DatePicker from '../ui/DatePicker'
+import DateInput from '../ui/DateInput'
 import { useSystemSettings } from '../../context/SystemSettingsContext'
 import { FileText, CheckSquare, Square, AlertTriangle, Receipt, Calculator, Link2 } from 'lucide-react'
 import './VendorBillModal.css'
@@ -348,26 +348,26 @@ const VendorBillModal = ({
             </div>
 
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label="Invoice Date *"
-                value={formData.invoiceDate ? new Date(formData.invoiceDate) : null}
-                onChange={(date) => setFormData(prev => ({
+                value={formData.invoiceDate || ''}
+                onChange={(value) => setFormData(prev => ({
                   ...prev,
-                  invoiceDate: date ? (toAPIDateFormat ? toAPIDateFormat(date) : date.toISOString().split('T')[0]) : ''
+                  invoiceDate: value || ''
                 }))}
                 required
               />
             </div>
 
             <div className="form-group">
-              <DatePicker
+              <DateInput
                 label="Due Date"
-                value={formData.dueDate ? new Date(formData.dueDate) : null}
-                onChange={(date) => setFormData(prev => ({
+                value={formData.dueDate || ''}
+                onChange={(value) => setFormData(prev => ({
                   ...prev,
-                  dueDate: date ? (toAPIDateFormat ? toAPIDateFormat(date) : date.toISOString().split('T')[0]) : ''
+                  dueDate: value || ''
                 }))}
-                minDate={formData.invoiceDate ? new Date(formData.invoiceDate) : null}
+                minDate={formData.invoiceDate || ''}
               />
             </div>
 

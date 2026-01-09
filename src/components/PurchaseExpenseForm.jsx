@@ -244,9 +244,9 @@ const PurchaseExpenseForm = ({
                   <CategoryIcon size={20} className="category-icon" />
                   <span className="expense-number">Expense {index + 1}</span>
                   {formData.expenses.length > 1 && (
-                    <button 
+                    <button
                       type="button"
-                      className="btn btn-outline btn-sm btn-danger"
+                      className="btn btn-danger btn-sm"
                       onClick={() => removeExpense(index)}
                     >
                       <Trash2 size={16} />
@@ -363,7 +363,7 @@ const PurchaseExpenseForm = ({
                         </div>
                         <button
                           type="button"
-                          className="btn btn-outline btn-sm btn-danger remove-receipt-btn"
+                          className="btn btn-danger btn-sm remove-receipt-btn"
                           onClick={() => removeReceiptPhoto(index)}
                         >
                           <X size={14} />

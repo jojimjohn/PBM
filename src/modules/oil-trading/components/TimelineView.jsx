@@ -24,7 +24,7 @@ import {
 import { useLocalization } from '../../../context/LocalizationContext';
 import { useSystemSettings } from '../../../context/SystemSettingsContext';
 import transactionService from '../../../services/transactionService';
-import DatePicker from '../../../components/ui/DatePicker';
+import DateInput from '../../../components/ui/DateInput';
 import '../styles/TimelineView.css';
 
 // Movement type configuration
@@ -313,22 +313,22 @@ const TimelineView = ({ materialId = null, onWastageClick = null }) => {
       <div className="timeline-filters-section">
         <div className="timeline-date-filters">
           <div className="date-filter-group">
-            <DatePicker
+            <DateInput
               label={t('from', 'From')}
-              value={startDate ? new Date(startDate) : null}
-              onChange={(date) => date && setStartDate(date.toISOString().split('T')[0])}
+              value={startDate || ''}
+              onChange={(value) => value && setStartDate(value)}
               size="small"
-              maxDate={endDate ? new Date(endDate) : new Date()}
+              maxDate={endDate || new Date().toISOString().split('T')[0]}
             />
           </div>
           <div className="date-filter-group">
-            <DatePicker
+            <DateInput
               label={t('to', 'To')}
-              value={endDate ? new Date(endDate) : null}
-              onChange={(date) => date && setEndDate(date.toISOString().split('T')[0])}
+              value={endDate || ''}
+              onChange={(value) => value && setEndDate(value)}
               size="small"
-              minDate={startDate ? new Date(startDate) : null}
-              maxDate={new Date()}
+              minDate={startDate || ''}
+              maxDate={new Date().toISOString().split('T')[0]}
             />
           </div>
           <button type="button" className="date-filter-apply-btn" onClick={handleApplyFilters}>

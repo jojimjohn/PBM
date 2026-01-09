@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
 import FileUpload from '../../../components/ui/FileUpload'
-import DatePicker from '../../../components/ui/DatePicker'
+import DateInput from '../../../components/ui/DateInput'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
@@ -427,19 +427,19 @@ const PurchaseOrderForm = ({
               data-tour="po-branch-select"
             />
 
-            <DatePicker
+            <DateInput
               label="Order Date"
-              value={formData.orderDate ? new Date(formData.orderDate) : null}
-              onChange={(date) => setFormData(prev => ({ ...prev, orderDate: date ? date.toISOString().split('T')[0] : '' }))}
+              value={formData.orderDate || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, orderDate: value || '' }))}
               required
               error={errors.orderDate}
             />
 
-            <DatePicker
+            <DateInput
               label={`Expected Delivery Date ${formData.status !== 'draft' ? '*' : ''}`}
-              value={formData.expectedDeliveryDate ? new Date(formData.expectedDeliveryDate) : null}
-              onChange={(date) => setFormData(prev => ({ ...prev, expectedDeliveryDate: date ? date.toISOString().split('T')[0] : '' }))}
-              minDate={formData.orderDate ? new Date(formData.orderDate) : null}
+              value={formData.expectedDeliveryDate || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, expectedDeliveryDate: value || '' }))}
+              minDate={formData.orderDate || ''}
               required={formData.status !== 'draft'}
               error={errors.expectedDeliveryDate}
             />

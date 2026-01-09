@@ -694,8 +694,8 @@ const VendorManager = ({
                           >
                             <Edit size={14} />
                           </button>
-                          <button 
-                            className="btn btn-outline btn-sm btn-danger"
+                          <button
+                            className="btn btn-danger btn-sm"
                             onClick={() => handleDeleteVendor(row)}
                             title="Delete Vendor"
                             disabled={row.totalPurchases > 0}

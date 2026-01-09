@@ -7,7 +7,7 @@ import contractService from '../../services/contractService';
 import supplierService from '../../services/supplierService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
-import DatePicker from '../ui/DatePicker';
+import DateInput from '../ui/DateInput';
 import MaterialSelector from '../ui/MaterialSelector';
 
 const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
@@ -515,20 +515,18 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
                 </div>
 
                 <div>
-                  <DatePicker
+                  <DateInput
                     label={t('requestedPickupDate')}
-                    value={formData.requestedPickupDate ? new Date(formData.requestedPickupDate) : null}
-                    onChange={(date) => {
+                    value={formData.requestedPickupDate ? formData.requestedPickupDate.split('T')[0] : ''}
+                    onChange={(value) => {
                       // Convert to ISO format for API consistency
-                      if (date) {
-                        const selectedDate = new Date(date);
-                        selectedDate.setHours(23, 59, 59, 999);
-                        handleInputChange('requestedPickupDate', selectedDate.toISOString());
+                      if (value) {
+                        handleInputChange('requestedPickupDate', value);
                       } else {
                         handleInputChange('requestedPickupDate', '');
                       }
                     }}
-                    minDate={new Date()}
+                    minDate={new Date().toISOString().split('T')[0]}
                     required
                     size="large"
                   />
