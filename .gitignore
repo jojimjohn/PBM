@@ -39,3 +39,8 @@ logs
 pids
 *.pid
 *.seed
+
+# Public Files
+public/help/videos
+public/help/video-scripts
+public/help/screenshots
