@@ -16,6 +16,8 @@ build/
 .env.production.local
 .env.example
 
+CLAUDE.md 
+
 # IDE files
 .vscode/
 .idea/
@@ -40,7 +42,10 @@ pids
 *.pid
 *.seed
 
-# Public Files
-public/help/videos
+# Markdown files
+*.md
+
+# Public
 public/help/video-scripts
 public/help/screenshots
+public/help/videos
