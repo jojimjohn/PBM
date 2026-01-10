@@ -49,3 +49,4 @@ pids
 public/help/video-scripts
 public/help/screenshots
 public/help/videos
+*.md
