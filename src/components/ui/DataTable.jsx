@@ -77,6 +77,7 @@ const DataTable = ({
   emptyMessage,
   className = '',
   initialPageSize = 10,
+  initialSearchTerm = '', // Pre-populate search input (e.g., from URL params)
   stickyHeader = false,
   enableColumnToggle = true,
   // Server-side pagination props
@@ -100,7 +101,7 @@ const DataTable = ({
   }
 
   // State management
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm)
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(initialPageSize)
@@ -324,6 +325,27 @@ const DataTable = ({
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, filters, advancedFilters])
+
+  // Track if initial search was triggered
+  const initialSearchTriggeredRef = React.useRef(false)
+
+  // Handle initialSearchTerm - trigger server-side search on mount and when it changes
+  useEffect(() => {
+    // Trigger initial search on mount if there's an initial search term
+    if (!initialSearchTriggeredRef.current && initialSearchTerm && serverSide && onSearch) {
+      initialSearchTriggeredRef.current = true
+      onSearch(initialSearchTerm)
+      return
+    }
+
+    // Handle subsequent changes to initialSearchTerm
+    if (initialSearchTerm !== searchTerm) {
+      setSearchTerm(initialSearchTerm)
+      if (serverSide && onSearch && initialSearchTerm) {
+        onSearch(initialSearchTerm)
+      }
+    }
+  }, [initialSearchTerm, serverSide, onSearch])
 
   // Check for mobile view
   useEffect(() => {

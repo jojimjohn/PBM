@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Modal from '../../../components/ui/Modal'
 import FileUpload from '../../../components/ui/FileUpload'
+import FileViewer from '../../../components/ui/FileViewer'
 import DateInput from '../../../components/ui/DateInput'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
@@ -46,6 +47,8 @@ const PurchaseOrderForm = ({
   const [branches, setBranches] = useState([])
   const [loadingBranches, setLoadingBranches] = useState(false)
   const [errors, setErrors] = useState({})
+  const [attachments, setAttachments] = useState([]) // S3 attachments
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
 
   // Tour context broadcast
   const { broadcast, isTourActive } = useTourBroadcast()
@@ -115,6 +118,38 @@ const PurchaseOrderForm = ({
       loadBranches()
     }
   }, [isOpen, initialData, getInputDate])
+
+  // Load S3 attachments when editing an existing order
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (isOpen && isEdit && initialData?.id) {
+        setLoadingAttachments(true)
+        try {
+          const result = await uploadService.getS3Files('purchase-orders', initialData.id)
+          if (result.success) {
+            const mappedFiles = (result.data || []).map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename || file.originalFilename,
+              contentType: file.content_type || file.contentType,
+              fileSize: file.file_size || file.fileSize,
+              downloadUrl: file.download_url || file.downloadUrl
+            }))
+            setAttachments(mappedFiles)
+          } else {
+            setAttachments([])
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error)
+          setAttachments([])
+        } finally {
+          setLoadingAttachments(false)
+        }
+      } else {
+        setAttachments([])
+      }
+    }
+    loadAttachments()
+  }, [isOpen, isEdit, initialData?.id])
 
   const loadVatRate = async () => {
     try {
@@ -678,45 +713,77 @@ const PurchaseOrderForm = ({
         {isEdit && initialData?.id && (
           <div className="form-section">
             <div className="form-section-title">Attachments</div>
+
+            {/* Upload new files */}
             <FileUpload
               mode="multiple"
               accept=".pdf,.jpg,.jpeg,.png"
               maxSize={5242880}
               maxFiles={10}
               onUpload={async (files) => {
-                const result = await uploadService.uploadFiles('purchase-orders', initialData.id, files);
-                if (result.success) {
-                  // Refresh the order data to get updated attachments
-                  const updated = await purchaseOrderService.getById(initialData.id);
-                  if (updated.success) {
-                    setFormData(prev => ({
-                      ...prev,
-                      attachments: updated.data.attachments
-                    }));
+                try {
+                  const result = await uploadService.uploadMultipleToS3('purchase-orders', initialData.id, files)
+                  if (result.success) {
+                    // Reload attachments from S3
+                    const attachmentsResult = await uploadService.getS3Files('purchase-orders', initialData.id)
+                    if (attachmentsResult.success) {
+                      const mappedFiles = (attachmentsResult.data || []).map(file => ({
+                        id: file.id,
+                        originalFilename: file.original_filename || file.originalFilename,
+                        contentType: file.content_type || file.contentType,
+                        fileSize: file.file_size || file.fileSize,
+                        downloadUrl: file.download_url || file.downloadUrl
+                      }))
+                      setAttachments(mappedFiles)
+                    }
+                    alert('Files uploaded successfully')
+                  } else {
+                    alert('Failed to upload files: ' + result.error)
                   }
-                  alert('Files uploaded successfully');
-                } else {
-                  alert('Failed to upload files: ' + result.error);
+                } catch (error) {
+                  console.error('Upload error:', error)
+                  alert('Failed to upload files: ' + error.message)
                 }
               }}
-              onDelete={async (filename) => {
-                const result = await uploadService.deleteFile('purchase-orders', initialData.id, filename);
-                if (result.success) {
-                  // Refresh the order data to get updated attachments
-                  const updated = await purchaseOrderService.getById(initialData.id);
-                  if (updated.success) {
-                    setFormData(prev => ({
-                      ...prev,
-                      attachments: updated.data.attachments
-                    }));
-                  }
-                  alert('File deleted successfully');
-                } else {
-                  alert('Failed to delete file: ' + result.error);
-                }
-              }}
-              existingFiles={formData.attachments || []}
+              existingFiles={[]}
             />
+
+            {/* Display existing attachments */}
+            {loadingAttachments ? (
+              <div className="attachments-loading">Loading attachments...</div>
+            ) : attachments.length > 0 ? (
+              <FileViewer
+                files={attachments}
+                onDelete={async (fileId) => {
+                  if (!window.confirm('Are you sure you want to delete this file?')) return
+                  try {
+                    const result = await uploadService.deleteS3File('purchase-orders', initialData.id, fileId)
+                    if (result.success) {
+                      setAttachments(prev => prev.filter(f => f.id !== fileId))
+                      alert('File deleted successfully')
+                    } else {
+                      alert('Failed to delete file: ' + result.error)
+                    }
+                  } catch (error) {
+                    console.error('Delete error:', error)
+                    alert('Failed to delete file: ' + error.message)
+                  }
+                }}
+                onRefreshUrl={async (fileId) => {
+                  const result = await uploadService.getS3Files('purchase-orders', initialData.id)
+                  if (result.success) {
+                    const file = result.data.find(f => f.id === fileId)
+                    if (file) {
+                      return file.download_url || file.downloadUrl
+                    }
+                  }
+                  return null
+                }}
+                canDelete={true}
+              />
+            ) : (
+              <div className="no-attachments">No attachments uploaded yet</div>
+            )}
           </div>
         )}
 

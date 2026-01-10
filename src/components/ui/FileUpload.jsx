@@ -40,14 +40,17 @@ const FileUpload = forwardRef(({
 
   // Legacy/Shared API
   mode = 'multiple',
+  multiple, // Alternative to mode - if true, mode='multiple'
   accept = '.pdf,.jpg,.jpeg,.png',
   maxSize = 10 * 1024 * 1024, // 10MB
   maxFiles = 10,
   disabled = false,
 
-  // Legacy API (backward compatibility)
+  // Callback APIs
   onUpload,
   onDelete,
+  onProgress, // Callback for upload progress: (fileId, progress) => {}
+  onError, // Callback for errors: (error, file) => {}
   existingFiles = [],
 
   ...props
@@ -61,28 +64,40 @@ const FileUpload = forwardRef(({
   const files = isModernAPI ? (Array.isArray(value) ? value : []) : existingFiles
   const hasError = !!error || !!internalError
 
+  // Support both 'mode' and 'multiple' props
+  const effectiveMode = multiple !== undefined ? (multiple ? 'multiple' : 'single') : mode
+
+  // Helper to handle errors (calls external callback if provided)
+  const handleError = (errorMessage, file = null) => {
+    setInternalError(errorMessage)
+    if (onError) {
+      onError(errorMessage, file)
+    }
+  }
+
   // File drop handler
   const onDrop = useCallback(async (acceptedFiles, rejectedFiles) => {
     setInternalError(null)
 
     // Handle rejected files
     if (rejectedFiles.length > 0) {
-      const errors = rejectedFiles.map(({ file, errors }) => {
-        const errorMessages = errors.map(e => {
+      const errors = rejectedFiles.map(({ file, errors: fileErrors }) => {
+        const errorMessages = fileErrors.map(e => {
           if (e.code === 'file-too-large') return `${file.name}: File too large (max ${formatFileSize(maxSize)})`
           if (e.code === 'file-invalid-type') return `${file.name}: Invalid file type`
           return `${file.name}: ${e.message}`
         })
         return errorMessages.join(', ')
       })
-      setInternalError(errors.join('\n'))
+      const errorMessage = errors.join('\n')
+      handleError(errorMessage, rejectedFiles[0]?.file)
       return
     }
 
     // Check max files limit
     const totalFiles = files.length + acceptedFiles.length
-    if (mode === 'multiple' && totalFiles > maxFiles) {
-      setInternalError(`Maximum ${maxFiles} files allowed`)
+    if (effectiveMode === 'multiple' && totalFiles > maxFiles) {
+      handleError(`Maximum ${maxFiles} files allowed`)
       return
     }
 
@@ -90,24 +105,26 @@ const FileUpload = forwardRef(({
     if (isModernAPI) {
       const newFiles = acceptedFiles.map(file => ({
         file,
+        id: `${file.name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: file.name,
         size: file.size,
         type: file.type,
         preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-        uploaded: false
+        uploaded: false,
+        progress: 0
       }))
 
-      onChange(mode === 'single' ? newFiles.slice(0, 1) : [...files, ...newFiles])
+      onChange(effectiveMode === 'single' ? newFiles.slice(0, 1) : [...files, ...newFiles])
     }
     // Legacy API: Call onUpload callback
     else if (onUpload) {
       try {
-        await onUpload(mode === 'single' ? acceptedFiles[0] : acceptedFiles)
+        await onUpload(effectiveMode === 'single' ? acceptedFiles[0] : acceptedFiles)
       } catch (err) {
-        setInternalError(err.message || 'Upload failed')
+        handleError(err.message || 'Upload failed', acceptedFiles[0])
       }
     }
-  }, [mode, maxSize, maxFiles, files, onChange, onUpload, isModernAPI])
+  }, [effectiveMode, maxSize, maxFiles, files, onChange, onUpload, isModernAPI, handleError])
 
   // Dropzone config
   const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject } = useDropzone({
@@ -118,9 +135,28 @@ const FileUpload = forwardRef(({
       'image/png': ['.png']
     },
     maxSize,
-    multiple: mode === 'multiple',
+    multiple: effectiveMode === 'multiple',
     disabled
   })
+
+  // Update progress for a specific file (can be called by parent via ref or directly)
+  const updateFileProgress = useCallback((fileId, progress) => {
+    setUploadProgress(prev => ({ ...prev, [fileId]: progress }))
+    if (onProgress) {
+      onProgress(fileId, progress)
+    }
+  }, [onProgress])
+
+  // Mark file as uploaded
+  const markFileUploaded = useCallback((fileId) => {
+    if (isModernAPI && onChange) {
+      const updatedFiles = files.map(f =>
+        f.id === fileId ? { ...f, uploaded: true, progress: 100 } : f
+      )
+      onChange(updatedFiles)
+    }
+    setUploadProgress(prev => ({ ...prev, [fileId]: 100 }))
+  }, [isModernAPI, onChange, files])
 
   // Remove file
   const handleRemoveFile = (index) => {
@@ -193,7 +229,7 @@ const FileUpload = forwardRef(({
 
             <p className="dropzone-hint">
               Accepted: {accept} • Max size: {formatFileSize(maxSize)}
-              {mode === 'multiple' && ` • Max files: ${maxFiles}`}
+              {effectiveMode === 'multiple' && ` • Max files: ${maxFiles}`}
             </p>
           </div>
         </div>
@@ -215,11 +251,14 @@ const FileUpload = forwardRef(({
               const fileSize = fileData.size
               const fileType = isLegacyFile ? '' : fileData.type
               const preview = fileData.preview
+              const fileId = fileData.id || `file-${index}`
+              const progress = uploadProgress[fileId] ?? fileData.progress ?? 0
+              const isUploading = progress > 0 && progress < 100 && !fileData.uploaded
 
               return (
                 <motion.div
-                  key={index}
-                  className="file-item"
+                  key={fileId}
+                  className={`file-item ${isUploading ? 'file-item-uploading' : ''}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -229,6 +268,10 @@ const FileUpload = forwardRef(({
                   <div className="file-preview">
                     {showPreview && preview ? (
                       <img src={preview} alt={fileName} className="file-preview-image" />
+                    ) : isUploading ? (
+                      <div className="file-icon file-icon-uploading">
+                        <Loader size={20} className="spin" />
+                      </div>
                     ) : (
                       <div className="file-icon">{getFileIcon(fileType)}</div>
                     )}
@@ -237,7 +280,19 @@ const FileUpload = forwardRef(({
                   {/* File Info */}
                   <div className="file-info">
                     <p className="file-name">{fileName}</p>
-                    <p className="file-size">{formatFileSize(fileSize)}</p>
+                    <p className="file-size">
+                      {formatFileSize(fileSize)}
+                      {isUploading && ` • ${progress}%`}
+                    </p>
+                    {/* Progress Bar */}
+                    {isUploading && (
+                      <div className="file-progress-bar">
+                        <div
+                          className="file-progress-fill"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -260,7 +315,7 @@ const FileUpload = forwardRef(({
                       </div>
                     )}
 
-                    {!disabled && (
+                    {!disabled && !isUploading && (
                       <button
                         type="button"
                         className="file-remove-btn"

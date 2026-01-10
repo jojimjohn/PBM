@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight, Droplet } from 'lucide-react';
+import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight, Droplet, Upload } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { collectionOrderService, calloutService } from '../../services/collectionService';
 import contractService from '../../services/contractService';
 import supplierService from '../../services/supplierService';
 import inventoryService from '../../services/inventoryService';
+import uploadService from '../../services/uploadService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
 import DateInput from '../ui/DateInput';
 import Autocomplete from '../ui/Autocomplete';
 import Input, { Textarea } from '../ui/Input';
+import FileUpload from '../ui/FileUpload';
+import FileViewer from '../ui/FileViewer';
 import WastageForm from '../../modules/oil-trading/components/WastageForm';
 import './collections-managers.css';
 
@@ -1494,6 +1497,11 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
     notes: '',
     receiptFile: null
   });
+  // S3 Attachments state for new expense
+  const [newExpenseFiles, setNewExpenseFiles] = useState([]);
+  // State to track which expense's attachments are being viewed
+  const [viewingExpenseId, setViewingExpenseId] = useState(null);
+  const [expenseAttachments, setExpenseAttachments] = useState({});
 
   useEffect(() => {
     if (isOpen && order) {
@@ -1528,8 +1536,17 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
 
       const response = await collectionOrderService.addCollectionExpense(order.id, expenseData);
       if (response.success) {
+        // If we have files to upload, upload them now that we have the expense ID
+        if (newExpenseFiles.length > 0 && response.data?.id) {
+          try {
+            await uploadService.uploadMultipleToS3(newExpenseFiles, 'collection-expenses', response.data.id);
+          } catch (uploadError) {
+            console.error('Error uploading receipt files:', uploadError);
+          }
+        }
         loadExpenses(); // Refresh expenses list
         setShowAddExpense(false);
+        setNewExpenseFiles([]); // Clear staged files
         setNewExpense({
           category: '',
           description: '',
@@ -1542,6 +1559,54 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
       console.error('Error adding expense:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load S3 attachments for a specific expense
+  const loadExpenseAttachments = async (expenseId) => {
+    try {
+      const result = await uploadService.getS3Files('collection-expenses', expenseId);
+      if (result.success) {
+        setExpenseAttachments(prev => ({
+          ...prev,
+          [expenseId]: result.data.map(file => ({
+            id: file.id,
+            originalFilename: file.original_filename,
+            contentType: file.content_type,
+            fileSize: file.file_size,
+            downloadUrl: file.download_url
+          }))
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading expense attachments:', error);
+    }
+  };
+
+  // Toggle viewing attachments for an expense
+  const toggleExpenseAttachments = async (expenseId) => {
+    if (viewingExpenseId === expenseId) {
+      setViewingExpenseId(null);
+    } else {
+      setViewingExpenseId(expenseId);
+      if (!expenseAttachments[expenseId]) {
+        await loadExpenseAttachments(expenseId);
+      }
+    }
+  };
+
+  // Handle deleting an attachment from an expense
+  const handleDeleteExpenseAttachment = async (expenseId, fileId) => {
+    try {
+      const result = await uploadService.deleteS3File(fileId);
+      if (result.success) {
+        setExpenseAttachments(prev => ({
+          ...prev,
+          [expenseId]: prev[expenseId].filter(f => f.id !== fileId)
+        }));
+      }
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
     }
   };
 
@@ -1661,6 +1726,35 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                   placeholder={t('additionalNotes')}
                 />
               </div>
+              {/* Receipt Attachments Upload */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <FileText className="inline w-4 h-4 mr-1" />
+                  {t('receiptAttachments') || 'Receipt Attachments'}
+                </label>
+                <FileUpload
+                  onUpload={(files) => setNewExpenseFiles(prev => [...prev, ...files])}
+                  accept="image/*,.pdf"
+                  maxFiles={5}
+                  maxSize={10 * 1024 * 1024}
+                />
+                {newExpenseFiles.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {newExpenseFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                        <span className="truncate flex-1">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewExpenseFiles(prev => prev.filter((_, i) => i !== index))}
+                          className="text-red-500 hover:text-red-700 ml-2"
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button
@@ -1717,13 +1811,51 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                     <div className="text-lg font-semibold text-gray-900">
                       {expense.amount.toFixed(2)} OMR
                     </div>
-                    {expense.receiptUrl && (
-                      <button className="text-blue-600 text-sm hover:underline mt-1">
-                        {t('viewReceipt')}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => toggleExpenseAttachments(expense.id)}
+                      className="text-blue-600 text-sm hover:underline mt-1 flex items-center gap-1"
+                    >
+                      <FileText className="w-4 h-4" />
+                      {viewingExpenseId === expense.id ? t('hideReceipts') || 'Hide Receipts' : t('viewReceipts') || 'View Receipts'}
+                    </button>
                   </div>
                 </div>
+                {/* S3 Attachments Viewer */}
+                {viewingExpenseId === expense.id && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h5 className="text-sm font-medium text-gray-700">
+                        <FileText className="inline w-4 h-4 mr-1" />
+                        {t('receiptAttachments') || 'Receipt Attachments'}
+                      </h5>
+                      <FileUpload
+                        onUpload={async (files) => {
+                          try {
+                            await uploadService.uploadMultipleToS3(files, 'collection-expenses', expense.id);
+                            loadExpenseAttachments(expense.id);
+                          } catch (err) {
+                            console.error('Error uploading files:', err);
+                          }
+                        }}
+                        accept="image/*,.pdf"
+                        maxFiles={5}
+                        maxSize={10 * 1024 * 1024}
+                      />
+                    </div>
+                    {expenseAttachments[expense.id]?.length > 0 ? (
+                      <FileViewer
+                        files={expenseAttachments[expense.id]}
+                        onDelete={(fileId) => handleDeleteExpenseAttachment(expense.id, fileId)}
+                        showDownload={true}
+                        showDelete={true}
+                      />
+                    ) : (
+                      <div className="text-center py-4 text-gray-400 text-sm">
+                        {t('noReceiptsAttached') || 'No receipts attached'}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           ) : (

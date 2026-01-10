@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ProjectProvider } from './context/ProjectContext'
 import { SystemSettingsProvider } from './context/SystemSettingsContext'
 import { LocalizationProvider } from './context/LocalizationContext'
 import { TourProvider } from './context/TourContext'
@@ -28,15 +29,17 @@ function App() {
         {/* All other routes - require system authentication */}
         <Route path="/*" element={
           <AuthProvider>
-            <LocalizationProvider>
-              <SystemSettingsProvider>
-                <TourProvider>
-                  <ProtectedRoute>
-                    <MainLayout />
-                  </ProtectedRoute>
-                </TourProvider>
-              </SystemSettingsProvider>
-            </LocalizationProvider>
+            <ProjectProvider>
+              <LocalizationProvider>
+                <SystemSettingsProvider>
+                  <TourProvider>
+                    <ProtectedRoute>
+                      <MainLayout />
+                    </ProtectedRoute>
+                  </TourProvider>
+                </SystemSettingsProvider>
+              </LocalizationProvider>
+            </ProjectProvider>
           </AuthProvider>
         } />
       </Routes>

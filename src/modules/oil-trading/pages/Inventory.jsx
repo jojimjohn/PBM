@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
+import useProjects from '../../../hooks/useProjects'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import LoadingSpinner from '../../../components/LoadingSpinner'
@@ -25,6 +27,9 @@ const Inventory = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { formatDate } = useSystemSettings()
+  const { selectedProjectId } = useProjects()
+  const [searchParams] = useSearchParams()
+  const urlSearchTerm = searchParams.get('search') || ''
   const [loading, setLoading] = useState(true)
   const [loadingMovements, setLoadingMovements] = useState(false)
   const [activeTab, setActiveTab] = useState('stock')
@@ -95,7 +100,7 @@ const Inventory = () => {
   useEffect(() => {
     loadInventoryData()
     loadMaterialCategories()
-  }, [])
+  }, [selectedProjectId])
 
   // Load stock movements when Transactions tab is activated
   useEffect(() => {
@@ -982,6 +987,7 @@ const Inventory = () => {
           emptyMessage={t('noMaterialsFound')}
           className="inventory-table"
           initialPageSize={20}
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 
@@ -1175,6 +1181,7 @@ const Inventory = () => {
           emptyMessage={t('noMaterialsFound')}
           className="materials-table"
           initialPageSize={10}
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 
@@ -1287,6 +1294,7 @@ const Inventory = () => {
           emptyMessage={t('noMovementsFound', 'No stock movements found')}
           className="movements-table"
           initialPageSize={10}
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 

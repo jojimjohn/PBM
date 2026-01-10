@@ -32,8 +32,12 @@ import {
   Pause,
   RefreshCw,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  FileText
 } from 'lucide-react'
+import FileUpload from '../components/ui/FileUpload'
+import FileViewer from '../components/ui/FileViewer'
+import uploadService from '../services/uploadService'
 import './Projects.css'
 
 const Projects = () => {
@@ -58,6 +62,8 @@ const Projects = () => {
   const [selectedProject, setSelectedProject] = useState(null)
   const [projectUsers, setProjectUsers] = useState([])
   const [actionLoading, setActionLoading] = useState(false)
+  const [attachments, setAttachments] = useState([])
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -125,6 +131,35 @@ const Projects = () => {
     loadProjects()
     loadUsers()
   }, [loadProjects, loadUsers])
+
+  // Load S3 attachments when editing a project
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (showEditModal && selectedProject?.id) {
+        setLoadingAttachments(true)
+        try {
+          const result = await uploadService.getS3Files('projects', selectedProject.id)
+          if (result.success) {
+            const mappedFiles = (result.data || []).map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename || file.originalFilename,
+              contentType: file.content_type || file.contentType,
+              fileSize: file.file_size || file.fileSize,
+              downloadUrl: file.download_url || file.downloadUrl
+            }))
+            setAttachments(mappedFiles)
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error)
+        } finally {
+          setLoadingAttachments(false)
+        }
+      } else {
+        setAttachments([])
+      }
+    }
+    loadAttachments()
+  }, [showEditModal, selectedProject?.id])
 
   // Show message with auto-dismiss
   const showMessage = (type, text) => {
@@ -775,6 +810,63 @@ const Projects = () => {
               />
             </div>
           </div>
+
+          {/* S3 Attachments Section */}
+          {selectedProject?.id && (
+            <div className="form-section">
+              <h4><FileText size={16} /> {t('attachments') || 'Attachments'}</h4>
+
+              <FileUpload
+                onUpload={async (files) => {
+                  try {
+                    const result = await uploadService.uploadMultipleToS3(files, 'projects', selectedProject.id)
+                    if (result.success) {
+                      // Refresh attachments list
+                      const refreshResult = await uploadService.getS3Files('projects', selectedProject.id)
+                      if (refreshResult.success) {
+                        setAttachments(refreshResult.data.map(file => ({
+                          id: file.id,
+                          originalFilename: file.original_filename,
+                          contentType: file.content_type,
+                          fileSize: file.file_size,
+                          downloadUrl: file.download_url
+                        })))
+                      }
+                      setMessage({ type: 'success', text: t('filesUploadedSuccessfully') || 'Files uploaded successfully' })
+                    }
+                  } catch (err) {
+                    setMessage({ type: 'error', text: err.message || t('uploadFailed') || 'Upload failed' })
+                  }
+                }}
+                accept="*/*"
+                maxFiles={10}
+                maxSize={25 * 1024 * 1024}
+              />
+
+              {loadingAttachments ? (
+                <div className="attachments-loading">{t('loadingAttachments') || 'Loading attachments...'}</div>
+              ) : attachments.length > 0 ? (
+                <FileViewer
+                  files={attachments}
+                  onDelete={async (fileId) => {
+                    try {
+                      const result = await uploadService.deleteS3File(fileId)
+                      if (result.success) {
+                        setAttachments(prev => prev.filter(f => f.id !== fileId))
+                        setMessage({ type: 'success', text: t('fileDeletedSuccessfully') || 'File deleted successfully' })
+                      }
+                    } catch (err) {
+                      setMessage({ type: 'error', text: err.message || t('deleteFailed') || 'Delete failed' })
+                    }
+                  }}
+                  showDownload={true}
+                  showDelete={true}
+                />
+              ) : (
+                <div className="no-attachments">{t('noAttachments') || 'No attachments'}</div>
+              )}
+            </div>
+          )}
 
           <div className="form-actions">
             <button

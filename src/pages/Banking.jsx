@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import useProjects from '../hooks/useProjects'
 import { useLocalization } from '../context/LocalizationContext'
 import { usePermissions } from '../hooks/usePermissions'
 import { PERMISSIONS } from '../config/roles'
@@ -31,12 +33,18 @@ import {
 import Modal from '../components/ui/Modal'
 import DataTable from '../components/ui/DataTable'
 import LoadingSpinner from '../components/LoadingSpinner'
+import FileUpload from '../components/ui/FileUpload'
+import FileViewer from '../components/ui/FileViewer'
+import uploadService from '../services/uploadService'
 import './Banking.css'
 
 const Banking = () => {
   const { user } = useAuth()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
+  const { selectedProjectId } = useProjects()
+  const [searchParams] = useSearchParams()
+  const urlSearchTerm = searchParams.get('search') || ''
 
   // Tab state
   const [activeTab, setActiveTab] = useState('accounts')
@@ -103,19 +111,61 @@ const Banking = () => {
   // View transaction detail
   const [viewingTransaction, setViewingTransaction] = useState(null)
 
+  // S3 Attachments state
+  const [attachments, setAttachments] = useState([])
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
+
   // Permission check
   const canManage = hasPermission(PERMISSIONS.MANAGE_SETTINGS) || user?.role === 'SUPER_ADMIN'
 
   useEffect(() => {
     loadAccounts()
     loadCategories()
-  }, [])
+  }, [selectedProjectId])
 
   useEffect(() => {
     if (activeTab === 'transactions') {
       loadTransactions()
     }
   }, [activeTab, filters])
+
+  // Handle URL search parameter for dashboard task navigation
+  useEffect(() => {
+    if (urlSearchTerm && urlSearchTerm !== filters.search) {
+      setFilters(prev => ({ ...prev, search: urlSearchTerm }))
+      if (activeTab !== 'transactions') {
+        setActiveTab('transactions')
+      }
+    }
+  }, [urlSearchTerm])
+
+  // Load S3 attachments when editing a transaction
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (showTransactionModal && editingTransaction?.id) {
+        setLoadingAttachments(true)
+        try {
+          const result = await uploadService.getS3Files('bank-transactions', editingTransaction.id)
+          if (result.success) {
+            setAttachments(result.data.map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename,
+              contentType: file.content_type,
+              fileSize: file.file_size,
+              downloadUrl: file.download_url
+            })))
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error)
+        } finally {
+          setLoadingAttachments(false)
+        }
+      } else if (!showTransactionModal) {
+        setAttachments([])
+      }
+    }
+    loadAttachments()
+  }, [showTransactionModal, editingTransaction?.id])
 
   const loadAccounts = async () => {
     try {
@@ -797,6 +847,7 @@ const Banking = () => {
               onPageChange={(page) => loadTransactions(page)}
               searchable={true}
               sortable={true}
+              initialSearchTerm={urlSearchTerm}
             />
           )}
         </>
@@ -1033,6 +1084,64 @@ const Banking = () => {
               rows={2}
             />
           </div>
+
+          {/* S3 Attachments Section */}
+          {editingTransaction?.id && (
+            <div className="form-section">
+              <h4><FileText size={16} /> {t('attachments') || 'Attachments'}</h4>
+
+              <FileUpload
+                onUpload={async (files) => {
+                  try {
+                    const result = await uploadService.uploadMultipleToS3(files, 'bank-transactions', editingTransaction.id)
+                    if (result.success) {
+                      // Refresh attachments list
+                      const refreshResult = await uploadService.getS3Files('bank-transactions', editingTransaction.id)
+                      if (refreshResult.success) {
+                        setAttachments(refreshResult.data.map(file => ({
+                          id: file.id,
+                          originalFilename: file.original_filename,
+                          contentType: file.content_type,
+                          fileSize: file.file_size,
+                          downloadUrl: file.download_url
+                        })))
+                      }
+                      showMessage('success', t('filesUploadedSuccessfully') || 'Files uploaded successfully')
+                    }
+                  } catch (err) {
+                    showMessage('error', err.message || t('uploadFailed') || 'Upload failed')
+                  }
+                }}
+                accept="*/*"
+                maxFiles={10}
+                maxSize={25 * 1024 * 1024}
+              />
+
+              {loadingAttachments ? (
+                <div className="attachments-loading">{t('loadingAttachments') || 'Loading attachments...'}</div>
+              ) : attachments.length > 0 ? (
+                <FileViewer
+                  files={attachments}
+                  onDelete={async (fileId) => {
+                    try {
+                      const result = await uploadService.deleteS3File(fileId)
+                      if (result.success) {
+                        setAttachments(prev => prev.filter(f => f.id !== fileId))
+                        showMessage('success', t('fileDeletedSuccessfully') || 'File deleted successfully')
+                      }
+                    } catch (err) {
+                      showMessage('error', err.message || t('deleteFailed') || 'Delete failed')
+                    }
+                  }}
+                  showDownload={true}
+                  showDelete={true}
+                />
+              ) : (
+                <div className="no-attachments">{t('noAttachments') || 'No attachments'}</div>
+              )}
+            </div>
+          )}
+
           <div className="modal-actions">
             <button className="btn btn-secondary" onClick={() => setShowTransactionModal(false)}>
               Cancel

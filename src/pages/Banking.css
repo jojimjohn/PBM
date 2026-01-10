@@ -180,3 +180,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==============================================
+   Attachments Section
+   ============================================== */
+
+.attachments-loading {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+}
+
+.no-attachments {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+  background-color: var(--bg-subtle, #f9fafb);
+  border-radius: 0.5rem;
+  border: 1px dashed var(--border-color, #e5e7eb);
+}
+
+.form-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+}

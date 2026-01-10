@@ -44,10 +44,21 @@ class SalesOrderService {
 
   /**
    * Get all sales orders for the current company
+   * @param {Object} options - Filter options
+   * @param {number|string} options.project_id - Filter by project ID (optional)
    */
-  async getAll() {
+  async getAll(options = {}) {
     try {
-      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders`);
+      const { project_id = null } = options;
+
+      const params = new URLSearchParams();
+      if (project_id && project_id !== 'all') params.append('project_id', project_id);
+
+      const url = params.toString()
+        ? `${API_BASE_URL}/sales-orders?${params.toString()}`
+        : `${API_BASE_URL}/sales-orders`;
+
+      const data = await authService.makeAuthenticatedRequest(url);
 
       // Transform decimal fields if data exists
       if (data.success && data.data) {
@@ -407,9 +418,18 @@ class SalesOrderService {
   /**
    * Get today's sales summary
    */
-  async getTodaysSummary() {
+  async getTodaysSummary(options = {}) {
     try {
-      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/sales-orders/today-summary`);
+      const { project_id = null } = options;
+
+      const params = new URLSearchParams();
+      if (project_id && project_id !== 'all') params.append('project_id', project_id);
+
+      const url = params.toString()
+        ? `${API_BASE_URL}/sales-orders/today-summary?${params.toString()}`
+        : `${API_BASE_URL}/sales-orders/today-summary`;
+
+      const data = await authService.makeAuthenticatedRequest(url);
 
       // Transform decimal fields if data exists
       if (data.success && data.data) {

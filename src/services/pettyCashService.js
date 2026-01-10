@@ -317,6 +317,37 @@ class PettyCashService {
   }
 
   /**
+   * Change the card and/or amount for an approved expense
+   * Handles card changes (refund old, deduct new) and amount adjustments
+   * @param {number} expenseId - Expense ID
+   * @param {number} newCardId - New card ID (can be same as current for amount-only changes)
+   * @param {number} newAmount - New amount (optional, pass null for card-only changes)
+   * @param {string} notes - Optional notes about the change
+   */
+  async changeExpenseCard(expenseId, newCardId, newAmount = null, notes = null) {
+    try {
+      const body = { newCardId, notes }
+      if (newAmount !== null) {
+        body.newAmount = newAmount
+      }
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/petty-cash-expenses/${expenseId}/change-card`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      return data;
+    } catch (error) {
+      console.error('Error changing expense card:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to change expense card'
+      };
+    }
+  }
+
+  /**
    * Get pending approval expenses
    */
   async getPendingApprovalExpenses() {

@@ -2,10 +2,12 @@
  * DateInput Component
  *
  * An enhanced date input that allows users to type dates directly
- * or use a calendar picker. Supports multiple date formats.
+ * or use a calendar picker. Supports multiple date formats based on
+ * user's system settings.
  *
  * Features:
- * - Type dates in DD/MM/YYYY, YYYY-MM-DD, or DD-MM-YYYY formats
+ * - Type dates in DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, or DD-MM-YYYY formats
+ * - Display format respects user's SystemSettings dateFormat preference
  * - Calendar picker for visual date selection
  * - Real-time format validation
  * - minDate/maxDate constraints
@@ -16,6 +18,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, AlertCircle, X } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useSystemSettings } from '../../context/SystemSettingsContext';
 import {
   parseDate,
   formatDateForDisplay,
@@ -46,7 +49,11 @@ const DateInput = React.forwardRef(({
   ...props
 }, ref) => {
   const { t, currentLanguage } = useLocalization();
+  const { settings } = useSystemSettings();
   const isRTL = currentLanguage === 'ar';
+
+  // Get display format from system settings (default: DD/MM/YYYY)
+  const displayFormat = settings?.dateFormat || 'DD/MM/YYYY';
 
   // Internal state for text input
   const [inputValue, setInputValue] = useState('');
@@ -70,14 +77,14 @@ const DateInput = React.forwardRef(({
     if (!isFocused) {
       if (value) {
         const parsed = parseDate(value);
-        setInputValue(parsed ? formatDateForDisplay(parsed) : '');
+        setInputValue(parsed ? formatDateForDisplay(parsed, displayFormat) : '');
         setValidationError('');
       } else {
         setInputValue('');
         setValidationError('');
       }
     }
-  }, [value, isFocused]);
+  }, [value, isFocused, displayFormat]);
 
   // Handle text input change
   const handleInputChange = (e) => {
@@ -101,7 +108,7 @@ const DateInput = React.forwardRef(({
       const parsed = parseDate(inputValue);
 
       if (!parsed) {
-        setValidationError(t('invalidDateFormat', 'Invalid date format. Use DD/MM/YYYY'));
+        setValidationError(t('invalidDateFormat', 'Invalid date format. Use {{format}}', { format: displayFormat }));
       } else if (minDate || maxDate) {
         if (!isDateInRange(parsed, minDate, maxDate)) {
           const minParsed = minDate ? parseDate(minDate) : null;
@@ -109,21 +116,21 @@ const DateInput = React.forwardRef(({
 
           if (minParsed && parsed < minParsed) {
             setValidationError(t('dateBeforeMin', 'Date must be after {{date}}', {
-              date: formatDateForDisplay(minParsed)
+              date: formatDateForDisplay(minParsed, displayFormat)
             }));
           } else if (maxParsed && parsed > maxParsed) {
             setValidationError(t('dateAfterMax', 'Date must be before {{date}}', {
-              date: formatDateForDisplay(maxParsed)
+              date: formatDateForDisplay(maxParsed, displayFormat)
             }));
           }
         } else {
           setValidationError('');
-          setInputValue(formatDateForDisplay(parsed));
+          setInputValue(formatDateForDisplay(parsed, displayFormat));
           onChange?.(formatDateForAPI(parsed));
         }
       } else {
         setValidationError('');
-        setInputValue(formatDateForDisplay(parsed));
+        setInputValue(formatDateForDisplay(parsed, displayFormat));
         onChange?.(formatDateForAPI(parsed));
       }
     }
@@ -142,7 +149,7 @@ const DateInput = React.forwardRef(({
     if (isoDate) {
       const parsed = parseDate(isoDate);
       if (parsed) {
-        setInputValue(formatDateForDisplay(parsed));
+        setInputValue(formatDateForDisplay(parsed, displayFormat));
         setValidationError('');
         onChange?.(isoDate);
       }
@@ -214,7 +221,7 @@ const DateInput = React.forwardRef(({
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onFocus={handleInputFocus}
-          placeholder={placeholder || t('dateFormatHint', 'DD/MM/YYYY')}
+          placeholder={placeholder || displayFormat}
           disabled={disabled}
           className="date-input-text"
           autoComplete="off"

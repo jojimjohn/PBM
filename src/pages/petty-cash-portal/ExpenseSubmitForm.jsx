@@ -27,6 +27,15 @@ import {
 import pettyCashPortalService from '../../services/pettyCashPortalService';
 import './PettyCashPortal.css';
 
+// Get local date string in YYYY-MM-DD format (avoids UTC timezone shift)
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Category icons mapping
 const categoryIcons = {
   fuel: '⛽',
@@ -98,7 +107,7 @@ const ExpenseSubmitForm = ({
     category: '',
     description: '',
     amount: '',
-    expenseDate: new Date().toISOString().split('T')[0],
+    expenseDate: getLocalDateString(), // Use local date, not UTC
     vendor: '',
     receiptNumber: '',
     paymentMethod: 'top_up_card', // Default to user's assigned card
@@ -345,7 +354,7 @@ const ExpenseSubmitForm = ({
           value={formData.expenseDate}
           onChange={handleChange}
           className="form-input"
-          max={new Date().toISOString().split('T')[0]}
+          max={getLocalDateString()}
           required
         />
       </div>

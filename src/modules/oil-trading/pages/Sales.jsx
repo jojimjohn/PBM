@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import useProjects from '../../../hooks/useProjects'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import SalesOrderForm from '../components/SalesOrderForm'
@@ -15,6 +17,12 @@ const Sales = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { formatDate, toAPIDateFormat } = useSystemSettings()
+  const { selectedProjectId, getProjectQueryParam } = useProjects()
+  const [searchParams] = useSearchParams()
+
+  // Read search param from URL (used when clicking tasks from dashboard)
+  const urlSearchTerm = searchParams.get('search') || ''
+
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('orders') // 'orders' or 'invoices'
   const [showOrderForm, setShowOrderForm] = useState(false)
@@ -32,10 +40,13 @@ const Sales = () => {
     try {
       setError(null)
 
+      // Get project filter params for API calls
+      const projectParams = getProjectQueryParam()
+
       // PERFORMANCE: Run both API calls in parallel
       const [ordersResult, summaryResult] = await Promise.all([
-        salesOrderService.getAll(),
-        salesOrderService.getTodaysSummary().catch(() => ({ success: false, data: null }))
+        salesOrderService.getAll(projectParams),
+        salesOrderService.getTodaysSummary(projectParams).catch(() => ({ success: false, data: null }))
       ])
 
       // Process orders
@@ -67,7 +78,7 @@ const Sales = () => {
   useEffect(() => {
     // Load sales orders from backend
     loadSalesData()
-    
+
     // Check for pre-selected customer from customer module
     const storedCustomer = sessionStorage.getItem('selectedCustomerForOrder')
     if (storedCustomer) {
@@ -81,7 +92,7 @@ const Sales = () => {
         sessionStorage.removeItem('selectedCustomerForOrder')
       }
     }
-  }, [])
+  }, [selectedCompany, selectedProjectId])
 
   const handleCreateOrder = (selectedCustomer = null) => {
     setSelectedCustomer(selectedCustomer)
@@ -300,14 +311,14 @@ const Sales = () => {
       )
     },
     {
-      key: 'customer',
+      key: 'customerName',
       header: t('customer'),
       sortable: true,
       filterable: true,
       render: (value, row) => (
         <div className="customer-info">
           <User size={14} />
-          <span>{value || row.customerName}</span>
+          <span>{value || '-'}</span>
         </div>
       )
     },
@@ -553,6 +564,7 @@ const Sales = () => {
           emptyMessage={t('noOrdersFound')}
           className="sales-orders-table"
           initialPageSize={10}
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 
@@ -579,13 +591,14 @@ const Sales = () => {
               render: (value) => <span className="text-muted">{value}</span>
             },
             {
-              key: 'customer',
+              key: 'customerName',
               header: t('customer'),
               sortable: true,
+              filterable: true,
               render: (value, row) => (
                 <div className="customer-info">
                   <User size={14} />
-                  <span>{value || row.customerName}</span>
+                  <span>{value || '-'}</span>
                 </div>
               )
             },
@@ -659,6 +672,7 @@ const Sales = () => {
           emptyMessage={t('noInvoicesYet', 'No invoices generated yet. Generate invoices from confirmed sales orders.')}
           className="invoices-table"
           initialPageSize={10}
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 

@@ -1,0 +1,326 @@
+/* FileViewer Component Styles */
+
+/* Wrapper */
+.file-viewer-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Loading State */
+.file-viewer-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+}
+
+/* Empty State */
+.file-viewer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  color: var(--gray-400);
+  font-size: var(--text-sm);
+  background-color: var(--gray-50);
+  border: 1px dashed var(--gray-200);
+  border-radius: var(--ds-form-radius);
+}
+
+/* File Item */
+.file-viewer-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background-color: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--ds-form-radius);
+  transition: all var(--transition-normal);
+}
+
+.file-viewer-item:hover {
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.file-viewer-item-deleting {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* File Icon */
+.file-viewer-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background-color: var(--gray-100);
+  border-radius: var(--ds-form-radius);
+  color: var(--gray-500);
+}
+
+/* File Info */
+.file-viewer-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.file-viewer-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--gray-900);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-viewer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--gray-500);
+}
+
+.file-viewer-meta > span:not(:last-child)::after {
+  content: '•';
+  margin-left: var(--space-2);
+  color: var(--gray-300);
+}
+
+.file-viewer-size,
+.file-viewer-uploader,
+.file-viewer-date {
+  white-space: nowrap;
+}
+
+.file-viewer-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--error-600);
+  margin-top: var(--space-1);
+}
+
+/* Actions */
+.file-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.file-viewer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: transparent;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--ds-form-radius);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.file-viewer-btn:hover {
+  background-color: var(--gray-100);
+  border-color: var(--gray-300);
+  color: var(--gray-700);
+}
+
+.file-viewer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-viewer-btn-download {
+  color: var(--primary-600);
+  border-color: var(--primary-200);
+}
+
+.file-viewer-btn-download:hover {
+  background-color: var(--primary-50);
+  border-color: var(--primary-300);
+  color: var(--primary-700);
+}
+
+.file-viewer-btn-view {
+  color: var(--gray-500);
+}
+
+.file-viewer-btn-view:hover {
+  color: var(--gray-700);
+}
+
+.file-viewer-btn-refresh {
+  color: var(--warning-600);
+  border-color: var(--warning-200);
+}
+
+.file-viewer-btn-refresh:hover {
+  background-color: var(--warning-50);
+  border-color: var(--warning-300);
+}
+
+.file-viewer-btn-delete {
+  color: var(--error-500);
+  border-color: var(--error-200);
+}
+
+.file-viewer-btn-delete:hover {
+  background-color: var(--error-50);
+  border-color: var(--error-300);
+  color: var(--error-600);
+}
+
+/* Compact Mode */
+.file-viewer-compact .file-viewer-item {
+  padding: var(--space-2);
+  gap: var(--space-2);
+}
+
+.file-viewer-compact .file-viewer-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.file-viewer-compact .file-viewer-name {
+  font-size: var(--text-xs);
+}
+
+.file-viewer-compact .file-viewer-meta {
+  display: none;
+}
+
+.file-viewer-compact .file-viewer-btn {
+  padding: var(--space-1);
+}
+
+/* Spinner Animation (reuse from FileUpload) */
+.file-viewer-wrapper .spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .file-viewer-empty {
+  background-color: var(--gray-900);
+  border-color: var(--gray-700);
+  color: var(--gray-500);
+}
+
+[data-theme="dark"] .file-viewer-loading {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .file-viewer-item {
+  background-color: var(--gray-900);
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .file-viewer-item:hover {
+  background-color: var(--gray-800);
+}
+
+[data-theme="dark"] .file-viewer-icon {
+  background-color: var(--gray-800);
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .file-viewer-name {
+  color: var(--gray-100);
+}
+
+[data-theme="dark"] .file-viewer-meta {
+  color: var(--gray-400);
+}
+
+[data-theme="dark"] .file-viewer-meta > span:not(:last-child)::after {
+  color: var(--gray-600);
+}
+
+[data-theme="dark"] .file-viewer-btn {
+  border-color: var(--gray-600);
+  color: var(--gray-300);
+}
+
+[data-theme="dark"] .file-viewer-btn:hover {
+  background-color: var(--gray-800);
+  border-color: var(--gray-500);
+  color: var(--gray-200);
+}
+
+[data-theme="dark"] .file-viewer-btn-download {
+  color: var(--primary-400);
+  border-color: var(--primary-700);
+}
+
+[data-theme="dark"] .file-viewer-btn-download:hover {
+  background-color: var(--primary-900);
+  border-color: var(--primary-600);
+}
+
+[data-theme="dark"] .file-viewer-btn-delete {
+  color: var(--error-400);
+  border-color: var(--error-700);
+}
+
+[data-theme="dark"] .file-viewer-btn-delete:hover {
+  background-color: var(--error-900);
+  border-color: var(--error-600);
+}
+
+/* RTL Support */
+[dir="rtl"] .file-viewer-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .file-viewer-meta > span:not(:last-child)::after {
+  margin-left: 0;
+  margin-right: var(--space-2);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .file-viewer-item {
+    flex-wrap: wrap;
+  }
+
+  .file-viewer-info {
+    flex: 1 1 100%;
+    order: 2;
+    margin-top: var(--space-2);
+  }
+
+  .file-viewer-icon {
+    order: 1;
+  }
+
+  .file-viewer-actions {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .file-viewer-btn span {
+    display: none;
+  }
+}

@@ -17,6 +17,7 @@ class PurchaseOrderService {
    * @param {string} options.status - Filter by status
    * @param {string} options.sortBy - Sort field
    * @param {string} options.sortOrder - Sort direction (asc/desc)
+   * @param {number|string} options.project_id - Filter by project ID (optional)
    * @returns {Promise<Object>} { success, data, pagination }
    */
   async getAll(options = {}) {
@@ -27,7 +28,8 @@ class PurchaseOrderService {
         search = '',
         status = '',
         sortBy = 'created_at',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        project_id = null
       } = options;
 
       const params = new URLSearchParams();
@@ -37,6 +39,7 @@ class PurchaseOrderService {
       if (status) params.append('status', status);
       if (sortBy) params.append('sortBy', sortBy);
       if (sortOrder) params.append('sortOrder', sortOrder);
+      if (project_id && project_id !== 'all') params.append('project_id', project_id);
 
       const data = await authService.makeAuthenticatedRequest(
         `${API_BASE_URL}/purchase-orders?${params.toString()}`

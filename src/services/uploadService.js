@@ -252,6 +252,304 @@ class UploadService {
       errors
     };
   }
+
+  // ========================================================================
+  // S3/MinIO Attachment Methods (New API)
+  // ========================================================================
+  // These methods work with the standardized S3-based attachment system.
+  // URL pattern: /{module}/{id}/attachments
+  // ========================================================================
+
+  /**
+   * Upload a file to S3 storage for any module
+   * @param {string} module - Module name (e.g., 'sales-orders', 'customers', 'contracts')
+   * @param {number|string} referenceId - Parent record ID
+   * @param {File} file - File to upload
+   * @param {Object} options - Optional settings
+   * @param {function} options.onProgress - Progress callback: (progress: number) => void
+   * @returns {Promise<Object>} Upload result with attachment data
+   */
+  async uploadToS3(module, referenceId, file, options = {}) {
+    const { onProgress } = options;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = authService.getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      // Use XMLHttpRequest for progress tracking
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Progress event
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded / event.total) * 100);
+              onProgress(progress);
+            }
+          });
+        }
+
+        // Completion event
+        xhr.addEventListener('load', () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(data);
+            } else {
+              reject(new Error(data.error || 'Upload failed'));
+            }
+          } catch (e) {
+            reject(new Error('Invalid response from server'));
+          }
+        });
+
+        // Error event
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+
+        // Abort event
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload cancelled'));
+        });
+
+        xhr.open('POST', `${API_BASE_URL}/${module}/${referenceId}/attachments`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
+      });
+    } catch (error) {
+      console.error('Error uploading to S3:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to upload file'
+      };
+    }
+  }
+
+  /**
+   * Upload multiple files to S3 storage
+   * @param {string} module - Module name
+   * @param {number|string} referenceId - Parent record ID
+   * @param {File[]} files - Files to upload
+   * @param {Object} options - Optional settings
+   * @param {function} options.onProgress - Progress callback: (fileIndex, progress) => void
+   * @param {function} options.onFileComplete - Callback when a file completes: (fileIndex, result) => void
+   * @returns {Promise<Object>} Upload results for all files
+   */
+  async uploadMultipleToS3(module, referenceId, files, options = {}) {
+    const { onProgress, onFileComplete } = options;
+    const results = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const result = await this.uploadToS3(module, referenceId, file, {
+          onProgress: onProgress ? (progress) => onProgress(i, progress) : undefined
+        });
+        results.push({ file: file.name, ...result });
+        if (onFileComplete) {
+          onFileComplete(i, result);
+        }
+      } catch (error) {
+        results.push({ file: file.name, success: false, error: error.message });
+        if (onFileComplete) {
+          onFileComplete(i, { success: false, error: error.message });
+        }
+      }
+    }
+
+    return {
+      success: results.every(r => r.success !== false),
+      data: { attachments: results }
+    };
+  }
+
+  /**
+   * Get all attachments for a module record (S3)
+   * @param {string} module - Module name
+   * @param {number|string} referenceId - Parent record ID
+   * @returns {Promise<Object>} List of attachments with presigned download URLs
+   */
+  async getS3Files(module, referenceId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/${module}/${referenceId}/attachments`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching S3 files:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch files',
+        data: { attachments: [] }
+      };
+    }
+  }
+
+  /**
+   * Delete an S3 attachment
+   * @param {string} module - Module name
+   * @param {number|string} referenceId - Parent record ID
+   * @param {number|string} fileId - Attachment ID
+   * @returns {Promise<Object>} Delete result
+   */
+  async deleteS3File(module, referenceId, fileId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/${module}/${referenceId}/attachments/${fileId}`,
+        { method: 'DELETE' }
+      );
+      return data;
+    } catch (error) {
+      console.error('Error deleting S3 file:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to delete file'
+      };
+    }
+  }
+
+  /**
+   * Refresh presigned download URL for an attachment
+   * @param {string} module - Module name
+   * @param {number|string} referenceId - Parent record ID
+   * @param {number|string} fileId - Attachment ID
+   * @returns {Promise<Object>} New presigned URL
+   */
+  async refreshS3Url(module, referenceId, fileId) {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/${module}/${referenceId}/attachments/${fileId}`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error refreshing S3 URL:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to refresh download URL'
+      };
+    }
+  }
+
+  // ========================================================================
+  // Module-Specific Convenience Methods (S3)
+  // ========================================================================
+
+  // Sales Orders
+  async uploadSalesOrderAttachment(salesOrderId, file, options) {
+    return this.uploadToS3('sales-orders', salesOrderId, file, options);
+  }
+  async getSalesOrderAttachments(salesOrderId) {
+    return this.getS3Files('sales-orders', salesOrderId);
+  }
+  async deleteSalesOrderAttachment(salesOrderId, fileId) {
+    return this.deleteS3File('sales-orders', salesOrderId, fileId);
+  }
+
+  // Purchase Orders
+  async uploadPurchaseOrderAttachment(purchaseOrderId, file, options) {
+    return this.uploadToS3('purchase-orders', purchaseOrderId, file, options);
+  }
+  async getPurchaseOrderAttachments(purchaseOrderId) {
+    return this.getS3Files('purchase-orders', purchaseOrderId);
+  }
+  async deletePurchaseOrderAttachment(purchaseOrderId, fileId) {
+    return this.deleteS3File('purchase-orders', purchaseOrderId, fileId);
+  }
+
+  // Customers
+  async uploadCustomerAttachment(customerId, file, options) {
+    return this.uploadToS3('customers', customerId, file, options);
+  }
+  async getCustomerAttachments(customerId) {
+    return this.getS3Files('customers', customerId);
+  }
+  async deleteCustomerAttachment(customerId, fileId) {
+    return this.deleteS3File('customers', customerId, fileId);
+  }
+
+  // Suppliers
+  async uploadSupplierAttachment(supplierId, file, options) {
+    return this.uploadToS3('suppliers', supplierId, file, options);
+  }
+  async getSupplierAttachments(supplierId) {
+    return this.getS3Files('suppliers', supplierId);
+  }
+  async deleteSupplierAttachment(supplierId, fileId) {
+    return this.deleteS3File('suppliers', supplierId, fileId);
+  }
+
+  // Contracts
+  async uploadContractAttachment(contractId, file, options) {
+    return this.uploadToS3('contracts', contractId, file, options);
+  }
+  async getContractAttachments(contractId) {
+    return this.getS3Files('contracts', contractId);
+  }
+  async deleteContractAttachment(contractId, fileId) {
+    return this.deleteS3File('contracts', contractId, fileId);
+  }
+
+  // Materials
+  async uploadMaterialAttachment(materialId, file, options) {
+    return this.uploadToS3('materials', materialId, file, options);
+  }
+  async getMaterialAttachments(materialId) {
+    return this.getS3Files('materials', materialId);
+  }
+  async deleteMaterialAttachment(materialId, fileId) {
+    return this.deleteS3File('materials', materialId, fileId);
+  }
+
+  // Wastages
+  async uploadWastageAttachment(wastageId, file, options) {
+    return this.uploadToS3('wastages', wastageId, file, options);
+  }
+  async getWastageAttachments(wastageId) {
+    return this.getS3Files('wastages', wastageId);
+  }
+  async deleteWastageAttachment(wastageId, fileId) {
+    return this.deleteS3File('wastages', wastageId, fileId);
+  }
+
+  // Projects
+  async uploadProjectAttachment(projectId, file, options) {
+    return this.uploadToS3('projects', projectId, file, options);
+  }
+  async getProjectAttachments(projectId) {
+    return this.getS3Files('projects', projectId);
+  }
+  async deleteProjectAttachment(projectId, fileId) {
+    return this.deleteS3File('projects', projectId, fileId);
+  }
+
+  // Bank Transactions
+  async uploadBankTransactionAttachment(transactionId, file, options) {
+    return this.uploadToS3('bank-transactions', transactionId, file, options);
+  }
+  async getBankTransactionAttachments(transactionId) {
+    return this.getS3Files('bank-transactions', transactionId);
+  }
+  async deleteBankTransactionAttachment(transactionId, fileId) {
+    return this.deleteS3File('bank-transactions', transactionId, fileId);
+  }
+
+  // Collection Expenses
+  async uploadCollectionExpenseAttachment(collectionOrderId, file, options) {
+    return this.uploadToS3('collection-orders', collectionOrderId, file, options);
+  }
+  async getCollectionExpenseAttachments(collectionOrderId) {
+    return this.getS3Files('collection-orders', collectionOrderId);
+  }
+  async deleteCollectionExpenseAttachment(collectionOrderId, fileId) {
+    return this.deleteS3File('collection-orders', collectionOrderId, fileId);
+  }
 }
 
 const uploadService = new UploadService();

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
@@ -40,6 +41,7 @@ import '../../../pages/PettyCash.css'
 const PettyCash = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { getInputDate } = useSystemSettings()
   const { hasPermission } = usePermissions()
   
   const [loading, setLoading] = useState(true)
@@ -144,16 +146,18 @@ const PettyCash = () => {
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-GB')
 
   // Statistics calculation
+  // Note: Using parseFloat and rounding to avoid JavaScript floating-point precision errors
   const calculateStats = () => {
-    const totalBalance = cards.reduce((sum, card) => sum + card.currentBalance, 0)
-    const totalLoaded = cards.reduce((sum, card) => sum + card.totalLoaded, 0)
-    const totalSpent = cards.reduce((sum, card) => sum + card.totalSpent, 0)
+    const totalBalance = cards.reduce((sum, card) => sum + (parseFloat(card.currentBalance) || 0), 0)
+    const totalLoaded = cards.reduce((sum, card) => sum + (parseFloat(card.totalLoaded) || 0), 0)
+    const totalSpent = cards.reduce((sum, card) => sum + (parseFloat(card.totalSpent) || 0), 0)
     const activeCards = cards.filter(card => card.status === 'active').length
-    
+
     return {
-      totalBalance,
-      totalLoaded,
-      totalSpent,
+      // Round to 3 decimal places for OMR currency to avoid floating-point display errors
+      totalBalance: Math.round(totalBalance * 1000) / 1000,
+      totalLoaded: Math.round(totalLoaded * 1000) / 1000,
+      totalSpent: Math.round(totalSpent * 1000) / 1000,
       activeCards,
       utilizationRate: totalLoaded > 0 ? ((totalSpent / totalLoaded) * 100).toFixed(1) : 0
     }
@@ -163,7 +167,7 @@ const PettyCash = () => {
 
   // Handle card operations
   const handleAddCard = () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getInputDate() // Use local date, not UTC
     setCardForm({
       cardType: 'top_up',  // 'top_up' or 'petrol'
       cardNumber: '',      // Manual entry for physical card number
@@ -222,7 +226,7 @@ const PettyCash = () => {
     setReloadForm({
       amount: '',
       notes: '',
-      reloadDate: new Date().toISOString().split('T')[0]
+      reloadDate: getInputDate() // Use local date, not UTC
     })
     setShowReloadModal(true)
   }
@@ -236,7 +240,7 @@ const PettyCash = () => {
       description: '',
       merchant: '',
       location: '',
-      transactionDate: new Date().toISOString().split('T')[0],
+      transactionDate: getInputDate(), // Use local date, not UTC
       receiptPhotos: [],
       hasReceipt: false,
       tags: '',
@@ -510,15 +514,17 @@ const PettyCash = () => {
       )
     },
     {
-      key: 'expenseType',
+      key: 'category', // Backend returns 'category', not 'expenseType'
       header: t('expenseType', 'Expense Type'),
       sortable: true,
       render: (value) => {
-        const expenseType = expenseTypes.find(type => type.id === value)
+        // Case-insensitive lookup for category name
+        const normalizedValue = value?.toLowerCase() || ''
+        const expenseType = expenseTypes.find(type => type.id?.toLowerCase() === normalizedValue)
         return (
           <div className="expense-type">
-            <span className={`expense-category ${expenseType?.category}`}>
-              {expenseType?.name || value}
+            <span className={`expense-category ${expenseType?.category || ''}`}>
+              {expenseType?.name || value || 'Unknown'}
             </span>
           </div>
         )

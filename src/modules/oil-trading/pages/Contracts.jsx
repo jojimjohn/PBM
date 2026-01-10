@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
+import useProjects from '../../../hooks/useProjects'
 import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
 import DateInput from '../../../components/ui/DateInput'
 import FileUpload from '../../../components/ui/FileUpload'
+import FileViewer from '../../../components/ui/FileViewer'
 import contractService from '../../../services/contractService'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
@@ -24,6 +27,12 @@ const Contracts = () => {
   const { t } = useLocalization()
   const { formatDate: systemFormatDate } = useSystemSettings()
   const { hasPermission } = usePermissions()
+  const { selectedProjectId } = useProjects()
+  const [searchParams] = useSearchParams()
+
+  // Read search param from URL (used when clicking tasks from dashboard)
+  const urlSearchTerm = searchParams.get('search') || ''
+
   const [contracts, setContracts] = useState([])
   const [contractTypes, setContractTypes] = useState({})
   const [contractStatuses, setContractStatuses] = useState({})
@@ -49,7 +58,7 @@ const Contracts = () => {
   useEffect(() => {
     loadContracts()
     loadSuppliersAndMaterials()
-  }, [selectedCompany])
+  }, [selectedCompany, selectedProjectId])
 
   const loadContracts = async () => {
     try {
@@ -779,6 +788,7 @@ const Contracts = () => {
         initialPageSize={10}
         stickyHeader={true}
         enableColumnToggle={true}
+        initialSearchTerm={urlSearchTerm}
       />
 
       {/* Create Contract Modal */}
@@ -1401,6 +1411,38 @@ const ContractFormModal = ({
   restoreFromOriginal,
   clearPendingDeletions
 }) => {
+  const [attachments, setAttachments] = useState([])
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
+
+  // Load attachments when editing existing contract
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (isOpen && isEdit && formData?.id) {
+        setLoadingAttachments(true)
+        try {
+          const result = await uploadService.getS3Files('contracts', formData.id)
+          if (result.success) {
+            const mappedFiles = (result.data || []).map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename || file.originalFilename,
+              contentType: file.content_type || file.contentType,
+              fileSize: file.file_size || file.fileSize,
+              downloadUrl: file.download_url || file.downloadUrl
+            }))
+            setAttachments(mappedFiles)
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error)
+        } finally {
+          setLoadingAttachments(false)
+        }
+      } else {
+        setAttachments([])
+      }
+    }
+    loadAttachments()
+  }, [isOpen, isEdit, formData?.id])
+
   const handleSubmit = (e) => {
     e.preventDefault()
     onSave()
@@ -1970,46 +2012,76 @@ const ContractFormModal = ({
         {/* Attachments - Only in edit mode */}
         {isEdit && formData?.id && (
           <div className="form-section">
-            <div className="form-section-title">Attachments</div>
+            <div className="form-section-title">
+              <FileText size={16} />
+              Attachments
+            </div>
+
             <FileUpload
               mode="multiple"
               accept=".pdf,.jpg,.jpeg,.png"
               maxSize={5242880}
               maxFiles={10}
               onUpload={async (files) => {
-                const result = await uploadService.uploadFiles('contracts', formData.id, files);
-                if (result.success) {
-                  // Refresh the contract data to get updated attachments
-                  const updated = await contractService.getById(formData.id);
-                  if (updated.success) {
-                    setFormData(prev => ({
-                      ...prev,
-                      attachments: updated.data.attachments
-                    }));
+                try {
+                  const result = await uploadService.uploadMultipleToS3('contracts', formData.id, files)
+                  if (result.success) {
+                    const attachmentsResult = await uploadService.getS3Files('contracts', formData.id)
+                    if (attachmentsResult.success) {
+                      const mappedFiles = (attachmentsResult.data || []).map(file => ({
+                        id: file.id,
+                        originalFilename: file.original_filename || file.originalFilename,
+                        contentType: file.content_type || file.contentType,
+                        fileSize: file.file_size || file.fileSize,
+                        downloadUrl: file.download_url || file.downloadUrl
+                      }))
+                      setAttachments(mappedFiles)
+                    }
+                    alert('Files uploaded successfully')
+                  } else {
+                    alert('Failed to upload files: ' + result.error)
                   }
-                  alert('Files uploaded successfully');
-                } else {
-                  alert('Failed to upload files: ' + result.error);
+                } catch (error) {
+                  console.error('Upload error:', error)
+                  alert('Failed to upload files: ' + error.message)
                 }
               }}
-              onDelete={async (filename) => {
-                const result = await uploadService.deleteFile('contracts', formData.id, filename);
-                if (result.success) {
-                  // Refresh the contract data to get updated attachments
-                  const updated = await contractService.getById(formData.id);
-                  if (updated.success) {
-                    setFormData(prev => ({
-                      ...prev,
-                      attachments: updated.data.attachments
-                    }));
-                  }
-                  alert('File deleted successfully');
-                } else {
-                  alert('Failed to delete file: ' + result.error);
-                }
-              }}
-              existingFiles={formData.attachments || []}
+              existingFiles={[]}
             />
+
+            {loadingAttachments ? (
+              <div className="attachments-loading">Loading attachments...</div>
+            ) : attachments.length > 0 ? (
+              <FileViewer
+                files={attachments}
+                onDelete={async (fileId) => {
+                  if (!window.confirm('Are you sure you want to delete this file?')) return
+                  try {
+                    const result = await uploadService.deleteS3File('contracts', formData.id, fileId)
+                    if (result.success) {
+                      setAttachments(prev => prev.filter(f => f.id !== fileId))
+                      alert('File deleted successfully')
+                    } else {
+                      alert('Failed to delete file: ' + result.error)
+                    }
+                  } catch (error) {
+                    console.error('Delete error:', error)
+                    alert('Failed to delete file: ' + error.message)
+                  }
+                }}
+                onRefreshUrl={async (fileId) => {
+                  const result = await uploadService.getS3Files('contracts', formData.id)
+                  if (result.success) {
+                    const file = result.data.find(f => f.id === fileId)
+                    if (file) return file.download_url || file.downloadUrl
+                  }
+                  return null
+                }}
+                canDelete={true}
+              />
+            ) : (
+              <div className="no-attachments">No attachments uploaded yet</div>
+            )}
           </div>
         )}
 

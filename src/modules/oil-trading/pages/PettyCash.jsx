@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
+import { parseDate } from '../../../utils/dateParser'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
@@ -51,9 +53,13 @@ import '../../../pages/PettyCash.css'
 const PettyCash = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
-  const { formatDate: systemFormatDate } = useSystemSettings()
+  const { formatDate: systemFormatDate, getInputDate } = useSystemSettings()
   const { hasPermission } = usePermissions()
-  
+  const [searchParams] = useSearchParams()
+
+  // Read search param from URL (used when clicking tasks from dashboard)
+  const urlSearchTerm = searchParams.get('search') || ''
+
   const [loading, setLoading] = useState(true)
   const [cards, setCards] = useState([])
   const [expenses, setExpenses] = useState([])
@@ -101,10 +107,15 @@ const PettyCash = () => {
     }
   }, [selectedCompany])
 
-  const loadPettyCashData = async () => {
+  const loadPettyCashData = async (forceRefresh = false) => {
     try {
       setLoading(true)
       setError(null)
+
+      // Invalidate cache if force refresh requested (after mutations)
+      if (forceRefresh) {
+        dataCacheService.invalidatePettyCash()
+      }
 
       // PERFORMANCE FIX: Load all data in parallel using dataCacheService for instant loading
       const [cardsData, expensesData, typesResult, statsResult, usersResult] = await Promise.all([
@@ -169,25 +180,30 @@ const PettyCash = () => {
 
   const formatCurrency = (amount) => `OMR ${parseFloat(amount || 0).toFixed(3)}`
   // Use system settings for date formatting
+  // IMPORTANT: Use parseDate() instead of new Date() to avoid UTC timezone issues
+  // new Date("2026-01-10") parses as UTC midnight, causing display to shift -1 day
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return 'N/A'
+    // parseDate handles YYYY-MM-DD strings correctly as local dates
+    const date = parseDate(dateString)
+    if (!date) return 'N/A'
     // Use the system formatDate function which respects user settings
     return systemFormatDate ? systemFormatDate(date) : date.toLocaleDateString('en-GB')
   }
 
   // Statistics calculation
+  // Note: Using parseFloat and rounding to avoid JavaScript floating-point precision errors
   const calculateStats = () => {
-    const totalBalance = cards.reduce((sum, card) => sum + card.currentBalance, 0)
-    const totalLoaded = cards.reduce((sum, card) => sum + card.totalLoaded, 0)
-    const totalSpent = cards.reduce((sum, card) => sum + card.totalSpent, 0)
+    const totalBalance = cards.reduce((sum, card) => sum + (parseFloat(card.currentBalance) || 0), 0)
+    const totalLoaded = cards.reduce((sum, card) => sum + (parseFloat(card.totalLoaded) || 0), 0)
+    const totalSpent = cards.reduce((sum, card) => sum + (parseFloat(card.totalSpent) || 0), 0)
     const activeCards = cards.filter(card => card.status === 'active').length
-    
+
     return {
-      totalBalance,
-      totalLoaded,
-      totalSpent,
+      // Round to 3 decimal places for OMR currency to avoid floating-point display errors
+      totalBalance: Math.round(totalBalance * 1000) / 1000,
+      totalLoaded: Math.round(totalLoaded * 1000) / 1000,
+      totalSpent: Math.round(totalSpent * 1000) / 1000,
       activeCards,
       utilizationRate: totalLoaded > 0 ? ((totalSpent / totalLoaded) * 100).toFixed(1) : 0
     }
@@ -197,7 +213,7 @@ const PettyCash = () => {
 
   // Handle card operations
   const handleAddCard = () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getInputDate() // Use local date, not UTC
     setCardForm({
       cardType: 'top_up',  // 'top_up' or 'petrol'
       cardNumber: '',      // Manual entry for physical card number
@@ -254,7 +270,7 @@ const PettyCash = () => {
     setReloadForm({
       amount: '',
       notes: '',
-      reloadDate: new Date().toISOString().split('T')[0]
+      reloadDate: getInputDate() // Use local date, not UTC
     })
     setShowReloadModal(true)
   }
@@ -267,7 +283,7 @@ const PettyCash = () => {
       amount: '',
       description: '',
       merchant: '',
-      transactionDate: new Date().toISOString().split('T')[0],
+      transactionDate: getInputDate(), // Use local date, not UTC
       notes: '',
       paymentMethod: 'top_up_card', // Default payment method
       receiptFile: null // S3-integrated receipt file
@@ -286,8 +302,8 @@ const PettyCash = () => {
       })
 
       if (result && result.success) {
-        // Reload data to reflect changes
-        await loadPettyCashData()
+        // Reload data to reflect changes (force refresh to bypass cache)
+        await loadPettyCashData(true)
         alert(`Expense ${newStatus} successfully`)
       } else {
         throw new Error(result?.error || `Failed to ${newStatus} expense`)
@@ -305,15 +321,17 @@ const PettyCash = () => {
   // Handle edit expense button click
   const handleEditExpense = (expense) => {
     setEditingExpense(expense)
+    // Normalize category to lowercase to match dropdown values
+    const categoryValue = (expense.category || expense.expenseType || '').toLowerCase()
     setEditExpenseForm({
       id: expense.id,
       cardId: expense.cardId?.toString() || '',
-      expenseType: expense.category || expense.expenseType || '',
+      expenseType: categoryValue,
       amount: expense.amount?.toString() || '',
       transactionDate: expense.expenseDate?.split('T')[0] || expense.transactionDate?.split('T')[0] || '',
       description: expense.description || '',
       merchant: expense.vendor || expense.merchant || '',  // Backend returns 'vendor'
-      paymentMethod: expense.paymentMethod || 'top_up_card',
+      paymentMethod: expense.payment_method || expense.paymentMethod || 'top_up_card',
       notes: expense.notes || '',
       receiptFile: null,
       existingReceipt: expense.receiptPhoto || null,
@@ -394,8 +412,8 @@ const PettyCash = () => {
         }
       }
 
-      // Reload data and close modal
-      await loadPettyCashData()
+      // Reload data and close modal (force refresh to bypass cache)
+      await loadPettyCashData(true)
       setShowEditExpenseModal(false)
       setEditingExpense(null)
       alert(t('expenseUpdated', 'Expense updated successfully'))
@@ -433,7 +451,7 @@ const PettyCash = () => {
       }
 
       if (result.success) {
-        await loadPettyCashData()
+        await loadPettyCashData(true)
         setShowCardModal(false)
         setEditingCard(null)
         alert(`Card ${editingCard ? 'updated' : 'created'} successfully`)
@@ -455,7 +473,7 @@ const PettyCash = () => {
       const result = await pettyCashService.reloadCard(selectedCard.id, reloadData)
       
       if (result.success) {
-        await loadPettyCashData()
+        await loadPettyCashData(true)
         setShowReloadModal(false)
         setSelectedCard(null)
         alert('Card balance reloaded successfully')
@@ -509,7 +527,7 @@ const PettyCash = () => {
           }
         }
 
-        await loadPettyCashData()
+        await loadPettyCashData(true)
         setShowExpenseModal(false)
         setSelectedCard(null)
         alert('Expense recorded successfully')
@@ -548,7 +566,7 @@ const PettyCash = () => {
       if (result.success) {
         setShowDeactivateCardModal(false)
         setCardDeactivationReason('')
-        await loadPettyCashData()
+        await loadPettyCashData(true)
         alert('Card deactivated successfully')
       } else {
         throw new Error(result.error || 'Failed to deactivate card')
@@ -573,7 +591,7 @@ const PettyCash = () => {
       const result = await pettyCashService.reactivateCard(card.id)
 
       if (result.success) {
-        await loadPettyCashData()
+        await loadPettyCashData(true)
         alert('Card reactivated successfully')
       } else {
         throw new Error(result.error || 'Failed to reactivate card')
@@ -818,7 +836,9 @@ const PettyCash = () => {
       header: t('expenseType', 'Expense Type'),
       sortable: true,
       render: (value) => {
-        const expenseType = expenseTypes.find(type => type.id === value)
+        // Case-insensitive lookup for category name
+        const normalizedValue = value?.toLowerCase() || ''
+        const expenseType = expenseTypes.find(type => type.id?.toLowerCase() === normalizedValue)
         return (
           <div className="expense-type">
             <span className={`expense-category ${expenseType?.category || ''}`}>
@@ -837,7 +857,7 @@ const PettyCash = () => {
       render: (value) => formatCurrency(value)
     },
     {
-      key: 'merchant',
+      key: 'vendor',
       header: t('merchant', 'Merchant'),
       sortable: true
     },
@@ -867,14 +887,18 @@ const PettyCash = () => {
           >
             <Receipt size={14} />
           </button>
-          {/* Edit button - available for admins/managers */}
+          {/* Edit button - available for admins/managers, shows view-only for rejected expenses */}
           {hasPermission('MANAGE_PETTY_CASH') && (
             <button
               className="btn btn-outline btn-sm"
-              title={t('editExpense', 'Edit Expense')}
+              title={row.status === 'rejected'
+                ? t('viewRejectedExpense', 'View Rejected Expense')
+                : row.status === 'approved'
+                  ? t('editApprovedExpense', 'Edit Card/Amount (Approved Expense)')
+                  : t('editExpense', 'Edit Expense')}
               onClick={() => handleEditExpense(row)}
             >
-              <Edit size={14} />
+              {row.status === 'rejected' ? <Eye size={14} /> : <Edit size={14} />}
             </button>
           )}
           {row.status === 'pending' && hasPermission('APPROVE_EXPENSE') && (
@@ -1046,6 +1070,7 @@ const PettyCash = () => {
           loading={loading}
           emptyMessage={t('noCardsFound', 'No cards found')}
           className="cards-table"
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 
@@ -1095,6 +1120,7 @@ const PettyCash = () => {
           loading={loading}
           emptyMessage={t('noExpensesFound', 'No expenses found')}
           className="expenses-table"
+          initialSearchTerm={urlSearchTerm}
         />
       )}
 
@@ -1260,6 +1286,7 @@ const PettyCash = () => {
           setFormData={setEditExpenseForm}
           t={t}
           formatCurrency={formatCurrency}
+          onRefreshData={loadPettyCashData}
         />
       )}
 
@@ -1387,6 +1414,7 @@ const PettyCash = () => {
 // Card Form Modal Component
 const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData, users, t }) => {
   const isPetrolCard = formData.cardType === 'petrol'
+  const isEditing = !!card
 
   return (
     <Modal
@@ -1397,45 +1425,51 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
       closeOnOverlayClick={false}
     >
       <form onSubmit={onSubmit} className="card-form">
-        {/* Card Type Selection - Only show for new cards */}
-        {!card && (
-          <div className="form-section">
-            <h3>{t('cardType', 'Card Type')}</h3>
-            <div className="card-type-selector">
-              <label className={`card-type-option ${formData.cardType === 'top_up' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="cardType"
-                  value="top_up"
-                  checked={formData.cardType === 'top_up'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
-                />
-                <div className="card-type-content">
-                  <span className="card-type-title">{t('topUpCard', 'Top-up Card')}</span>
-                  <span className="card-type-desc">{t('topUpCardDesc', 'Regular petty cash card assigned to specific users')}</span>
-                </div>
-              </label>
-              <label className={`card-type-option ${formData.cardType === 'petrol' ? 'selected' : ''}`}>
-                <input
-                  type="radio"
-                  name="cardType"
-                  value="petrol"
-                  checked={formData.cardType === 'petrol'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
-                />
-                <div className="card-type-content">
-                  <span className="card-type-title">{t('petrolCard', 'Petrol Card')}</span>
-                  <span className="card-type-desc">{t('petrolCardDesc', 'Shared fuel card for all users (one per company)')}</span>
-                </div>
-              </label>
-            </div>
-            {isPetrolCard && (
-              <div className="info-banner info-warning mt-3">
-                <span>⛽ {t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</span>
+        {/* Card Type Selection - Show for both new and edit, but disabled when editing */}
+        <div className="ds-form-section">
+          <h4>{t('cardType', 'Card Type')}</h4>
+          <div className="ds-checkbox-grid">
+            <label className={`ds-checkbox-card ${isEditing ? 'opacity-50' : ''}`}>
+              <input
+                type="radio"
+                name="cardType"
+                value="top_up"
+                checked={formData.cardType === 'top_up'}
+                onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
+                disabled={isEditing}
+              />
+              <div className="ds-checkbox-content">
+                <span className="ds-checkbox-title">{t('topUpCard', 'Top-up Card')}</span>
+                <span className="ds-checkbox-description">{t('topUpCardDesc', 'Regular petty cash card assigned to specific users')}</span>
               </div>
-            )}
+            </label>
+            <label className={`ds-checkbox-card ${isEditing ? 'opacity-50' : ''}`}>
+              <input
+                type="radio"
+                name="cardType"
+                value="petrol"
+                checked={formData.cardType === 'petrol'}
+                onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
+                disabled={isEditing}
+              />
+              <div className="ds-checkbox-content">
+                <span className="ds-checkbox-title">{t('petrolCard', 'Petrol Card')}</span>
+                <span className="ds-checkbox-description">{t('petrolCardDesc', 'Shared fuel card for all users (one per company)')}</span>
+              </div>
+            </label>
           </div>
-        )}
+          {isPetrolCard && (
+            <div className="ds-form-info-box warning mt-3">
+              <span>⛽</span>
+              <p>{t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</p>
+            </div>
+          )}
+          {isEditing && (
+            <div className="ds-form-hint mt-2">
+              {t('cardTypeCannotChange', 'Card type cannot be changed after creation')}
+            </div>
+          )}
+        </div>
 
         <div className="form-section">
           <h3>{t('cardInformation', 'Card Information')}</h3>
@@ -1549,6 +1583,50 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState(null)
 
+  // Find the petrol card (shared fuel card)
+  const petrolCard = cards.find(c => c.card_type === 'petrol' && c.status === 'active')
+
+  // Determine if current expense type is fuel
+  const isFuelExpense = formData.expenseType?.toLowerCase() === 'fuel'
+
+  // Get available cards for selection based on expense type
+  const getAvailableCards = () => {
+    if (isFuelExpense) {
+      // For fuel expenses, show petrol card first, then other active cards
+      const activeCards = cards.filter(card => card.status === 'active')
+      return activeCards.sort((a, b) => {
+        if (a.card_type === 'petrol') return -1
+        if (b.card_type === 'petrol') return 1
+        return 0
+      })
+    } else {
+      // For non-fuel expenses, show only top-up cards (exclude petrol)
+      return cards.filter(card => card.status === 'active' && card.card_type !== 'petrol')
+    }
+  }
+
+  const handleExpenseTypeChange = (categoryId) => {
+    const normalizedCategory = categoryId?.toLowerCase()
+    if (normalizedCategory === 'fuel') {
+      // Auto-select petrol card when fuel is selected
+      setFormData(prev => ({
+        ...prev,
+        expenseType: categoryId,
+        paymentMethod: 'petrol_card',
+        cardId: petrolCard ? petrolCard.id.toString() : ''
+      }))
+    } else {
+      // Reset to top_up_card payment method when switching away from fuel
+      setFormData(prev => ({
+        ...prev,
+        expenseType: categoryId,
+        paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod,
+        // Clear card selection if it was petrol card
+        cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
+      }))
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
@@ -1576,36 +1654,100 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="expense-form">
-        {/* Card Selection - Only for top_up_card payment method */}
-        {(!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (
+        {/* Expense Type Selection - FIRST to trigger payment method and card auto-selection */}
+        <div className="form-group">
+          <label>{t('expenseType', 'Expense Type')} *</label>
+          <select
+            value={formData.expenseType}
+            onChange={(e) => handleExpenseTypeChange(e.target.value)}
+            required
+          >
+            <option value="">{t('selectExpenseType', 'Select Expense Type')}</option>
+            {expenseTypes.map(type => (
+              <option key={type.id} value={type.id}>
+                {type.name}{type.maxAmount ? ` - ${t('maxAmount', 'Max')}: OMR ${type.maxAmount}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Payment Method Selection - SECOND (triggers card selection) */}
+        <PaymentMethodSelect
+          label={t('paymentMethod', 'Payment Method')}
+          value={formData.paymentMethod || 'top_up_card'}
+          onChange={(method) => {
+            // Handle payment method change with card auto-selection
+            if (method === 'company_card' || method === 'iou') {
+              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
+            } else if (method === 'petrol_card') {
+              // Auto-select petrol card when petrol_card payment method is selected
+              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: petrolCard ? petrolCard.id.toString() : '' }))
+            } else {
+              // For top_up_card, clear card if it was petrol card
+              setFormData(prev => ({
+                ...prev,
+                paymentMethod: method,
+                cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
+              }))
+            }
+          }}
+          category={formData.expenseType}
+          compact={true}
+          required
+        />
+
+        {/* Card Selection - THIRD (show for card-based payment methods) */}
+        {(formData.paymentMethod === 'top_up_card' || formData.paymentMethod === 'petrol_card' || !formData.paymentMethod) && (
           <div className="form-group">
             <label>{t('selectCard', 'Select Card')} *</label>
             <select
               value={formData.cardId}
-              onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value }))}
-              required={formData.paymentMethod === 'top_up_card' || !formData.paymentMethod}
+              onChange={(e) => {
+                const selectedCardId = e.target.value
+                const selectedCard = cards.find(c => c.id === parseInt(selectedCardId))
+                // Update payment method based on selected card type
+                const newPaymentMethod = selectedCard?.card_type === 'petrol' ? 'petrol_card' : 'top_up_card'
+                setFormData(prev => ({ ...prev, cardId: selectedCardId, paymentMethod: newPaymentMethod }))
+              }}
+              required
             >
               <option value="">{t('selectCard', 'Select Card')}</option>
-              {cards.filter(card => card.status === 'active' && card.cardType !== 'petrol').map(card => (
+              {getAvailableCards().map(card => (
                 <option key={card.id} value={card.id}>
-                  {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
+                  {card.card_type === 'petrol' ? '⛽ ' : ''}{card.cardNumber} - {card.cardName || card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
                 </option>
               ))}
             </select>
+            {/* Petrol card auto-selected info */}
+            {isFuelExpense && petrolCard && formData.cardId === petrolCard.id.toString() && (
+              <div className="ds-form-info-box success mt-2">
+                <span>⛽</span>
+                <p>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</p>
+              </div>
+            )}
+            {/* Warning when using non-petrol card for fuel */}
+            {isFuelExpense && formData.cardId && petrolCard && formData.cardId !== petrolCard.id.toString() && (
+              <div className="ds-form-info-box warning mt-2">
+                <span>⚠️</span>
+                <p>{t('usingNonPetrolCard', 'Using a non-petrol card for fuel expense')}</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Selected Card Info Panel - Only for top_up_card */}
-        {formData.cardId && (!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (() => {
+        {/* Selected Card Info Panel */}
+        {formData.cardId && (formData.paymentMethod === 'top_up_card' || formData.paymentMethod === 'petrol_card' || !formData.paymentMethod) && (() => {
           const selectedCard = cards.find(c => c.id === parseInt(formData.cardId));
           if (!selectedCard) return null;
           return (
             <div className="selected-info-panel">
               <div className="flex-between">
                 <div>
-                  <div className="info-label font-semibold">{selectedCard.cardNumber}</div>
+                  <div className="info-label font-semibold">
+                    {selectedCard.card_type === 'petrol' ? '⛽ ' : ''}{selectedCard.cardNumber}
+                  </div>
                   <div className="info-value mt-1">
-                    {selectedCard.assignedStaff?.name || t('unassigned', 'Unassigned')}
+                    {selectedCard.cardName || selectedCard.assignedStaff?.name || t('unassigned', 'Unassigned')}
                   </div>
                   {selectedCard.pettyCashUser && (
                     <div className="info-label mt-1">
@@ -1626,35 +1768,6 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
         })()}
 
         <div className="form-grid">
-          <div className="form-group">
-            <label>{t('expenseType', 'Expense Type')} *</label>
-            <select
-              value={formData.expenseType}
-              onChange={(e) => {
-                const categoryId = e.target.value;
-                // Auto-select petrol card when fuel category is selected
-                if (categoryId === 'fuel') {
-                  setFormData(prev => ({ ...prev, expenseType: categoryId, paymentMethod: 'petrol_card', cardId: '' }));
-                } else {
-                  // Reset to default payment method when switching away from fuel
-                  setFormData(prev => ({
-                    ...prev,
-                    expenseType: categoryId,
-                    paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod
-                  }));
-                }
-              }}
-              required
-            >
-              <option value="">{t('selectExpenseType', 'Select Expense Type')}</option>
-              {expenseTypes.map(type => (
-                <option key={type.id} value={type.id}>
-                  {type.name} - {t('maxAmount', 'Max')}: OMR {type.maxAmount}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="form-group">
             <label>{t('amount', 'Amount')} (OMR) *</label>
             <input
@@ -1696,23 +1809,6 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
             placeholder={t('merchantName', 'Store/vendor name')}
           />
         </div>
-
-        {/* Payment Method Selection - Compact Mode */}
-        <PaymentMethodSelect
-          label={t('paymentMethod', 'Payment Method')}
-          value={formData.paymentMethod || 'top_up_card'}
-          onChange={(method) => {
-            // Clear card selection when switching to non-card payment methods
-            if (method === 'company_card' || method === 'iou') {
-              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
-            } else {
-              setFormData(prev => ({ ...prev, paymentMethod: method }))
-            }
-          }}
-          category={formData.expenseType}
-          compact={true}
-          required
-        />
 
         {/* Receipt Upload (S3-integrated) */}
         <div className="form-group">
@@ -1872,7 +1968,8 @@ const EditExpenseFormModal = ({
   formData,
   setFormData,
   t,
-  formatCurrency
+  formatCurrency,
+  onRefreshData
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState(null)
@@ -1880,6 +1977,64 @@ const EditExpenseFormModal = ({
   const [loadingReceipts, setLoadingReceipts] = React.useState(false)
   const [maxReceipts, setMaxReceipts] = React.useState(2)
   const [deletingReceiptId, setDeletingReceiptId] = React.useState(null)
+
+  // Card/Amount change confirmation state for approved expenses
+  const [showCardChangeConfirm, setShowCardChangeConfirm] = React.useState(false)
+  const [cardChangeNotes, setCardChangeNotes] = React.useState('')
+  const [originalCardId, setOriginalCardId] = React.useState(null)
+  const [originalAmount, setOriginalAmount] = React.useState(null)
+
+  // Track original card and amount when modal opens
+  React.useEffect(() => {
+    if (isOpen && expense) {
+      setOriginalCardId(expense.cardId)
+      setOriginalAmount(parseFloat(expense.amount) || 0)
+    }
+  }, [isOpen, expense?.cardId, expense?.amount])
+
+  // Find the petrol card (shared fuel card)
+  const petrolCard = cards.find(c => c.card_type === 'petrol' && c.status === 'active')
+
+  // Determine if current expense type is fuel
+  const isFuelExpense = formData.expenseType?.toLowerCase() === 'fuel'
+
+  // Get available cards for selection based on expense type
+  const getAvailableCards = () => {
+    if (isFuelExpense) {
+      // For fuel expenses, show petrol card first, then other active cards
+      const activeCards = cards.filter(card => card.status === 'active')
+      return activeCards.sort((a, b) => {
+        if (a.card_type === 'petrol') return -1
+        if (b.card_type === 'petrol') return 1
+        return 0
+      })
+    } else {
+      // For non-fuel expenses, show only top-up cards (exclude petrol)
+      return cards.filter(card => card.status === 'active' && card.card_type !== 'petrol')
+    }
+  }
+
+  const handleExpenseTypeChange = (categoryId) => {
+    const normalizedCategory = categoryId?.toLowerCase()
+    if (normalizedCategory === 'fuel') {
+      // Auto-select petrol card when fuel is selected
+      setFormData(prev => ({
+        ...prev,
+        expenseType: categoryId,
+        paymentMethod: 'petrol_card',
+        cardId: petrolCard ? petrolCard.id.toString() : ''
+      }))
+    } else {
+      // Reset to top_up_card payment method when switching away from fuel
+      setFormData(prev => ({
+        ...prev,
+        expenseType: categoryId,
+        paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod,
+        // Clear card selection if it was petrol card
+        cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
+      }))
+    }
+  }
 
   // Load existing receipts when modal opens
   React.useEffect(() => {
@@ -1903,9 +2058,55 @@ const EditExpenseFormModal = ({
     loadReceipts()
   }, [isOpen, expense?.id])
 
+  // Check expense status for field restrictions
+  const isApprovedExpense = expense?.status === 'approved'
+  const isRejectedExpense = expense?.status === 'rejected'
+  const isReadOnly = isRejectedExpense // Rejected expenses are view-only
+  const cardHasChanged = originalCardId && formData.cardId && originalCardId.toString() !== formData.cardId.toString()
+  const currentAmount = parseFloat(formData.amount) || 0
+  const amountHasChanged = originalAmount !== null && Math.abs(currentAmount - originalAmount) > 0.001
+
+  // Get card details for confirmation dialog
+  const getOldCard = () => cards.find(c => c.id === parseInt(originalCardId))
+  const getNewCard = () => cards.find(c => c.id === parseInt(formData.cardId))
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+
+    // For both pending and approved expenses with card or amount change, show confirmation dialog
+    // Payment methods that affect card balance
+    const balanceAffectingMethods = ['top_up_card', 'petrol_card']
+    const requiresBalanceAdjustment = balanceAffectingMethods.includes(expense.paymentMethod || expense.payment_method)
+
+    if (requiresBalanceAdjustment && (cardHasChanged || amountHasChanged)) {
+      const oldCard = getOldCard()
+      const newCard = getNewCard()
+      const oldCardBalance = parseFloat(oldCard?.currentBalance || 0)
+      const newCardBalance = parseFloat(newCard?.currentBalance || 0)
+
+      // Check if operation is valid
+      if (cardHasChanged) {
+        // Card change: need sufficient balance on new card for the new amount
+        if (newCardBalance < currentAmount) {
+          setError(t('cardChangeInsufficientBalance', 'Insufficient balance for this operation') +
+            `. ${t('required', 'Required')}: ${currentAmount.toFixed(3)}, ${t('available', 'Available')}: ${newCardBalance.toFixed(3)}`)
+          return
+        }
+      } else if (amountHasChanged) {
+        // Amount-only change: if increasing, need sufficient balance on same card
+        const amountDiff = currentAmount - originalAmount
+        if (amountDiff > 0 && oldCardBalance < amountDiff) {
+          setError(t('cardChangeInsufficientBalance', 'Insufficient balance for this operation') +
+            `. ${t('additionalDeduction', 'Additional Deduction')}: ${amountDiff.toFixed(3)}, ${t('available', 'Available')}: ${oldCardBalance.toFixed(3)}`)
+          return
+        }
+      }
+
+      setShowCardChangeConfirm(true)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -1918,6 +2119,63 @@ const EditExpenseFormModal = ({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Handle card/amount change confirmation
+  const handleConfirmCardChange = async () => {
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      let result
+
+      if (isApprovedExpense) {
+        // For approved expenses, use the special changeExpenseCard endpoint
+        result = await pettyCashService.changeExpenseCard(
+          expense.id,
+          parseInt(formData.cardId),
+          amountHasChanged ? currentAmount : null,
+          cardChangeNotes || null
+        )
+      } else {
+        // For pending expenses, use the regular update endpoint
+        // Backend will handle balance adjustments automatically
+        if (typeof onSave !== 'function') {
+          throw new Error('onSave handler not provided')
+        }
+        await onSave(formData)
+        result = { success: true }
+      }
+
+      if (result.success) {
+        setShowCardChangeConfirm(false)
+        setCardChangeNotes('')
+        // Refresh data to show updated balances (force refresh to bypass cache)
+        if (typeof onRefreshData === 'function') {
+          await onRefreshData(true)
+        }
+        onClose()
+        // Show success message
+        alert(t('cardChangeSuccess', 'Changes applied successfully. Card balances have been updated.'))
+      } else {
+        setError(result.error || 'Failed to apply changes')
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to apply changes')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCancelCardChange = () => {
+    setShowCardChangeConfirm(false)
+    setCardChangeNotes('')
+    // Reset card and amount to original
+    setFormData(prev => ({
+      ...prev,
+      cardId: originalCardId?.toString() || '',
+      amount: originalAmount?.toString() || ''
+    }))
   }
 
   // Handle receipt file selection and upload
@@ -1979,10 +2237,201 @@ const EditExpenseFormModal = ({
 
   if (!expense) return null
 
+  // Get card details for the confirmation dialog
+  const oldCard = getOldCard()
+  const newCard = getNewCard()
+  const oldCardBalance = parseFloat(oldCard?.currentBalance || 0)
+  const newCardBalance = parseFloat(newCard?.currentBalance || 0)
+  const amountDiff = currentAmount - originalAmount
+
   return (
-    <Modal
-      isOpen={isOpen}
-      title={t('editExpense', 'Edit Expense')}
+    <>
+      {/* Card/Amount Change Confirmation Dialog */}
+      <Modal
+        isOpen={showCardChangeConfirm}
+        title={t('cardChangeConfirmTitle', 'Confirm Expense Changes')}
+        onClose={handleCancelCardChange}
+        className="modal-md"
+        closeOnOverlayClick={false}
+      >
+        <div className="card-change-confirmation">
+          {/* Warning Header */}
+          <div className="ds-form-info-box warning mb-4">
+            <AlertCircle size={20} />
+            <p>{t('cardChangeWarning', 'This expense is already approved. This change will affect card balances:')}</p>
+          </div>
+
+          {/* Change Summary */}
+          <div className="change-summary">
+            {/* Card Change Section */}
+            {cardHasChanged && (
+              <>
+                {/* Old Card - Refund */}
+                <div className="card-change-item refund">
+                  <div className="card-change-header">
+                    <RefreshCw size={16} className="refund-icon" />
+                    <span className="card-change-label">{t('cardChangeRefundOldCard', 'Refund the previous card')}</span>
+                  </div>
+                  <div className="card-change-details">
+                    <div className="card-info">
+                      <span className="card-info-label">{t('cardChangeOldCardInfo', 'Previous Card')}</span>
+                      <span className="card-info-value">
+                        {oldCard?.card_type === 'petrol' ? '⛽ ' : ''}{oldCard?.cardNumber} - {oldCard?.cardName || t('unassigned', 'Unassigned')}
+                      </span>
+                    </div>
+                    <div className="balance-row">
+                      <span>{t('cardChangeRefundAmount', 'Refund Amount')}:</span>
+                      <span className="amount positive">+OMR {originalAmount?.toFixed(3)}</span>
+                    </div>
+                    <div className="balance-row">
+                      <span>{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
+                      <span>OMR {oldCardBalance.toFixed(3)}</span>
+                    </div>
+                    <div className="balance-row total">
+                      <span>{t('cardChangeNewBalance', 'New Balance')}:</span>
+                      <span className="amount positive">OMR {(oldCardBalance + originalAmount).toFixed(3)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* New Card - Deduction */}
+                <div className="card-change-item deduction">
+                  <div className="card-change-header">
+                    <CreditCard size={16} className="deduction-icon" />
+                    <span className="card-change-label">{t('cardChangeDeductNewCard', 'Deduct from the new card')}</span>
+                  </div>
+                  <div className="card-change-details">
+                    <div className="card-info">
+                      <span className="card-info-label">{t('cardChangeNewCardInfo', 'New Card')}</span>
+                      <span className="card-info-value">
+                        {newCard?.card_type === 'petrol' ? '⛽ ' : ''}{newCard?.cardNumber} - {newCard?.cardName || t('unassigned', 'Unassigned')}
+                      </span>
+                    </div>
+                    <div className="balance-row">
+                      <span>{t('cardChangeDeductAmount', 'Deduct Amount')}:</span>
+                      <span className="amount negative">-OMR {currentAmount.toFixed(3)}</span>
+                    </div>
+                    <div className="balance-row">
+                      <span>{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
+                      <span>OMR {newCardBalance.toFixed(3)}</span>
+                    </div>
+                    <div className="balance-row total">
+                      <span>{t('cardChangeNewBalance', 'New Balance')}:</span>
+                      <span className="amount">OMR {(newCardBalance - currentAmount).toFixed(3)}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Amount-Only Change Section */}
+            {!cardHasChanged && amountHasChanged && (
+              <div className={`card-change-item ${amountDiff > 0 ? 'deduction' : 'refund'}`}>
+                <div className="card-change-header">
+                  {amountDiff > 0 ? (
+                    <>
+                      <CreditCard size={16} className="deduction-icon" />
+                      <span className="card-change-label">{t('additionalDeduction', 'Additional Deduction')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={16} className="refund-icon" />
+                      <span className="card-change-label">{t('partialRefund', 'Partial Refund')}</span>
+                    </>
+                  )}
+                </div>
+                <div className="card-change-details">
+                  <div className="card-info">
+                    <span className="card-info-label">{t('selectCard', 'Card')}</span>
+                    <span className="card-info-value">
+                      {oldCard?.card_type === 'petrol' ? '⛽ ' : ''}{oldCard?.cardNumber} - {oldCard?.cardName || t('unassigned', 'Unassigned')}
+                    </span>
+                  </div>
+                  <div className="balance-row">
+                    <span>{t('originalAmount', 'Original Amount')}:</span>
+                    <span>OMR {originalAmount?.toFixed(3)}</span>
+                  </div>
+                  <div className="balance-row">
+                    <span>{t('newAmount', 'New Amount')}:</span>
+                    <span>OMR {currentAmount.toFixed(3)}</span>
+                  </div>
+                  <div className="balance-row">
+                    <span>{t('amountDifference', 'Difference')}:</span>
+                    <span className={`amount ${amountDiff > 0 ? 'negative' : 'positive'}`}>
+                      {amountDiff > 0 ? '-' : '+'}OMR {Math.abs(amountDiff).toFixed(3)}
+                    </span>
+                  </div>
+                  <div className="balance-row">
+                    <span>{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
+                    <span>OMR {oldCardBalance.toFixed(3)}</span>
+                  </div>
+                  <div className="balance-row total">
+                    <span>{t('cardChangeNewBalance', 'New Balance')}:</span>
+                    <span className={`amount ${amountDiff > 0 ? '' : 'positive'}`}>
+                      OMR {(oldCardBalance - amountDiff).toFixed(3)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Notes Input */}
+          <div className="form-group mt-4">
+            <label>{t('cardChangeReason', 'Reason for change (optional)')}</label>
+            <textarea
+              value={cardChangeNotes}
+              onChange={(e) => setCardChangeNotes(e.target.value)}
+              rows="2"
+              placeholder={t('changeReasonPlaceholder', 'Enter reason for this change...')}
+              className="form-control"
+            />
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="alert-error mt-3">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="form-actions mt-4">
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleCancelCardChange}
+              disabled={isSubmitting}
+            >
+              {t('cancel', 'Cancel')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleConfirmCardChange}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="spinning" />
+                  {t('processing', 'Processing...')}
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} />
+                  {t('cardChangeConfirmProceed', 'Proceed with Changes')}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Main Edit/View Expense Modal */}
+      <Modal
+        isOpen={isOpen}
+        title={isRejectedExpense ? t('viewRejectedExpense', 'View Rejected Expense') : t('editExpense', 'Edit Expense')}
       onClose={onClose}
       className="modal-lg"
       closeOnOverlayClick={false}
@@ -2002,58 +2451,107 @@ const EditExpenseFormModal = ({
           )}
         </div>
 
-        {/* Payment Method Selection - Compact Mode */}
+        {/* Info box for rejected expenses - view only */}
+        {isRejectedExpense && (
+          <div className="ds-form-info-box error mb-3">
+            <AlertCircle size={16} />
+            <p>{t('rejectedExpenseViewOnly', 'This expense was rejected and cannot be edited.')}</p>
+          </div>
+        )}
+
+        {/* Info box for approved expenses - only card/amount can be changed */}
+        {isApprovedExpense && (
+          <div className="ds-form-info-box warning mb-3">
+            <AlertCircle size={16} />
+            <p>{t('approvedExpenseEditRestriction', 'This expense is approved. Only card and amount can be changed.')}</p>
+          </div>
+        )}
+
+        {/* Expense Type Selection - FIRST to trigger payment method and card auto-selection */}
+        <div className="form-group">
+          <label>{t('expenseType', 'Expense Type')} *</label>
+          <select
+            value={formData.expenseType}
+            onChange={(e) => handleExpenseTypeChange(e.target.value)}
+            required
+            disabled={isApprovedExpense || isReadOnly}
+          >
+            <option value="">{t('selectExpenseType', 'Select Expense Type')}</option>
+            {expenseTypes.map(type => (
+              <option key={type.id} value={type.id}>
+                {type.name}{type.maxAmount ? ` - ${t('maxAmount', 'Max')}: OMR ${type.maxAmount}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Payment Method Selection - SECOND (triggers card selection) - disabled for approved */}
         <PaymentMethodSelect
           label={t('paymentMethod', 'Payment Method')}
           value={formData.paymentMethod || 'top_up_card'}
           onChange={(method) => {
+            // Handle payment method change with card auto-selection
             if (method === 'company_card' || method === 'iou') {
               setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
+            } else if (method === 'petrol_card') {
+              // Auto-select petrol card when petrol_card payment method is selected
+              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: petrolCard ? petrolCard.id.toString() : '' }))
             } else {
-              setFormData(prev => ({ ...prev, paymentMethod: method }))
+              // For top_up_card, clear card if it was petrol card
+              setFormData(prev => ({
+                ...prev,
+                paymentMethod: method,
+                cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
+              }))
             }
           }}
           category={formData.expenseType}
           compact={true}
           required
+          disabled={isApprovedExpense || isReadOnly}
         />
 
-        {/* Card Selection - Only for top_up_card payment method */}
-        {(!formData.paymentMethod || formData.paymentMethod === 'top_up_card') && (
-          <div className="form-group mt-4">
+        {/* Card Selection - THIRD (show for card-based payment methods) */}
+        {(formData.paymentMethod === 'top_up_card' || formData.paymentMethod === 'petrol_card' || !formData.paymentMethod) && (
+          <div className="form-group">
             <label>{t('selectCard', 'Select Card')} *</label>
             <select
               value={formData.cardId}
-              onChange={(e) => setFormData(prev => ({ ...prev, cardId: e.target.value }))}
-              required={formData.paymentMethod === 'top_up_card' || !formData.paymentMethod}
+              onChange={(e) => {
+                const selectedCardId = e.target.value
+                const selectedCard = cards.find(c => c.id === parseInt(selectedCardId))
+                // Update payment method based on selected card type
+                const newPaymentMethod = selectedCard?.card_type === 'petrol' ? 'petrol_card' : 'top_up_card'
+                setFormData(prev => ({ ...prev, cardId: selectedCardId, paymentMethod: newPaymentMethod }))
+              }}
+              required
+              disabled={isReadOnly}
             >
               <option value="">{t('selectCard', 'Select Card')}</option>
-              {cards.filter(card => card.status === 'active' && card.cardType !== 'petrol').map(card => (
+              {getAvailableCards().map(card => (
                 <option key={card.id} value={card.id}>
-                  {card.cardNumber} - {card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
+                  {card.card_type === 'petrol' ? '⛽ ' : ''}{card.cardNumber} - {card.cardName || card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
                 </option>
               ))}
             </select>
+            {/* Petrol card auto-selected info */}
+            {isFuelExpense && petrolCard && formData.cardId === petrolCard.id.toString() && (
+              <div className="ds-form-info-box success mt-2">
+                <span>⛽</span>
+                <p>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</p>
+              </div>
+            )}
+            {/* Warning when using non-petrol card for fuel */}
+            {isFuelExpense && formData.cardId && petrolCard && formData.cardId !== petrolCard.id.toString() && (
+              <div className="ds-form-info-box warning mt-2">
+                <span>⚠️</span>
+                <p>{t('usingNonPetrolCard', 'Using a non-petrol card for fuel expense')}</p>
+              </div>
+            )}
           </div>
         )}
 
         <div className="form-grid mt-4">
-          <div className="form-group">
-            <label>{t('expenseType', 'Expense Type')} *</label>
-            <select
-              value={formData.expenseType}
-              onChange={(e) => setFormData(prev => ({ ...prev, expenseType: e.target.value }))}
-              required
-            >
-              <option value="">{t('selectExpenseType', 'Select Expense Type')}</option>
-              {expenseTypes.map(type => (
-                <option key={type.id} value={type.id}>
-                  {type.name} - {t('maxAmount', 'Max')}: OMR {type.maxAmount}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="form-group">
             <label>{t('amount', 'Amount')} (OMR) *</label>
             <input
@@ -2062,6 +2560,7 @@ const EditExpenseFormModal = ({
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
               required
+              disabled={isReadOnly}
             />
           </div>
 
@@ -2071,6 +2570,7 @@ const EditExpenseFormModal = ({
               value={formData.transactionDate || ''}
               onChange={(value) => setFormData(prev => ({ ...prev, transactionDate: value || '' }))}
               required
+              disabled={isApprovedExpense || isReadOnly}
             />
           </div>
         </div>
@@ -2083,6 +2583,7 @@ const EditExpenseFormModal = ({
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             required
             placeholder={t('expenseDescription', 'Brief description of expense')}
+            disabled={isApprovedExpense || isReadOnly}
           />
         </div>
 
@@ -2093,6 +2594,7 @@ const EditExpenseFormModal = ({
             value={formData.merchant}
             onChange={(e) => setFormData(prev => ({ ...prev, merchant: e.target.value }))}
             placeholder={t('merchantName', 'Store/vendor name')}
+            disabled={isApprovedExpense || isReadOnly}
           />
         </div>
 
@@ -2153,7 +2655,7 @@ const EditExpenseFormModal = ({
                     <button
                       type="button"
                       onClick={() => handleDeleteReceipt(receipt.id)}
-                      disabled={deletingReceiptId === receipt.id}
+                      disabled={deletingReceiptId === receipt.id || isReadOnly}
                       className="btn btn-danger btn-sm"
                       title={t('deleteReceipt', 'Delete Receipt')}
                     >
@@ -2177,8 +2679,8 @@ const EditExpenseFormModal = ({
             </div>
           )}
 
-          {/* Upload Section - Only show if under max limit */}
-          {!loadingReceipts && receipts.length < maxReceipts && (
+          {/* Upload Section - Only show if under max limit and not rejected */}
+          {!loadingReceipts && receipts.length < maxReceipts && !isReadOnly && (
             <ReceiptUpload
               label={t('uploadReceipt', 'Upload Receipt')}
               value={formData.receiptFile}
@@ -2203,6 +2705,7 @@ const EditExpenseFormModal = ({
             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
             rows="3"
             placeholder={t('additionalNotes', 'Any additional details...')}
+            disabled={isReadOnly}
           />
         </div>
 
@@ -2215,24 +2718,27 @@ const EditExpenseFormModal = ({
 
         <div className="form-actions">
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
-            {t('cancel', 'Cancel')}
+            {isRejectedExpense ? t('close', 'Close') : t('cancel', 'Cancel')}
           </button>
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="spinning" />
-                {t('updating', 'Updating...')}
-              </>
-            ) : (
-              <>
-                <CheckCircle size={16} />
-                {t('updateExpense', 'Update Expense')}
-              </>
-            )}
-          </button>
+          {!isRejectedExpense && (
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="spinning" />
+                  {t('updating', 'Updating...')}
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} />
+                  {t('updateExpense', 'Update Expense')}
+                </>
+              )}
+            </button>
+          )}
         </div>
       </form>
     </Modal>
+    </>
   )
 }
 

@@ -9,6 +9,8 @@ import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import wastageService from '../../../services/wastageService'
 import inventoryService from '../../../services/inventoryService'
 import { collectionOrderService } from '../../../services/collectionService'
+import uploadService from '../../../services/uploadService'
+import FileViewer from '../../../components/ui/FileViewer'
 import { WASTAGE_TYPE_COLORS } from '../pages/Wastage'
 import {
   Package,
@@ -64,6 +66,37 @@ const WastageForm = ({
   const [loadingCollections, setLoadingCollections] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
   const [submitError, setSubmitError] = useState(null)
+  const [s3Attachments, setS3Attachments] = useState([]) // S3 attachments for existing wastage
+  const [loadingS3Attachments, setLoadingS3Attachments] = useState(false)
+
+  // Load S3 attachments when editing existing wastage
+  useEffect(() => {
+    const loadS3Attachments = async () => {
+      if (isOpen && isEditing && initialData?.id) {
+        setLoadingS3Attachments(true)
+        try {
+          const result = await uploadService.getS3Files('wastages', initialData.id)
+          if (result.success) {
+            const mappedFiles = (result.data || []).map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename || file.originalFilename,
+              contentType: file.content_type || file.contentType,
+              fileSize: file.file_size || file.fileSize,
+              downloadUrl: file.download_url || file.downloadUrl
+            }))
+            setS3Attachments(mappedFiles)
+          }
+        } catch (error) {
+          console.error('Error loading S3 attachments:', error)
+        } finally {
+          setLoadingS3Attachments(false)
+        }
+      } else {
+        setS3Attachments([])
+      }
+    }
+    loadS3Attachments()
+  }, [isOpen, isEditing, initialData?.id])
 
   // Determine which materials to use - collection context materials take priority
   // Use useMemo to prevent recreation on every render (which causes useEffect to re-fire)
@@ -827,6 +860,50 @@ const WastageForm = ({
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* S3 Attachments - Show existing files when editing */}
+            {isEditing && initialData?.id && (
+              <div className="s3-attachments-section" style={{ marginTop: '1rem' }}>
+                <h5 style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                  {t('existingAttachments', 'Existing Attachments')}
+                </h5>
+                {loadingS3Attachments ? (
+                  <div className="attachments-loading">{t('loadingAttachments', 'Loading attachments...')}</div>
+                ) : s3Attachments.length > 0 ? (
+                  <FileViewer
+                    files={s3Attachments}
+                    onDelete={async (fileId) => {
+                      if (!window.confirm(t('confirmDeleteFile', 'Are you sure you want to delete this file?'))) return
+                      try {
+                        const result = await uploadService.deleteS3File('wastages', initialData.id, fileId)
+                        if (result.success) {
+                          setS3Attachments(prev => prev.filter(f => f.id !== fileId))
+                          alert(t('fileDeleted', 'File deleted successfully'))
+                        } else {
+                          alert(t('fileDeleteFailed', 'Failed to delete file') + ': ' + result.error)
+                        }
+                      } catch (error) {
+                        console.error('Delete error:', error)
+                        alert(t('fileDeleteFailed', 'Failed to delete file') + ': ' + error.message)
+                      }
+                    }}
+                    onRefreshUrl={async (fileId) => {
+                      const result = await uploadService.getS3Files('wastages', initialData.id)
+                      if (result.success) {
+                        const file = result.data.find(f => f.id === fileId)
+                        if (file) return file.download_url || file.downloadUrl
+                      }
+                      return null
+                    }}
+                    canDelete={true}
+                  />
+                ) : (
+                  <div className="no-attachments" style={{ color: '#999', fontSize: '0.875rem' }}>
+                    {t('noExistingAttachments', 'No existing attachments')}
+                  </div>
+                )}
               </div>
             )}
           </div>

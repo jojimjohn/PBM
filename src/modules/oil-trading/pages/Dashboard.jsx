@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Users, Droplet, Banknote, TrendingUp, ShoppingCart, FileText, BarChart3, AlertTriangle, Package } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import useProjects from '../../../hooks/useProjects'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card'
 import Alert from '../../../components/ui/Alert'
 import { ProgressBar, Skeleton, SkeletonCard } from '../../../components/ui/Progress'
@@ -14,16 +15,31 @@ import '../styles/DashboardModern.css'
 const OilTradingDashboard = () => {
   const { user, selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { selectedProjectId, getProjectQueryParam } = useProjects()
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
-    // Simulate loading dashboard data
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1500)
-    
-    return () => clearTimeout(timer)
-  }, [])
+    // Load dashboard data when company or project changes
+    const loadDashboardData = async () => {
+      setLoading(true)
+      try {
+        // Get project filter params for API calls
+        const projectParams = getProjectQueryParam()
+
+        // TODO: Fetch real dashboard data with project filter
+        // const stats = await dashboardService.getStats(projectParams)
+
+        // Simulate loading for now
+        await new Promise(resolve => setTimeout(resolve, 500))
+      } catch (error) {
+        console.error('Error loading dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadDashboardData()
+  }, [selectedCompany, selectedProjectId, getProjectQueryParam])
   
   // Skeleton loading state
   if (loading) {

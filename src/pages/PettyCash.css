@@ -917,6 +917,127 @@
 }
 
 /* ==============================================
+   Card/Amount Change Confirmation Dialog
+   ============================================== */
+
+.card-change-confirmation {
+  display: flex;
+  flex-direction: column;
+}
+
+.change-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-change-item {
+  border-radius: var(--ds-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--ds-border);
+}
+
+.card-change-item.refund {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.card-change-item.deduction {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.card-change-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.card-change-item.refund .card-change-header {
+  background: rgba(16, 185, 129, 0.1);
+  color: #065f46;
+}
+
+.card-change-item.deduction .card-change-header {
+  background: rgba(239, 68, 68, 0.1);
+  color: #991b1b;
+}
+
+.refund-icon {
+  color: #10b981;
+}
+
+.deduction-icon {
+  color: #ef4444;
+}
+
+.card-change-label {
+  flex: 1;
+}
+
+.card-change-details {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--ds-border);
+  margin-bottom: 0.5rem;
+}
+
+.card-info-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-text-muted);
+  font-weight: 500;
+}
+
+.card-info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ds-text);
+}
+
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--ds-text-secondary);
+}
+
+.balance-row.total {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--ds-border);
+  font-weight: 600;
+  color: var(--ds-text);
+}
+
+.balance-row .amount {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.balance-row .amount.positive {
+  color: #10b981;
+}
+
+.balance-row .amount.negative {
+  color: #ef4444;
+}
+
+/* ==============================================
    Responsive Styles
    ============================================== */
 

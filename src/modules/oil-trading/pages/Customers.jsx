@@ -10,6 +10,9 @@ import typesService from '../../../services/typesService'
 import materialService from '../../../services/materialService'
 import dataCacheService from '../../../services/dataCacheService'
 import { Eye, Edit, ShoppingCart, FileText, User, Phone, Mail, Calendar, Banknote, AlertTriangle, Trash, RotateCcw } from 'lucide-react'
+import FileUpload from '../../../components/ui/FileUpload'
+import FileViewer from '../../../components/ui/FileViewer'
+import uploadService from '../../../services/uploadService'
 import '../styles/Customers.css'
 
 const OilTradingCustomers = () => {
@@ -521,6 +524,35 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
     specialTerms: customer?.contractDetails?.specialTerms || '',
     isTaxable: customer?.is_taxable !== false  // Default to true
   })
+  const [attachments, setAttachments] = useState([])
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
+
+  // Load attachments when editing existing customer
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (customer?.id) {
+        setLoadingAttachments(true)
+        try {
+          const result = await uploadService.getS3Files('customers', customer.id)
+          if (result.success) {
+            const mappedFiles = (result.data || []).map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename || file.originalFilename,
+              contentType: file.content_type || file.contentType,
+              fileSize: file.file_size || file.fileSize,
+              downloadUrl: file.download_url || file.downloadUrl
+            }))
+            setAttachments(mappedFiles)
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error)
+        } finally {
+          setLoadingAttachments(false)
+        }
+      }
+    }
+    loadAttachments()
+  }, [customer?.id])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -833,7 +865,83 @@ const CustomerFormModal = ({ customer, onSave, onCancel, customerTypes, t }) => 
             </div>
           </div>
         )}
-        
+
+        {/* Attachments - Only in edit mode */}
+        {customer?.id && (
+          <div className="form-section">
+            <div className="form-section-title">
+              <FileText size={16} />
+              Attachments
+            </div>
+
+            <FileUpload
+              mode="multiple"
+              accept=".pdf,.jpg,.jpeg,.png"
+              maxSize={5242880}
+              maxFiles={10}
+              onUpload={async (files) => {
+                try {
+                  const result = await uploadService.uploadMultipleToS3('customers', customer.id, files)
+                  if (result.success) {
+                    const attachmentsResult = await uploadService.getS3Files('customers', customer.id)
+                    if (attachmentsResult.success) {
+                      const mappedFiles = (attachmentsResult.data || []).map(file => ({
+                        id: file.id,
+                        originalFilename: file.original_filename || file.originalFilename,
+                        contentType: file.content_type || file.contentType,
+                        fileSize: file.file_size || file.fileSize,
+                        downloadUrl: file.download_url || file.downloadUrl
+                      }))
+                      setAttachments(mappedFiles)
+                    }
+                    alert('Files uploaded successfully')
+                  } else {
+                    alert('Failed to upload files: ' + result.error)
+                  }
+                } catch (error) {
+                  console.error('Upload error:', error)
+                  alert('Failed to upload files: ' + error.message)
+                }
+              }}
+              existingFiles={[]}
+            />
+
+            {loadingAttachments ? (
+              <div className="attachments-loading">Loading attachments...</div>
+            ) : attachments.length > 0 ? (
+              <FileViewer
+                files={attachments}
+                onDelete={async (fileId) => {
+                  if (!window.confirm('Are you sure you want to delete this file?')) return
+                  try {
+                    const result = await uploadService.deleteS3File('customers', customer.id, fileId)
+                    if (result.success) {
+                      setAttachments(prev => prev.filter(f => f.id !== fileId))
+                      alert('File deleted successfully')
+                    } else {
+                      alert('Failed to delete file: ' + result.error)
+                    }
+                  } catch (error) {
+                    console.error('Delete error:', error)
+                    alert('Failed to delete file: ' + error.message)
+                  }
+                }}
+                onRefreshUrl={async (fileId) => {
+                  const result = await uploadService.getS3Files('customers', customer.id)
+                  if (result.success) {
+                    const file = result.data.find(f => f.id === fileId)
+                    if (file) return file.download_url || file.downloadUrl
+                  }
+                  return null
+                }}
+                canDelete={true}
+              />
+            ) : (
+              <div className="no-attachments">No attachments uploaded yet</div>
+            )}
+          </div>
+        )}
+
         <div className="form-actions">
           <button type="button" className="btn btn-outline" onClick={onCancel}>
             Cancel

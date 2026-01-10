@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import useProjects from '../../../hooks/useProjects'
 import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
@@ -40,19 +41,24 @@ const Purchase = () => {
   const { selectedCompany } = useAuth()
   const { hasPermission } = usePermissions()
   const { formatDate, formatCurrency } = useSystemSettings()
+  const { selectedProjectId, getProjectQueryParam } = useProjects()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Tab management - read from URL params or default to 'collections'
   const initialTab = searchParams.get('tab') || 'collections'
   const [activeTab, setActiveTab] = useState(initialTab)
 
-  // Sync URL params when tab changes
+  // Read search param from URL (used when clicking tasks from dashboard)
+  const urlSearchTerm = searchParams.get('search') || ''
+
+  // Sync URL params when tab or search changes
   useEffect(() => {
     const urlTab = searchParams.get('tab')
     if (urlTab && urlTab !== activeTab) {
       setActiveTab(urlTab)
     }
   }, [searchParams])
+
   
   // Data states
   const [purchaseOrders, setPurchaseOrders] = useState([])
@@ -68,12 +74,13 @@ const Purchase = () => {
   const [billsLoading, setBillsLoading] = useState(false)
 
   // Server-side pagination state for purchase orders
+  // Initialize search from URL param (used when clicking tasks from dashboard)
   const [ordersPagination, setOrdersPagination] = useState({
     page: 1,
     limit: 10,
     total: 0,
     totalPages: 0,
-    search: '',
+    search: urlSearchTerm,
     sortBy: 'created_at',
     sortOrder: 'desc',
     status: ''
@@ -109,21 +116,25 @@ const Purchase = () => {
 
   useEffect(() => {
     loadPurchaseData()
-  }, [selectedCompany])
+  }, [selectedCompany, selectedProjectId])
 
   // Load purchase orders with server-side pagination
   const loadPurchaseOrders = useCallback(async (paginationParams = {}) => {
     try {
       setLoading(true)
 
-      // Merge current pagination with new params
+      // Get project filter params
+      const projectParams = getProjectQueryParam()
+
+      // Merge current pagination with new params and project filter
       const params = {
         page: paginationParams.page ?? ordersPagination.page,
         limit: paginationParams.limit ?? ordersPagination.limit,
         search: paginationParams.search ?? ordersPagination.search,
         status: paginationParams.status ?? ordersPagination.status,
         sortBy: paginationParams.sortBy ?? ordersPagination.sortBy,
-        sortOrder: paginationParams.sortOrder ?? ordersPagination.sortOrder
+        sortOrder: paginationParams.sortOrder ?? ordersPagination.sortOrder,
+        ...projectParams  // Include project_id filter
       }
 
       const ordersResult = await purchaseOrderService.getAll(params)
@@ -148,7 +159,7 @@ const Purchase = () => {
     } finally {
       setLoading(false)
     }
-  }, [ordersPagination])
+  }, [ordersPagination, getProjectQueryParam])
 
   const loadPurchaseData = async () => {
     try {
@@ -301,6 +312,22 @@ const Purchase = () => {
       loadBills()
     }
   }, [activeTab, billTypeFilter, billPaymentFilter])
+
+  // Handle URL search param changes (from dashboard task navigation)
+  useEffect(() => {
+    // If URL has a search param and it differs from current state, trigger reload
+    if (urlSearchTerm) {
+      // Update pagination search and reload data
+      setOrdersPagination(prev => {
+        if (prev.search !== urlSearchTerm) {
+          // Trigger reload with new search term
+          loadPurchaseOrders({ search: urlSearchTerm, page: 1 })
+          return { ...prev, search: urlSearchTerm, page: 1 }
+        }
+        return prev
+      })
+    }
+  }, [urlSearchTerm])
 
   // Calculate bill summary
   const calculateBillSummary = () => {
@@ -1175,6 +1202,7 @@ const Purchase = () => {
               onSort={handleOrdersSort}
               onSearch={handleOrdersSearch}
               onPageSizeChange={handleOrdersPageSizeChange}
+              initialSearchTerm={urlSearchTerm}
             />
           </div>
         )}
@@ -1436,6 +1464,7 @@ const Purchase = () => {
               exportable={true}
               emptyMessage="No purchase expenses found"
               className="purchase-expenses-table"
+              initialSearchTerm={urlSearchTerm}
             />
           </div>
         )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { usePermissions } from '../../../hooks/usePermissions'
@@ -41,6 +42,10 @@ const Wastage = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
+  const [searchParams] = useSearchParams()
+
+  // Read search param from URL (used when clicking tasks from dashboard)
+  const urlSearchTerm = searchParams.get('search') || ''
 
   // Data state
   const [loading, setLoading] = useState(true)
@@ -483,6 +488,7 @@ const Wastage = () => {
         paginated={true}
         exportable={true}
         emptyMessage={t('noWastageRecords', 'No wastage records found')}
+        initialSearchTerm={urlSearchTerm}
       />
 
       {/* WastageForm Modal */}

@@ -2,8 +2,9 @@
  * Date Parser Utility
  *
  * Provides consistent date parsing and formatting across the application.
- * Supports multiple input formats commonly used in the region:
+ * Supports multiple input formats based on regional preferences:
  * - DD/MM/YYYY (Oman/Middle East standard)
+ * - MM/DD/YYYY (US format)
  * - YYYY-MM-DD (ISO/Database format)
  * - DD-MM-YYYY (Alternative format)
  */
@@ -13,9 +14,10 @@
  */
 export const DATE_FORMATS = {
   DMY_SLASH: 'DD/MM/YYYY',
+  MDY_SLASH: 'MM/DD/YYYY',
   ISO: 'YYYY-MM-DD',
   DMY_DASH: 'DD-MM-YYYY',
-  DISPLAY: 'DD/MM/YYYY',
+  DISPLAY: 'DD/MM/YYYY',  // Default display format (can be overridden via settings)
   API: 'YYYY-MM-DD'
 };
 
@@ -42,7 +44,8 @@ export function parseDate(input, formats = null) {
   // Default formats to try in order of preference
   const formatsToTry = formats || [
     DATE_FORMATS.ISO,        // YYYY-MM-DD (most reliable)
-    DATE_FORMATS.DMY_SLASH,  // DD/MM/YYYY (user preference)
+    DATE_FORMATS.DMY_SLASH,  // DD/MM/YYYY (Middle East standard)
+    DATE_FORMATS.MDY_SLASH,  // MM/DD/YYYY (US format)
     DATE_FORMATS.DMY_DASH    // DD-MM-YYYY (alternative)
   ];
 
@@ -78,6 +81,14 @@ function parseDateWithFormat(dateStr, format) {
         const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
         if (!match) return null;
         [, day, month, year] = match;
+      }
+      break;
+
+    case DATE_FORMATS.MDY_SLASH: // MM/DD/YYYY
+      {
+        const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!match) return null;
+        [, month, day, year] = match;
       }
       break;
 
@@ -150,6 +161,9 @@ export function formatDate(date, format = DATE_FORMATS.DISPLAY) {
     case DATE_FORMATS.DISPLAY:
       return `${day}/${month}/${year}`;
 
+    case DATE_FORMATS.MDY_SLASH:
+      return `${month}/${day}/${year}`;
+
     case DATE_FORMATS.DMY_DASH:
       return `${day}-${month}-${year}`;
 
@@ -169,13 +183,14 @@ export function formatDateForAPI(date) {
 }
 
 /**
- * Format a date for display (DD/MM/YYYY format)
+ * Format a date for display using the specified format
  *
  * @param {Date|string} date - Date to format
+ * @param {string} displayFormat - Optional format (default: DD/MM/YYYY)
  * @returns {string} - Display formatted date or empty string
  */
-export function formatDateForDisplay(date) {
-  return formatDate(date, DATE_FORMATS.DISPLAY);
+export function formatDateForDisplay(date, displayFormat = DATE_FORMATS.DISPLAY) {
+  return formatDate(date, displayFormat);
 }
 
 /**

@@ -82,9 +82,34 @@ const WorkflowDashboard = () => {
   const [activityFeed, setActivityFeed] = useState([])
   const [workflowStats, setWorkflowStats] = useState({})
   const [notifications, setNotifications] = useState({ notifications: [], total: 0, hasUrgent: false })
-  const [expandedSection, setExpandedSection] = useState('high')
+  const [taskTypeTab, setTaskTypeTab] = useState('all') // 'all', 'purchases', 'sales', 'approvals', 'finance', 'alerts'
   const [showNotifications, setShowNotifications] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+
+  // Task type groupings for tabs
+  const taskTypeGroups = {
+    purchases: ['wcn_finalization', 'po_receipt', 'generate_bill'],
+    sales: ['sales_delivery', 'customer_payment'],
+    approvals: ['expense_approval', 'wastage_approval'],
+    finance: ['record_payment', 'bank_reconciliation'],
+    alerts: ['low_stock', 'petty_cash_expiry', 'petty_cash_low_balance', 'contract_renewal']
+  }
+
+  // Filter tasks by type group
+  const getFilteredTasks = () => {
+    const allTasks = [...(pendingActions.high || []), ...(pendingActions.normal || [])]
+    if (taskTypeTab === 'all') return allTasks
+    const allowedTypes = taskTypeGroups[taskTypeTab] || []
+    return allTasks.filter(task => allowedTypes.includes(task.type))
+  }
+
+  // Count tasks per group
+  const getTaskCountByGroup = (group) => {
+    if (group === 'all') return (pendingActions.stats?.totalPending || 0)
+    const allTasks = [...(pendingActions.high || []), ...(pendingActions.normal || [])]
+    const allowedTypes = taskTypeGroups[group] || []
+    return allTasks.filter(task => allowedTypes.includes(task.type)).length
+  }
 
   useEffect(() => {
     loadDashboardData()
@@ -468,6 +493,67 @@ const WorkflowDashboard = () => {
             </span>
           </div>
 
+          {/* Task Type Tabs - Group tasks by category */}
+          <div className="task-type-tabs">
+            <button
+              className={`task-type-tab ${taskTypeTab === 'all' ? 'active' : ''}`}
+              onClick={() => setTaskTypeTab('all')}
+            >
+              <span className="tab-label">All</span>
+              <span className="tab-count">{getTaskCountByGroup('all')}</span>
+            </button>
+            <button
+              className={`task-type-tab ${taskTypeTab === 'purchases' ? 'active' : ''}`}
+              onClick={() => setTaskTypeTab('purchases')}
+            >
+              <Package size={12} />
+              <span className="tab-label">Purchases</span>
+              {getTaskCountByGroup('purchases') > 0 && (
+                <span className="tab-count">{getTaskCountByGroup('purchases')}</span>
+              )}
+            </button>
+            <button
+              className={`task-type-tab ${taskTypeTab === 'sales' ? 'active' : ''}`}
+              onClick={() => setTaskTypeTab('sales')}
+            >
+              <Truck size={12} />
+              <span className="tab-label">Sales</span>
+              {getTaskCountByGroup('sales') > 0 && (
+                <span className="tab-count">{getTaskCountByGroup('sales')}</span>
+              )}
+            </button>
+            <button
+              className={`task-type-tab ${taskTypeTab === 'approvals' ? 'active' : ''}`}
+              onClick={() => setTaskTypeTab('approvals')}
+            >
+              <CheckCircle size={12} />
+              <span className="tab-label">Approvals</span>
+              {getTaskCountByGroup('approvals') > 0 && (
+                <span className="tab-count">{getTaskCountByGroup('approvals')}</span>
+              )}
+            </button>
+            <button
+              className={`task-type-tab ${taskTypeTab === 'finance' ? 'active' : ''}`}
+              onClick={() => setTaskTypeTab('finance')}
+            >
+              <Banknote size={12} />
+              <span className="tab-label">Finance</span>
+              {getTaskCountByGroup('finance') > 0 && (
+                <span className="tab-count">{getTaskCountByGroup('finance')}</span>
+              )}
+            </button>
+            <button
+              className={`task-type-tab ${taskTypeTab === 'alerts' ? 'active' : ''}`}
+              onClick={() => setTaskTypeTab('alerts')}
+            >
+              <AlertTriangle size={12} />
+              <span className="tab-label">Alerts</span>
+              {getTaskCountByGroup('alerts') > 0 && (
+                <span className="tab-count">{getTaskCountByGroup('alerts')}</span>
+              )}
+            </button>
+          </div>
+
           <div className="panel-body">
             {/* Loading State */}
             {loading && (
@@ -478,113 +564,72 @@ const WorkflowDashboard = () => {
               </div>
             )}
 
-            {/* High Priority Tasks */}
-            {!loading && pendingActions.high.length > 0 && (
-              <div className="task-section">
-                <button
-                  className="section-toggle high"
-                  onClick={() => setExpandedSection(expandedSection === 'high' ? null : 'high')}
-                >
-                  <div className="toggle-left">
-                    <Zap size={14} />
-                    <span>High Priority</span>
-                    <span className="section-count">{pendingActions.high.length}</span>
-                  </div>
-                  <ChevronRight size={14} className={`chevron ${expandedSection === 'high' ? 'open' : ''}`} />
-                </button>
-
-                {expandedSection === 'high' && (
-                  <div className="task-list">
-                    {pendingActions.high.map((action, index) => (
-                      <div key={index} className="task-item high">
-                        <div className="task-icon-wrapper" data-type={action.type}>
-                          {getActionIcon(action.type)}
-                        </div>
-                        <div className="task-content">
-                          <span className="task-title">{action.title}</span>
-                          <span className="task-description">{action.description}</span>
-                          {action.metadata && (
-                            <div className="task-meta">
-                              {action.metadata.supplierName && (
-                                <span>{action.metadata.supplierName}</span>
-                              )}
-                              {action.metadata.contractNumber && (
-                                <span>Contract: {action.metadata.contractNumber}</span>
-                              )}
-                            </div>
+            {/* Task List - Filtered by task type */}
+            {!loading && (
+              <div className="task-list">
+                {getFilteredTasks().map((action, index) => (
+                  <div key={`task-${action.entityId}-${index}`} className={`task-item ${action.urgency === 'high' ? 'high' : ''}`}>
+                    <div className="task-icon-wrapper" data-type={action.type}>
+                      {getActionIcon(action.type)}
+                    </div>
+                    <div className="task-content">
+                      <span className="task-title">{action.title}</span>
+                      <span className="task-description">{action.description}</span>
+                      {action.metadata && (
+                        <div className="task-meta">
+                          {action.metadata.supplierName && (
+                            <span>{action.metadata.supplierName}</span>
+                          )}
+                          {action.metadata.contractNumber && (
+                            <span>Contract: {action.metadata.contractNumber}</span>
+                          )}
+                          {action.metadata.cardName && (
+                            <span>Card: {action.metadata.cardName}</span>
+                          )}
+                          {action.metadata.materialName && (
+                            <span>{action.metadata.materialName}</span>
+                          )}
+                          {action.metadata.customerName && (
+                            <span>{action.metadata.customerName}</span>
+                          )}
+                          {action.metadata.totalCost && (
+                            <span>OMR {parseFloat(action.metadata.totalCost).toFixed(3)}</span>
+                          )}
+                          {action.metadata.amount && (
+                            <span>OMR {parseFloat(action.metadata.amount).toFixed(3)}</span>
                           )}
                         </div>
-                        <div className="task-actions">
-                          <span className="urgency-badge high">
-                            <Zap size={10} />
-                            {action.daysPending}d
-                          </span>
-                          <button
-                            className="btn-task-action primary"
-                            onClick={() => handleActionClick(action)}
-                          >
-                            {action.actionLabel}
-                            <ArrowRight size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                    <div className="task-actions">
+                      {action.daysPending !== undefined && (
+                        <span className={`urgency-badge ${action.urgency === 'high' ? 'high' : ''}`}>
+                          {action.urgency === 'high' ? <Zap size={10} /> : <Clock size={10} />}
+                          {action.daysPending}d
+                        </span>
+                      )}
+                      <button
+                        className={`btn-task-action ${action.urgency === 'high' ? 'primary' : ''}`}
+                        onClick={() => handleActionClick(action)}
+                      >
+                        {action.actionLabel}
+                        {action.urgency === 'high' && <ArrowRight size={12} />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Empty State for filtered view */}
+                {getFilteredTasks().length === 0 && taskTypeTab !== 'all' && (
+                  <div className="empty-state small">
+                    <CheckCircle size={32} strokeWidth={1} />
+                    <p>No {taskTypeTab} tasks</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Normal Priority Tasks */}
-            {!loading && pendingActions.normal.length > 0 && (
-              <div className="task-section">
-                <button
-                  className="section-toggle"
-                  onClick={() => setExpandedSection(expandedSection === 'normal' ? null : 'normal')}
-                >
-                  <div className="toggle-left">
-                    <Clock size={14} />
-                    <span>Normal Priority</span>
-                    <span className="section-count">{pendingActions.normal.length}</span>
-                  </div>
-                  <ChevronRight size={14} className={`chevron ${expandedSection === 'normal' ? 'open' : ''}`} />
-                </button>
-
-                {expandedSection === 'normal' && (
-                  <div className="task-list">
-                    {pendingActions.normal.slice(0, 5).map((action, index) => (
-                      <div key={index} className="task-item">
-                        <div className="task-icon-wrapper" data-type={action.type}>
-                          {getActionIcon(action.type)}
-                        </div>
-                        <div className="task-content">
-                          <span className="task-title">{action.title}</span>
-                          <span className="task-description">{action.description}</span>
-                        </div>
-                        <div className="task-actions">
-                          <span className="urgency-badge">
-                            <Clock size={10} />
-                            {action.daysPending}d
-                          </span>
-                          <button
-                            className="btn-task-action"
-                            onClick={() => handleActionClick(action)}
-                          >
-                            {action.actionLabel}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {pendingActions.normal.length > 5 && (
-                      <div className="task-more">
-                        +{pendingActions.normal.length - 5} more tasks
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Empty State */}
+            {/* Empty State - All */}
             {!loading && pendingActions.high.length === 0 && pendingActions.normal.length === 0 && (
               <div className="empty-state">
                 <CheckCircle size={40} strokeWidth={1} />
