@@ -24,6 +24,7 @@ import RoleManagement from './RoleManagement'
 import Modal from '../components/ui/Modal'
 import {
   Users,
+  User,
   UserPlus,
   Edit,
   Trash2,
@@ -176,7 +177,7 @@ const UserManagement = () => {
   const { user } = useAuth()
   const { t } = useLocalization()
   const { formatDate: systemFormatDate, formatDateTime: systemFormatDateTime } = useSystemSettings()
-  const { hasPermission, canManageUser, userRole } = usePermissions()
+  const { hasPermission, userRole } = usePermissions()
 
   // Tab state
   const [activeTab, setActiveTab] = useState('users')
@@ -423,10 +424,13 @@ const UserManagement = () => {
   }
 
   // Check if current user can manage target user
+  // Uses backend's canManage field which properly handles all role format variations
   const canManageTargetUser = (targetUser) => {
     if (!canManageUsers) return false
     if (targetUser.id === user?.id) return false // Can't manage self
-    return canManageUser(targetUser.role)
+    // Use backend's pre-computed canManage field for proper role hierarchy handling
+    // This handles cases where role might be null/undefined or in different formats
+    return targetUser.canManage === true
   }
 
   // DataTable columns
@@ -458,8 +462,8 @@ const UserManagement = () => {
       key: 'role',
       header: t('role', 'Role'),
       filterable: true,
-      render: (value) => {
-        // Map role to design-system badge variant
+      render: (value, row) => {
+        // Map role slug to design-system badge variant
         const roleVariantMap = {
           'SUPER_ADMIN': 'danger',
           'super-admin': 'danger',
@@ -480,9 +484,11 @@ const UserManagement = () => {
           'accounts_staff': 'success'
         }
         const variant = roleVariantMap[value] || 'neutral'
+        // Use roleDisplayName from API (from roles table) or fallback to local function
+        const displayName = row.roleDisplayName || row.roleName || getRoleDisplayName(value)
         return (
           <span className={`status-badge ${variant}`}>
-            {getRoleDisplayName(value)}
+            {displayName}
           </span>
         )
       }
@@ -752,11 +758,12 @@ const UserManagement = () => {
 const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, availableRoles = [], t }) => {
   const [formData, setFormData] = useState({
     email: '',
+    username: '',
     firstName: '',
     lastName: '',
     roleId: '',
     sendWelcomeEmail: true,
-    createPettyCashAccount: false
+    createPettyCashAccount: true
   })
   const [errors, setErrors] = useState({})
 
@@ -800,11 +807,12 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
       const assignable = getAssignableRoles()
       setFormData({
         email: '',
+        username: '',
         firstName: '',
         lastName: '',
         roleId: assignable.length > 0 ? assignable[assignable.length - 1].value : '',
         sendWelcomeEmail: true,
-        createPettyCashAccount: false
+        createPettyCashAccount: true
       })
       setErrors({})
     }
@@ -817,6 +825,17 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
       newErrors.email = t('emailRequired', 'Email is required')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = t('invalidEmailFormat', 'Invalid email format')
+    }
+
+    // Username validation - optional but if provided, must follow rules
+    if (formData.username) {
+      if (formData.username.length < 3) {
+        newErrors.username = t('usernameMinLength', 'Username must be at least 3 characters')
+      } else if (formData.username.length > 30) {
+        newErrors.username = t('usernameMaxLength', 'Username must be less than 30 characters')
+      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+        newErrors.username = t('usernameInvalidChars', 'Username can only contain letters, numbers, and underscores')
+      }
     }
 
     if (!formData.firstName || formData.firstName.length < 2) {
@@ -869,6 +888,27 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
             />
           </div>
           {errors.email && <span className="error-text">{errors.email}</span>}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="username">
+            {t('username', 'Username')} <span className="optional-label">({t('optional', 'Optional')})</span>
+          </label>
+          <div className="input-with-icon">
+            <User size={16} />
+            <input
+              type="text"
+              id="username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+              placeholder="john_doe"
+              disabled={loading}
+              className={errors.username ? 'error' : ''}
+              maxLength={30}
+            />
+          </div>
+          <span className="hint-text">{t('usernameHint', 'Letters, numbers, and underscores only. Can be used for login.')}</span>
+          {errors.username && <span className="error-text">{errors.username}</span>}
         </div>
 
         <div className="form-row">

@@ -110,13 +110,25 @@ const PettyCashUsersSection = ({
   // Get available cards (not assigned to any PC user)
   // Note: A card can have both a system user (assignedTo) AND a PC user (for mobile portal)
   // We only filter out cards that already have a PC user assigned
-  const getAvailableCards = () => {
-    const assignedCardIds = users.map((u) => u.card_id);
+  const getAvailableCards = (excludeUserId = null) => {
+    const assignedCardIds = users
+      .filter((u) => excludeUserId ? u.id !== excludeUserId : true)
+      .map((u) => u.card_id)
+      .filter(Boolean);
     return cards.filter(
       (card) =>
         card.status === 'active' &&
         !assignedCardIds.includes(card.id)
     );
+  };
+
+  // Format card display name (name + number)
+  const formatCardOption = (card) => {
+    const name = card.cardName || card.staffName || card.name;
+    if (name) {
+      return `${name} (${card.cardNumber})`;
+    }
+    return card.cardNumber;
   };
 
   // Handle form input change
@@ -193,6 +205,7 @@ const PettyCashUsersSection = ({
 
     try {
       const result = await pettyCashUsersService.update(selectedUser.id, {
+        cardId: formData.cardId ? parseInt(formData.cardId) : null,
         name: formData.name,
         phone: formData.phone || null,
         department: formData.department || null,
@@ -202,6 +215,7 @@ const PettyCashUsersSection = ({
       if (result.success) {
         setShowEditModal(false);
         loadUsers();
+        onRefresh?.(); // Refresh cards list to update assigned staff column
       } else {
         setFormError(result.error || 'Failed to update user');
       }
@@ -468,6 +482,7 @@ const PettyCashUsersSection = ({
   const openEditModal = (user) => {
     setSelectedUser(user);
     setFormData({
+      cardId: user.card_id || '',
       name: user.name || '',
       phone: user.phone || '',
       department: user.department || '',
@@ -730,7 +745,7 @@ const PettyCashUsersSection = ({
               <option value="">{t('selectCardPlaceholder', '-- Select a card --')}</option>
               {availableCards.map((card) => (
                 <option key={card.id} value={card.id}>
-                  {card.cardNumber} - {formatCurrency(card.currentBalance)}
+                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
                 </option>
               ))}
             </select>
@@ -861,6 +876,33 @@ const PettyCashUsersSection = ({
               {formError}
             </div>
           )}
+
+          {/* Card Assignment - show available cards + current card */}
+          <div className="form-group">
+            <label>{t('assignedCard', 'Assigned Card')}</label>
+            <select
+              name="cardId"
+              value={formData.cardId}
+              onChange={handleInputChange}
+            >
+              <option value="">{t('noCardAssigned', '-- No card assigned --')}</option>
+              {/* Show available cards for this user (includes their current card) */}
+              {getAvailableCards(selectedUser?.id).map((card) => (
+                <option key={card.id} value={card.id}>
+                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                </option>
+              ))}
+              {/* If user has a card that's not in available cards, show it separately */}
+              {selectedUser?.card_id && !getAvailableCards(selectedUser?.id).find(c => c.id === selectedUser.card_id) && (
+                <option value={selectedUser.card_id}>
+                  {selectedUser.cardNumber || `Card #${selectedUser.card_id}`} (current)
+                </option>
+              )}
+            </select>
+            <span className="form-hint">
+              {t('cardAssignmentHint', 'Assign or change the petty cash card for this user')}
+            </span>
+          </div>
 
           <div className="form-group">
             <label>{t('fullName', 'Full Name')} *</label>

@@ -324,15 +324,15 @@ const LoginForm = () => {
               </div>
 
               <div className="form-field space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email or Username</Label>
                 <div className="input-with-icon">
                   <Icons.mail className="input-icon" />
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                    placeholder="Enter email or username"
                     className="pl-10"
                     required
                   />
