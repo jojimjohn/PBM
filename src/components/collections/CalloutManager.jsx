@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AlertCircle, Plus, RefreshCw, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Truck, User, Play, FileCheck, FileEdit, Navigation, PackageSearch, ClipboardList } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useSystemSettings } from '../../context/SystemSettingsContext';
+import { useProjects } from '../../context/ProjectContext';
 import { calloutService } from '../../services/collectionService';
 import dataCacheService from '../../services/dataCacheService';
 import Modal from '../ui/Modal';
@@ -28,6 +29,7 @@ import './collections-managers.css';
 const CalloutManager = () => {
   const { t, isRTL } = useLocalization();
   const { formatDate } = useSystemSettings();
+  const { selectedProjectId, getProjectQueryParam } = useProjects();
   const [loading, setLoading] = useState(false);
   const [callouts, setCallouts] = useState([]);
   const [workflowStage, setWorkflowStage] = useState('all'); // Workflow stage filter
@@ -114,11 +116,15 @@ const CalloutManager = () => {
       try {
         setLoading(true);
 
+        // Get project filter params
+        const projectParams = getProjectQueryParam();
+
         // PERFORMANCE FIX: Use dataCacheService for cached collection orders (2 min TTL)
         // This provides instant loading after the first fetch
         const allData = await dataCacheService.getCollectionOrders({
           page: 1,
-          limit: 200
+          limit: 200,
+          ...projectParams  // Include project_id filter
         }).catch(err => {
           console.error('Error loading callouts:', err);
           return [];
@@ -157,7 +163,7 @@ const CalloutManager = () => {
     };
 
     loadData();
-  }, [workflowStage, getStatusFilterFromWorkflowStage, checkIsFinalized, calculateGlobalStats]);
+  }, [workflowStage, getStatusFilterFromWorkflowStage, checkIsFinalized, calculateGlobalStats, selectedProjectId, getProjectQueryParam]);
 
   // Refresh function - invalidates cache and reloads fresh data
   const loadCallouts = async () => {
@@ -167,9 +173,13 @@ const CalloutManager = () => {
       // Invalidate cache to force fresh data fetch on explicit refresh
       dataCacheService.invalidateCollectionOrders();
 
+      // Get project filter params
+      const projectParams = getProjectQueryParam();
+
       const response = await calloutService.getCallouts({
         page: 1,
-        limit: 200
+        limit: 200,
+        ...projectParams  // Include project_id filter
       });
 
       if (response.success) {
@@ -577,7 +587,7 @@ const CalloutManager = () => {
       all: {
         icon: Package,
         title: t('noCalloutsFound') || 'No Collection Orders Found',
-        description: t('createFirstCallout') || 'Create your first callout to get started.',
+        description: t('createFirstCallout'),
         action: { label: t('newCallout') || '+ New Callout', handler: handleCreateCallout }
       }
     };

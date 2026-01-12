@@ -10,6 +10,7 @@ import {
   FileText,
   Database,
   FolderOpen,
+  FolderKanban,
 } from 'lucide-react';
 import { fadeUpVariants } from '../../config/animations';
 import './EmptyState.css';
@@ -47,6 +48,7 @@ const EmptyState = ({
       document: FileText,
       database: Database,
       folder: FolderOpen,
+      project: FolderKanban,
     };
 
     const IconComponent = iconMap[iconName] || Inbox;
@@ -160,6 +162,16 @@ export const DatabaseEmptyState = ({ action }) => (
     title="No data"
     description="The database is empty. Add some records to get started."
     action={action}
+  />
+);
+
+export const NoProjectsEmptyState = ({ title, description, action }) => (
+  <EmptyState
+    iconName="project"
+    title={title || "No Projects Assigned"}
+    description={description || "You don't have access to any projects. Please contact your administrator to be assigned to a project."}
+    action={action}
+    size="lg"
   />
 );
 

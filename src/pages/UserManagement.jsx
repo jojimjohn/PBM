@@ -1147,6 +1147,9 @@ const EditUserModal = ({ isOpen, onClose, onSubmit, user, loading, currentUserRo
           <div className="user-summary-info">
             <strong>{user.firstName} {user.lastName}</strong>
             <span>{user.email}</span>
+            {user.username && (
+              <span className="status-badge info">@{user.username}</span>
+            )}
             <span className="user-meta">
               {t('created', 'Created')}: {formatDate(user.createdAt)}
               {user.lastLoginAt && ` • ${t('lastLogin', 'Last login')}: ${formatDateTime(user.lastLoginAt)}`}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
+import { useLocalization } from '../../../context/LocalizationContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import useProjects from '../../../hooks/useProjects'
@@ -23,6 +24,7 @@ import WorkflowStepper from '../../../components/purchase/WorkflowStepper'
 import GroupedBillsTable from '../../../components/bills/GroupedBillsTable'
 import VendorBillModal from '../../../components/bills/VendorBillModal'
 import ExpenseViewModal from '../../../components/expenses/ExpenseViewModal'
+import EmptyState from '../../../components/ui/EmptyState'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import purchaseOrderAmendmentService from '../../../services/purchaseOrderAmendmentService'
 import purchaseInvoiceService from '../../../services/purchaseInvoiceService'
@@ -39,6 +41,7 @@ import '../styles/Purchase.css'
 
 const Purchase = () => {
   const { selectedCompany } = useAuth()
+  const { t } = useLocalization()
   const { hasPermission } = usePermissions()
   const { formatDate, formatCurrency } = useSystemSettings()
   const { selectedProjectId, getProjectQueryParam } = useProjects()
@@ -178,6 +181,9 @@ const Purchase = () => {
 
       // PERFORMANCE FIX: Use dataCacheService for instant loading of cached data
       // Suppliers and materials use 5-min cache, purchase orders use 2-min cache
+      // Get project filter params
+      const projectParams = getProjectQueryParam()
+
       const [
         ordersResult,
         expensesResult,
@@ -192,10 +198,11 @@ const Purchase = () => {
           search: ordersPagination.search,
           status: ordersPagination.status,
           sortBy: ordersPagination.sortBy,
-          sortOrder: ordersPagination.sortOrder
+          sortOrder: ordersPagination.sortOrder,
+          ...projectParams  // Include project_id filter
         }),
-        // 2. Purchase expenses
-        expenseService.getAll({ expenseType: 'purchase' }).catch(err => {
+        // 2. Purchase expenses with project filter
+        expenseService.getAll({ expenseType: 'purchase', ...projectParams }).catch(err => {
           console.error('Error loading purchase expenses:', err)
           return { success: false, data: [] }
         }),
@@ -275,8 +282,13 @@ const Purchase = () => {
     try {
       setBillsLoading(true)
 
+      // Get project filter params
+      const projectParams = getProjectQueryParam()
+
       // Build filters
-      const filters = {}
+      const filters = {
+        ...projectParams  // Include project_id filter
+      }
       if (billTypeFilter !== 'all') {
         filters.billType = billTypeFilter
       }
@@ -306,12 +318,12 @@ const Purchase = () => {
     }
   }, [activeTab])
 
-  // Load bills when bills tab is active or filters change
+  // Load bills when bills tab is active, filters change, or project changes
   useEffect(() => {
     if (activeTab === 'bills') {
       loadBills()
     }
-  }, [activeTab, billTypeFilter, billPaymentFilter])
+  }, [activeTab, billTypeFilter, billPaymentFilter, selectedProjectId])
 
   // Handle URL search param changes (from dashboard task navigation)
   useEffect(() => {
@@ -904,13 +916,13 @@ const Purchase = () => {
 
   // Tabs ordered by workflow: Collections → PO → Bills → Expenses → Vendors → Locations → Analytics
   const tabs = [
-    { id: 'collections', name: 'Collections', icon: Package },
-    { id: 'orders', name: 'Purchase Orders', icon: FileText },
-    { id: 'bills', name: 'Bills', icon: Receipt },
-    { id: 'expenses', name: 'Purchase Expenses', icon: Banknote },
-    { id: 'vendors', name: 'Vendor Management', icon: Users },
-    { id: 'locations', name: 'Storage Locations', icon: Building },
-    { id: 'analytics', name: 'Analytics', icon: Calculator }
+    { id: 'collections', name: t('collections'), icon: Package },
+    { id: 'orders', name: t('purchaseOrders'), icon: FileText },
+    { id: 'bills', name: t('bills'), icon: Receipt },
+    { id: 'expenses', name: t('purchaseExpenses'), icon: Banknote },
+    { id: 'vendors', name: t('vendorManagement'), icon: Users },
+    { id: 'locations', name: t('storageLocations'), icon: Building },
+    { id: 'analytics', name: t('analytics'), icon: Calculator }
   ]
 
   const billSummary = calculateBillSummary()
@@ -1007,6 +1019,21 @@ const Purchase = () => {
               </div>
             </div>
 
+            {!loading && purchaseOrders.length === 0 ? (
+              <EmptyState
+                iconName="package"
+                title={t('noPurchaseOrdersFound')}
+                description={t('purchaseOrdersEmptyDescription')}
+                action={
+                  <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
+                    <button className="empty-action-btn" onClick={handleCreateOrder}>
+                      <Plus size={16} />
+                      {t('newPurchaseOrder')}
+                    </button>
+                  </PermissionGate>
+                }
+              />
+            ) : (
             <DataTable
               headerActions={
                 <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
@@ -1204,6 +1231,7 @@ const Purchase = () => {
               onPageSizeChange={handleOrdersPageSizeChange}
               initialSearchTerm={urlSearchTerm}
             />
+            )}
           </div>
         )}
 
@@ -1218,7 +1246,7 @@ const Purchase = () => {
                 </div>
                 <div>
                   <div className="summary-value">{billSummary.companyBills}</div>
-                  <div className="summary-label">Company Bills</div>
+                  <div className="summary-label">{t('companyBills')}</div>
                 </div>
               </div>
               <div className="summary-card">
@@ -1227,7 +1255,7 @@ const Purchase = () => {
                 </div>
                 <div>
                   <div className="summary-value">{billSummary.vendorBills}</div>
-                  <div className="summary-label">Vendor Bills</div>
+                  <div className="summary-label">{t('vendorBills')}</div>
                 </div>
               </div>
               <div className="summary-card">
@@ -1236,7 +1264,7 @@ const Purchase = () => {
                 </div>
                 <div>
                   <div className="summary-value">{billSummary.unpaid}</div>
-                  <div className="summary-label">Unpaid</div>
+                  <div className="summary-label">{t('unpaid')}</div>
                 </div>
               </div>
               <div className="summary-card">
@@ -1245,7 +1273,7 @@ const Purchase = () => {
                 </div>
                 <div>
                   <div className="summary-value">{billSummary.overdue}</div>
-                  <div className="summary-label">Overdue</div>
+                  <div className="summary-label">{t('overdue')}</div>
                 </div>
               </div>
               <div className="summary-card">
@@ -1254,7 +1282,7 @@ const Purchase = () => {
                 </div>
                 <div>
                   <div className="summary-value">{formatCurrency(billSummary.balanceDue)}</div>
-                  <div className="summary-label">Balance Due</div>
+                  <div className="summary-label">{t('balanceDue')}</div>
                 </div>
               </div>
             </div>
@@ -1267,20 +1295,20 @@ const Purchase = () => {
                   value={billTypeFilter}
                   onChange={(e) => setBillTypeFilter(e.target.value)}
                 >
-                  <option value="all">All Bills</option>
-                  <option value="company">Company Bills</option>
-                  <option value="vendor">Vendor Bills</option>
+                  <option value="all">{t('allBills')}</option>
+                  <option value="company">{t('companyBills')}</option>
+                  <option value="vendor">{t('vendorBills')}</option>
                 </select>
                 <select
                   className="filter-select"
                   value={billPaymentFilter}
                   onChange={(e) => setBillPaymentFilter(e.target.value)}
                 >
-                  <option value="all">All Statuses</option>
-                  <option value="unpaid">Unpaid</option>
-                  <option value="partial">Partially Paid</option>
-                  <option value="paid">Paid</option>
-                  <option value="overdue">Overdue</option>
+                  <option value="all">{t('allStatuses')}</option>
+                  <option value="unpaid">{t('unpaid')}</option>
+                  <option value="partial">{t('partiallyPaid')}</option>
+                  <option value="paid">{t('paid')}</option>
+                  <option value="overdue">{t('overdue')}</option>
                 </select>
               </div>
               <button
@@ -1291,7 +1319,7 @@ const Purchase = () => {
                 }}
               >
                 <Plus size={16} />
-                Create Vendor Bill
+                {t('createVendorBill')}
               </button>
             </div>
 
@@ -1299,8 +1327,14 @@ const Purchase = () => {
             {billsLoading ? (
               <div className="loading-container">
                 <div className="loading-spinner"></div>
-                <p>Loading bills...</p>
+                <p>{t('loadingBills')}</p>
               </div>
+            ) : !billsLoading && bills.length === 0 ? (
+              <EmptyState
+                iconName="document"
+                title={t('noBillsFound')}
+                description={t('billsEmptyDescription')}
+              />
             ) : (
               (() => {
                 const { groupedBills, orphanBills } = groupBillsForDisplay()
@@ -1326,6 +1360,13 @@ const Purchase = () => {
 
         {activeTab === 'expenses' && (
           <div className="expenses-tab">
+            {!loading && purchaseExpenses.length === 0 ? (
+              <EmptyState
+                iconName="document"
+                title={t('noPurchaseExpensesFound')}
+                description={t('purchaseExpensesEmptyDescription')}
+              />
+            ) : (
             <DataTable
               data={purchaseExpenses}
               columns={[
@@ -1466,6 +1507,7 @@ const Purchase = () => {
               className="purchase-expenses-table"
               initialSearchTerm={urlSearchTerm}
             />
+            )}
           </div>
         )}
 

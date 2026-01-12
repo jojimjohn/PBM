@@ -24,6 +24,7 @@ class PurchaseInvoiceService {
       if (filters.toDate) params.append('toDate', filters.toDate);
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('limit', filters.limit);
+      if (filters.project_id && filters.project_id !== 'all') params.append('project_id', filters.project_id);
 
       const url = `${API_BASE_URL}/purchase-invoices${params.toString() ? '?' + params.toString() : ''}`;
       const data = await authService.makeAuthenticatedRequest(url);

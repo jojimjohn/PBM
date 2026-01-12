@@ -34,6 +34,9 @@ export const useProjectContext = () => {
   return context;
 };
 
+// Alias for convenience (shorter name)
+export const useProjects = useProjectContext;
+
 /**
  * Project Provider component
  * Wraps the app to provide shared project state
@@ -162,6 +165,29 @@ export const ProjectProvider = ({ children }) => {
     return true;
   }, [selectedProjectId]);
 
+  // Check if user has no projects available (non-admin with no assignments)
+  const noProjectsAvailable = useMemo(() => {
+    return !loading && projects.length === 0 && !canViewAllProjects;
+  }, [loading, projects.length, canViewAllProjects]);
+
+  // Check if project selection is required (non-admins must select a project)
+  const isProjectRequired = useMemo(() => {
+    return !canViewAllProjects;
+  }, [canViewAllProjects]);
+
+  // Auto-select first project for non-admins if none selected
+  useEffect(() => {
+    if (
+      isProjectRequired &&
+      !selectedProjectId &&
+      !loading &&
+      projects.length > 0
+    ) {
+      // Auto-select the first available project
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [isProjectRequired, selectedProjectId, loading, projects, setSelectedProjectId]);
+
   // Get query parameter for API calls
   const getProjectQueryParam = useCallback(() => {
     if (!selectedProjectId) return {};
@@ -197,6 +223,8 @@ export const ProjectProvider = ({ children }) => {
     error,
     canViewAllProjects,
     isFiltered,
+    noProjectsAvailable,
+    isProjectRequired,
 
     // Actions
     setSelectedProjectId,

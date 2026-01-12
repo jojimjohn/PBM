@@ -103,14 +103,18 @@ const ProjectSelector = () => {
       >
         <FolderKanban size={16} className="project-icon" />
         <span className="project-selector-text">{getDisplayText()}</span>
-        {isFiltered && (
-          <button
+        {/* Only admins can clear project selection - regular users must always have a project */}
+        {isFiltered && canViewAllProjects && (
+          <span
+            role="button"
+            tabIndex={0}
             className="clear-filter-btn"
             onClick={handleClear}
+            onKeyDown={(e) => e.key === 'Enter' && handleClear(e)}
             title={t('clearFilter', 'Clear filter')}
           >
             <X size={14} />
-          </button>
+          </span>
         )}
         <ChevronDown size={16} className={`chevron ${isOpen ? 'open' : ''}`} />
       </button>

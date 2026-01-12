@@ -2080,7 +2080,7 @@ const ContractFormModal = ({
                 canDelete={true}
               />
             ) : (
-              <div className="no-attachments">No attachments uploaded yet</div>
+              <div className="empty-state text-sm">{t('noAttachments')}</div>
             )}
           </div>
         )}

@@ -22,6 +22,7 @@ class ExpenseService {
       if (filters.category) params.append('category', filters.category);
       if (filters.fromDate) params.append('fromDate', filters.fromDate);
       if (filters.toDate) params.append('toDate', filters.toDate);
+      if (filters.project_id && filters.project_id !== 'all') params.append('project_id', filters.project_id);
 
       const queryString = params.toString();
       const url = `${API_BASE_URL}/expenses${queryString ? `?${queryString}` : ''}`;

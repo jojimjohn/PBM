@@ -1394,6 +1394,40 @@
   margin: 0 0 16px 0;
 }
 
+.empty-action-btn,
+.empty-state-action .empty-action-btn,
+button.empty-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 10px 20px !important;
+  background: var(--ds-accent) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  width: auto !important;
+  min-width: auto !important;
+  max-width: fit-content !important;
+}
+
+.empty-action-btn:hover,
+.empty-state-action .empty-action-btn:hover,
+button.empty-action-btn:hover {
+  background: var(--ds-accent-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.empty-action-btn svg,
+.empty-state-action .empty-action-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
 /* ==============================================
    Text Utilities
    ============================================== */
@@ -1479,6 +1513,12 @@
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .search-box {

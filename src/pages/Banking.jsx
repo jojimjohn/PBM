@@ -1137,7 +1137,7 @@ const Banking = () => {
                   showDelete={true}
                 />
               ) : (
-                <div className="no-attachments">{t('noAttachments') || 'No attachments'}</div>
+                <div className="empty-state text-sm">{t('noAttachments')}</div>
               )}
             </div>
           )}

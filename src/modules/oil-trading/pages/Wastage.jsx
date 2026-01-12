@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
+import { useProjects } from '../../../context/ProjectContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
@@ -41,6 +42,7 @@ export const WASTAGE_TYPE_COLORS = {
 const Wastage = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
+  const { selectedProjectId, getProjectQueryParam } = useProjects()
   const { hasPermission } = usePermissions()
   const [searchParams] = useSearchParams()
 
@@ -79,16 +81,19 @@ const Wastage = () => {
 
   useEffect(() => {
     loadWastageData()
-  }, [selectedCompany])
+  }, [selectedCompany, selectedProjectId])
 
   const loadWastageData = async () => {
     try {
       setLoading(true)
       setError(null)
 
+      // Get project filter params
+      const projectParams = getProjectQueryParam()
+
       // PERFORMANCE: Run ALL API calls in parallel
       const [wastageResult, typesResult, materialsResult] = await Promise.all([
-        wastageService.getAll(),
+        wastageService.getAll(projectParams),
         wastageService.getTypes().catch(() => ({ success: false, data: [] })),
         materialService.getAll().catch(() => ({ success: false, data: [] }))
       ])

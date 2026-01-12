@@ -16,6 +16,8 @@ import ProfileModal from './ProfileModal'
 import HelpMenu from './tour/HelpMenu'
 import ProductTour from './tour/ProductTour'
 import ProjectSelector from './ui/ProjectSelector'
+import NoProjectsMessage from './ui/NoProjectsMessage'
+import useProjects from '../hooks/useProjects'
 import workflowService from '../services/workflowService'
 import { Menu, X } from 'lucide-react'
 import './MainLayout.css'
@@ -25,6 +27,7 @@ const MainLayout = () => {
   const { theme, toggleTheme } = useSystemSettings()
   const { t, currentLanguage, changeLanguage, getSupportedLanguages } = useLocalization()
   const { getAccessibleModules, hasPermission } = usePermissions()
+  const { noProjectsAvailable } = useProjects()
   const location = useLocation()
   const navigate = useNavigate()
   const isOilBusiness = selectedCompany?.businessType === 'oil'
@@ -535,7 +538,11 @@ const MainLayout = () => {
       {/* Main Content */}
       <main className="main-content">
         <div className="content-container">
-          <BusinessRouter />
+          {noProjectsAvailable ? (
+            <NoProjectsMessage />
+          ) : (
+            <BusinessRouter />
+          )}
         </div>
       </main>
 

@@ -10,10 +10,19 @@ import { API_BASE_URL } from '../config/api.js';
 class WastageService {
   /**
    * Get all wastages for the current company
+   * @param {Object} params - Optional query parameters
+   * @param {string} params.project_id - Filter by project ID
    */
-  async getAll() {
+  async getAll(params = {}) {
     try {
-      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/wastages`);
+      // Build query string from params
+      const queryParams = new URLSearchParams();
+      if (params.project_id) queryParams.append('project_id', params.project_id);
+
+      const queryString = queryParams.toString();
+      const url = `${API_BASE_URL}/wastages${queryString ? `?${queryString}` : ''}`;
+
+      const data = await authService.makeAuthenticatedRequest(url);
 
       return {
         success: true,

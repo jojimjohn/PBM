@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocalization } from '../../../context/LocalizationContext'
 import Modal from '../../../components/ui/Modal'
 import FileUpload from '../../../components/ui/FileUpload'
 import FileViewer from '../../../components/ui/FileViewer'
@@ -24,6 +25,7 @@ const PurchaseOrderForm = ({
   title = "Create Purchase Order",
   isEdit = false 
 }) => {
+  const { t } = useLocalization()
   const { getInputDate, formatCurrency } = useSystemSettings()
   
   const [formData, setFormData] = useState({
@@ -782,7 +784,7 @@ const PurchaseOrderForm = ({
                 canDelete={true}
               />
             ) : (
-              <div className="no-attachments">No attachments uploaded yet</div>
+              <div className="empty-state text-sm">{t('noAttachments')}</div>
             )}
           </div>
         )}

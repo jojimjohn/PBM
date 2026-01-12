@@ -1091,6 +1091,7 @@ const translations = {
     wcnNumber: 'WCN',
     attachments: 'Attachments',
     uploadAttachments: 'Upload Attachments',
+    noAttachments: 'No attachments uploaded yet',
     maxFileSize: 'Max 5MB per file',
     dragDropFiles: 'Drag and drop files here or click to browse',
     stockWarningTitle: 'Stock Quantity Warning',
@@ -1670,6 +1671,10 @@ const translations = {
     editPurchaseOrder: 'Edit Purchase Order',
     createPurchaseOrder: 'Create Purchase Order',
     noPurchaseOrdersFound: 'No purchase orders found',
+    purchaseOrdersEmptyDescription: 'Purchase orders will appear here when created manually or auto-generated from WCN finalization.',
+    newPurchaseOrder: 'New Purchase Order',
+    noPurchaseExpensesFound: 'No Purchase Expenses Found',
+    purchaseExpensesEmptyDescription: 'Purchase expenses will appear here when added to purchase orders or recorded separately.',
     adjustStockLevel: 'Adjust Stock Level',
     stockMovements: 'Stock Movements',
     transactionsSubtitle: 'View and filter all inventory transactions',
@@ -1726,6 +1731,26 @@ const translations = {
     managePurchaseOrders: 'Manage purchase orders and expenses',
     manageScrapMaterialPurchaseOrders: 'Manage scrap material purchase orders and track deliveries',
     manageTransportationMaintenance: 'Manage transportation, maintenance, and other purchase-related expenses',
+
+    // Purchase Module Tabs
+    vendorManagement: 'Vendor Management',
+    storageLocations: 'Storage Locations',
+    analytics: 'Analytics',
+    noBillsFound: 'No Bills Found',
+    billsEmptyDescription: 'Bills will appear here when purchase orders are completed and invoiced.',
+
+    // Bills Tab Labels
+    companyBills: 'Company Bills',
+    vendorBills: 'Vendor Bills',
+    unpaid: 'Unpaid',
+    overdue: 'Overdue',
+    balanceDue: 'Balance Due',
+    allBills: 'All Bills',
+    allStatuses: 'All Statuses',
+    partiallyPaid: 'Partially Paid',
+    paid: 'Paid',
+    createVendorBill: 'Create Vendor Bill',
+    loadingBills: 'Loading bills...',
     
     // Sales Management - Missing Keys
     salesManagement: 'Sales Management',
@@ -1974,6 +1999,7 @@ const translations = {
     completedEmptyDescription: 'Completed collections waiting for WCN finalization appear here.',
     noFinalizedWcns: 'No Finalized WCNs',
     finalizedEmptyDescription: 'Finalized waste consignment notes with generated POs appear here.',
+    createFirstCallout: 'Create your first callout to get started.',
 
     // Collection Type Labels
     calloutType: 'Callout',
@@ -3094,6 +3120,7 @@ const translations = {
     wcnNumber: 'رقم WCN',
     attachments: 'المرفقات',
     uploadAttachments: 'رفع المرفقات',
+    noAttachments: 'لم يتم رفع أي مرفقات بعد',
     maxFileSize: 'الحد الأقصى 5 ميجابايت لكل ملف',
     dragDropFiles: 'اسحب وأفلت الملفات هنا أو انقر للتصفح',
     stockWarningTitle: 'تحذير كمية المخزون',
@@ -3775,6 +3802,10 @@ const translations = {
     editPurchaseOrder: 'تعديل أمر الشراء',
     createPurchaseOrder: 'إنشاء أمر شراء',
     noPurchaseOrdersFound: 'لم يتم العثور على أوامر شراء',
+    purchaseOrdersEmptyDescription: 'ستظهر أوامر الشراء هنا عند إنشائها يدوياً أو إنشائها تلقائياً من إتمام WCN.',
+    newPurchaseOrder: 'أمر شراء جديد',
+    noPurchaseExpensesFound: 'لم يتم العثور على مصروفات الشراء',
+    purchaseExpensesEmptyDescription: 'ستظهر مصروفات الشراء هنا عند إضافتها إلى أوامر الشراء أو تسجيلها بشكل منفصل.',
     adjustStockLevel: 'تعديل مستوى المخزون',
     stockMovements: 'حركات المخزون',
     transactionsSubtitle: 'عرض وتصفية جميع معاملات المخزون',
@@ -3822,6 +3853,26 @@ const translations = {
     
     // Additional commonly used keys - Arabic translations
     order: 'الطلب',
+
+    // Purchase Module Tabs - Arabic
+    vendorManagement: 'إدارة الموردين',
+    storageLocations: 'مواقع التخزين',
+    analytics: 'التحليلات',
+    noBillsFound: 'لم يتم العثور على فواتير',
+    billsEmptyDescription: 'ستظهر الفواتير هنا عند إتمام أوامر الشراء وإصدار الفواتير.',
+
+    // Bills Tab Labels - Arabic
+    companyBills: 'فواتير الشركة',
+    vendorBills: 'فواتير الموردين',
+    unpaid: 'غير مدفوع',
+    overdue: 'متأخر السداد',
+    balanceDue: 'الرصيد المستحق',
+    allBills: 'كل الفواتير',
+    allStatuses: 'كل الحالات',
+    partiallyPaid: 'مدفوع جزئياً',
+    paid: 'مدفوع',
+    createVendorBill: 'إنشاء فاتورة مورد',
+    loadingBills: 'جاري تحميل الفواتير...',
 
     // Welcome and greeting messages
     welcomeBack: 'مرحباً بعودتك',
@@ -4080,6 +4131,7 @@ const translations = {
     completedEmptyDescription: 'تظهر هنا عمليات التجميع المكتملة في انتظار إنهاء الإشعار.',
     noFinalizedWcns: 'لا توجد إشعارات منتهية',
     finalizedEmptyDescription: 'تظهر هنا إشعارات نقل النفايات المنتهية مع أوامر الشراء المُنشأة.',
+    createFirstCallout: 'أنشئ طلب استلام أول للبدء.',
 
     // Collection Type Labels (تسميات أنواع التجميع)
     calloutType: 'طلب استدعاء',

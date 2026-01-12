@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocalization } from '../../../context/LocalizationContext'
 import Modal from '../../../components/ui/Modal'
 import FIFOPreviewModal from '../../../components/FIFOPreviewModal'
 import FileUpload from '../../../components/ui/FileUpload'
@@ -19,6 +20,7 @@ import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shiel
 import './SalesOrderForm.css'
 
 const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, editingOrder = null }) => {
+  const { t } = useLocalization()
   const { getInputDate } = useSystemSettings()
   
   const [formData, setFormData] = useState({
@@ -1288,7 +1290,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 canDelete={true}
               />
             ) : (
-              <div className="no-attachments">No attachments uploaded yet</div>
+              <div className="empty-state text-sm">{t('noAttachments')}</div>
             )}
           </div>
         )}

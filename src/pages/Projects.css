@@ -254,16 +254,6 @@
   font-style: italic;
 }
 
-.no-attachments {
-  padding: 1rem;
-  text-align: center;
-  color: var(--text-muted, #6b7280);
-  font-style: italic;
-  background-color: var(--bg-subtle, #f9fafb);
-  border-radius: 0.5rem;
-  border: 1px dashed var(--border-color, #e5e7eb);
-}
-
 .form-section h4 {
   display: flex;
   align-items: center;

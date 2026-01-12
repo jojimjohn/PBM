@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight, Droplet, Upload } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
+import { useProjects } from '../../context/ProjectContext';
 import { collectionOrderService, calloutService } from '../../services/collectionService';
 import contractService from '../../services/contractService';
 import supplierService from '../../services/supplierService';
@@ -19,6 +20,7 @@ import './collections-managers.css';
 
 const CollectionOrderManager = () => {
   const { t, isRTL } = useLocalization();
+  const { selectedProjectId, getProjectQueryParam } = useProjects();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,20 +42,20 @@ const CollectionOrderManager = () => {
     totalPages: 0
   });
 
-  // Load collection orders on component mount
-  useEffect(() => {
-    loadOrders();
-  }, [pagination.page, statusFilter, dateFilter, searchTerm]);
-
-  const loadOrders = async () => {
+  // Memoized load function to avoid stale closure issues
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
+      // Get project filter params
+      const projectParams = getProjectQueryParam();
+
       const response = await collectionOrderService.getCollectionOrders({
         page: pagination.page,
         limit: pagination.limit,
         status: statusFilter === 'all' ? undefined : statusFilter,
         dateFilter: dateFilter === 'all' ? undefined : dateFilter,
-        search: searchTerm || undefined
+        search: searchTerm || undefined,
+        ...projectParams  // Include project_id filter
       });
 
       if (response.success) {
@@ -69,7 +71,12 @@ const CollectionOrderManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, statusFilter, dateFilter, searchTerm, selectedProjectId, getProjectQueryParam]);
+
+  // Load collection orders on component mount or when filters/project change
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const handleCreateOrder = () => {
     setSelectedOrder(null);
