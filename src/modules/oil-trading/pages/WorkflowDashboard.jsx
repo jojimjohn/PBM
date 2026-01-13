@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
+import { useProjects } from '../../../hooks/useProjects'
 import { useNavigate } from 'react-router-dom'
 import workflowService from '../../../services/workflowService'
 import {
@@ -75,6 +76,7 @@ const WorkflowDashboard = () => {
   const { user, selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { formatDate } = useSystemSettings()
+  const { selectedProjectId, getProjectQueryParam } = useProjects()
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
@@ -113,7 +115,7 @@ const WorkflowDashboard = () => {
 
   useEffect(() => {
     loadDashboardData()
-  }, [selectedCompany])
+  }, [selectedCompany, selectedProjectId])
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 60000)
@@ -123,11 +125,14 @@ const WorkflowDashboard = () => {
   const loadDashboardData = async () => {
     setLoading(true)
     try {
+      // Build project params for filtering
+      const projectParams = selectedProjectId ? { project_id: selectedProjectId } : {}
+
       const [actionsResult, activityResult, statsResult, notificationsResult] = await Promise.all([
-        workflowService.getPendingActions(),
-        workflowService.getActivityFeed(10),
-        workflowService.getWorkflowStats(),
-        workflowService.getNotifications(10)
+        workflowService.getPendingActions(projectParams),
+        workflowService.getActivityFeed(10, projectParams),
+        workflowService.getWorkflowStats(projectParams),
+        workflowService.getNotifications(10, projectParams)
       ])
 
       if (actionsResult.success) {

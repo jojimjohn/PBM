@@ -356,10 +356,10 @@ const MainLayout = () => {
 
             <div className="user-profile" data-tour="user-menu">
               <div className="user-avatar">
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                {user?.firstName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
               </div>
               <div className="user-details">
-                <span className="user-name">{user?.name || 'User'}</span>
+                <span className="user-name">{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.firstName || user?.email || 'User'}</span>
                 <span className="user-role">{user?.role?.replace('_', ' ') || 'User'}</span>
               </div>
               <div className="user-menu">

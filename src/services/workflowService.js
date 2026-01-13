@@ -15,12 +15,19 @@ const workflowService = {
    * Get pending actions across all workflows
    * Returns high priority and normal priority tasks
    *
+   * @param {Object} params - Optional query parameters
+   * @param {string} params.project_id - Filter by project ID
    * @returns {Promise<Object>} { high: [], normal: [], stats: {} }
    */
-  async getPendingActions() {
+  async getPendingActions(params = {}) {
     try {
+      const queryParams = new URLSearchParams();
+      if (params.project_id) queryParams.append('project_id', params.project_id);
+      const queryString = queryParams.toString();
+      const url = `${API_BASE_URL}/workflow/pending-actions${queryString ? `?${queryString}` : ''}`;
+
       const data = await authService.makeAuthenticatedRequest(
-        `${API_BASE_URL}/workflow/pending-actions`,
+        url,
         {
           method: 'GET'
         }
@@ -53,12 +60,19 @@ const workflowService = {
    * Returns last N activities across all workflows
    *
    * @param {number} limit - Number of activities to return (default: 50)
+   * @param {Object} params - Optional query parameters
+   * @param {string} params.project_id - Filter by project ID
    * @returns {Promise<Object>} { activities: [], total: number }
    */
-  async getActivityFeed(limit = 50) {
+  async getActivityFeed(limit = 50, params = {}) {
     try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('limit', limit);
+      if (params.project_id) queryParams.append('project_id', params.project_id);
+      const url = `${API_BASE_URL}/workflow/activity?${queryParams.toString()}`;
+
       const data = await authService.makeAuthenticatedRequest(
-        `${API_BASE_URL}/workflow/activity?limit=${limit}`,
+        url,
         {
           method: 'GET'
         }
@@ -89,12 +103,19 @@ const workflowService = {
    * Get workflow statistics
    * Returns quick stats for dashboard widgets
    *
+   * @param {Object} params - Optional query parameters
+   * @param {string} params.project_id - Filter by project ID
    * @returns {Promise<Object>} { collections: {}, purchaseOrders: {}, invoices: {}, contracts: {} }
    */
-  async getWorkflowStats() {
+  async getWorkflowStats(params = {}) {
     try {
+      const queryParams = new URLSearchParams();
+      if (params.project_id) queryParams.append('project_id', params.project_id);
+      const queryString = queryParams.toString();
+      const url = `${API_BASE_URL}/workflow/stats${queryString ? `?${queryString}` : ''}`;
+
       const data = await authService.makeAuthenticatedRequest(
-        `${API_BASE_URL}/workflow/stats`,
+        url,
         {
           method: 'GET'
         }
@@ -130,12 +151,19 @@ const workflowService = {
    * Returns condensed summary of urgent items across all modules
    *
    * @param {number} limit - Number of notifications to return (default: 10)
+   * @param {Object} params - Optional query parameters
+   * @param {string} params.project_id - Filter by project ID
    * @returns {Promise<Object>} { notifications: [], total: number, hasUrgent: boolean }
    */
-  async getNotifications(limit = 10) {
+  async getNotifications(limit = 10, params = {}) {
     try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('limit', limit);
+      if (params.project_id) queryParams.append('project_id', params.project_id);
+      const url = `${API_BASE_URL}/workflow/notifications?${queryParams.toString()}`;
+
       const data = await authService.makeAuthenticatedRequest(
-        `${API_BASE_URL}/workflow/notifications?limit=${limit}`,
+        url,
         {
           method: 'GET'
         }
