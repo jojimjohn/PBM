@@ -76,7 +76,7 @@ const WorkflowDashboard = () => {
   const { user, selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { formatDate } = useSystemSettings()
-  const { selectedProjectId, getProjectQueryParam } = useProjects()
+  const { selectedProjectId, getProjectQueryParam, isProjectRequired, initialized: projectsInitialized, canViewAllProjects } = useProjects()
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
@@ -87,6 +87,10 @@ const WorkflowDashboard = () => {
   const [taskTypeTab, setTaskTypeTab] = useState('all') // 'all', 'purchases', 'sales', 'approvals', 'finance', 'alerts'
   const [showNotifications, setShowNotifications] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  // Function to trigger a refresh
+  const handleRefresh = () => setRefreshTrigger(prev => prev + 1)
 
   // Task type groupings for tabs
   const taskTypeGroups = {
@@ -114,48 +118,67 @@ const WorkflowDashboard = () => {
   }
 
   useEffect(() => {
+    // Wait for project context to be fully initialized (localStorage checked & projects loaded)
+    // This prevents duplicate API calls during initialization
+    if (!projectsInitialized) return
+
+    // For non-admin users, wait until a project is selected (auto-selection happens in ProjectContext)
+    // This prevents loading data before the user's project is selected
+    if (isProjectRequired && !selectedProjectId) return
+
+    // Define loadDashboardData inside useEffect to avoid stale closure issues
+    const loadDashboardData = async () => {
+      setLoading(true)
+      try {
+        // Use centralized helper that validates project access
+        const projectParams = getProjectQueryParam()
+
+        console.log('Dashboard loading with project filter:', {
+          selectedProjectId,
+          projectParams,
+          canViewAllProjects,
+          isProjectRequired
+        })
+
+        const [actionsResult, activityResult, statsResult, notificationsResult] = await Promise.all([
+          workflowService.getPendingActions(projectParams),
+          workflowService.getActivityFeed(10, projectParams),
+          workflowService.getWorkflowStats(projectParams),
+          workflowService.getNotifications(10, projectParams)
+        ])
+
+        if (actionsResult.success) {
+          setPendingActions(actionsResult.data)
+        }
+
+        if (activityResult.success) {
+          setActivityFeed(activityResult.data.activities || [])
+        }
+
+        if (statsResult.success) {
+          setWorkflowStats(statsResult.data)
+        }
+
+        if (notificationsResult.success) {
+          setNotifications(notificationsResult.data)
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     loadDashboardData()
-  }, [selectedCompany, selectedProjectId])
+    // Note: getProjectQueryParam not in deps - it's derived from selectedProjectId which IS in deps
+    // Including it would cause duplicate calls since it changes reference when projects array loads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompany, selectedProjectId, projectsInitialized, isProjectRequired, refreshTrigger])
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 60000)
     return () => clearInterval(interval)
   }, [])
-
-  const loadDashboardData = async () => {
-    setLoading(true)
-    try {
-      // Build project params for filtering
-      const projectParams = selectedProjectId ? { project_id: selectedProjectId } : {}
-
-      const [actionsResult, activityResult, statsResult, notificationsResult] = await Promise.all([
-        workflowService.getPendingActions(projectParams),
-        workflowService.getActivityFeed(10, projectParams),
-        workflowService.getWorkflowStats(projectParams),
-        workflowService.getNotifications(10, projectParams)
-      ])
-
-      if (actionsResult.success) {
-        setPendingActions(actionsResult.data)
-      }
-
-      if (activityResult.success) {
-        setActivityFeed(activityResult.data.activities || [])
-      }
-
-      if (statsResult.success) {
-        setWorkflowStats(statsResult.data)
-      }
-
-      if (notificationsResult.success) {
-        setNotifications(notificationsResult.data)
-      }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleActionClick = (action) => {
     navigate(action.actionRoute)
@@ -245,7 +268,7 @@ const WorkflowDashboard = () => {
             <p className="header-subtitle">{selectedCompany?.name}</p>
           </div>
           <div className="header-actions">
-            <button className="btn-refresh" onClick={loadDashboardData} disabled={loading}>
+            <button className="btn-refresh" onClick={handleRefresh} disabled={loading}>
               <RefreshCw size={16} className={loading ? 'spinning' : ''} />
               <span>Refresh</span>
             </button>

@@ -1,480 +1,312 @@
-import React, { useState, useEffect } from 'react'
+/**
+ * Oil Trading Sales Page
+ *
+ * Main page for managing sales orders and invoices.
+ * Uses composition of hooks and components for clean separation of concerns.
+ *
+ * Refactored from 704-line monolith to ~350 lines.
+ * Updated to use showToast and ConfirmDialog instead of native dialogs.
+ *
+ * @module pages/Sales
+ */
+
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import useProjects from '../../../hooks/useProjects'
-import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog'
+import AlertDialog from '../../../components/ui/AlertDialog'
+import showToast from '../../../components/ui/Toast'
 import SalesOrderForm from '../components/SalesOrderForm'
 import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
+import SalesSummaryCards from '../components/SalesSummaryCards'
+import { useSalesOrders } from '../hooks'
 import salesOrderService from '../../../services/salesOrderService'
-import customerService from '../../../services/customerService'
-import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle, Truck, XCircle, Clock, Trash2, Plus, Download, ClipboardList, Receipt } from 'lucide-react'
+import { getSalesOrderColumns, STATUS_LABELS } from './salesOrdersTableConfig'
+import { getInvoiceColumns, filterOrdersWithInvoices } from './invoicesTableConfig'
+import { Plus, ClipboardList, Receipt, AlertTriangle } from 'lucide-react'
 import '../styles/Sales.css'
 
+/**
+ * Sales Page Component
+ */
 const Sales = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
-  const { formatDate, toAPIDateFormat } = useSystemSettings()
+  const { formatDate } = useSystemSettings()
   const { selectedProjectId, getProjectQueryParam } = useProjects()
   const [searchParams] = useSearchParams()
 
-  // Read search param from URL (used when clicking tasks from dashboard)
+  // URL search param (from dashboard task links)
   const urlSearchTerm = searchParams.get('search') || ''
 
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('orders') // 'orders' or 'invoices'
+  // Use the useSalesOrders hook for data management
+  const {
+    orders: salesOrders,
+    todaysSummary,
+    loading,
+    error,
+    refresh: loadSalesData,
+    loadOrder,
+    updateStatus: hookUpdateStatus,
+    deleteOrder: hookDeleteOrder,
+    generateInvoice: hookGenerateInvoice
+  } = useSalesOrders({
+    projectId: selectedProjectId,
+    getProjectQueryParam
+  })
+
+  // UI state
+  const [activeTab, setActiveTab] = useState('orders')
+
+  // Modal state
   const [showOrderForm, setShowOrderForm] = useState(false)
-  const [salesOrders, setSalesOrders] = useState([])
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [viewingOrder, setViewingOrder] = useState(null)
   const [editingOrder, setEditingOrder] = useState(null)
-  const [todaysSummary, setTodaysSummary] = useState({ totalSales: 0, totalOrders: 0, pendingOrders: 0 })
-  const [error, setError] = useState(null)
-  const [filterFromDate, setFilterFromDate] = useState(null)
-  const [filterToDate, setFilterToDate] = useState(null)
 
-  // Load sales orders and summary data from backend
-  const loadSalesData = async () => {
-    try {
-      setError(null)
+  // Dialog state
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, order: null, action: null, newStatus: null })
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', variant: 'error' })
 
-      // Get project filter params for API calls
-      const projectParams = getProjectQueryParam()
-
-      // PERFORMANCE: Run both API calls in parallel
-      const [ordersResult, summaryResult] = await Promise.all([
-        salesOrderService.getAll(projectParams),
-        salesOrderService.getTodaysSummary(projectParams).catch(() => ({ success: false, data: null }))
-      ])
-
-      // Process orders
-      if (ordersResult.success) {
-        setSalesOrders(ordersResult.data || [])
-      } else {
-        throw new Error(ordersResult.error || 'Failed to load sales orders')
-      }
-
-      // Process summary
-      if (summaryResult.success && summaryResult.data) {
-        setTodaysSummary({
-          totalSales: summaryResult.data.totalSales || 0,
-          totalOrders: summaryResult.data.totalOrders || 0,
-          pendingOrders: summaryResult.data.pendingOrders || 0
-        })
-      }
-
-    } catch (error) {
-      console.error('Error loading sales data:', error)
-      setError(error.message)
-      // Fallback to empty data on error
-      setSalesOrders([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // Check for pre-selected customer from customer module on mount
   useEffect(() => {
-    // Load sales orders from backend
-    loadSalesData()
-
-    // Check for pre-selected customer from customer module
     const storedCustomer = sessionStorage.getItem('selectedCustomerForOrder')
     if (storedCustomer) {
       try {
         const customer = JSON.parse(storedCustomer)
         setSelectedCustomer(customer)
         setShowOrderForm(true)
-        // Clear the stored customer after using it
         sessionStorage.removeItem('selectedCustomerForOrder')
-      } catch (error) {
+      } catch {
         sessionStorage.removeItem('selectedCustomerForOrder')
       }
     }
-  }, [selectedCompany, selectedProjectId])
+  }, [])
 
-  const handleCreateOrder = (selectedCustomer = null) => {
-    setSelectedCustomer(selectedCustomer)
+  // Event handlers
+  const handleCreateOrder = useCallback((customer = null) => {
+    setSelectedCustomer(customer)
+    setEditingOrder(null)
     setShowOrderForm(true)
-  }
+  }, [])
 
-  const handleSaveOrder = async (orderData) => {
+  const handleViewOrder = useCallback(async (order) => {
     try {
-      setLoading(true)
-
-      let result
-
-      // Check if editing existing order or creating new one
-      if (editingOrder) {
-        result = await salesOrderService.update(editingOrder.id, orderData)
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to update sales order')
-        }
-      } else {
-        result = await salesOrderService.create(orderData)
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create sales order')
-        }
-      }
-
-      // Refresh the sales orders list
-      await loadSalesData()
-
-      // Reset form state
-      setSelectedCustomer(null)
-      setShowOrderForm(false)
-      setEditingOrder(null)
-
-      // Show success message
-      const totalAmount = parseFloat(result.data.totalAmount) || 0
-      const action = editingOrder ? 'updated' : 'created'
-      alert(`✅ Sales order ${action} successfully!\n\nOrder Number: ${result.data.orderNumber}\nTotal: OMR ${totalAmount.toFixed(2)}`)
-
-    } catch (error) {
-      console.error('Error saving sales order:', error)
-      setError(error.message)
-      const action = editingOrder ? 'update' : 'create'
-      alert(`❌ Failed to ${action} sales order:\n\n${error.message}`)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleViewSalesOrder = async (order) => {
-    try {
-      setLoading(true)
-      // Fetch full order details including items
-      const result = await salesOrderService.getById(order.id)
-
-      if (result.success && result.data) {
-        setViewingOrder(result.data)
-      } else {
-        // Fallback to basic order if fetch fails
-        console.warn('Failed to fetch full order details, showing basic data')
-        setViewingOrder(order)
-      }
-    } catch (error) {
-      console.error('Error fetching order details:', error)
-      // Fallback to basic order on error
+      const result = await loadOrder(order.id)
+      setViewingOrder(result.success && result.data ? result.data : order)
+    } catch {
       setViewingOrder(order)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [loadOrder])
 
-  const handleEditSalesOrder = async (order) => {
+  const handleEditOrder = useCallback(async (order) => {
     try {
-      setLoading(true)
-      // Fetch full order details including items
-      const result = await salesOrderService.getById(order.id)
+      const result = await loadOrder(order.id)
 
       if (result.success && result.data) {
         setEditingOrder(result.data)
         setSelectedCustomer({ id: result.data.customerId, name: result.data.customerName })
       } else {
-        // Fallback to basic order if fetch fails
-        console.warn('Failed to fetch full order details for edit, using basic data')
         setEditingOrder(order)
         setSelectedCustomer({ id: order.customerId, name: order.customerName })
       }
       setShowOrderForm(true)
-    } catch (error) {
-      console.error('Error fetching order details for edit:', error)
-      // Fallback to basic order on error
+    } catch {
       setEditingOrder(order)
       setSelectedCustomer({ id: order.customerId, name: order.customerName })
       setShowOrderForm(true)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [loadOrder])
 
-  const handleGenerateInvoice = async (order) => {
+  const handleSaveOrder = useCallback(async (orderData) => {
     try {
-      setLoading(true)
-      const result = await salesOrderService.generateInvoice(order.id)
+      const result = editingOrder
+        ? await salesOrderService.update(editingOrder.id, orderData)
+        : await salesOrderService.create(orderData)
 
-      if (result.success) {
-        alert(`🧾 Invoice generated successfully for order: ${order.orderNumber}\n\nInvoice Number: ${result.data.invoiceNumber}`)
-        // Refresh sales orders to show updated invoice number
-        await loadSalesData()
-      } else {
-        throw new Error(result.error || 'Failed to generate invoice')
+      if (!result.success) {
+        throw new Error(result.error || `Failed to ${editingOrder ? 'update' : 'create'} sales order`)
       }
-    } catch (error) {
-      console.error('Error generating invoice:', error)
-      alert(`❌ Failed to generate invoice:\n\n${error.message}`)
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  // Quick status change handler
-  const handleQuickStatusChange = async (order, newStatus) => {
-    // Prevent changing from delivered if it has an invoice
+      await loadSalesData()
+      setSelectedCustomer(null)
+      setShowOrderForm(false)
+      setEditingOrder(null)
+
+      const totalAmount = parseFloat(result.data.totalAmount) || 0
+      const action = editingOrder ? t('updated', 'updated') : t('created', 'created')
+      showToast.success(
+        `${t('salesOrder', 'Sales order')} ${action}!\n${t('orderNumber', 'Order Number')}: ${result.data.orderNumber}\n${t('total', 'Total')}: OMR ${totalAmount.toFixed(2)}`,
+        t('success', 'Success')
+      )
+    } catch (err) {
+      showToast.error(err.message, t('error', 'Error'))
+    }
+  }, [editingOrder, loadSalesData, t])
+
+  const handleStatusChange = useCallback(async (order, newStatus) => {
     if (order.status === 'delivered' && order.invoiceNumber && newStatus !== 'delivered') {
-      alert('Cannot change status of a delivered order with an invoice.')
+      setAlertDialog({
+        isOpen: true,
+        title: t('cannotChangeStatus', 'Cannot Change Status'),
+        message: t('cannotChangeDeliveredOrderStatus', 'Cannot change status of a delivered order with an invoice.'),
+        variant: 'warning'
+      })
       return
     }
 
-    // Confirm status change
-    const statusLabels = {
-      draft: 'Draft',
-      confirmed: 'Confirmed',
-      delivered: 'Delivered',
-      cancelled: 'Cancelled'
-    }
+    // Show confirmation dialog
+    setConfirmDialog({
+      isOpen: true,
+      order,
+      action: 'status',
+      newStatus
+    })
+  }, [t])
 
-    const confirmMessage = `Change order ${order.orderNumber} status from "${statusLabels[order.status]}" to "${statusLabels[newStatus]}"?`
-    if (!window.confirm(confirmMessage)) return
+  const handleStatusChangeConfirm = useCallback(async () => {
+    const { order, newStatus } = confirmDialog
+    setConfirmDialog({ isOpen: false, order: null, action: null, newStatus: null })
 
     try {
-      setLoading(true)
-      const result = await salesOrderService.updateStatus(order.id, newStatus)
+      const result = await hookUpdateStatus(order.id, newStatus)
 
       if (result.success) {
-        // Refresh the data to show updated status
-        await loadSalesData()
+        showToast.success(t('statusUpdated', 'Status updated successfully'))
       } else {
         throw new Error(result.error || 'Failed to update status')
       }
-    } catch (error) {
-      console.error('Error updating status:', error)
-      alert(`❌ Failed to update status:\n\n${error.message}`)
-    } finally {
-      setLoading(false)
+    } catch (err) {
+      showToast.error(err.message, t('error', 'Error'))
     }
-  }
+  }, [confirmDialog, hookUpdateStatus, t])
 
-  // Get next possible status transitions for an order
-  const getNextStatuses = (currentStatus) => {
-    const transitions = {
-      draft: ['confirmed', 'cancelled'],
-      confirmed: ['delivered', 'cancelled'],
-      delivered: ['cancelled'],
-      cancelled: []
-    }
-    return transitions[currentStatus] || []
-  }
-
-  // Delete order handler with validation
-  const handleDeleteOrder = async (order) => {
-    // Check if order can be deleted based on status
+  const handleDeleteOrder = useCallback(async (order) => {
     const deletableStatuses = ['draft', 'cancelled']
-
     if (!deletableStatuses.includes(order.status)) {
-      alert(`❌ Cannot delete order with status "${order.status}".\n\nOnly Draft and Cancelled orders can be deleted.`)
+      setAlertDialog({
+        isOpen: true,
+        title: t('cannotDelete', 'Cannot Delete'),
+        message: t('cannotDeleteOrderWithStatus', `Cannot delete order with status "${order.status}". Only Draft and Cancelled orders can be deleted.`),
+        variant: 'error'
+      })
       return
     }
 
-    // Confirm deletion
-    const confirmMessage = `Are you sure you want to delete order ${order.orderNumber}?\n\nThis action cannot be undone.`
-    if (!window.confirm(confirmMessage)) return
+    // Show confirmation dialog
+    setConfirmDialog({
+      isOpen: true,
+      order,
+      action: 'delete',
+      newStatus: null
+    })
+  }, [t])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    const { order } = confirmDialog
+    setConfirmDialog({ isOpen: false, order: null, action: null, newStatus: null })
 
     try {
-      setLoading(true)
-      const result = await salesOrderService.delete(order.id)
+      const result = await hookDeleteOrder(order.id)
 
       if (result.success) {
-        // Refresh the data to show updated list
-        await loadSalesData()
-        alert(`✅ Order ${order.orderNumber} deleted successfully.`)
+        showToast.success(`${t('order', 'Order')} ${order.orderNumber} ${t('deletedSuccessfully', 'deleted successfully')}`)
       } else {
         throw new Error(result.error || 'Failed to delete order')
       }
-    } catch (error) {
-      console.error('Error deleting order:', error)
-      alert(`❌ Failed to delete order:\n\n${error.message}`)
-    } finally {
-      setLoading(false)
+    } catch (err) {
+      showToast.error(err.message, t('error', 'Error'))
     }
-  }
+  }, [confirmDialog, hookDeleteOrder, t])
 
-  // Check if order can be deleted
-  const canDeleteOrder = (order) => {
-    return ['draft', 'cancelled'].includes(order.status)
-  }
+  const handleGenerateInvoice = useCallback(async (order) => {
+    try {
+      const result = await hookGenerateInvoice(order.id)
 
-  // Define table columns for sales orders
-  const salesOrderColumns = [
-    {
-      key: 'orderNumber',
-      header: t('orderNumber'),
-      sortable: true,
-      render: (value, row) => (
-        <div className="order-id">
-          <strong>{value || row.orderNumber || row.id}</strong>
-        </div>
-      )
-    },
-    {
-      key: 'customerName',
-      header: t('customer'),
-      sortable: true,
-      filterable: true,
-      render: (value, row) => (
-        <div className="customer-info">
-          <User size={14} />
-          <span>{value || '-'}</span>
-        </div>
-      )
-    },
-    {
-      key: 'date',
-      header: t('date'),
-      type: 'date',
-      sortable: true,
-      render: (value) => {
-        if (!value) return '-'
-        return formatDate ? formatDate(value) : new Date(value).toLocaleDateString()
-      }
-    },
-    {
-      key: 'itemCount',
-      header: t('items'),
-      sortable: true,
-      render: (value, row) => {
-        const count = parseInt(value) || 0
-        return (
-          <div className="items-count-badge">
-            <span className="count-number">{count}</span>
-            <span className="count-label">{count === 1 ? t('item') || 'item' : t('items')}</span>
-          </div>
+      if (result.success) {
+        showToast.success(
+          `${t('invoice', 'Invoice')} ${result.data.invoiceNumber} ${t('generatedFor', 'generated for')} ${t('order', 'order')} ${order.orderNumber}!`,
+          t('success', 'Success')
         )
+      } else {
+        throw new Error(result.error || 'Failed to generate invoice')
       }
-    },
-    {
-      key: 'total',
-      header: t('total'),
-      type: 'currency',
-      align: 'right',
-      sortable: true,
-      render: (value, row) => {
-        const total = parseFloat(value || row.totalAmount) || 0
-        return `OMR ${total.toFixed(2)}`
-      }
-    },
-    {
-      key: 'invoiceNumber',
-      header: t('invoice'),
-      sortable: true,
-      render: (value, row) => {
-        if (value || row.invoiceNumber) {
-          return (
-            <div className="invoice-info">
-              <FileText size={14} />
-              <span>{value || row.invoiceNumber}</span>
-            </div>
-          )
-        }
-        return <span className="text-muted">-</span>
-      }
-    },
-    {
-      key: 'status',
-      header: t('status'),
-      sortable: true,
-      filterable: true,
-      render: (value) => (
-        <span className={`status-badge ${value}`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      )
-    },
-    {
-      key: 'actions',
-      header: t('actions'),
-      sortable: false,
-      width: '220px',
-      render: (value, row) => {
-        const nextStatuses = getNextStatuses(row.status)
-        return (
-          <div className="cell-actions">
-            <button
-              className="btn btn-outline btn-sm"
-              title={t('view')}
-              onClick={() => handleViewSalesOrder(row)}
-            >
-              <Eye size={14} />
-            </button>
-            <button
-              className="btn btn-outline btn-sm"
-              title={t('edit')}
-              onClick={() => handleEditSalesOrder(row)}
-            >
-              <Edit size={14} />
-            </button>
-            {/* Quick Status Actions */}
-            {row.status === 'draft' && (
-              <button
-                className="btn btn-primary btn-sm"
-                title={t('confirm') || 'Confirm'}
-                onClick={() => handleQuickStatusChange(row, 'confirmed')}
-              >
-                <CheckCircle size={14} />
-              </button>
-            )}
-            {row.status === 'confirmed' && (
-              <button
-                className="btn btn-success btn-sm"
-                title={t('markDelivered') || 'Mark Delivered'}
-                onClick={() => handleQuickStatusChange(row, 'delivered')}
-              >
-                <Truck size={14} />
-              </button>
-            )}
-            {nextStatuses.includes('cancelled') && !row.invoiceNumber && (
-              <button
-                className="btn btn-danger btn-sm"
-                title={t('cancel') || 'Cancel'}
-                onClick={() => handleQuickStatusChange(row, 'cancelled')}
-              >
-                <XCircle size={14} />
-              </button>
-            )}
-            {/* Delete Button - Only for draft/cancelled orders */}
-            {canDeleteOrder(row) && (
-              <button
-                className="btn btn-danger btn-sm"
-                title={t('delete') || 'Delete'}
-                onClick={() => handleDeleteOrder(row)}
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-            {/* Invoice Actions */}
-            {(row.status === 'confirmed' || row.status === 'delivered') && (
-              row.invoiceNumber ? (
-                <button
-                  className="btn btn-outline btn-success btn-sm"
-                  title={`Invoice: ${row.invoiceNumber}`}
-                >
-                  <FileText size={14} />
-                </button>
-              ) : (
-                <button
-                  className="btn btn-outline btn-sm"
-                  title={t('generateInvoice')}
-                  onClick={() => handleGenerateInvoice(row)}
-                >
-                  <FileText size={14} />
-                </button>
-              )
-            )}
-          </div>
-        )
+    } catch (err) {
+      showToast.error(err.message, t('error', 'Error'))
+    }
+  }, [hookGenerateInvoice, t])
+
+  const handleDownloadInvoice = useCallback((invoice) => {
+    showToast.info(t('downloadComingSoon', 'Download invoice functionality coming soon'))
+  }, [t])
+
+  const handleCloseForm = useCallback(() => {
+    setEditingOrder(null)
+    setSelectedCustomer(null)
+    setShowOrderForm(false)
+  }, [])
+
+  // Handle confirm dialog action
+  const handleConfirmAction = useCallback(() => {
+    if (confirmDialog.action === 'status') {
+      handleStatusChangeConfirm()
+    } else if (confirmDialog.action === 'delete') {
+      handleDeleteConfirm()
+    }
+  }, [confirmDialog.action, handleStatusChangeConfirm, handleDeleteConfirm])
+
+  // Get confirm dialog content
+  const getConfirmDialogContent = () => {
+    const { order, action, newStatus } = confirmDialog
+
+    if (action === 'status') {
+      return {
+        title: t('confirmStatusChange', 'Confirm Status Change'),
+        message: `${t('changeOrderStatus', 'Change order')} ${order?.orderNumber} ${t('statusFrom', 'status from')} "${STATUS_LABELS[order?.status]}" ${t('to', 'to')} "${STATUS_LABELS[newStatus]}"?`,
+        variant: 'warning',
+        confirmText: t('changeStatus', 'Change Status')
       }
     }
-  ]
 
-  // Remove early return - let DataTable handle loading state with skeleton
+    if (action === 'delete') {
+      return {
+        title: t('confirmDelete', 'Confirm Delete'),
+        message: `${t('deleteOrder', 'Delete order')} ${order?.orderNumber}?\n\n${t('actionCannotBeUndone', 'This action cannot be undone.')}`,
+        variant: 'danger',
+        confirmText: t('delete', 'Delete')
+      }
+    }
+
+    return { title: '', message: '', variant: 'default', confirmText: t('confirm', 'Confirm') }
+  }
+
+  const dialogContent = getConfirmDialogContent()
+
+  // Table columns
+  const salesOrderColumns = getSalesOrderColumns({
+    t,
+    formatDate,
+    onView: handleViewOrder,
+    onEdit: handleEditOrder,
+    onStatusChange: handleStatusChange,
+    onDelete: handleDeleteOrder,
+    onGenerateInvoice: handleGenerateInvoice
+  })
+
+  const invoiceColumns = getInvoiceColumns({
+    t,
+    formatDate,
+    onView: handleViewOrder,
+    onDownload: handleDownloadInvoice
+  })
 
   return (
     <div className="sales-page">
-      {/* Error Display */}
+      {/* Error Banner */}
       {error && (
         <div className="error-banner">
           <AlertTriangle size={16} />
@@ -482,7 +314,7 @@ const Sales = () => {
           <button onClick={() => setError(null)} className="error-close">×</button>
         </div>
       )}
-      
+
       {/* Tab Navigation */}
       <div className="tab-navigation">
         <button
@@ -502,40 +334,8 @@ const Sales = () => {
         </button>
       </div>
 
-      {/* Sales Summary Cards */}
-      <div className="sales-summary">
-        <div className="summary-cards">
-          <div className="summary-card">
-            <div className="summary-icon success">
-              <Banknote size={24} />
-            </div>
-            <div className="summary-info">
-              <p className="summary-value">OMR {(parseFloat(todaysSummary.totalSales) || 0).toFixed(2)}</p>
-              <p className="summary-label">{t('totalSalesToday', 'Total Sales (Today)')}</p>
-            </div>
-          </div>
-
-          <div className="summary-card">
-            <div className="summary-icon primary">
-              <FileText size={24} />
-            </div>
-            <div className="summary-info">
-              <p className="summary-value">{todaysSummary.totalOrders}</p>
-              <p className="summary-label">{t('ordersToday', 'Orders (Today)')}</p>
-            </div>
-          </div>
-
-          <div className="summary-card">
-            <div className="summary-icon warning">
-              <Clock size={24} />
-            </div>
-            <div className="summary-info">
-              <p className="summary-value">{todaysSummary.pendingOrders}</p>
-              <p className="summary-label">{t('pendingOrders', 'Pending Orders')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Summary Cards */}
+      <SalesSummaryCards summary={todaysSummary} t={t} />
 
       {/* Sales Orders Tab */}
       {activeTab === 'orders' && (
@@ -555,13 +355,13 @@ const Sales = () => {
             </button>
           }
           loading={loading}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
+          searchable
+          filterable
+          sortable
+          paginated
+          exportable
           selectable={false}
-          emptyMessage={t('noOrdersFound')}
+          emptyMessage={t('noOrdersFound', 'No orders found')}
           className="sales-orders-table"
           initialPageSize={10}
           initialSearchTerm={urlSearchTerm}
@@ -571,103 +371,16 @@ const Sales = () => {
       {/* Invoices Tab */}
       {activeTab === 'invoices' && (
         <DataTable
-          data={salesOrders.filter(order => order.invoiceNumber)}
-          columns={[
-            {
-              key: 'invoiceNumber',
-              header: t('invoiceNumber'),
-              sortable: true,
-              render: (value) => (
-                <div className="invoice-number">
-                  <FileText size={14} />
-                  <strong>{value}</strong>
-                </div>
-              )
-            },
-            {
-              key: 'orderNumber',
-              header: t('orderNumber'),
-              sortable: true,
-              render: (value) => <span className="text-muted">{value}</span>
-            },
-            {
-              key: 'customerName',
-              header: t('customer'),
-              sortable: true,
-              filterable: true,
-              render: (value, row) => (
-                <div className="customer-info">
-                  <User size={14} />
-                  <span>{value || '-'}</span>
-                </div>
-              )
-            },
-            {
-              key: 'invoiceGeneratedAt',
-              header: t('generatedDate'),
-              type: 'date',
-              sortable: true,
-              render: (value) => {
-                if (!value) return '-'
-                const date = new Date(value)
-                const formattedDate = formatDate ? formatDate(value) : date.toLocaleDateString()
-                return formattedDate + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-              }
-            },
-            {
-              key: 'total',
-              header: t('amount'),
-              type: 'currency',
-              align: 'right',
-              sortable: true,
-              render: (value, row) => {
-                const total = parseFloat(value || row.totalAmount) || 0
-                return `OMR ${total.toFixed(2)}`
-              }
-            },
-            {
-              key: 'status',
-              header: t('orderStatus'),
-              sortable: true,
-              render: (value) => (
-                <span className={`status-badge ${value}`}>
-                  {value.charAt(0).toUpperCase() + value.slice(1)}
-                </span>
-              )
-            },
-            {
-              key: 'actions',
-              header: t('actions'),
-              sortable: false,
-              width: '120px',
-              render: (value, row) => (
-                <div className="cell-actions">
-                  <button
-                    className="btn btn-outline btn-sm"
-                    title={t('view')}
-                    onClick={() => handleViewSalesOrder(row)}
-                  >
-                    <Eye size={14} />
-                  </button>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    title={t('downloadInvoice')}
-                    onClick={() => alert('Download invoice functionality coming soon')}
-                  >
-                    <FileText size={14} />
-                  </button>
-                </div>
-              )
-            }
-          ]}
-          title={t('invoices')}
+          data={filterOrdersWithInvoices(salesOrders)}
+          columns={invoiceColumns}
+          title={t('invoices', 'Invoices')}
           subtitle={t('invoicesSubtitle', 'Generated sales invoices')}
           loading={loading}
-          searchable={true}
-          filterable={true}
-          sortable={true}
-          paginated={true}
-          exportable={true}
+          searchable
+          filterable
+          sortable
+          paginated
+          exportable
           selectable={false}
           emptyMessage={t('noInvoicesYet', 'No invoices generated yet. Generate invoices from confirmed sales orders.')}
           className="invoices-table"
@@ -679,11 +392,7 @@ const Sales = () => {
       {/* Sales Order Form Modal */}
       <SalesOrderForm
         isOpen={showOrderForm}
-        onClose={() => {
-          setEditingOrder(null)      // Clear editing state first
-          setSelectedCustomer(null)  // Clear customer
-          setShowOrderForm(false)    // Close form last
-        }}
+        onClose={handleCloseForm}
         onSave={handleSaveOrder}
         selectedCustomer={selectedCustomer}
         editingOrder={editingOrder}
@@ -694,7 +403,30 @@ const Sales = () => {
         isOpen={!!viewingOrder}
         onClose={() => setViewingOrder(null)}
         orderData={viewingOrder}
-        onEdit={handleEditSalesOrder}
+        onEdit={handleEditOrder}
+        t={t}
+      />
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, order: null, action: null, newStatus: null })}
+        onConfirm={handleConfirmAction}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        variant={dialogContent.variant}
+        confirmText={dialogContent.confirmText}
+        cancelText={t('cancel', 'Cancel')}
+        t={t}
+      />
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        onClose={() => setAlertDialog({ isOpen: false, title: '', message: '', variant: 'error' })}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        variant={alertDialog.variant}
         t={t}
       />
     </div>

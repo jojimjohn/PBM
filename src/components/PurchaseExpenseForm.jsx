@@ -3,9 +3,12 @@ import Modal from './ui/Modal'
 import { useSystemSettings } from '../context/SystemSettingsContext'
 import { useLocalization } from '../context/LocalizationContext'
 import CategorySelect from './expenses/CategorySelect'
+import useExpenseCategories from '../hooks/useExpenseCategories'
+import purchaseOrderExpenseService from '../services/purchaseOrderExpenseService'
 import {
   Plus, Trash2, Save, Calculator, Truck, FileText,
-  Package, Banknote, MapPin, Calendar, Upload, X, Image
+  Package, Banknote, MapPin, Calendar, Upload, X, Image,
+  ChevronDown, ChevronUp, AlertCircle
 } from 'lucide-react'
 import './PurchaseExpenseForm.css'
 
@@ -30,13 +33,20 @@ const PurchaseExpenseForm = ({
   title = "Add Purchase Expenses",
   isEdit = false
 }) => {
-  const { getInputDate, formatCurrency } = useSystemSettings()
+  const { getInputDate, formatCurrency, formatDate } = useSystemSettings()
   const { t } = useLocalization()
-  
+  // Load categories from database for display labels
+  const { getCategoryLabel } = useExpenseCategories('operational')
+
+  // State for existing expenses
+  const [existingExpenses, setExistingExpenses] = useState([])
+  const [loadingExisting, setLoadingExisting] = useState(false)
+  const [showExisting, setShowExisting] = useState(true)
+
   const [formData, setFormData] = useState({
     purchaseOrderId: '',
     expenses: [{
-      category: 'transportation',
+      category: '',  // Will be populated by CategorySelect dropdown
       description: '',
       amount: 0,
       vendor: '',
@@ -79,6 +89,35 @@ const PurchaseExpenseForm = ({
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
 
+  // Fetch existing expenses for this PO when modal opens
+  useEffect(() => {
+    const fetchExistingExpenses = async () => {
+      if (!isOpen || !purchaseOrder?.id) {
+        setExistingExpenses([])
+        return
+      }
+
+      setLoadingExisting(true)
+      try {
+        const result = await purchaseOrderExpenseService.getExpenses(purchaseOrder.id)
+        if (result.success && result.data?.expenses) {
+          setExistingExpenses(result.data.expenses)
+        } else {
+          setExistingExpenses([])
+        }
+      } catch (error) {
+        console.error('Error fetching existing expenses:', error)
+        setExistingExpenses([])
+      } finally {
+        setLoadingExisting(false)
+      }
+    }
+
+    fetchExistingExpenses()
+  }, [isOpen, purchaseOrder?.id])
+
+  // Initialize form when modal opens
+  // Note: getInputDate intentionally excluded from deps to prevent form reset on context changes
   useEffect(() => {
     if (isOpen && purchaseOrder) {
       if (initialData) {
@@ -88,8 +127,8 @@ const PurchaseExpenseForm = ({
           ...prev,
           purchaseOrderId: purchaseOrder.id,
           expenses: [{
-            category: 'transportation',
-            description: `Transportation for PO ${purchaseOrder.orderNumber}`,
+            category: '',  // User selects from CategorySelect dropdown
+            description: `Expense for PO ${purchaseOrder.orderNumber}`,
             amount: 0,
             vendor: '',
             receiptNumber: '',
@@ -100,7 +139,8 @@ const PurchaseExpenseForm = ({
         }))
       }
     }
-  }, [isOpen, purchaseOrder, initialData, getInputDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, purchaseOrder, initialData])
 
   const handleExpenseChange = (index, field, value) => {
     const newExpenses = [...formData.expenses]
@@ -130,7 +170,7 @@ const PurchaseExpenseForm = ({
     setFormData(prev => ({
       ...prev,
       expenses: [...prev.expenses, {
-        category: 'other',
+        category: '',  // User selects from CategorySelect dropdown
         description: '',
         amount: 0,
         vendor: '',
@@ -156,10 +196,14 @@ const PurchaseExpenseForm = ({
     const newErrors = {}
 
     formData.expenses.forEach((expense, index) => {
+      if (!expense.category) {
+        newErrors[`category_${index}`] = 'Category is required'
+      }
+
       if (!expense.description.trim()) {
         newErrors[`description_${index}`] = 'Description is required'
       }
-      
+
       if (!expense.amount || expense.amount <= 0) {
         newErrors[`amount_${index}`] = 'Amount must be greater than 0'
       }
@@ -221,6 +265,70 @@ const PurchaseExpenseForm = ({
           </div>
         )}
 
+        {/* Existing Expenses Section */}
+        {!isEdit && (
+          <div className="existing-expenses-section">
+            <button
+              type="button"
+              className="existing-expenses-toggle"
+              onClick={() => setShowExisting(!showExisting)}
+            >
+              <span className="toggle-label">
+                <AlertCircle size={16} />
+                Existing Expenses ({loadingExisting ? '...' : existingExpenses.length})
+              </span>
+              {showExisting ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+
+            {showExisting && (
+              <div className="existing-expenses-list">
+                {loadingExisting ? (
+                  <div className="loading-expenses">Loading existing expenses...</div>
+                ) : existingExpenses.length === 0 ? (
+                  <div className="no-existing-expenses">
+                    No expenses recorded for this purchase order yet.
+                  </div>
+                ) : (
+                  <>
+                    <div className="existing-expenses-table">
+                      <div className="existing-expense-header-row">
+                        <span>Category</span>
+                        <span>Description</span>
+                        <span>Amount</span>
+                        <span>Date</span>
+                      </div>
+                      {existingExpenses.map((exp, idx) => (
+                        <div key={exp.id || idx} className="existing-expense-row">
+                          <span className="existing-category">
+                            {getCategoryLabel(exp.category)}
+                          </span>
+                          <span className="existing-description" title={exp.description}>
+                            {exp.description?.length > 30
+                              ? exp.description.substring(0, 30) + '...'
+                              : exp.description}
+                          </span>
+                          <span className="existing-amount">
+                            {formatCurrency(exp.amount)}
+                          </span>
+                          <span className="existing-date">
+                            {formatDate(exp.expenseDate)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="existing-expenses-total">
+                      <span>Total Existing Expenses:</span>
+                      <span className="total-amount">
+                        {formatCurrency(existingExpenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0))}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Expense Items */}
         <div className="expense-items">
           <div className="items-header">
@@ -260,9 +368,13 @@ const PurchaseExpenseForm = ({
                     <CategorySelect
                       value={expense.category}
                       onChange={(code) => handleCategoryChange(index, code)}
-                      type="purchase"
+                      type="operational"
                       placeholder={t('selectCategory', 'Select category')}
+                      error={errors[`category_${index}`]}
                     />
+                    {errors[`category_${index}`] && (
+                      <span className="error-text">{errors[`category_${index}`]}</span>
+                    )}
                   </div>
 
                   <div className="field-group">

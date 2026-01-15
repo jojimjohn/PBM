@@ -48,6 +48,7 @@ export const ProjectProvider = ({ children }) => {
   const [selectedProjectId, setSelectedProjectIdState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [initialized, setInitialized] = useState(false); // True when localStorage checked & projects loaded
 
   // Determine if user can view all projects (admin level)
   const canViewAllProjects = useMemo(() => {
@@ -116,6 +117,7 @@ export const ProjectProvider = ({ children }) => {
       setProjects([]);
     } finally {
       setLoading(false);
+      setInitialized(true); // Mark as ready for API calls
     }
   }, [user, selectedCompany, isAuthenticated, canViewAllProjects, selectedProjectId]);
 
@@ -132,6 +134,7 @@ export const ProjectProvider = ({ children }) => {
       setProjects([]);
       setSelectedProjectIdState(null);
       setError(null);
+      setInitialized(false);
     }
   }, [isAuthenticated]);
 
@@ -188,20 +191,46 @@ export const ProjectProvider = ({ children }) => {
     }
   }, [isProjectRequired, selectedProjectId, loading, projects, setSelectedProjectId]);
 
-  // Get query parameter for API calls
+  // Get query parameter for API calls (validates access for non-admins)
   const getProjectQueryParam = useCallback(() => {
     if (!selectedProjectId) return {};
     if (selectedProjectId === 'all') return { project_id: 'all' };
-    return { project_id: selectedProjectId };
-  }, [selectedProjectId]);
 
-  // Build URL with project filter
+    // For admins, return the project_id directly
+    if (canViewAllProjects) {
+      return { project_id: selectedProjectId };
+    }
+
+    // For non-admins, validate they have access before returning
+    const hasAccess = projects.some(p => p.id === selectedProjectId);
+    if (hasAccess) {
+      return { project_id: selectedProjectId };
+    }
+
+    // No access - return empty to let backend filter by user's projects
+    return {};
+  }, [selectedProjectId, canViewAllProjects, projects]);
+
+  // Build URL with project filter (validates access for non-admins)
   const buildFilteredUrl = useCallback((baseUrl) => {
     if (!selectedProjectId || selectedProjectId === 'all') return baseUrl;
 
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}project_id=${selectedProjectId}`;
-  }, [selectedProjectId]);
+    // For admins, add the filter directly
+    if (canViewAllProjects) {
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}project_id=${selectedProjectId}`;
+    }
+
+    // For non-admins, validate access before adding filter
+    const hasAccess = projects.some(p => p.id === selectedProjectId);
+    if (hasAccess) {
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}project_id=${selectedProjectId}`;
+    }
+
+    // No access - return base URL without filter
+    return baseUrl;
+  }, [selectedProjectId, canViewAllProjects, projects]);
 
   // Clear project selection
   const clearSelection = useCallback(() => {
@@ -214,12 +243,31 @@ export const ProjectProvider = ({ children }) => {
     return fetchProjects();
   }, [fetchProjects]);
 
+  // Check if user has access to a specific project ID
+  const hasProjectAccess = useCallback((projectId) => {
+    if (!projectId || projectId === 'all') return true;
+    if (canViewAllProjects) return true;
+    return projects.some(p => p.id === projectId);
+  }, [canViewAllProjects, projects]);
+
+  // Get validated project ID (returns null if user doesn't have access)
+  const getValidatedProjectId = useCallback(() => {
+    if (!selectedProjectId) return null;
+    if (selectedProjectId === 'all') return 'all';
+    if (canViewAllProjects) return selectedProjectId;
+
+    // For non-admins, validate access
+    const hasAccess = projects.some(p => p.id === selectedProjectId);
+    return hasAccess ? selectedProjectId : null;
+  }, [selectedProjectId, canViewAllProjects, projects]);
+
   const value = {
     // State
     projects,
     selectedProjectId,
     selectedProject,
     loading,
+    initialized, // True when localStorage checked & projects loaded - safe to make API calls
     error,
     canViewAllProjects,
     isFiltered,
@@ -233,7 +281,9 @@ export const ProjectProvider = ({ children }) => {
 
     // Helpers
     getProjectQueryParam,
-    buildFilteredUrl
+    buildFilteredUrl,
+    hasProjectAccess,
+    getValidatedProjectId
   };
 
   return (

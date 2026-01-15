@@ -429,16 +429,41 @@ class DataCacheService {
   /**
    * Prefetch transactional data for faster page loads
    * Call this in the background after initial page load
+   * Only fetches data the user has permission to access
+   *
+   * @param {Array<string>} userPermissions - Array of permission strings the user has
    */
-  async prefetchTransactional() {
-    // Fire all requests in parallel - don't wait for completion
-    Promise.all([
-      this.getPurchaseOrders().catch(() => []),
-      this.getPettyCashCards().catch(() => []),
-      this.getCollectionOrders().catch(() => []),
-      this.getRoles().catch(() => []),
-      this.getInventory().catch(() => [])
-    ])
+  async prefetchTransactional(userPermissions = []) {
+    const hasPermission = (perm) => userPermissions.includes(perm)
+
+    // Build list of promises based on user permissions
+    const prefetchPromises = []
+
+    // Purchase orders - requires VIEW_PURCHASE
+    if (hasPermission('VIEW_PURCHASE')) {
+      prefetchPromises.push(this.getPurchaseOrders().catch(() => []))
+      prefetchPromises.push(this.getCollectionOrders().catch(() => []))
+    }
+
+    // Petty cash - requires VIEW_PETTY_CASH or MANAGE_PETTY_CASH
+    if (hasPermission('VIEW_PETTY_CASH') || hasPermission('MANAGE_PETTY_CASH')) {
+      prefetchPromises.push(this.getPettyCashCards().catch(() => []))
+    }
+
+    // Roles - requires VIEW_ROLES or MANAGE_USERS
+    if (hasPermission('VIEW_ROLES') || hasPermission('MANAGE_USERS')) {
+      prefetchPromises.push(this.getRoles().catch(() => []))
+    }
+
+    // Inventory - requires VIEW_INVENTORY
+    if (hasPermission('VIEW_INVENTORY')) {
+      prefetchPromises.push(this.getInventory().catch(() => []))
+    }
+
+    // Fire all permitted requests in parallel - don't wait for completion
+    if (prefetchPromises.length > 0) {
+      Promise.all(prefetchPromises)
+    }
   }
 
   /**

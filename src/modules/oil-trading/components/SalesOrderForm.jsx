@@ -1,3 +1,12 @@
+/**
+ * SalesOrderForm Component
+ *
+ * Refactored to use custom hooks for form state, contract rates, and stock validation.
+ * Uses ConfirmDialog and showToast instead of native browser dialogs.
+ *
+ * @module components/SalesOrderForm
+ */
+
 import React, { useState, useEffect } from 'react'
 import { useLocalization } from '../../../context/LocalizationContext'
 import Modal from '../../../components/ui/Modal'
@@ -7,69 +16,148 @@ import FileViewer from '../../../components/ui/FileViewer'
 import DateInput from '../../../components/ui/DateInput'
 import Autocomplete from '../../../components/ui/Autocomplete'
 import Input, { Textarea } from '../../../components/ui/Input'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog'
+import AlertDialog from '../../../components/ui/AlertDialog'
+import showToast from '../../../components/ui/Toast'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { useTourBroadcast } from '../../../context/TourContext'
 import systemSettingsService from '../../../services/systemSettingsService'
-import inventoryService from '../../../services/inventoryService'
 import customerService from '../../../services/customerService'
 import materialService from '../../../services/materialService'
 import branchService from '../../../services/branchService'
 import uploadService from '../../../services/uploadService'
-import salesOrderService from '../../../services/salesOrderService'
-import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package, Building } from 'lucide-react'
+import { useSalesOrderForm } from '../hooks/useSalesOrderForm'
+import { useSalesContractRates } from '../hooks/useSalesContractRates'
+import { useStockValidation } from '../hooks/useStockValidation'
+import RateOverrideModal from './RateOverrideModal'
+import { Plus, Trash2, AlertTriangle, Check, User, FileText, ChevronDown, ChevronUp, Package } from 'lucide-react'
 import './SalesOrderForm.css'
 
 const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, editingOrder = null }) => {
   const { t } = useLocalization()
   const { getInputDate } = useSystemSettings()
-  
-  const [formData, setFormData] = useState({
-    orderNumber: '',
-    customer: selectedCustomer || null,
-    branch_id: '',
-    orderDate: getInputDate(),
-    deliveryDate: '',
-    items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
-    notes: '',
-    specialInstructions: '',
-    totalAmount: 0,
-    discountPercent: 0,
-    discountAmount: 0,
-    netAmount: 0,
-    status: 'draft' // Order status: draft, confirmed, delivered, cancelled
-  })
+  const { broadcast, isTourActive } = useTourBroadcast()
 
+  // Data loading states
   const [customers, setCustomers] = useState([])
   const [materials, setMaterials] = useState([])
   const [branches, setBranches] = useState([])
-  const [contractRates, setContractRates] = useState({})
-  const [warnings, setWarnings] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingBranches, setLoadingBranches] = useState(false)
-  const [overrideRequests, setOverrideRequests] = useState({})
-  const [showOverrideModal, setShowOverrideModal] = useState(false)
-  const [currentOverride, setCurrentOverride] = useState(null)
+  const [defaultVatRate, setDefaultVatRate] = useState(5)
+
+  // UI states
   const [contractTermsExpanded, setContractTermsExpanded] = useState(false)
-  const [stockInfo, setStockInfo] = useState({}) // Track current stock levels
-  const [defaultVatRate, setDefaultVatRate] = useState(5) // VAT rate from database
-  const [showFIFOPreview, setShowFIFOPreview] = useState(false) // FIFO preview modal
-  const [pendingOrderData, setPendingOrderData] = useState(null) // Order data waiting for FIFO confirmation
-  const [attachments, setAttachments] = useState([]) // S3 attachments
+  const [showFIFOPreview, setShowFIFOPreview] = useState(false)
+  const [pendingOrderData, setPendingOrderData] = useState(null)
+  const [attachments, setAttachments] = useState([])
   const [loadingAttachments, setLoadingAttachments] = useState(false)
 
-  // Tour context broadcast
-  const { broadcast, isTourActive } = useTourBroadcast()
+  // Rate override modal states
+  const [showOverrideModal, setShowOverrideModal] = useState(false)
+  const [currentOverride, setCurrentOverride] = useState(null)
 
+  // Dialog states for file operations
+  const [deleteFileDialog, setDeleteFileDialog] = useState({ isOpen: false, fileId: null })
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: '', message: '', variant: 'error' })
+
+  // Initialize hooks with loaded data
+  const formHook = useSalesOrderForm({
+    editingOrder,
+    selectedCustomer,
+    customers,
+    materials,
+    defaultVatRate
+  })
+
+  const contractRates = useSalesContractRates({ customers, materials })
+
+  const stockValidation = useStockValidation({ materials })
+
+  // Load initial data
   useEffect(() => {
-    // Load customers and materials data first
-    loadCustomersAndMaterials()
-
-    // Load VAT rate from database
-    loadVatRate()
-
-    // Load active branches
-    loadBranches()
+    if (isOpen) {
+      loadCustomersAndMaterials()
+      loadVatRate()
+      loadBranches()
+    }
   }, [isOpen])
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      formHook.reset()
+      contractRates.resetContractState()
+      setAttachments([])
+      setContractTermsExpanded(false)
+    }
+  }, [isOpen])
+
+  // Load contract rates when customer changes
+  useEffect(() => {
+    if (formHook.formData.customer) {
+      contractRates.loadContractRates(formHook.formData.customer.id)
+    } else {
+      contractRates.resetContractState()
+    }
+  }, [formHook.formData.customer?.id])
+
+  // Load S3 attachments when editing
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (isOpen && editingOrder?.id) {
+        setLoadingAttachments(true)
+        try {
+          const result = await uploadService.getSalesOrderAttachments(editingOrder.id)
+          if (result.success) {
+            const mappedFiles = (result.data || []).map(file => ({
+              id: file.id,
+              originalFilename: file.original_filename || file.originalFilename,
+              contentType: file.content_type || file.contentType,
+              fileSize: file.file_size || file.fileSize,
+              downloadUrl: file.download_url || file.downloadUrl
+            }))
+            setAttachments(mappedFiles)
+          } else {
+            setAttachments([])
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error)
+          setAttachments([])
+        } finally {
+          setLoadingAttachments(false)
+        }
+      } else {
+        setAttachments([])
+      }
+    }
+    loadAttachments()
+  }, [isOpen, editingOrder?.id])
+
+  // Tour context broadcast
+  useEffect(() => {
+    if (isTourActive && isOpen) {
+      const validItemCount = formHook.formData.items.filter(item => item.materialId).length
+      const completeItemCount = formHook.formData.items.filter(
+        item => item.materialId && item.quantity && item.rate
+      ).length
+
+      broadcast({
+        formState: {
+          hasCustomer: !!formHook.formData.customer,
+          hasBranch: !!formHook.formData.branch_id,
+          hasOrderDate: !!formHook.formData.orderDate,
+          hasDeliveryDate: !!formHook.formData.deliveryDate,
+          itemCount: validItemCount,
+          completeItemCount: completeItemCount,
+          hasContractRates: Object.keys(contractRates.contractRates).length > 0,
+          hasNotes: !!formHook.formData.notes,
+          isDraft: formHook.formData.status === 'draft',
+          isEdit: !!editingOrder
+        }
+      })
+    }
+  }, [formHook.formData, contractRates.contractRates, isTourActive, isOpen, editingOrder, broadcast])
 
   const loadVatRate = async () => {
     try {
@@ -77,7 +165,6 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       setDefaultVatRate(vatRate)
     } catch (error) {
       console.error('Error loading VAT rate:', error)
-      // Keep default 5% if loading fails
     }
   }
 
@@ -95,452 +182,79 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     }
   }
 
-  // Separate useEffect for populating edit data after customers and materials are loaded
-  useEffect(() => {
-    if (isOpen && editingOrder && customers.length > 0 && materials.length > 0) {
-      // Pre-fill form with existing order data
-      // Handle customer - resolve to customer object from customers array
-      let customerObj = editingOrder.customer
-      if (typeof customerObj === 'string') {
-        // Try to find by name (legacy support)
-        customerObj = customers.find(c => c.name === editingOrder.customer) || null
-      } else if (typeof customerObj === 'object' && customerObj !== null && customerObj.id) {
-        // If it's an object, ensure it's the same reference from customers array for dropdown matching
-        customerObj = customers.find(c => c.id === customerObj.id) || customerObj
-      } else if (editingOrder.customerId) {
-        // If only customerId is provided, find the customer
-        customerObj = customers.find(c => c.id === editingOrder.customerId) || null
-      }
-        
-        // Transform items data to match form structure
-        // Backend returns 'items' array with unitPrice/totalPrice, form uses rate/amount
-        const transformedItems = editingOrder.items ? editingOrder.items.map(item => {
-          // Find material by name if materialId is not present
-          let materialId = item.materialId || ''
-          if (!materialId && item.name && materials.length > 0) {
-            const material = materials.find(m => m.name === item.name)
-            materialId = material ? material.id : ''
-          }
-
-          return {
-            materialId: materialId,
-            quantity: item.quantity || '',
-            rate: item.unitPrice || item.rate || '',
-            amount: item.totalPrice || item.amount || 0
-          }
-        }) : [{ materialId: '', quantity: '', rate: '', amount: 0 }]
-
-        // Calculate delivery date if not provided (default to 7 days from order date)
-        let deliveryDate = editingOrder.deliveryDate || editingOrder.expectedDeliveryDate || ''
-        if (!deliveryDate && (editingOrder.date || editingOrder.orderDate)) {
-          const orderDate = new Date(editingOrder.date || editingOrder.orderDate)
-          orderDate.setDate(orderDate.getDate() + 7) // Add 7 days
-          deliveryDate = orderDate.toISOString().split('T')[0]
-        }
-
-        setFormData({
-          orderNumber: editingOrder.orderNumber || editingOrder.id || '',
-          customer: customerObj,
-          branch_id: editingOrder.branch_id || '',
-          orderDate: (editingOrder.orderDate || editingOrder.date) ? new Date(editingOrder.orderDate || editingOrder.date).toISOString().split('T')[0] : getInputDate(),
-          deliveryDate: deliveryDate,
-          items: transformedItems,
-          notes: editingOrder.notes || 'Order imported from existing data',
-          specialInstructions: editingOrder.specialInstructions || '',
-          totalAmount: editingOrder.subtotal || editingOrder.total || 0,
-          discountPercent: editingOrder.discountPercent || 0,
-          discountAmount: editingOrder.discountAmount || 0,
-          vatRate: editingOrder.vatRate || defaultVatRate,
-          vatAmount: editingOrder.vatAmount || editingOrder.taxAmount || 0,
-          netAmount: editingOrder.totalAmount || editingOrder.total || 0,
-          status: editingOrder.status || 'draft'
-        })
-    }
-  }, [isOpen, editingOrder, customers, materials])
-
-  // Load S3 attachments when editing an existing order
-  useEffect(() => {
-    const loadAttachments = async () => {
-      if (isOpen && editingOrder?.id) {
-        setLoadingAttachments(true)
-        try {
-          const result = await uploadService.getSalesOrderAttachments(editingOrder.id)
-          if (result.success) {
-            // Map backend response to FileViewer format
-            const mappedFiles = (result.data || []).map(file => ({
-              id: file.id,
-              originalFilename: file.original_filename || file.originalFilename,
-              contentType: file.content_type || file.contentType,
-              fileSize: file.file_size || file.fileSize,
-              downloadUrl: file.download_url || file.downloadUrl
-            }))
-            setAttachments(mappedFiles)
-          } else {
-            console.error('Failed to load attachments:', result.error)
-            setAttachments([])
-          }
-        } catch (error) {
-          console.error('Error loading attachments:', error)
-          setAttachments([])
-        } finally {
-          setLoadingAttachments(false)
-        }
-      } else {
-        setAttachments([])
-      }
-    }
-    loadAttachments()
-  }, [isOpen, editingOrder?.id])
-
-  // Generate order number for new orders
-  useEffect(() => {
-    if (isOpen && !editingOrder && !formData.orderNumber) {
-      const orderNum = `SO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
-      setFormData(prev => ({ ...prev, orderNumber: orderNum }))
-    }
-  }, [isOpen, editingOrder, formData.orderNumber])
-
-  // Reset form when modal closes to ensure clean state
-  useEffect(() => {
-    if (!isOpen) {
-      setFormData({
-        orderNumber: '',
-        customer: null,
-        branch_id: '',
-        orderDate: getInputDate(),
-        deliveryDate: '',
-        items: [{ materialId: '', quantity: '', rate: '', amount: 0 }],
-        notes: '',
-        specialInstructions: '',
-        totalAmount: 0,
-        discountPercent: 0,
-        discountAmount: 0,
-        netAmount: 0,
-        status: 'draft'
-      })
-      setWarnings([])
-      setOverrideRequests({})
-      setAttachments([])
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    // Load contract rates when customer changes
-    if (formData.customer) {
-      loadContractRates(formData.customer.id)
-    }
-  }, [formData.customer])
-
-  useEffect(() => {
-    // Recalculate totals when items change
-    calculateTotals()
-  }, [formData.items, formData.discountPercent])
-
-  // Broadcast form state to tour context when tour is active
-  useEffect(() => {
-    if (isTourActive && isOpen) {
-      // Count items that have at least a material selected
-      const validItemCount = formData.items.filter(item => item.materialId).length
-      // Count items that are complete (material, quantity, rate)
-      const completeItemCount = formData.items.filter(
-        item => item.materialId && item.quantity && item.rate
-      ).length
-
-      broadcast({
-        formState: {
-          hasCustomer: !!formData.customer,
-          hasBranch: !!formData.branch_id,
-          hasOrderDate: !!formData.orderDate,
-          hasDeliveryDate: !!formData.deliveryDate,
-          itemCount: validItemCount,
-          completeItemCount: completeItemCount,
-          hasContractRates: Object.keys(contractRates).length > 0,
-          hasNotes: !!formData.notes,
-          isDraft: formData.status === 'draft',
-          isEdit: !!editingOrder
-        }
-      })
-    }
-  }, [formData, contractRates, isTourActive, isOpen, editingOrder, broadcast])
-
   const loadCustomersAndMaterials = async () => {
     try {
-      // Load customers using API service
-      const customersResponse = await customerService.getAll()
-      const companyCustomers = customersResponse.success ? customersResponse.data : []
-      setCustomers(companyCustomers)
+      const [customersResponse, materialsResponse] = await Promise.all([
+        customerService.getAll(),
+        materialService.getAll()
+      ])
 
-      // Load materials using API service
-      const materialsResponse = await materialService.getAll()
+      const companyCustomers = customersResponse.success ? customersResponse.data : []
       const companyMaterials = materialsResponse.success ? materialsResponse.data : []
+
+      setCustomers(companyCustomers)
       setMaterials(companyMaterials)
 
-      // Load current stock information
-      await loadStockInfo(companyMaterials)
+      // Load stock info for all materials
+      await stockValidation.loadAllStock(companyMaterials)
     } catch (error) {
       console.error('Error loading data:', error)
     }
   }
 
-  const loadStockInfo = async (materials) => {
-    try {
-      const stockData = {}
-
-      // Use getBatchStock for accurate FIFO-based stock levels
-      for (const material of materials) {
-        const result = await inventoryService.getBatchStock(material.id)
-        if (result.success && result.data) {
-          const stock = result.data
-          stockData[material.id] = {
-            currentStock: stock.availableQuantity || 0,
-            totalRemaining: stock.totalRemaining || 0,
-            reservedQuantity: stock.reservedQuantity || 0,
-            unit: stock.unit || material.unit,
-            isLowStock: stock.stockStatus === 'low-stock',
-            isOutOfStock: stock.stockStatus === 'out-of-stock',
-            activeBatchCount: stock.activeBatchCount || 0,
-            weightedAvgCost: stock.weightedAvgCost || 0,
-            source: 'inventory_batches' // Indicates FIFO source
-          }
-        } else {
-          // Fallback if batch stock unavailable
-          stockData[material.id] = {
-            currentStock: 0,
-            unit: material.unit,
-            isLowStock: false,
-            isOutOfStock: true,
-            source: 'fallback'
-          }
-        }
-      }
-
-      setStockInfo(stockData)
-    } catch (error) {
-      console.error('Error loading stock information:', error)
-    }
-  }
-
-  // Fetch stock for a single material (for real-time updates)
-  const fetchMaterialStock = async (materialId) => {
-    try {
-      const result = await inventoryService.getBatchStock(materialId)
-      if (result.success && result.data) {
-        const stock = result.data
-        setStockInfo(prev => ({
-          ...prev,
-          [materialId]: {
-            currentStock: stock.availableQuantity || 0,
-            totalRemaining: stock.totalRemaining || 0,
-            reservedQuantity: stock.reservedQuantity || 0,
-            unit: stock.unit,
-            isLowStock: stock.stockStatus === 'low-stock',
-            isOutOfStock: stock.stockStatus === 'out-of-stock',
-            activeBatchCount: stock.activeBatchCount || 0,
-            weightedAvgCost: stock.weightedAvgCost || 0,
-            source: 'inventory_batches'
-          }
-        }))
-      }
-    } catch (error) {
-      console.error('Error fetching material stock:', error)
-    }
-  }
-
-  const loadContractRates = (customerId) => {
-    const customer = customers.find(c => c.id === customerId)
-    if (customer && customer.contractDetails && customer.contractDetails.rates) {
-      setContractRates(customer.contractDetails.rates)
-      
-      // Check contract validity
-      const contract = customer.contractDetails
-      const today = new Date()
-      const endDate = new Date(contract.endDate)
-      
-      if (endDate < today) {
-        setWarnings(prev => [...prev, {
-          type: 'contract_expired',
-          message: `Customer contract expired on ${contract.endDate}. Standard rates will apply.`
-        }])
-      }
-    } else {
-      setContractRates({})
-    }
-  }
-
-  const isContractActive = (materialId) => {
-    const contractInfo = contractRates[materialId]
-    if (!contractInfo) return false
-    
-    // Check if contract has individual expiry dates
-    if (typeof contractInfo === 'object' && contractInfo.endDate) {
-      const today = new Date()
-      const endDate = new Date(contractInfo.endDate)
-      return endDate >= today && contractInfo.status === 'active'
-    }
-    
-    return true // Legacy contracts without expiry are considered active
-  }
-
-  const getEffectiveRate = (materialId) => {
-    const material = materials.find(m => m.id === materialId)
-    if (!material) return 0
-
-    // Check for contract rate first, but only if contract is active
-    if (contractRates[materialId] && isContractActive(materialId)) {
-      const contractInfo = contractRates[materialId]
-      
-      // Handle different contract types
-      if (typeof contractInfo === 'object') {
-        // Enhanced contract with metadata
-        if (contractInfo.type === 'fixed_rate') {
-          // Fixed negotiated rate - only use if contract is active
-          return contractInfo.contractRate
-        } else if (contractInfo.type === 'discount_percentage') {
-          // Discount percentage off current market price
-          const currentMarketPrice = material.standardPrice || 0
-          const discountAmount = (currentMarketPrice * contractInfo.discountPercentage) / 100
-          return Math.max(0, currentMarketPrice - discountAmount)
-        } else if (contractInfo.type === 'minimum_price_guarantee') {
-          // Customer gets lower of market price or contract price
-          return Math.min(material.standardPrice || 0, contractInfo.contractRate)
-        }
-      } else {
-        // Legacy: simple number (fixed rate)
-        return contractInfo
-      }
-    }
-
-    // Fall back to standard rate (no contract or expired contract)
-    return material.standardPrice || 0
-  }
-
   const handleCustomerChange = (customerId) => {
-    // Use type-coercion comparison to handle both string and number IDs
-    const customer = customers.find(c => c.id == customerId)
-    setFormData(prev => ({ ...prev, customer }))
-    setWarnings([]) // Clear previous warnings
+    const customer = formHook.setCustomer(customerId)
+    contractRates.clearAllWarnings()
+    return customer
   }
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...formData.items]
-    newItems[index][field] = value
-
-    // Auto-calculate rate and amount when material changes
     if (field === 'materialId') {
-      const effectiveRate = getEffectiveRate(value)
-      newItems[index].rate = effectiveRate
-      newItems[index].amount = newItems[index].quantity * effectiveRate
+      const rateResult = contractRates.getEffectiveRate(value)
+      formHook.updateItemWithRate(index, value, rateResult.effectiveRate, {
+        isContractRate: rateResult.isContractRate,
+        marketPrice: rateResult.marketPrice
+      })
 
       // Fetch real-time stock for the selected material
       if (value) {
-        fetchMaterialStock(value)
+        stockValidation.fetchMaterialStock(value)
       }
 
-      // Check if using contract rate vs standard rate and show appropriate message
-      const material = materials.find(m => m.id === value)
-      if (material && contractRates[value]) {
-        const contractInfo = contractRates[value]
-        const effectiveRate = getEffectiveRate(value)
-        const marketRate = material.standardPrice || 0
-        
-        // Check if material contract is active or expired
-        const isActive = isContractActive(value)
-        let warningMessage = ''
-        let warningType = 'contract_rate_applied'
-        
-        if (isActive) {
-          // Active contract - rate applied
-          const difference = marketRate - effectiveRate
-          warningMessage = `Contract rate applied for ${material.name}`
-          
-          if (difference < 0) {
-            warningType = 'contract_rate_above_market'
-          }
-        } else {
-          // Expired contract - using standard rate
-          warningMessage = `Contract EXPIRED for ${material.name} - using standard rate`
-          warningType = 'contract_expired'
+      // Add contract rate warning if applicable
+      if (contractRates.hasContractRate(value)) {
+        const rateDetails = contractRates.getRateDetails(value)
+        if (rateDetails.warningType) {
+          contractRates.addWarning({
+            type: rateDetails.warningType,
+            materialId: value,
+            message: rateDetails.description
+          })
         }
-        
-        setWarnings(prev => [...prev.filter(w => w.materialId !== value), {
-          type: warningType,
-          materialId: value,
-          message: warningMessage
-        }])
       }
-    }
-
-    // Handle rate changes with contract enforcement
-    if (field === 'rate') {
-      const materialId = newItems[index].materialId
-      const contractInfo = contractRates[materialId]
-      const isActive = isContractActive(materialId)
+    } else if (field === 'rate') {
+      const materialId = formHook.formData.items[index].materialId
       const newRate = parseFloat(value) || 0
-      const contractRate = getEffectiveRate(materialId)
-      
+      const rateResult = contractRates.getEffectiveRate(materialId)
+
       // Check if trying to change active contracted rate
-      if (contractInfo && isActive && Math.abs(newRate - contractRate) > 0.001) {
-        // Don't allow direct rate change for active contracts - trigger override request
+      if (contractRates.isRateLocked(materialId) &&
+          Math.abs(newRate - rateResult.effectiveRate) > 0.001) {
         setCurrentOverride({
           itemIndex: index,
           materialId,
-          contractRate,
+          contractRate: rateResult.effectiveRate,
           requestedRate: newRate,
           material: materials.find(m => m.id === materialId)
         })
         setShowOverrideModal(true)
-        return // Don't update the rate yet
-      } else {
-        // Allow rate change for expired contracts or non-contracted materials
-        newItems[index].rate = newRate
-        const quantity = parseFloat(newItems[index].quantity) || 0
-        newItems[index].amount = quantity * newRate
+        return
       }
+
+      formHook.updateItem(index, 'rate', newRate)
+    } else {
+      formHook.updateItem(index, field, value)
     }
-
-    // Recalculate amount when quantity changes
-    if (field === 'quantity') {
-      const quantity = parseFloat(value) || 0
-      const rate = parseFloat(newItems[index].rate) || 0
-      newItems[index].amount = quantity * rate
-    }
-
-    setFormData(prev => ({ ...prev, items: newItems }))
-  }
-
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { materialId: '', quantity: '', rate: '', amount: 0 }]
-    }))
-  }
-
-  const removeItem = (index) => {
-    if (formData.items.length === 1) return // Keep at least one item
-    const newItems = formData.items.filter((_, i) => i !== index)
-    setFormData(prev => ({ ...prev, items: newItems }))
-  }
-
-  const calculateTotals = () => {
-    const subtotal = formData.items.reduce((sum, item) => sum + (item.amount || 0), 0)
-    const discountAmount = (subtotal * (formData.discountPercent || 0)) / 100
-    const subtotalAfterDiscount = subtotal - discountAmount
-
-    // Determine VAT rate based on customer taxable status
-    const isTaxable = formData.customer?.is_taxable !== false // Default to taxable if not specified
-    const vatRate = isTaxable ? defaultVatRate : 0
-    const vatAmount = (subtotalAfterDiscount * vatRate) / 100
-
-    const netAmount = subtotalAfterDiscount + vatAmount
-
-    setFormData(prev => ({
-      ...prev,
-      totalAmount: subtotal,
-      discountAmount,
-      vatRate,
-      vatAmount,
-      netAmount
-    }))
   }
 
   const handleOverrideRequest = (reason, approverPassword) => {
@@ -548,104 +262,34 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
     // Simple password check for demo (in real app, this would be proper authentication)
     if (approverPassword !== 'manager123') {
-      alert('Invalid approver credentials')
+      setAlertDialog({
+        isOpen: true,
+        title: t('invalidCredentials', 'Invalid Credentials'),
+        message: t('invalidApproverCredentials', 'The approver credentials are incorrect. Please try again.'),
+        variant: 'error'
+      })
       return
     }
 
-    // Apply the override
-    const newItems = [...formData.items]
-    newItems[currentOverride.itemIndex].rate = currentOverride.requestedRate
-    newItems[currentOverride.itemIndex].amount = 
-      (parseFloat(newItems[currentOverride.itemIndex].quantity) || 0) * currentOverride.requestedRate
+    // Apply the override using hook
+    formHook.applyRateOverride(currentOverride.itemIndex, currentOverride.requestedRate, {
+      reason,
+      originalRate: currentOverride.contractRate,
+      approvedBy: 'Manager',
+      approvedAt: new Date().toISOString()
+    })
 
-    // Track the override
-    setOverrideRequests(prev => ({
-      ...prev,
-      [currentOverride.materialId]: {
-        originalRate: currentOverride.contractRate,
-        overrideRate: currentOverride.requestedRate,
-        reason: reason,
-        approvedBy: 'Manager', // In real app, get from authenticated user
-        approvedAt: new Date().toISOString()
-      }
-    }))
+    // Track override in contract rates
+    contractRates.applyOverride(currentOverride.materialId, {
+      originalRate: currentOverride.contractRate,
+      overrideRate: currentOverride.requestedRate,
+      reason,
+      approvedBy: 'Manager'
+    })
 
-    // Add warning about override
-    setWarnings(prev => [...prev.filter(w => w.materialId !== currentOverride.materialId), {
-      type: 'rate_override_applied',
-      materialId: currentOverride.materialId,
-      message: `Rate overridden: OMR ${currentOverride.requestedRate.toFixed(3)} (was OMR ${currentOverride.contractRate.toFixed(3)}) - ${reason}`
-    }])
-
-    setFormData(prev => ({ ...prev, items: newItems }))
     setShowOverrideModal(false)
     setCurrentOverride(null)
-  }
-
-  const isRateLocked = (materialId) => {
-    return contractRates[materialId] && isContractActive(materialId) && !overrideRequests[materialId]
-  }
-
-  const getDiscountInfo = (materialId) => {
-    const contractInfo = contractRates[materialId]
-    if (contractInfo && typeof contractInfo === 'object' && contractInfo.type === 'discount_percentage') {
-      return {
-        hasDiscount: true,
-        percentage: contractInfo.discountPercentage,
-        description: contractInfo.description
-      }
-    }
-    return { hasDiscount: false }
-  }
-
-  const getDetailedRateInfo = (materialId, rateInfo) => {
-    const material = materials.find(m => m.id === materialId)
-    if (!material) return ''
-    
-    const effectiveRate = getEffectiveRate(materialId)
-    const marketRate = material.standardPrice || 0
-    const isActive = isContractActive(materialId)
-    
-    // If contract is expired, show different message
-    if (!isActive) {
-      if (typeof rateInfo === 'object' && rateInfo.endDate) {
-        return `Contract EXPIRED on ${rateInfo.endDate}. Using standard market rate: OMR ${marketRate.toFixed(3)}. Renewal pending.`
-      }
-      return `Contract expired - using standard market rate: OMR ${marketRate.toFixed(3)}`
-    }
-    
-    // Active contract - show savings information
-    if (typeof rateInfo === 'object') {
-      if (rateInfo.type === 'fixed_rate') {
-        const difference = marketRate - effectiveRate
-        if (difference > 0) {
-          const savings = ((difference / marketRate) * 100).toFixed(1)
-          return `Fixed contract rate: OMR ${effectiveRate.toFixed(3)} (${savings}% savings vs market rate OMR ${marketRate.toFixed(3)}) - Active until ${rateInfo.endDate}`
-        } else if (difference < 0) {
-          const premium = ((Math.abs(difference) / marketRate) * 100).toFixed(1)
-          return `Fixed contract rate: OMR ${effectiveRate.toFixed(3)} (${premium}% above current market rate OMR ${marketRate.toFixed(3)}) - Active until ${rateInfo.endDate}`
-        } else {
-          return `Fixed contract rate: OMR ${effectiveRate.toFixed(3)} (matches current market rate) - Active until ${rateInfo.endDate}`
-        }
-      } else if (rateInfo.type === 'discount_percentage') {
-        return `Contract discount: ${rateInfo.discountPercentage}% off market rate (OMR ${effectiveRate.toFixed(3)} vs OMR ${marketRate.toFixed(3)}) - Active until ${rateInfo.endDate}`
-      } else if (rateInfo.type === 'minimum_price_guarantee') {
-        if (effectiveRate === rateInfo.contractRate) {
-          return `Price guarantee: Using contract rate OMR ${effectiveRate.toFixed(3)} (market: OMR ${marketRate.toFixed(3)}) - Active until ${rateInfo.endDate}`
-        } else {
-          return `Price guarantee: Using market rate OMR ${effectiveRate.toFixed(3)} (contract allows up to OMR ${rateInfo.contractRate.toFixed(3)}) - Active until ${rateInfo.endDate}`
-        }
-      }
-    } else {
-      // Legacy contract handling
-      const difference = marketRate - effectiveRate
-      if (difference > 0) {
-        const savings = ((difference / marketRate) * 100).toFixed(1)
-        return `Fixed contract rate: OMR ${effectiveRate.toFixed(3)} (${savings}% savings vs market rate OMR ${marketRate.toFixed(3)})`
-      }
-    }
-    
-    return `Contract rate: OMR ${effectiveRate.toFixed(3)}`
+    showToast.success(t('rateOverrideApplied', 'Rate override applied successfully'))
   }
 
   const handleSubmit = async (e) => {
@@ -653,88 +297,68 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
     setLoading(true)
 
     try {
-      const isDraft = formData.status === 'draft'
-      const isConfirmed = formData.status === 'confirmed'
+      const isDraft = formHook.formData.status === 'draft'
+      const isConfirmed = formHook.formData.status === 'confirmed'
 
-      // Validate required fields (relaxed for drafts)
-      if (!formData.customer) {
-        throw new Error('Please select a customer')
-      }
-
-      // Only require items for non-draft statuses
-      if (!isDraft && formData.items.some(item => !item.materialId || !item.quantity)) {
-        throw new Error('Please fill in all item details')
+      // Validate form
+      if (!formHook.validate(isDraft)) {
+        throw new Error(formHook.errors.customer || formHook.errors.items || 'Please fill in required fields')
       }
 
       // Stock validation for non-draft orders
       if (!isDraft) {
-        const insufficientItems = formData.items
-          .filter(item => item.materialId && item.quantity)
-          .filter(item => {
-            const stock = stockInfo[item.materialId]
-            return stock && parseFloat(item.quantity) > stock.currentStock
-          })
-          .map(item => {
-            const material = materials.find(m => m.id === item.materialId)
-            const stock = stockInfo[item.materialId]
-            return `${material?.name || 'Unknown'}: Requested ${item.quantity}, Available ${stock?.currentStock || 0} ${stock?.unit || ''}`
-          })
-
-        if (insufficientItems.length > 0) {
-          throw new Error(`Insufficient stock for:\n${insufficientItems.join('\n')}`)
+        const stockResult = stockValidation.validateStock(formHook.formData.items)
+        if (!stockResult.isValid) {
+          throw new Error(`Insufficient stock for:\n${stockResult.errors.join('\n')}`)
         }
       }
 
-      // For drafts: allow items with at least materialId (partial items OK)
-      // For confirmed: require all fields (materialId, quantity, rate)
-      const filteredItems = isDraft
-        ? formData.items.filter(item => item.materialId) // Only need material for drafts
-        : formData.items.filter(item => item.materialId && item.quantity && item.rate) // All fields for confirmed
-
       // Prepare order data
       const orderData = {
-        ...formData,
-        items: filteredItems,
-        id: `order_${Date.now()}`,
-        status: formData.status,
+        ...formHook.getCleanData(),
+        id: editingOrder?.id || `order_${Date.now()}`,
         createdAt: new Date().toISOString(),
         createdBy: 'current_user',
-        contractInfo: formData.customer.contractDetails ? {
-          contractId: formData.customer.contractDetails.contractId,
-          ratesApplied: filteredItems.map(item => ({
+        contractInfo: formHook.formData.customer?.contractDetails ? {
+          contractId: formHook.formData.customer.contractDetails.contractId,
+          ratesApplied: formHook.getCleanData().items.map(item => ({
             materialId: item.materialId,
-            contractRate: contractRates[item.materialId] || null,
+            contractRate: contractRates.contractRates[item.materialId] || null,
             standardRate: materials.find(m => m.id === item.materialId)?.standardPrice || 0,
-            appliedRate: item.rate
+            appliedRate: item.unitPrice
           }))
         } : null
       }
 
       // For confirmed orders, show FIFO preview before submitting
-      if (isConfirmed && filteredItems.length > 0) {
+      if (isConfirmed && formHook.hasValidItems) {
         setPendingOrderData(orderData)
         setShowFIFOPreview(true)
         setLoading(false)
-        return // Wait for FIFO confirmation
+        return
       }
 
       await onSave(orderData)
+      showToast.success(editingOrder ? t('orderUpdated', 'Order updated successfully') : t('orderCreated', 'Order created successfully'))
       onClose()
     } catch (error) {
       console.error('Error creating sales order:', error)
-      alert(error.message)
+      setAlertDialog({
+        isOpen: true,
+        title: t('error', 'Error'),
+        message: error.message,
+        variant: 'error'
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle FIFO preview confirmation
   const handleFIFOConfirm = async (fifoData) => {
     setShowFIFOPreview(false)
     setLoading(true)
 
     try {
-      // Add FIFO preview data to the order for reference
       const orderWithFIFO = {
         ...pendingOrderData,
         fifoPreview: {
@@ -749,30 +373,81 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       }
 
       await onSave(orderWithFIFO)
+      showToast.success(editingOrder ? t('orderUpdated', 'Order updated successfully') : t('orderCreated', 'Order created successfully'))
       setPendingOrderData(null)
       onClose()
     } catch (error) {
       console.error('Error saving order after FIFO confirmation:', error)
-      alert(error.message)
+      setAlertDialog({
+        isOpen: true,
+        title: t('error', 'Error'),
+        message: error.message,
+        variant: 'error'
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle FIFO preview cancellation
   const handleFIFOCancel = () => {
     setShowFIFOPreview(false)
     setPendingOrderData(null)
+  }
+
+  // File operations with dialogs
+  const handleFileUpload = async (files) => {
+    try {
+      const result = await uploadService.uploadMultipleToS3('sales-orders', editingOrder.id, files)
+      if (result.success) {
+        const attachmentsResult = await uploadService.getSalesOrderAttachments(editingOrder.id)
+        if (attachmentsResult.success) {
+          const mappedFiles = (attachmentsResult.data || []).map(file => ({
+            id: file.id,
+            originalFilename: file.original_filename || file.originalFilename,
+            contentType: file.content_type || file.contentType,
+            fileSize: file.file_size || file.fileSize,
+            downloadUrl: file.download_url || file.downloadUrl
+          }))
+          setAttachments(mappedFiles)
+        }
+        showToast.success(t('filesUploaded', 'Files uploaded successfully'))
+      } else {
+        showToast.error(t('uploadFailed', 'Failed to upload files') + ': ' + result.error)
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      showToast.error(t('uploadFailed', 'Failed to upload files') + ': ' + error.message)
+    }
+  }
+
+  const handleFileDeleteConfirm = async () => {
+    const fileId = deleteFileDialog.fileId
+    setDeleteFileDialog({ isOpen: false, fileId: null })
+
+    try {
+      const result = await uploadService.deleteSalesOrderAttachment(editingOrder.id, fileId)
+      if (result.success) {
+        setAttachments(prev => prev.filter(f => f.id !== fileId))
+        showToast.success(t('fileDeleted', 'File deleted successfully'))
+      } else {
+        showToast.error(t('deleteFailed', 'Failed to delete file') + ': ' + result.error)
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      showToast.error(t('deleteFailed', 'Failed to delete file') + ': ' + error.message)
+    }
   }
 
   if (!isOpen) {
     return null
   }
 
+  const { formData } = formHook
+
   return (
     <Modal
       isOpen={isOpen}
-      title={editingOrder ? 'Edit Sales Order' : 'Create Sales Order'}
+      title={editingOrder ? t('editSalesOrder', 'Edit Sales Order') : t('createSalesOrder', 'Create Sales Order')}
       onClose={onClose}
       className="modal-xxl"
       closeOnOverlayClick={false}
@@ -784,7 +459,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={18} style={{ color: '#1976d2' }} />
             <span style={{ color: '#1565c0' }}>
-              <strong>Draft Mode:</strong> You can save with minimal information (Customer only). Additional details can be added later.
+              <strong>{t('draftMode', 'Draft Mode')}:</strong> {t('draftModeInfo', 'You can save with minimal information (Customer only). Additional details can be added later.')}
             </span>
           </div>
         )}
@@ -793,46 +468,46 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         <div className="form-section">
           <div className="form-section-title">
             <FileText size={20} />
-            Order Information
+            {t('orderInformation', 'Order Information')}
           </div>
           <div className="form-grid">
             <div className="form-group">
               <Input
-                label="Order Number"
+                label={t('orderNumber', 'Order Number')}
                 type="text"
                 value={formData.orderNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, orderNumber: e.target.value }))}
+                onChange={(e) => formHook.setField('orderNumber', e.target.value)}
                 required
                 readOnly
               />
             </div>
             <div className="form-group">
               <DateInput
-                label="Order Date"
+                label={t('orderDate', 'Order Date')}
                 value={formData.orderDate || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, orderDate: value || '' }))}
+                onChange={(value) => formHook.setField('orderDate', value || '')}
                 required
               />
             </div>
             <div className="form-group">
               <DateInput
-                label="Expected Delivery Date"
+                label={t('expectedDeliveryDate', 'Expected Delivery Date')}
                 value={formData.deliveryDate || ''}
-                onChange={(value) => setFormData(prev => ({ ...prev, deliveryDate: value || '' }))}
+                onChange={(value) => formHook.setField('deliveryDate', value || '')}
                 minDate={formData.orderDate || ''}
               />
             </div>
             <div className="form-group">
               <Autocomplete
-                label="Order Status"
+                label={t('orderStatus', 'Order Status')}
                 options={[
-                  { value: 'draft', label: 'Draft' },
-                  { value: 'confirmed', label: 'Confirmed' },
-                  { value: 'delivered', label: 'Delivered' },
-                  { value: 'cancelled', label: 'Cancelled' }
+                  { value: 'draft', label: t('draft', 'Draft') },
+                  { value: 'confirmed', label: t('confirmed', 'Confirmed') },
+                  { value: 'delivered', label: t('delivered', 'Delivered') },
+                  { value: 'cancelled', label: t('cancelled', 'Cancelled') }
                 ]}
                 value={formData.status}
-                onChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                onChange={(value) => formHook.setField('status', value)}
                 searchable={false}
               />
             </div>
@@ -843,24 +518,24 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         <div className="form-section">
           <div className="form-section-title">
             <User size={20} />
-            Customer Details
-            {formData.customer && formData.customer.contractDetails && (
+            {t('customerDetails', 'Customer Details')}
+            {formData.customer?.contractDetails && (
               <span className="contract-indicator">
                 <Check size={16} />
-                Contract Customer
+                {t('contractCustomer', 'Contract Customer')}
               </span>
             )}
           </div>
           <div className="form-grid">
             <div className="form-group">
               <Autocomplete
-                label="Select Customer"
+                label={t('selectCustomer', 'Select Customer')}
                 options={customers}
                 value={formData.customer?.id || null}
                 onChange={(customerId) => handleCustomerChange(customerId)}
                 getOptionLabel={(customer) => customer ? `${customer.name} (${customer.type.replace('_', ' ').toUpperCase()})` : ''}
                 getOptionValue={(customer) => customer?.id || ''}
-                placeholder="Choose a customer..."
+                placeholder={t('chooseCustomer', 'Choose a customer...')}
                 searchable
                 required
                 loading={loading && customers.length === 0}
@@ -870,18 +545,18 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
             <div className="form-group">
               <Autocomplete
-                label={`Branch ${formData.status !== 'draft' ? '*' : ''}`}
+                label={`${t('branch', 'Branch')} ${formData.status !== 'draft' ? '*' : ''}`}
                 options={branches}
                 value={formData.branch_id || null}
-                onChange={(branchId) => setFormData(prev => ({ ...prev, branch_id: branchId }))}
+                onChange={(branchId) => formHook.setField('branch_id', branchId)}
                 getOptionLabel={(branch) => branch ? `${branch.name} (${branch.code})` : ''}
                 getOptionValue={(branch) => branch?.id || ''}
-                placeholder="Select Branch..."
+                placeholder={t('selectBranch', 'Select Branch...')}
                 searchable
                 required={formData.status !== 'draft'}
                 disabled={loadingBranches}
                 loading={loadingBranches}
-                helperText={loadingBranches ? 'Loading branches...' : null}
+                helperText={loadingBranches ? t('loadingBranches', 'Loading branches...') : null}
               />
             </div>
 
@@ -889,7 +564,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               <>
                 <div className="form-group">
                   <Input
-                    label="Contact Person"
+                    label={t('contactPerson', 'Contact Person')}
                     type="text"
                     value={formData.customer.contactPerson || 'N/A'}
                     readOnly
@@ -897,7 +572,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 </div>
                 <div className="form-group">
                   <Input
-                    label="Phone"
+                    label={t('phone', 'Phone')}
                     type="text"
                     value={formData.customer.contact?.phone || 'N/A'}
                     readOnly
@@ -909,61 +584,60 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         </div>
 
         {/* Contract Terms Display - Collapsible */}
-        {formData.customer && formData.customer.contractDetails && (
+        {formData.customer?.contractDetails && (
           <div className="form-section contract-terms-display">
-            <div 
-              className="form-section-title clickable" 
+            <div
+              className="form-section-title clickable"
               onClick={() => setContractTermsExpanded(!contractTermsExpanded)}
             >
               <Check size={20} />
-              Active Contract Terms
+              {t('activeContractTerms', 'Active Contract Terms')}
               <div className="contract-header-right">
                 <span className="contract-status-badge active">
-                  Valid until {formData.customer.contractDetails.endDate}
+                  {t('validUntil', 'Valid until')} {formData.customer.contractDetails.endDate}
                 </span>
                 {contractTermsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               </div>
             </div>
-            
+
             {contractTermsExpanded && (
               <div className="contract-summary">
                 <div className="contract-info-grid">
                   <div className="contract-detail">
-                    <label>Contract ID:</label>
+                    <label>{t('contractId', 'Contract ID')}:</label>
                     <span>{formData.customer.contractDetails.contractId}</span>
                   </div>
                   <div className="contract-detail">
-                    <label>Status:</label>
+                    <label>{t('status', 'Status')}:</label>
                     <span className={`status-badge ${formData.customer.contractDetails.status}`}>
                       {formData.customer.contractDetails.status.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
                 </div>
-                
+
                 {formData.customer.contractDetails.specialTerms && (
                   <div className="special-terms">
-                    <label>Special Terms:</label>
+                    <label>{t('specialTerms', 'Special Terms')}:</label>
                     <p>{formData.customer.contractDetails.specialTerms}</p>
                   </div>
                 )}
-                
+
                 <div className="material-rates-summary">
-                  <h4>Contract Rates:</h4>
+                  <h4>{t('contractRates', 'Contract Rates')}:</h4>
                   <div className="rates-compact">
                     {Object.entries(formData.customer.contractDetails.rates || {}).map(([materialId, rateInfo]) => {
                       const material = materials.find(m => m.id === materialId)
                       if (!material) return null
-                      
-                      const detailedInfo = getDetailedRateInfo(materialId, rateInfo)
-                      
-                      const isActive = isContractActive(materialId)
+
+                      const rateDetails = contractRates.getRateDetails(materialId)
+                      const isActive = contractRates.isContractActive(materialId)
                       const statusClass = isActive ? 'active' : 'expired'
-                      
+
                       return (
-                        <div 
-                          key={materialId} 
+                        <div
+                          key={materialId}
                           className={`rate-compact-item ${statusClass}`}
-                          title={detailedInfo}
+                          title={rateDetails?.description || ''}
                         >
                           <span className="material-name">{material.name}</span>
                           <div className="rate-info">
@@ -977,7 +651,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                               <span className="rate-badge fixed_rate">OMR {rateInfo.toFixed(3)}</span>
                             )}
                             <span className={`status-indicator ${statusClass}`}>
-                              {isActive ? 'ACTIVE' : 'EXPIRED'}
+                              {isActive ? t('active', 'ACTIVE') : t('expired', 'EXPIRED')}
                             </span>
                           </div>
                         </div>
@@ -991,9 +665,9 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         )}
 
         {/* Warnings */}
-        {warnings.length > 0 && (
+        {contractRates.warnings.length > 0 && (
           <div className="warnings-section">
-            {warnings.map((warning, index) => (
+            {contractRates.warnings.map((warning, index) => (
               <div key={index} className={`warning-item ${warning.type}`}>
                 <AlertTriangle size={16} />
                 <span>{warning.message}</span>
@@ -1006,38 +680,40 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         <div className="form-section" data-tour="so-items-section">
           <div className="form-section-title">
             <div className="title-with-action">
-              <span>Order Items</span>
+              <span>{t('orderItems', 'Order Items')}</span>
               <button
                 type="button"
                 className="btn btn-outline btn-small"
-                onClick={addItem}
+                onClick={formHook.addItem}
               >
                 <Plus size={16} />
-                Add Item
+                {t('addItem', 'Add Item')}
               </button>
             </div>
           </div>
-          
+
           <div className="items-table">
             <div className="items-header">
-              <span>Material</span>
-              <span>Quantity</span>
-              <span>Unit</span>
-              <span>Rate (OMR)</span>
-              <span>Amount (OMR)</span>
-              <span>Actions</span>
+              <span>{t('material', 'Material')}</span>
+              <span>{t('quantity', 'Quantity')}</span>
+              <span>{t('unit', 'Unit')}</span>
+              <span>{t('rateOMR', 'Rate (OMR)')}</span>
+              <span>{t('amountOMR', 'Amount (OMR)')}</span>
+              <span>{t('actions', 'Actions')}</span>
             </div>
-            
+
             {formData.items.map((item, index) => {
               const selectedMaterial = materials.find(m => m.id === item.materialId)
-              const hasContractRate = contractRates[item.materialId]
-              const rateLocked = isRateLocked(item.materialId)
-              const discountInfo = getDiscountInfo(item.materialId)
-              const isOverridden = overrideRequests[item.materialId]
+              const hasContractRate = contractRates.hasContractRate(item.materialId)
+              const rateLocked = contractRates.isRateLocked(item.materialId)
+              const discountInfo = contractRates.getDiscountInfo(item.materialId)
+              const isOverridden = item.isOverridden
               const isDraft = formData.status === 'draft'
+              const stock = stockValidation.getStockForMaterial(item.materialId)
+              const stockWarning = stockValidation.getStockWarning(item.materialId, item.quantity)
 
               return (
-                <div key={index} className="item-row">
+                <div key={item.tempId || index} className="item-row">
                   <div className="item-field material-autocomplete-field">
                     <Autocomplete
                       options={materials}
@@ -1045,18 +721,18 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       onChange={(materialId) => handleItemChange(index, 'materialId', materialId)}
                       getOptionLabel={(material) => {
                         if (!material) return ''
-                        const stock = stockInfo[material.id]
-                        const stockDisplay = stock ? `(Stock: ${stock.currentStock} ${stock.unit})` : '(Stock: N/A)'
+                        const matStock = stockValidation.getStockForMaterial(material.id)
+                        const stockDisplay = matStock ? `(Stock: ${matStock.currentStock} ${matStock.unit})` : '(Stock: N/A)'
                         return `${material.name} ${stockDisplay}`
                       }}
                       getOptionValue={(material) => material?.id || ''}
-                      placeholder="Select material..."
+                      placeholder={t('selectMaterial', 'Select material...')}
                       searchable
                       required={!isDraft}
                       size="small"
                     />
                   </div>
-                  
+
                   <div className="item-field">
                     <input
                       type="number"
@@ -1067,43 +743,43 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       step="0.001"
                       required={!isDraft}
                     />
-                    {/* Stock validation display - Real-time from FIFO batch system */}
-                    {item.materialId && stockInfo[item.materialId] && (
+                    {/* Stock validation display */}
+                    {item.materialId && stock && (
                       <div className="stock-info">
-                        {stockInfo[item.materialId].isOutOfStock || stockInfo[item.materialId].currentStock <= 0 ? (
+                        {stock.isOutOfStock || stock.currentStock <= 0 ? (
                           <div className="stock-error">
                             <AlertTriangle size={14} />
-                            <span>Out of stock!</span>
+                            <span>{t('outOfStock', 'Out of stock!')}</span>
                           </div>
-                        ) : parseFloat(item.quantity) > stockInfo[item.materialId].currentStock ? (
+                        ) : stockWarning?.type === 'error' ? (
                           <div className="stock-warning">
                             <AlertTriangle size={14} />
                             <span>
-                              Insufficient! Available: {stockInfo[item.materialId].currentStock.toFixed(3)} {stockInfo[item.materialId].unit}
-                              {formData.status !== 'draft' && <strong> (Cannot submit)</strong>}
+                              {t('insufficient', 'Insufficient!')} {t('available', 'Available')}: {stock.currentStock.toFixed(3)} {stock.unit}
+                              {formData.status !== 'draft' && <strong> ({t('cannotSubmit', 'Cannot submit')})</strong>}
                             </span>
                           </div>
-                        ) : stockInfo[item.materialId].isLowStock ? (
+                        ) : stock.isLowStock ? (
                           <div className="stock-low">
                             <Package size={14} />
-                            <span>Low stock: {stockInfo[item.materialId].currentStock.toFixed(3)} {stockInfo[item.materialId].unit}</span>
+                            <span>{t('lowStock', 'Low stock')}: {stock.currentStock.toFixed(3)} {stock.unit}</span>
                           </div>
                         ) : (
                           <div className="stock-ok">
                             <Check size={14} />
-                            <span>Available: {stockInfo[item.materialId].currentStock.toFixed(3)} {stockInfo[item.materialId].unit}</span>
+                            <span>{t('available', 'Available')}: {stock.currentStock.toFixed(3)} {stock.unit}</span>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="item-field">
                     <span className="unit-display">
                       {selectedMaterial ? selectedMaterial.unit : '-'}
                     </span>
                   </div>
-                  
+
                   <div className="item-field rate-field">
                     <input
                       type="number"
@@ -1115,34 +791,34 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       required={!isDraft}
                       readOnly={rateLocked}
                       className={rateLocked ? 'locked-rate' : ''}
-                      title={rateLocked ? 'Contract rate is locked. Attempt to change will require manager approval.' : ''}
+                      title={rateLocked ? t('contractRateLocked', 'Contract rate is locked. Attempt to change will require manager approval.') : ''}
                     />
                     {hasContractRate && (
                       <div className="contract-indicators">
                         <span className={`contract-rate-indicator ${isOverridden ? 'overridden' : ''}`}>
-                          {isOverridden ? 'Rate Overridden' : 'Contract Rate'}
+                          {isOverridden ? t('rateOverridden', 'Rate Overridden') : t('contractRate', 'Contract Rate')}
                           {rateLocked && <span className="lock-icon">🔒</span>}
                         </span>
                         {discountInfo.hasDiscount && (
                           <span className="discount-indicator">
-                            {discountInfo.percentage}% Discount Applied
+                            {discountInfo.percentage}% {t('discountApplied', 'Discount Applied')}
                           </span>
                         )}
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="item-field">
                     <span className="amount-display">
-                      {item.amount.toFixed(3)}
+                      {(parseFloat(item.amount) || 0).toFixed(3)}
                     </span>
                   </div>
-                  
+
                   <div className="item-field">
                     <button
                       type="button"
                       className="btn btn-outline btn-small"
-                      onClick={() => removeItem(index)}
+                      onClick={() => formHook.removeItem(index)}
                       disabled={formData.items.length === 1}
                     >
                       <Trash2 size={14} />
@@ -1158,16 +834,16 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         <div className="form-section">
           <div className="totals-section">
             <div className="totals-row">
-              <label>Subtotal:</label>
+              <label>{t('subtotal', 'Subtotal')}:</label>
               <span>OMR {formData.totalAmount.toFixed(3)}</span>
             </div>
             <div className="totals-row">
               <label>
-                Discount:
+                {t('discount', 'Discount')}:
                 <input
                   type="number"
                   value={formData.discountPercent}
-                  onChange={(e) => setFormData(prev => ({ ...prev, discountPercent: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => formHook.setField('discountPercent', parseFloat(e.target.value) || 0)}
                   placeholder="0"
                   min="0"
                   max="100"
@@ -1180,12 +856,12 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             </div>
             {formData.vatAmount > 0 && (
               <div className="totals-row">
-                <label>VAT ({formData.vatRate}%):</label>
+                <label>{t('vat', 'VAT')} ({formData.vatRate}%):</label>
                 <span>OMR {formData.vatAmount.toFixed(3)}</span>
               </div>
             )}
             <div className="totals-row total-row">
-              <label>Total Amount:</label>
+              <label>{t('totalAmount', 'Total Amount')}:</label>
               <span>OMR {formData.netAmount.toFixed(3)}</span>
             </div>
           </div>
@@ -1193,23 +869,23 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Additional Information */}
         <div className="form-section">
-          <div className="form-section-title">Additional Information</div>
+          <div className="form-section-title">{t('additionalInformation', 'Additional Information')}</div>
           <div className="form-grid">
             <div className="form-group full-width">
               <Textarea
-                label="Order Notes"
+                label={t('orderNotes', 'Order Notes')}
                 value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Any notes or comments about this order..."
+                onChange={(e) => formHook.setField('notes', e.target.value)}
+                placeholder={t('orderNotesPlaceholder', 'Any notes or comments about this order...')}
                 rows={3}
               />
             </div>
             <div className="form-group full-width">
               <Textarea
-                label="Special Instructions"
+                label={t('specialInstructions', 'Special Instructions')}
                 value={formData.specialInstructions}
-                onChange={(e) => setFormData(prev => ({ ...prev, specialInstructions: e.target.value }))}
-                placeholder="Special delivery or handling instructions..."
+                onChange={(e) => formHook.setField('specialInstructions', e.target.value)}
+                placeholder={t('specialInstructionsPlaceholder', 'Special delivery or handling instructions...')}
                 rows={2}
               />
             </div>
@@ -1219,65 +895,24 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         {/* Attachments - Only in edit mode */}
         {editingOrder?.id && (
           <div className="form-section">
-            <div className="form-section-title">Attachments</div>
+            <div className="form-section-title">{t('attachments', 'Attachments')}</div>
 
-            {/* Upload new files */}
             <FileUpload
               mode="multiple"
               accept=".pdf,.jpg,.jpeg,.png"
               maxSize={5242880}
               maxFiles={10}
-              onUpload={async (files) => {
-                try {
-                  const result = await uploadService.uploadMultipleToS3('sales-orders', editingOrder.id, files)
-                  if (result.success) {
-                    // Reload attachments from S3
-                    const attachmentsResult = await uploadService.getSalesOrderAttachments(editingOrder.id)
-                    if (attachmentsResult.success) {
-                      const mappedFiles = (attachmentsResult.data || []).map(file => ({
-                        id: file.id,
-                        originalFilename: file.original_filename || file.originalFilename,
-                        contentType: file.content_type || file.contentType,
-                        fileSize: file.file_size || file.fileSize,
-                        downloadUrl: file.download_url || file.downloadUrl
-                      }))
-                      setAttachments(mappedFiles)
-                    }
-                    alert('Files uploaded successfully')
-                  } else {
-                    alert('Failed to upload files: ' + result.error)
-                  }
-                } catch (error) {
-                  console.error('Upload error:', error)
-                  alert('Failed to upload files: ' + error.message)
-                }
-              }}
-              existingFiles={[]} // FileViewer handles existing files display
+              onUpload={handleFileUpload}
+              existingFiles={[]}
             />
 
-            {/* Display existing attachments */}
             {loadingAttachments ? (
-              <div className="attachments-loading">Loading attachments...</div>
+              <div className="attachments-loading">{t('loadingAttachments', 'Loading attachments...')}</div>
             ) : attachments.length > 0 ? (
               <FileViewer
                 files={attachments}
-                onDelete={async (fileId) => {
-                  if (!window.confirm('Are you sure you want to delete this file?')) return
-                  try {
-                    const result = await uploadService.deleteSalesOrderAttachment(editingOrder.id, fileId)
-                    if (result.success) {
-                      setAttachments(prev => prev.filter(f => f.id !== fileId))
-                      alert('File deleted successfully')
-                    } else {
-                      alert('Failed to delete file: ' + result.error)
-                    }
-                  } catch (error) {
-                    console.error('Delete error:', error)
-                    alert('Failed to delete file: ' + error.message)
-                  }
-                }}
+                onDelete={(fileId) => setDeleteFileDialog({ isOpen: true, fileId })}
                 onRefreshUrl={async (fileId) => {
-                  // Refresh presigned URL when it expires
                   const result = await uploadService.getSalesOrderAttachments(editingOrder.id)
                   if (result.success) {
                     const file = result.data.find(f => f.id === fileId)
@@ -1290,7 +925,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 canDelete={true}
               />
             ) : (
-              <div className="empty-state text-sm">{t('noAttachments')}</div>
+              <div className="empty-state text-sm">{t('noAttachments', 'No attachments')}</div>
             )}
           </div>
         )}
@@ -1298,7 +933,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         {/* Form Actions */}
         <div className="form-actions">
           <button type="button" className="btn btn-outline" onClick={onClose}>
-            Cancel
+            {t('cancel', 'Cancel')}
           </button>
           <button
             type="submit"
@@ -1306,93 +941,24 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             disabled={loading}
             data-tour="so-submit-button"
           >
-            {loading ? (editingOrder ? 'Updating Order...' : 'Creating Order...') : (editingOrder ? 'Update Sales Order' : 'Create Sales Order')}
+            {loading
+              ? (editingOrder ? t('updatingOrder', 'Updating Order...') : t('creatingOrder', 'Creating Order...'))
+              : (editingOrder ? t('updateSalesOrder', 'Update Sales Order') : t('createSalesOrder', 'Create Sales Order'))}
           </button>
         </div>
       </form>
 
       {/* Rate Override Modal */}
-      {showOverrideModal && currentOverride && (
-        <div className="override-modal-backdrop">
-          <div className="override-modal">
-            <div className="override-modal-header">
-              <div className="override-icon">
-                <Shield size={24} />
-              </div>
-              <h3>Rate Override Required</h3>
-              <p>Manager approval needed to change contracted rate</p>
-            </div>
-            
-            <div className="override-details">
-              <div className="override-item">
-                <label>Material:</label>
-                <span>{currentOverride.material?.name}</span>
-              </div>
-              <div className="override-item">
-                <label>Contract Rate:</label>
-                <span className="contract-rate">OMR {currentOverride.contractRate.toFixed(3)}</span>
-              </div>
-              <div className="override-item">
-                <label>Requested Rate:</label>
-                <span className="requested-rate">OMR {currentOverride.requestedRate.toFixed(3)}</span>
-              </div>
-              <div className="override-item">
-                <label>Difference:</label>
-                <span className={currentOverride.requestedRate > currentOverride.contractRate ? 'increase' : 'decrease'}>
-                  {currentOverride.requestedRate > currentOverride.contractRate ? '+' : ''}
-                  OMR {(currentOverride.requestedRate - currentOverride.contractRate).toFixed(3)}
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const formData = new FormData(e.target)
-              handleOverrideRequest(formData.get('reason'), formData.get('password'))
-            }}>
-              <div className="override-form">
-                <div className="form-group">
-                  <Textarea
-                    label="Reason for Override"
-                    name="reason"
-                    placeholder="Please provide justification for rate change..."
-                    required
-                    rows={3}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <Input
-                    label="Manager Password"
-                    type="password"
-                    name="password"
-                    placeholder="Enter manager password"
-                    required
-                  />
-                  <small>Demo password: manager123</small>
-                </div>
-              </div>
-
-              <div className="override-actions">
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => {
-                    setShowOverrideModal(false)
-                    setCurrentOverride(null)
-                  }}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-warning">
-                  <Shield size={16} />
-                  Approve Override
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <RateOverrideModal
+        isOpen={showOverrideModal}
+        override={currentOverride}
+        onApprove={handleOverrideRequest}
+        onCancel={() => {
+          setShowOverrideModal(false)
+          setCurrentOverride(null)
+        }}
+        t={t}
+      />
 
       {/* FIFO Preview Modal */}
       <FIFOPreviewModal
@@ -1402,10 +968,33 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         items={pendingOrderData?.items?.filter(item => item.materialId).map(item => ({
           materialId: parseInt(item.materialId, 10),
           quantity: parseFloat(item.quantity) || 0,
-          unitPrice: parseFloat(item.rate) || 0
+          unitPrice: parseFloat(item.unitPrice) || 0
         })) || []}
         branchId={pendingOrderData?.branch_id ? parseInt(pendingOrderData.branch_id, 10) : null}
         formatCurrency={(val) => `${parseFloat(val || 0).toFixed(3)} OMR`}
+      />
+
+      {/* File Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteFileDialog.isOpen}
+        onClose={() => setDeleteFileDialog({ isOpen: false, fileId: null })}
+        onConfirm={handleFileDeleteConfirm}
+        title={t('confirmDelete', 'Confirm Delete')}
+        message={t('deleteFileConfirmation', 'Are you sure you want to delete this file? This action cannot be undone.')}
+        variant="danger"
+        confirmText={t('delete', 'Delete')}
+        cancelText={t('cancel', 'Cancel')}
+        t={t}
+      />
+
+      {/* Alert Dialog for Errors */}
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        onClose={() => setAlertDialog({ isOpen: false, title: '', message: '', variant: 'error' })}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        variant={alertDialog.variant}
+        t={t}
       />
     </Modal>
   )

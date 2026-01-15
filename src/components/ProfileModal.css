@@ -276,3 +276,144 @@
 [dir="rtl"] .profile-form .modal-actions {
   flex-direction: row-reverse;
 }
+
+/* Security Tab Content */
+.security-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.security-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.security-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ds-text-primary, #1a1a2e);
+  margin: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ds-border, #e2e8f0);
+}
+
+/* MFA Status Card - leverages design-system entity-card pattern */
+.mfa-status-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--ds-radius-lg, 8px);
+  cursor: pointer;
+  transition: all var(--ds-transition, 150ms);
+  border: 1px solid var(--ds-border, #e2e8f0);
+  background: var(--ds-surface, #fff);
+}
+
+.mfa-status-card:hover {
+  border-color: var(--ds-accent, #3b82f6);
+}
+
+.mfa-status-card:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.mfa-status-card.enabled {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.mfa-status-card.disabled {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.mfa-status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ds-radius-md, 6px);
+  flex-shrink: 0;
+}
+
+.mfa-status-card.enabled .mfa-status-icon {
+  background: var(--ds-success, #10b981);
+  color: white;
+}
+
+.mfa-status-card.disabled .mfa-status-icon {
+  background: var(--ds-warning, #f59e0b);
+  color: white;
+}
+
+.mfa-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.mfa-status-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ds-text-primary, #0f172a);
+}
+
+.mfa-status-description {
+  font-size: 0.75rem;
+  color: var(--ds-text-muted, #64748b);
+  line-height: 1.4;
+}
+
+.mfa-chevron {
+  color: var(--ds-text-faint, #94a3b8);
+  flex-shrink: 0;
+  transition: transform var(--ds-transition, 150ms);
+}
+
+.mfa-status-card:hover .mfa-chevron {
+  transform: translateX(4px);
+  color: var(--ds-text-secondary, #475569);
+}
+
+/* MFA Setup Container */
+.mfa-setup-container {
+  margin: -0.5rem;
+}
+
+.mfa-setup-container .mfa-setup-modal {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.mfa-setup-container .mfa-modal-header {
+  padding: 0 0 1rem 0;
+  border-bottom: 1px solid var(--ds-border, #e2e8f0);
+  margin-bottom: 1rem;
+}
+
+.mfa-setup-container .mfa-modal-content {
+  padding: 0;
+}
+
+/* RTL Support for MFA */
+[dir="rtl"] .mfa-status-card {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .mfa-chevron {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .mfa-status-card:hover .mfa-chevron {
+  transform: rotate(180deg) translateX(4px);
+}

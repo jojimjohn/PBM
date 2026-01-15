@@ -23,6 +23,138 @@
   font-size: 0.9rem;
 }
 
+/* Existing Expenses Section */
+.existing-expenses-section {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.existing-expenses-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fef3c7;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: #92400e;
+  transition: background 0.2s;
+}
+
+.existing-expenses-toggle:hover {
+  background: #fde68a;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.existing-expenses-list {
+  background: #fffbeb;
+  border-top: 1px solid #fcd34d;
+}
+
+.loading-expenses,
+.no-existing-expenses {
+  padding: 1.5rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.no-existing-expenses {
+  color: #059669;
+}
+
+.existing-expenses-table {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.existing-expense-header-row,
+.existing-expense-row {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.85rem;
+}
+
+.existing-expense-header-row {
+  background: #fef3c7;
+  font-weight: 600;
+  color: #92400e;
+  position: sticky;
+  top: 0;
+}
+
+.existing-expense-row {
+  border-bottom: 1px solid #fde68a;
+  color: #374151;
+}
+
+.existing-expense-row:last-child {
+  border-bottom: none;
+}
+
+.existing-category {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.existing-description {
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.existing-amount {
+  font-weight: 600;
+  color: #059669;
+  text-align: right;
+}
+
+.existing-date {
+  color: #64748b;
+  text-align: right;
+}
+
+.existing-expenses-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fef3c7;
+  border-top: 1px solid #fcd34d;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.existing-expenses-total .total-amount {
+  font-size: 1rem;
+  color: #059669;
+}
+
+/* Responsive for existing expenses */
+@media (max-width: 768px) {
+  .existing-expense-header-row,
+  .existing-expense-row {
+    grid-template-columns: 1fr 2fr 1fr;
+  }
+
+  .existing-expense-header-row span:last-child,
+  .existing-expense-row span:last-child {
+    display: none;
+  }
+}
+
 .expense-items {
   margin-bottom: 1.5rem;
 }
@@ -188,6 +320,7 @@
   transition: all 0.2s;
   text-decoration: none;
   background: none;
+  white-space: nowrap;
 }
 
 .btn:disabled {
@@ -373,6 +506,9 @@
 
 .remove-receipt-btn {
   margin-top: 0.5rem;
+  min-width: fit-content;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
 }
 
 /* Receipt Upload Responsive */

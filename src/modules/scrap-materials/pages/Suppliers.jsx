@@ -1009,312 +1009,212 @@ const SupplierFormModal = ({
 }
 
 // Supplier View Modal Component
-const SupplierViewModal = ({ 
-  isOpen, 
+const SupplierViewModal = ({
+  isOpen,
   onClose,
-  onEdit, 
-  supplier, 
-  supplierTypes, 
-  supplierStatuses, 
-  formatCurrency, 
+  onEdit,
+  supplier,
+  supplierTypes,
+  supplierStatuses,
+  formatCurrency,
   formatDate,
-  t 
+  t
 }) => {
   return (
-    <Modal 
+    <Modal
       isOpen={isOpen}
-      title={`${supplier.name} - Supplier Details`}
+      title=""
       onClose={onClose}
-      className="modal-xl supplier-details-modal"
+      className="ds-form-modal ds-modal-lg"
     >
-      <div className="supplier-view-professional">
-        {/* Professional Header Section */}
-        <div className="supplier-header-section">
-          <div className="supplier-main-info">
-            <div className="supplier-avatar-large" style={{ backgroundColor: '#6366f1' }}>
-              {supplier.name.substring(0, 2).toUpperCase()}
-            </div>
-            <div className="supplier-identity">
-              <h2 className="supplier-name-large">{supplier.name}</h2>
-              <div className="supplier-meta">
-                <span className="supplier-code-badge">{supplier.code || 'N/A'}</span>
-                <span className="supplier-type-badge">{supplier.businessRegistration ? 'Business' : 'Individual'}</span>
-                <span 
-                  className="supplier-status-professional"
-                  style={{ backgroundColor: supplier.isActive ? '#10b981' : '#ef4444' }}
-                >
-                  {supplier.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
+      {/* Header Section */}
+      <div className="modal-header">
+        <div className="cell-row">
+          <div className="avatar avatar-xl primary">
+            {supplier.name.substring(0, 2).toUpperCase()}
+          </div>
+          <div className="cell-info">
+            <h3 className="modal-title">{supplier.name}</h3>
+            <div className="flex-row">
+              <code className="cell-code accent">{supplier.code || 'N/A'}</code>
+              <span className="type-badge">
+                {supplier.businessRegistration ? 'Business' : 'Individual'}
+              </span>
+              <span className={`status-badge ${supplier.isActive ? 'active' : 'inactive'}`}>
+                {supplier.isActive ? '● Active' : '○ Inactive'}
+              </span>
             </div>
           </div>
-          
-          {/* Key Performance Metrics */}
-          <div className="supplier-kpi-cards">
-            <div className="kpi-card primary">
-              <div className="kpi-icon">
-                <Package size={20} />
-              </div>
-              <div className="kpi-content">
-                <span className="kpi-value">0</span>
-                <span className="kpi-label">KG/Month</span>
-              </div>
+        </div>
+        <div className="cell-actions">
+          <button className="btn-icon-action secondary" onClick={onEdit} title="Edit Supplier">
+            <Edit size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="modal-body">
+        {/* Contact Information */}
+        <div className="ds-form-section">
+          <div className="ds-form-section-title">
+            <Phone size={16} /> Contact Information
+          </div>
+          <div className="ds-form-grid two-col">
+            <div className="ds-form-group">
+              <label className="ds-form-label">Contact Person</label>
+              <div className="cell-text">{supplier.contactPerson || 'Not specified'}</div>
             </div>
-            <div className="kpi-card success">
-              <div className="kpi-icon">
-                <Banknote size={20} />
-              </div>
-              <div className="kpi-content">
-                <span className="kpi-value">{formatCurrency(0)}</span>
-                <span className="kpi-label">Total Value</span>
-              </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Phone Number</label>
+              <div className="cell-text">{supplier.phone || supplier.contactPhone || supplier.contact_phone || 'Not provided'}</div>
             </div>
-            <div className="kpi-card info">
-              <div className="kpi-icon">
-                <TrendingUp size={20} />
-              </div>
-              <div className="kpi-content">
-                <span className="kpi-value">0%</span>
-                <span className="kpi-label">Reliability</span>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Email Address</label>
+              <div className="cell-text">{supplier.email || supplier.contactEmail || supplier.contact_email || 'Not provided'}</div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">{t('vatRegistrationNumber')}</label>
+              <div className="cell-text">{supplier.vatRegistration || supplier.vatRegistrationNumber || supplier.vat_registration || 'Not provided'}</div>
+            </div>
+            <div className="ds-form-group full-width">
+              <label className="ds-form-label">Physical Address</label>
+              <div className="cell-text">
+                {supplier.address || supplier.physical_address || 'Not provided'}
+                {supplier.city && `, ${supplier.city}`}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Professional Information Grid */}
-        <div className="supplier-info-grid">
-          {/* Contact Information Card */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <Phone size={18} />
-              <h3>Contact Information</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="info-row">
-                <span className="info-label">Contact Person</span>
-                <span className="info-value">{supplier.contactPerson || 'Not specified'}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Phone Number</span>
-                <span className="info-value">
-                  {supplier.phone || supplier.contactPhone || supplier.contact_phone || 'Not provided'}
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Email Address</span>
-                <span className="info-value">
-                  {supplier.email || supplier.contactEmail || supplier.contact_email || 'Not provided'}
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">{t('vatRegistrationNumber')}</span>
-                <span className="info-value">
-                  {supplier.vatRegistration || supplier.vatRegistrationNumber || supplier.vat_registration || 'Not provided'}
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Physical Address</span>
-                <span className="info-value">
-                  {supplier.address || supplier.physical_address || 'Not provided'}
-                </span>
-              </div>
-              {supplier.city && (
-                <div className="info-row">
-                  <span className="info-label">City</span>
-                  <span className="info-value">{supplier.city}</span>
-                </div>
-              )}
-            </div>
+        {/* Business Information */}
+        <div className="ds-form-section">
+          <div className="ds-form-section-title">
+            <Building size={16} /> Business Information
           </div>
-
-          {/* Business Information Card */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <Building size={18} />
-              <h3>Business Information</h3>
+          <div className="ds-form-grid two-col">
+            <div className="ds-form-group">
+              <label className="ds-form-label">Supplier Type</label>
+              <div className="cell-text">{supplier.businessRegistration ? 'Business' : 'Individual'}</div>
             </div>
-            <div className="info-card-content">
-              <div className="info-row">
-                <span className="info-label">Supplier Type</span>
-                <span className="info-value">{supplier.businessRegistration ? 'Business' : 'Individual'}</span>
+            {supplier.businessRegistration && (
+              <div className="ds-form-group">
+                <label className="ds-form-label">Business Registration</label>
+                <div className="cell-text">{supplier.businessRegistration}</div>
               </div>
-              {supplier.businessRegistration && (
-                <div className="info-row">
-                  <span className="info-label">Business Registration</span>
-                  <span className="info-value">{supplier.businessRegistration}</span>
-                </div>
-              )}
-              <div className="info-row">
-                <span className="info-label">Payment Terms</span>
-                <span className="info-value">{supplier.paymentTermDays || 0} days</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Tax Number</span>
-                <span className="info-value">{supplier.taxNumber || 'Not provided'}</span>
-              </div>
+            )}
+            <div className="ds-form-group">
+              <label className="ds-form-label">Payment Terms</label>
+              <div className="cell-text">{supplier.paymentTermDays || 0} days</div>
             </div>
-          </div>
-
-          {/* Specialization & Areas Card */}
-          <div className="info-card full-width">
-            <div className="info-card-header">
-              <Package size={18} />
-              <h3>Specialization & Service Areas</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="info-row">
-                <span className="info-label">Material Specialization</span>
-                <div className="specialization-professional">
-                  {supplier.specialization ? (
-                    supplier.specialization.split(',').map((spec, index) => (
-                      <span key={index} className="spec-badge-professional">
-                        {spec.trim().replace('_', ' ').toUpperCase()}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="info-value">Not specified</span>
-                  )}
-                </div>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Collection Areas</span>
-                <span className="info-value">{'Managed via supplier locations'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Performance Metrics Card */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <TrendingUp size={18} />
-              <h3>Performance Metrics</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="metrics-grid">
-                <div className="metric-item">
-                  <span className="metric-value">0%</span>
-                  <span className="metric-label">Reliability Score</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-value">0%</span>
-                  <span className="metric-label">Quality Rating</span>
-                </div>
-                <div className="metric-item">
-                  <span className="metric-value">{formatCurrency(0)}</span>
-                  <span className="metric-label">Average Rate</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Purchase History Card */}
-          <div className="info-card">
-            <div className="info-card-header">
-              <Calendar size={18} />
-              <h3>Purchase History</h3>
-            </div>
-            <div className="info-card-content">
-              <div className="info-row">
-                <span className="info-label">Total Transactions</span>
-                <span className="info-value">0</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Total Purchase Value</span>
-                <span className="info-value">{formatCurrency(0)}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Total Material Weight</span>
-                <span className="info-value">0 KG</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">Last Purchase Date</span>
-                <span className="info-value">Not available</span>
-              </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Tax Number</label>
+              <div className="cell-text">{supplier.taxNumber || 'Not provided'}</div>
             </div>
           </div>
         </div>
 
-        {/* Additional Information - Only show if available */}
+        {/* Specialization */}
+        <div className="ds-form-section">
+          <div className="ds-form-section-title">
+            <Package size={16} /> Specialization & Service Areas
+          </div>
+          <div className="ds-form-grid two-col">
+            <div className="ds-form-group">
+              <label className="ds-form-label">Material Specialization</label>
+              <div className="flex-row flex-wrap">
+                {supplier.specialization ? (
+                  supplier.specialization.split(',').map((spec, index) => (
+                    <span key={index} className="type-badge">
+                      {spec.trim().replace('_', ' ').toUpperCase()}
+                    </span>
+                  ))
+                ) : (
+                  <span className="cell-text-secondary">Not specified</span>
+                )}
+              </div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Collection Areas</label>
+              <div className="cell-text-secondary">Managed via supplier locations</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Performance & Purchase History */}
+        <div className="ds-form-section">
+          <div className="ds-form-section-title">
+            <TrendingUp size={16} /> Performance & Purchase History
+          </div>
+          <div className="ds-form-grid three-col">
+            <div className="ds-form-group">
+              <label className="ds-form-label">Reliability Score</label>
+              <div className="cell-text">0%</div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Quality Rating</label>
+              <div className="cell-text">0%</div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Average Rate</label>
+              <div className="cell-text">{formatCurrency(0)}</div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Total Transactions</label>
+              <div className="cell-text">0</div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Total Purchase Value</label>
+              <div className="cell-text text-success font-semibold">{formatCurrency(0)}</div>
+            </div>
+            <div className="ds-form-group">
+              <label className="ds-form-label">Total Material Weight</label>
+              <div className="cell-text">0 KG</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Banking Information - Only show if available */}
         {(supplier.bankName || supplier.accountNumber || supplier.iban) && (
-          <div className="additional-info-section">
-            {false && (
-              <div className="info-card">
-                <div className="info-card-header">
-                  <Award size={18} />
-                  <h3>Contract Information</h3>
-                </div>
-                <div className="info-card-content">
-                  <div className="info-row">
-                    <span className="info-label">Contract ID</span>
-                    <span className="info-value">{supplier.contractDetails.contractId}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Contract Period</span>
-                    <span className="info-value">
-                      {formatDate(supplier.contractDetails.startDate)} - {formatDate(supplier.contractDetails.endDate)}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Contract Status</span>
-                    <span className={`contract-status-badge ${supplier.contractDetails.status}`}>
-                      {supplier.contractDetails.status.toUpperCase()}
-                    </span>
-                  </div>
-                  {supplier.contractDetails.specialTerms && (
-                    <div className="info-row">
-                      <span className="info-label">Special Terms</span>
-                      <span className="info-value">{supplier.contractDetails.specialTerms}</span>
-                    </div>
-                  )}
-                </div>
+          <div className="ds-form-section">
+            <div className="ds-form-section-title">
+              <Banknote size={16} /> Banking Information
+            </div>
+            <div className="ds-form-grid three-col">
+              <div className="ds-form-group">
+                <label className="ds-form-label">Bank Name</label>
+                <div className="cell-text">{supplier.bankName || 'Not provided'}</div>
               </div>
-            )}
-
-            {(supplier.bankName || supplier.accountNumber || supplier.iban) && (
-              <div className="info-card">
-                <div className="info-card-header">
-                  <Banknote size={18} />
-                  <h3>Banking Information</h3>
-                </div>
-                <div className="info-card-content">
-                  <div className="info-row">
-                    <span className="info-label">Bank Name</span>
-                    <span className="info-value">{supplier.bankName || 'Not provided'}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Account Number</span>
-                    <span className="info-value">{supplier.accountNumber || 'Not provided'}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">IBAN</span>
-                    <span className="info-value">{supplier.iban || 'Not provided'}</span>
-                  </div>
-                </div>
+              <div className="ds-form-group">
+                <label className="ds-form-label">Account Number</label>
+                <div className="cell-text">{supplier.accountNumber || 'Not provided'}</div>
               </div>
-            )}
+              <div className="ds-form-group">
+                <label className="ds-form-label">IBAN</label>
+                <div className="cell-text">{supplier.iban || 'Not provided'}</div>
+              </div>
+            </div>
           </div>
         )}
+      </div>
 
-        {/* Professional Action Footer */}
-        <div className="supplier-actions-footer">
-          <div className="actions-left">
-            <span className="last-updated">
-              Last updated: {formatDate(supplier.updated_at || supplier.created_at)}
-            </span>
-          </div>
-          <div className="actions-right">
-            <button className="btn btn-outline" onClick={onClose}>
-              Close
-            </button>
-            <button className="btn btn-primary" onClick={onEdit}>
-              <Edit size={16} />
-              Edit Supplier
-            </button>
-            <button className="btn btn-success">
-              <Plus size={16} />
-              New Purchase Order
-            </button>
-          </div>
+      {/* Footer */}
+      <div className="modal-footer">
+        <span className="cell-text-secondary">
+          Last updated: {formatDate(supplier.updated_at || supplier.created_at)}
+        </span>
+        <div className="flex-row">
+          <button className="btn btn-outline" onClick={onClose}>
+            Close
+          </button>
+          <button className="btn btn-primary" onClick={onEdit}>
+            <Edit size={16} />
+            Edit Supplier
+          </button>
+          <button className="btn btn-success">
+            <Plus size={16} />
+            New Purchase Order
+          </button>
         </div>
       </div>
     </Modal>

@@ -10,6 +10,7 @@ import { useLocalization } from '../context/LocalizationContext'
 import { useAuth } from '../context/AuthContext'
 import authService from '../services/authService'
 import Modal from './ui/Modal'
+import MFASetup from './MFASetup'
 import {
   User,
   Key,
@@ -20,7 +21,12 @@ import {
   RefreshCw,
   Lock,
   Mail,
-  Save
+  Save,
+  Shield,
+  ShieldCheck,
+  ShieldOff,
+  ChevronRight,
+  AtSign
 } from 'lucide-react'
 import './ProfileModal.css'
 
@@ -55,6 +61,24 @@ const ProfileModal = ({ isOpen, onClose }) => {
     confirm: false
   })
 
+  // MFA state
+  const [showMfaSetup, setShowMfaSetup] = useState(false)
+  const [mfaStatus, setMfaStatus] = useState(null)
+  const [mfaLoading, setMfaLoading] = useState(false)
+
+  // Load MFA status
+  const loadMfaStatus = async () => {
+    setMfaLoading(true)
+    try {
+      const status = await authService.getMfaStatus()
+      setMfaStatus(status)
+    } catch (err) {
+      console.error('Failed to load MFA status:', err)
+    } finally {
+      setMfaLoading(false)
+    }
+  }
+
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen && user) {
@@ -75,6 +99,10 @@ const ProfileModal = ({ isOpen, onClose }) => {
       setPasswordErrors({})
       setPasswordMessage(null)
       setActiveTab('info')
+      setShowMfaSetup(false)
+
+      // Load MFA status
+      loadMfaStatus()
     }
   }, [isOpen, user])
 
@@ -249,6 +277,21 @@ const ProfileModal = ({ isOpen, onClose }) => {
               </div>
             )}
 
+            {/* Username (Read-only) */}
+            <div className="form-group">
+              <label htmlFor="username">
+                <AtSign size={16} />
+                {t('username', 'Username')}
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={user?.username ? `@${user.username}` : ''}
+                disabled
+                className="readonly-input"
+              />
+            </div>
+
             {/* Email (Read-only) */}
             <div className="form-group">
               <label htmlFor="email">
@@ -329,150 +372,219 @@ const ProfileModal = ({ isOpen, onClose }) => {
           </form>
         )}
 
-        {/* Security Tab (Password Change) */}
+        {/* Security Tab */}
         {activeTab === 'security' && (
-          <form onSubmit={handlePasswordSubmit} className="profile-form">
-            {passwordMessage && (
-              <div className={`message-banner ${passwordMessage.type}`}>
-                {passwordMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-                {passwordMessage.text}
-              </div>
-            )}
-
-            {/* Current Password */}
-            <div className="form-group">
-              <label htmlFor="currentPassword">
-                <Lock size={16} />
-                {t('currentPassword', 'Current Password')}
-              </label>
-              <div className="password-input">
-                <input
-                  type={showPasswords.current ? 'text' : 'password'}
-                  id="currentPassword"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  disabled={passwordLoading}
-                  className={passwordErrors.currentPassword ? 'error' : ''}
-                  autoComplete="current-password"
+          <div className="security-tab-content">
+            {showMfaSetup ? (
+              /* MFA Setup Modal View */
+              <div className="mfa-setup-container">
+                <MFASetup
+                  onClose={() => {
+                    setShowMfaSetup(false)
+                    loadMfaStatus()
+                  }}
+                  onStatusChange={(enabled) => {
+                    setMfaStatus(prev => ({ ...prev, enabled }))
+                  }}
                 />
-                <button
-                  type="button"
-                  className="toggle-visibility"
-                  onClick={() => togglePasswordVisibility('current')}
-                  tabIndex={-1}
-                >
-                  {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
               </div>
-              {passwordErrors.currentPassword && <span className="error-text">{passwordErrors.currentPassword}</span>}
-            </div>
-
-            {/* New Password */}
-            <div className="form-group">
-              <label htmlFor="newPassword">
-                <Key size={16} />
-                {t('newPassword', 'New Password')}
-              </label>
-              <div className="password-input">
-                <input
-                  type={showPasswords.new ? 'text' : 'password'}
-                  id="newPassword"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  disabled={passwordLoading}
-                  className={passwordErrors.newPassword ? 'error' : ''}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  className="toggle-visibility"
-                  onClick={() => togglePasswordVisibility('new')}
-                  tabIndex={-1}
-                >
-                  {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {passwordErrors.newPassword && <span className="error-text">{passwordErrors.newPassword}</span>}
-
-              {/* Password Strength Indicator */}
-              {passwordData.newPassword && (
-                <div className="password-strength">
-                  <div className="strength-bar">
-                    <div
-                      className="strength-fill"
-                      style={{
-                        width: `${passwordStrength}%`,
-                        backgroundColor: passwordStrength < 40 ? '#ef4444' : passwordStrength < 80 ? '#f59e0b' : '#22c55e'
-                      }}
-                    />
-                  </div>
-                  <div className="strength-checks">
-                    <span className={checks.minLength ? 'valid' : 'invalid'}>8+ chars</span>
-                    <span className={checks.hasUppercase ? 'valid' : 'invalid'}>A-Z</span>
-                    <span className={checks.hasLowercase ? 'valid' : 'invalid'}>a-z</span>
-                    <span className={checks.hasNumber ? 'valid' : 'invalid'}>0-9</span>
-                    <span className={checks.hasSpecial ? 'valid' : 'invalid'}>@$!%*?&</span>
+            ) : (
+              /* Security Settings Overview */
+              <>
+                {/* Two-Factor Authentication Section */}
+                <div className="security-section">
+                  <h4 className="security-section-title">
+                    <Shield size={18} />
+                    {t('twoFactorAuthentication', 'Two-Factor Authentication')}
+                  </h4>
+                  <div
+                    className={`mfa-status-card ${mfaStatus?.enabled ? 'enabled' : 'disabled'}`}
+                    onClick={() => setShowMfaSetup(true)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && setShowMfaSetup(true)}
+                  >
+                    <div className="mfa-status-icon">
+                      {mfaLoading ? (
+                        <RefreshCw size={24} className="spinning" />
+                      ) : mfaStatus?.enabled ? (
+                        <ShieldCheck size={24} />
+                      ) : (
+                        <ShieldOff size={24} />
+                      )}
+                    </div>
+                    <div className="mfa-status-info">
+                      <span className="mfa-status-label">
+                        {mfaLoading
+                          ? t('loading', 'Loading...')
+                          : mfaStatus?.enabled
+                            ? t('mfaEnabled', 'MFA Enabled')
+                            : t('mfaDisabled', 'MFA Disabled')
+                        }
+                      </span>
+                      <span className="mfa-status-description">
+                        {mfaStatus?.enabled
+                          ? t('mfaEnabledDescription', 'Your account is protected with two-factor authentication')
+                          : t('mfaDisabledDescription', 'Add an extra layer of security to your account')
+                        }
+                      </span>
+                    </div>
+                    <ChevronRight size={20} className="mfa-chevron" />
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Confirm Password */}
-            <div className="form-group">
-              <label htmlFor="confirmPassword">
-                <Key size={16} />
-                {t('confirmPassword', 'Confirm Password')}
-              </label>
-              <div className="password-input">
-                <input
-                  type={showPasswords.confirm ? 'text' : 'password'}
-                  id="confirmPassword"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  disabled={passwordLoading}
-                  className={passwordErrors.confirmPassword ? 'error' : ''}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  className="toggle-visibility"
-                  onClick={() => togglePasswordVisibility('confirm')}
-                  tabIndex={-1}
-                >
-                  {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {passwordErrors.confirmPassword && <span className="error-text">{passwordErrors.confirmPassword}</span>}
-            </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={onClose}
-                disabled={passwordLoading}
-              >
-                {t('cancel', 'Cancel')}
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={passwordLoading}
-              >
-                {passwordLoading ? (
-                  <>
-                    <RefreshCw size={16} className="spinning" />
-                    {t('changing', 'Changing...')}
-                  </>
-                ) : (
-                  <>
-                    <Key size={16} />
+                {/* Change Password Section */}
+                <div className="security-section">
+                  <h4 className="security-section-title">
+                    <Key size={18} />
                     {t('changePassword', 'Change Password')}
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+                  </h4>
+                  <form onSubmit={handlePasswordSubmit} className="profile-form">
+                    {passwordMessage && (
+                      <div className={`message-banner ${passwordMessage.type}`}>
+                        {passwordMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+                        {passwordMessage.text}
+                      </div>
+                    )}
+
+                    {/* Current Password */}
+                    <div className="form-group">
+                      <label htmlFor="currentPassword">
+                        <Lock size={16} />
+                        {t('currentPassword', 'Current Password')}
+                      </label>
+                      <div className="password-input">
+                        <input
+                          type={showPasswords.current ? 'text' : 'password'}
+                          id="currentPassword"
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                          disabled={passwordLoading}
+                          className={passwordErrors.currentPassword ? 'error' : ''}
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          className="toggle-visibility"
+                          onClick={() => togglePasswordVisibility('current')}
+                          tabIndex={-1}
+                        >
+                          {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      {passwordErrors.currentPassword && <span className="error-text">{passwordErrors.currentPassword}</span>}
+                    </div>
+
+                    {/* New Password */}
+                    <div className="form-group">
+                      <label htmlFor="newPassword">
+                        <Key size={16} />
+                        {t('newPassword', 'New Password')}
+                      </label>
+                      <div className="password-input">
+                        <input
+                          type={showPasswords.new ? 'text' : 'password'}
+                          id="newPassword"
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                          disabled={passwordLoading}
+                          className={passwordErrors.newPassword ? 'error' : ''}
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          className="toggle-visibility"
+                          onClick={() => togglePasswordVisibility('new')}
+                          tabIndex={-1}
+                        >
+                          {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      {passwordErrors.newPassword && <span className="error-text">{passwordErrors.newPassword}</span>}
+
+                      {/* Password Strength Indicator */}
+                      {passwordData.newPassword && (
+                        <div className="password-strength">
+                          <div className="strength-bar">
+                            <div
+                              className="strength-fill"
+                              style={{
+                                width: `${passwordStrength}%`,
+                                backgroundColor: passwordStrength < 40 ? '#ef4444' : passwordStrength < 80 ? '#f59e0b' : '#22c55e'
+                              }}
+                            />
+                          </div>
+                          <div className="strength-checks">
+                            <span className={checks.minLength ? 'valid' : 'invalid'}>8+ chars</span>
+                            <span className={checks.hasUppercase ? 'valid' : 'invalid'}>A-Z</span>
+                            <span className={checks.hasLowercase ? 'valid' : 'invalid'}>a-z</span>
+                            <span className={checks.hasNumber ? 'valid' : 'invalid'}>0-9</span>
+                            <span className={checks.hasSpecial ? 'valid' : 'invalid'}>@$!%*?&</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="form-group">
+                      <label htmlFor="confirmPassword">
+                        <Key size={16} />
+                        {t('confirmPassword', 'Confirm Password')}
+                      </label>
+                      <div className="password-input">
+                        <input
+                          type={showPasswords.confirm ? 'text' : 'password'}
+                          id="confirmPassword"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                          disabled={passwordLoading}
+                          className={passwordErrors.confirmPassword ? 'error' : ''}
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          className="toggle-visibility"
+                          onClick={() => togglePasswordVisibility('confirm')}
+                          tabIndex={-1}
+                        >
+                          {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      {passwordErrors.confirmPassword && <span className="error-text">{passwordErrors.confirmPassword}</span>}
+                    </div>
+
+                    <div className="modal-actions">
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        onClick={onClose}
+                        disabled={passwordLoading}
+                      >
+                        {t('cancel', 'Cancel')}
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={passwordLoading}
+                      >
+                        {passwordLoading ? (
+                          <>
+                            <RefreshCw size={16} className="spinning" />
+                            {t('changing', 'Changing...')}
+                          </>
+                        ) : (
+                          <>
+                            <Key size={16} />
+                            {t('changePassword', 'Change Password')}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </Modal>

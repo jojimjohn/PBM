@@ -1,5 +1,5 @@
 import React from 'react';
-import toast, { Toaster, Toast as ToastType } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 import './Toast.css';
 

@@ -1,0 +1,118 @@
+/**
+ * AlertDialog Styles
+ *
+ * Styling for alert dialogs with variant support.
+ * Similar to ConfirmDialog but for single-button acknowledgment.
+ */
+
+/* Main container */
+.alert-dialog .modal-body {
+  padding: 24px;
+}
+
+.alert-dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+/* Icon container */
+.alert-dialog-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.alert-dialog-icon-success {
+  background-color: var(--success-50, #f0fdf4);
+  color: var(--success-600, #16a34a);
+}
+
+.alert-dialog-icon-error {
+  background-color: var(--error-50, #fef2f2);
+  color: var(--error-600, #dc2626);
+}
+
+.alert-dialog-icon-warning {
+  background-color: var(--warning-50, #fffbeb);
+  color: var(--warning-600, #d97706);
+}
+
+.alert-dialog-icon-info {
+  background-color: var(--info-50, #eff6ff);
+  color: var(--info-600, #2563eb);
+}
+
+/* Text content */
+.alert-dialog-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert-dialog-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900, #111827);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.alert-dialog-message {
+  font-size: 0.9375rem;
+  color: var(--gray-600, #4b5563);
+  line-height: 1.5;
+}
+
+.alert-dialog-message p {
+  margin: 0;
+}
+
+/* Actions footer */
+.alert-dialog-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.alert-dialog-actions .btn {
+  min-width: 100px;
+}
+
+/* Dark theme */
+[data-theme="dark"] .alert-dialog-title {
+  color: var(--gray-100, #f3f4f6);
+}
+
+[data-theme="dark"] .alert-dialog-message {
+  color: var(--gray-400, #9ca3af);
+}
+
+[data-theme="dark"] .alert-dialog-icon-success {
+  background-color: rgba(22, 163, 74, 0.15);
+}
+
+[data-theme="dark"] .alert-dialog-icon-error {
+  background-color: rgba(220, 38, 38, 0.15);
+}
+
+[data-theme="dark"] .alert-dialog-icon-warning {
+  background-color: rgba(217, 119, 6, 0.15);
+}
+
+[data-theme="dark"] .alert-dialog-icon-info {
+  background-color: rgba(37, 99, 235, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .alert-dialog-actions .btn {
+    width: 100%;
+  }
+}

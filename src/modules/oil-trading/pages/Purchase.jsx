@@ -5,6 +5,7 @@ import { useLocalization } from '../../../context/LocalizationContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import useProjects from '../../../hooks/useProjects'
+import useExpenseCategories from '../../../hooks/useExpenseCategories'
 import { PERMISSIONS } from '../../../config/roles'
 import PermissionGate from '../../../components/PermissionGate'
 import DataTable from '../../../components/ui/DataTable'
@@ -45,6 +46,9 @@ const Purchase = () => {
   const { hasPermission } = usePermissions()
   const { formatDate, formatCurrency } = useSystemSettings()
   const { selectedProjectId, getProjectQueryParam } = useProjects()
+  // Load expense categories from database for display labels
+  // Purchase expenses use 'operational' type categories from the database
+  const { getCategoryLabel: getPurchaseCategoryLabel } = useExpenseCategories('operational')
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Tab management - read from URL params or default to 'collections'
@@ -799,7 +803,6 @@ const Purchase = () => {
 
   const handleViewOrder = async (order) => {
     try {
-      console.log('Viewing purchase order:', order)
       // Fetch full order details including items
       const result = await purchaseOrderService.getById(order.id)
       if (result.success && result.data) {
@@ -858,7 +861,6 @@ const Purchase = () => {
   }
 
   const handleDownloadOrder = (order) => {
-    console.log('Downloading purchase order:', order)
     alert(`✅ Downloading purchase order ${order.orderNumber}`)
   }
 
@@ -1384,7 +1386,7 @@ const Purchase = () => {
                   filterable: true,
                   render: (value) => (
                     <span className="status-badge confirmed">
-                      {value.replace('_', ' ')}
+                      {getPurchaseCategoryLabel(value)}
                     </span>
                   )
                 },
@@ -1453,18 +1455,33 @@ const Purchase = () => {
                   sortable: false,
                   render: (value) => {
                     if (value) {
+                      const isPDF = value.startsWith('data:application/pdf')
                       return (
                         <button
-                          onClick={() => window.open(value, '_blank')}
-                          className="btn btn-outline btn-sm"
-                          title="View Receipt"
+                          onClick={() => {
+                            // For base64 data, create a blob and open it
+                            if (value.startsWith('data:')) {
+                              const newWindow = window.open()
+                              if (newWindow) {
+                                if (isPDF) {
+                                  newWindow.document.write(`<embed src="${value}" width="100%" height="100%" type="application/pdf" />`)
+                                } else {
+                                  newWindow.document.write(`<html><head><title>Receipt</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a1a;"><img src="${value}" style="max-width:100%;max-height:100vh;object-fit:contain;"/></body></html>`)
+                                }
+                                newWindow.document.close()
+                              }
+                            } else {
+                              window.open(value, '_blank')
+                            }
+                          }}
+                          className="btn btn-outline btn-sm view-receipt-btn"
+                          title={isPDF ? 'View PDF Document' : 'View Receipt Image'}
                         >
-                          <Image size={12} />
-                          View
+                          {isPDF ? <FileText size={14} /> : <Receipt size={14} />}
                         </button>
                       )
                     }
-                    return <span className="text-muted">None</span>
+                    return <span className="text-muted">-</span>
                   }
                 },
                 {

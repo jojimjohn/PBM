@@ -309,7 +309,7 @@ const PurchaseInvoiceModal = ({
         <h3>Invoices for {purchaseOrder?.orderNumber}</h3>
         <button
           type="button"
-          className="btn-create-invoice"
+          className="btn btn-primary"
           onClick={() => setMode('create')}
         >
           <FileText size={16} />
@@ -323,7 +323,7 @@ const PurchaseInvoiceModal = ({
           <p>No invoices created for this purchase order</p>
           <button
             type="button"
-            className="btn-create-invoice"
+            className="btn btn-primary"
             onClick={() => setMode('create')}
           >
             Create First Invoice
@@ -392,173 +392,197 @@ const PurchaseInvoiceModal = ({
 
   // Render create invoice form
   const renderCreateForm = () => (
-    <form onSubmit={handleCreateInvoice} className="invoice-form">
-      <h3>Create New Invoice</h3>
-
-      {/* Bill Type Selector (Sprint 4.5 - Task 7.2) */}
-      <div className="form-group">
-        <label>Bill Type *</label>
-        <div className="bill-type-selector">
-          <label className={`bill-type-option ${billType === 'company' ? 'active' : ''}`}>
-            <input
-              type="radio"
-              name="billType"
-              value="company"
-              checked={billType === 'company'}
-              onChange={(e) => setBillType(e.target.value)}
-            />
-            <div className="bill-type-content">
-              <strong>Company Bill</strong>
-              <small>One invoice for one purchase order</small>
-            </div>
-          </label>
-          <label className={`bill-type-option ${billType === 'vendor' ? 'active' : ''}`}>
-            <input
-              type="radio"
-              name="billType"
-              value="vendor"
-              checked={billType === 'vendor'}
-              onChange={(e) => setBillType(e.target.value)}
-            />
-            <div className="bill-type-content">
-              <strong>Vendor Bill</strong>
-              <small>One invoice covering multiple purchase orders</small>
-            </div>
-          </label>
-        </div>
+    <form onSubmit={handleCreateInvoice}>
+      <div className="modal-header">
+        <h3 className="modal-title">
+          <FileText size={20} />
+          Create New Invoice
+        </h3>
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Invoice Number *</label>
-          <input
-            type="text"
-            value={formData.invoiceNumber}
-            onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
-            placeholder="INV-2025-001"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Invoice Date *</label>
-          <input
-            type="date"
-            value={formData.invoiceDate}
-            onChange={(e) => setFormData({ ...formData, invoiceDate: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      {/* Multi-PO Selector for Vendor Bills (Sprint 4.5 - Task 7.3) */}
-      {billType === 'vendor' && (
-        <div className="form-group">
-          <label>Select Purchase Orders *</label>
-          {loading && availablePOs.length === 0 ? (
-            <div className="loading-pos">Loading unbilled purchase orders...</div>
-          ) : availablePOs.length === 0 ? (
-            <div className="no-pos">No unbilled purchase orders available</div>
-          ) : (
-            <div className="po-selector">
-              <div className="po-selector-header">
-                <span>{selectedPOs.length} of {availablePOs.length} selected</span>
-                {selectedPOs.length > 0 && (
-                  <span className="po-total">
-                    Total: {formatCurrency(selectedPOs.reduce((sum, po) => sum + (parseFloat(po.totalAmount) || 0), 0))}
-                  </span>
-                )}
+      <div className="modal-body">
+        {/* Bill Type Selector (Sprint 4.5 - Task 7.2) */}
+        <div className="ds-form-section">
+          <h4><Banknote size={16} /> Bill Type</h4>
+          <div className="bill-type-selector">
+            <label className={`bill-type-option ${billType === 'company' ? 'active' : ''}`}>
+              <input
+                type="radio"
+                name="billType"
+                value="company"
+                checked={billType === 'company'}
+                onChange={(e) => setBillType(e.target.value)}
+              />
+              <div className="bill-type-content">
+                <strong>Company Bill</strong>
+                <small>One invoice for one purchase order</small>
               </div>
-              <div className="po-selector-list">
-                {availablePOs.map((po) => {
-                  const isSelected = selectedPOs.some(p => p.id === po.id);
-                  return (
-                    <label key={po.id} className={`po-selector-item ${isSelected ? 'selected' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedPOs([...selectedPOs, po]);
-                          } else {
-                            setSelectedPOs(selectedPOs.filter(p => p.id !== po.id));
-                          }
-                        }}
-                      />
-                      <div className="po-selector-info">
-                        <div className="po-selector-header-row">
-                          <strong>{po.orderNumber}</strong>
-                          <span className="po-selector-amount">{formatCurrency(po.totalAmount)}</span>
-                        </div>
-                        <div className="po-selector-details">
-                          <span>{po.supplierName}</span>
-                          <span>•</span>
-                          <span>{formatDate(po.orderDate)}</span>
-                        </div>
-                      </div>
-                    </label>
-                  );
-                })}
+            </label>
+            <label className={`bill-type-option ${billType === 'vendor' ? 'active' : ''}`}>
+              <input
+                type="radio"
+                name="billType"
+                value="vendor"
+                checked={billType === 'vendor'}
+                onChange={(e) => setBillType(e.target.value)}
+              />
+              <div className="bill-type-content">
+                <strong>Vendor Bill</strong>
+                <small>One invoice covering multiple purchase orders</small>
               </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Invoice Details Section */}
+        <div className="ds-form-section">
+          <h4><FileText size={16} /> Invoice Details</h4>
+          <div className="ds-form-grid">
+            <div className="ds-form-group">
+              <label className="ds-form-label">
+                Invoice Number <span className="required">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.invoiceNumber}
+                onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                placeholder="INV-2025-001"
+                required
+              />
             </div>
-          )}
-        </div>
-      )}
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Invoice Amount (OMR) *</label>
-          <input
-            type="number"
-            step="0.001"
-            value={formData.invoiceAmount}
-            onChange={(e) => setFormData({ ...formData, invoiceAmount: e.target.value })}
-            placeholder="0.000"
-            required
-          />
+            <div className="ds-form-group">
+              <label className="ds-form-label">
+                Invoice Date <span className="required">*</span>
+              </label>
+              <input
+                type="date"
+                value={formData.invoiceDate}
+                onChange={(e) => setFormData({ ...formData, invoiceDate: e.target.value })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Payment Terms (Days)</label>
-          <input
-            type="number"
-            value={formData.paymentTermsDays}
-            onChange={(e) => setFormData({ ...formData, paymentTermsDays: e.target.value })}
-            placeholder="30"
-          />
+        {/* Multi-PO Selector for Vendor Bills (Sprint 4.5 - Task 7.3) */}
+        {billType === 'vendor' && (
+          <div className="ds-form-section">
+            <h4>Select Purchase Orders <span className="required">*</span></h4>
+            {loading && availablePOs.length === 0 ? (
+              <div className="loading-pos">Loading unbilled purchase orders...</div>
+            ) : availablePOs.length === 0 ? (
+              <div className="no-pos">No unbilled purchase orders available</div>
+            ) : (
+              <div className="po-selector">
+                <div className="po-selector-header">
+                  <span>{selectedPOs.length} of {availablePOs.length} selected</span>
+                  {selectedPOs.length > 0 && (
+                    <span className="po-total">
+                      Total: {formatCurrency(selectedPOs.reduce((sum, po) => sum + (parseFloat(po.totalAmount) || 0), 0))}
+                    </span>
+                  )}
+                </div>
+                <div className="po-selector-list">
+                  {availablePOs.map((po) => {
+                    const isSelected = selectedPOs.some(p => p.id === po.id);
+                    return (
+                      <label key={po.id} className={`po-selector-item ${isSelected ? 'selected' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPOs([...selectedPOs, po]);
+                            } else {
+                              setSelectedPOs(selectedPOs.filter(p => p.id !== po.id));
+                            }
+                          }}
+                        />
+                        <div className="po-selector-info">
+                          <div className="po-selector-header-row">
+                            <strong>{po.orderNumber}</strong>
+                            <span className="po-selector-amount">{formatCurrency(po.totalAmount)}</span>
+                          </div>
+                          <div className="po-selector-details">
+                            <span>{po.supplierName}</span>
+                            <span>•</span>
+                            <span>{formatDate(po.orderDate)}</span>
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Payment Information Section */}
+        <div className="ds-form-section">
+          <h4><Calendar size={16} /> Payment Information</h4>
+          <div className="ds-form-grid">
+            <div className="ds-form-group">
+              <label className="ds-form-label">
+                Invoice Amount (OMR) <span className="required">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.001"
+                value={formData.invoiceAmount}
+                onChange={(e) => setFormData({ ...formData, invoiceAmount: e.target.value })}
+                placeholder="0.000"
+                required
+              />
+            </div>
+
+            <div className="ds-form-group">
+              <label className="ds-form-label">Payment Terms (Days)</label>
+              <input
+                type="number"
+                value={formData.paymentTermsDays}
+                onChange={(e) => setFormData({ ...formData, paymentTermsDays: e.target.value })}
+                placeholder="30"
+              />
+            </div>
+
+            <div className="ds-form-group">
+              <label className="ds-form-label">Due Date</label>
+              <input
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Notes Section */}
+        <div className="ds-form-section">
+          <div className="ds-form-group full-width">
+            <label className="ds-form-label">Notes</label>
+            <textarea
+              rows="3"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Additional notes..."
+            />
+          </div>
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Due Date</label>
-        <input
-          type="date"
-          value={formData.dueDate}
-          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Notes</label>
-        <textarea
-          rows="3"
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          placeholder="Additional notes..."
-        />
-      </div>
-
-      <div className="form-actions">
+      <div className="modal-footer">
         <button
           type="button"
-          className="btn-cancel"
+          className="btn btn-outline"
           onClick={() => setMode('list')}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="btn-submit"
+          className="btn btn-primary"
           disabled={loading}
         >
           {loading ? 'Creating...' : 'Create Invoice'}
@@ -569,99 +593,118 @@ const PurchaseInvoiceModal = ({
 
   // Render payment form
   const renderPaymentForm = () => (
-    <form onSubmit={handleRecordPayment} className="invoice-form">
-      <h3>Record Payment</h3>
+    <form onSubmit={handleRecordPayment}>
+      <div className="modal-header">
+        <h3 className="modal-title">
+          <Banknote size={20} />
+          Record Payment
+        </h3>
+      </div>
 
-      <div className="payment-summary">
-        <div className="payment-summary-row">
-          <span>Invoice Number:</span>
-          <strong>{selectedInvoice?.invoice_number}</strong>
+      <div className="modal-body">
+        {/* Invoice Summary */}
+        <div className="ds-form-section info">
+          <h4><FileText size={16} /> Invoice Summary</h4>
+          <div className="payment-summary">
+            <div className="payment-summary-row">
+              <span>Invoice Number:</span>
+              <strong>{selectedInvoice?.invoice_number}</strong>
+            </div>
+            <div className="payment-summary-row">
+              <span>Invoice Amount:</span>
+              <strong>{formatCurrency(selectedInvoice?.invoice_amount)}</strong>
+            </div>
+            <div className="payment-summary-row">
+              <span>Already Paid:</span>
+              <strong>{formatCurrency(selectedInvoice?.paid_amount)}</strong>
+            </div>
+            <div className="payment-summary-row highlight">
+              <span>Balance Due:</span>
+              <strong>{formatCurrency(selectedInvoice?.balance_due)}</strong>
+            </div>
+          </div>
         </div>
-        <div className="payment-summary-row">
-          <span>Invoice Amount:</span>
-          <strong>{formatCurrency(selectedInvoice?.invoice_amount)}</strong>
-        </div>
-        <div className="payment-summary-row">
-          <span>Already Paid:</span>
-          <strong>{formatCurrency(selectedInvoice?.paid_amount)}</strong>
-        </div>
-        <div className="payment-summary-row highlight">
-          <span>Balance Due:</span>
-          <strong>{formatCurrency(selectedInvoice?.balance_due)}</strong>
+
+        {/* Payment Details */}
+        <div className="ds-form-section">
+          <h4><Banknote size={16} /> Payment Details</h4>
+          <div className="ds-form-grid">
+            <div className="ds-form-group">
+              <label className="ds-form-label">
+                Payment Amount (OMR) <span className="required">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.001"
+                value={paymentData.amount}
+                onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                max={selectedInvoice?.balance_due}
+                required
+              />
+            </div>
+
+            <div className="ds-form-group">
+              <label className="ds-form-label">
+                Payment Date <span className="required">*</span>
+              </label>
+              <input
+                type="date"
+                value={paymentData.paymentDate}
+                onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="ds-form-group">
+              <label className="ds-form-label">
+                Payment Method <span className="required">*</span>
+              </label>
+              <select
+                value={paymentData.paymentMethod}
+                onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
+                required
+              >
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="cheque">Cheque</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+              </select>
+            </div>
+
+            <div className="ds-form-group">
+              <label className="ds-form-label">Reference</label>
+              <input
+                type="text"
+                value={paymentData.reference}
+                onChange={(e) => setPaymentData({ ...paymentData, reference: e.target.value })}
+                placeholder="Transaction ID / Cheque Number"
+              />
+            </div>
+
+            <div className="ds-form-group full-width">
+              <label className="ds-form-label">Notes</label>
+              <textarea
+                rows="2"
+                value={paymentData.notes}
+                onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
+                placeholder="Payment notes..."
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label>Payment Amount (OMR) *</label>
-          <input
-            type="number"
-            step="0.001"
-            value={paymentData.amount}
-            onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-            max={selectedInvoice?.balance_due}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Payment Date *</label>
-          <input
-            type="date"
-            value={paymentData.paymentDate}
-            onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="form-row">
-        <div className="form-group">
-          <label>Payment Method *</label>
-          <select
-            value={paymentData.paymentMethod}
-            onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
-            required
-          >
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="cheque">Cheque</option>
-            <option value="cash">Cash</option>
-            <option value="card">Card</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Reference</label>
-          <input
-            type="text"
-            value={paymentData.reference}
-            onChange={(e) => setPaymentData({ ...paymentData, reference: e.target.value })}
-            placeholder="Transaction ID / Cheque Number"
-          />
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label>Notes</label>
-        <textarea
-          rows="2"
-          value={paymentData.notes}
-          onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-          placeholder="Payment notes..."
-        />
-      </div>
-
-      <div className="form-actions">
+      <div className="modal-footer">
         <button
           type="button"
-          className="btn-cancel"
+          className="btn btn-outline"
           onClick={() => setMode('list')}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="btn-submit"
+          className="btn btn-success"
           disabled={loading}
         >
           {loading ? 'Recording...' : 'Record Payment'}
@@ -803,11 +846,12 @@ const PurchaseInvoiceModal = ({
       isOpen={isOpen}
       onClose={handleClose}
       title="Purchase Invoices"
-      className="purchase-invoice-modal"
+      className="ds-form-modal ds-modal-lg purchase-invoice-modal"
       closeOnOverlayClick={false}
     >
       {message.text && (
-        <div className={`message message-${message.type}`}>
+        <div className={`ds-alert ds-alert-${message.type}`}>
+          {message.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
           {message.text}
         </div>
       )}

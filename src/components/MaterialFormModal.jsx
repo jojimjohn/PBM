@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useLocalization } from '../context/LocalizationContext'
-import { X, Plus, Trash2, Layers, Package, AlertCircle, Recycle, FileText } from 'lucide-react'
-import FileUpload from './ui/FileUpload'
-import FileViewer from './ui/FileViewer'
-import uploadService from '../services/uploadService'
+import { X, Plus, Trash2, Layers, Package, AlertCircle, Recycle } from 'lucide-react'
 import './MaterialFormModal.css'
 
 // Valid waste types for disposable materials
@@ -56,37 +53,6 @@ const MaterialFormModal = ({
   const [compositions, setCompositions] = useState([])
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
-  const [attachments, setAttachments] = useState([])
-  const [loadingAttachments, setLoadingAttachments] = useState(false)
-
-  // Load attachments when editing existing material
-  useEffect(() => {
-    const loadAttachments = async () => {
-      if (isOpen && editingMaterial?.id) {
-        setLoadingAttachments(true)
-        try {
-          const result = await uploadService.getS3Files('materials', editingMaterial.id)
-          if (result.success) {
-            const mappedFiles = (result.data || []).map(file => ({
-              id: file.id,
-              originalFilename: file.original_filename || file.originalFilename,
-              contentType: file.content_type || file.contentType,
-              fileSize: file.file_size || file.fileSize,
-              downloadUrl: file.download_url || file.downloadUrl
-            }))
-            setAttachments(mappedFiles)
-          }
-        } catch (error) {
-          console.error('Error loading attachments:', error)
-        } finally {
-          setLoadingAttachments(false)
-        }
-      } else {
-        setAttachments([])
-      }
-    }
-    loadAttachments()
-  }, [isOpen, editingMaterial?.id])
 
   // Available units
   const units = [
@@ -809,82 +775,6 @@ const MaterialFormModal = ({
               )}
             </div>
           </div>
-
-          {/* Attachments - Only in edit mode */}
-          {editingMaterial?.id && (
-            <div className="form-section" style={{ padding: '1rem', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
-              <div className="form-section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                <FileText size={16} />
-                {t('attachments', 'Attachments')}
-              </div>
-
-              <FileUpload
-                mode="multiple"
-                accept=".pdf,.jpg,.jpeg,.png"
-                maxSize={5242880}
-                maxFiles={10}
-                onUpload={async (files) => {
-                  try {
-                    const result = await uploadService.uploadMultipleToS3('materials', editingMaterial.id, files)
-                    if (result.success) {
-                      const attachmentsResult = await uploadService.getS3Files('materials', editingMaterial.id)
-                      if (attachmentsResult.success) {
-                        const mappedFiles = (attachmentsResult.data || []).map(file => ({
-                          id: file.id,
-                          originalFilename: file.original_filename || file.originalFilename,
-                          contentType: file.content_type || file.contentType,
-                          fileSize: file.file_size || file.fileSize,
-                          downloadUrl: file.download_url || file.downloadUrl
-                        }))
-                        setAttachments(mappedFiles)
-                      }
-                      alert('Files uploaded successfully')
-                    } else {
-                      alert('Failed to upload files: ' + result.error)
-                    }
-                  } catch (error) {
-                    console.error('Upload error:', error)
-                    alert('Failed to upload files: ' + error.message)
-                  }
-                }}
-                existingFiles={[]}
-              />
-
-              {loadingAttachments ? (
-                <div className="attachments-loading">Loading attachments...</div>
-              ) : attachments.length > 0 ? (
-                <FileViewer
-                  files={attachments}
-                  onDelete={async (fileId) => {
-                    if (!window.confirm('Are you sure you want to delete this file?')) return
-                    try {
-                      const result = await uploadService.deleteS3File('materials', editingMaterial.id, fileId)
-                      if (result.success) {
-                        setAttachments(prev => prev.filter(f => f.id !== fileId))
-                        alert('File deleted successfully')
-                      } else {
-                        alert('Failed to delete file: ' + result.error)
-                      }
-                    } catch (error) {
-                      console.error('Delete error:', error)
-                      alert('Failed to delete file: ' + error.message)
-                    }
-                  }}
-                  onRefreshUrl={async (fileId) => {
-                    const result = await uploadService.getS3Files('materials', editingMaterial.id)
-                    if (result.success) {
-                      const file = result.data.find(f => f.id === fileId)
-                      if (file) return file.download_url || file.downloadUrl
-                    }
-                    return null
-                  }}
-                  canDelete={true}
-                />
-              ) : (
-                <div className="empty-state text-sm">{t('noAttachments')}</div>
-              )}
-            </div>
-          )}
 
           <div className="modal-footer">
             <button

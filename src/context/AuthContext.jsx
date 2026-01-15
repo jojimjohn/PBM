@@ -81,8 +81,9 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
 
       // Set company ID and prefetch transactional data for instant cross-module navigation
+      // Only prefetch data the user has permission to access (prevents 403 errors)
       dataCacheService.setCompanyId(companyDetails?.id);
-      dataCacheService.prefetchTransactional();
+      dataCacheService.prefetchTransactional(currentUser.permissions || []);
     } else {
       setUser(null);
       setSelectedCompany(null);
@@ -170,7 +171,8 @@ export const AuthProvider = ({ children }) => {
         dataCacheService.setCompanyId(companyDetails?.id);
 
         // Prefetch transactional data for instant cross-module navigation
-        dataCacheService.prefetchTransactional();
+        // Only prefetch data the user has permission to access (prevents 403 errors)
+        dataCacheService.prefetchTransactional(result.user.permissions || []);
 
         return {
           success: true,
@@ -233,7 +235,8 @@ export const AuthProvider = ({ children }) => {
         dataCacheService.setCompanyId(companyDetails?.id);
 
         // Prefetch transactional data for instant cross-module navigation
-        dataCacheService.prefetchTransactional();
+        // Only prefetch data the user has permission to access (prevents 403 errors)
+        dataCacheService.prefetchTransactional(result.user.permissions || []);
 
         return {
           success: true,

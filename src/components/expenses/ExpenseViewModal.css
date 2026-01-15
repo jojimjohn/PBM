@@ -243,6 +243,27 @@
   color: #6b7280;
 }
 
+/* PDF Preview */
+.receipt-pdf-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 30px;
+  background-color: #fef3c7;
+  border-radius: 8px;
+  color: #92400e;
+}
+
+.receipt-pdf-preview svg {
+  color: #b45309;
+}
+
+.receipt-pdf-preview span {
+  font-weight: 500;
+  font-size: 14px;
+}
+
 /* Metadata Footer */
 .expense-metadata {
   display: flex;

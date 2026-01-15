@@ -27,7 +27,7 @@ const MainLayout = () => {
   const { theme, toggleTheme } = useSystemSettings()
   const { t, currentLanguage, changeLanguage, getSupportedLanguages } = useLocalization()
   const { getAccessibleModules, hasPermission } = usePermissions()
-  const { noProjectsAvailable } = useProjects()
+  const { noProjectsAvailable, initialized: projectsInitialized, getProjectQueryParam } = useProjects()
   const location = useLocation()
   const navigate = useNavigate()
   const isOilBusiness = selectedCompany?.businessType === 'oil'
@@ -58,9 +58,16 @@ const MainLayout = () => {
   const loadNotifications = useCallback(async () => {
     if (!user || !selectedCompany) return
 
+    // Wait until project context is fully initialized (localStorage checked & projects loaded)
+    // This prevents "Access denied" errors from stale/invalid project IDs
+    if (!projectsInitialized) return
+
     setNotificationsLoading(true)
     try {
-      const result = await workflowService.getNotifications(10)
+      // Use centralized helper that validates project access
+      const params = getProjectQueryParam()
+
+      const result = await workflowService.getNotifications(10, params)
       if (result.success && result.data?.notifications) {
         // Transform API notifications to UI format
         const transformedNotifications = result.data.notifications.map((notif, index) => ({
@@ -80,7 +87,8 @@ const MainLayout = () => {
     } finally {
       setNotificationsLoading(false)
     }
-  }, [user, selectedCompany])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, selectedCompany, projectsInitialized])
 
   // Load notifications on mount and when company changes
   useEffect(() => {

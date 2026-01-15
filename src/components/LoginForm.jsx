@@ -10,8 +10,8 @@ import { Icons } from './ui/Icons'
 import './LoginForm.css'
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('admin@alramrami.com')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [selectedCompanyId, setSelectedCompanyId] = useState('al-ramrami')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -384,18 +384,6 @@ const LoginForm = () => {
           </CardContent>
         </Card>
 
-        {/* Demo Credentials */}
-        <Card className="demo-card">
-          <CardContent>
-            <h4 className="font-medium mb-4">Development Credentials:</h4>
-            <div className="demo-list space-y-2 text-sm">
-              <div><span className="font-medium">Al Ramrami Admin:</span> admin@alramrami.com</div>
-              <div><span className="font-medium">Pride Muscat Admin:</span> admin@pridemuscat.com</div>
-              <div><span className="font-medium">Password:</span> admin123</div>
-              <div className="text-xs text-gray-500 mt-2">⚠️ Change passwords in production!</div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

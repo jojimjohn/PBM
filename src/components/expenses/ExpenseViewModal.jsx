@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import { useSystemSettings } from '../../context/SystemSettingsContext';
+import useExpenseCategories from '../../hooks/useExpenseCategories';
 import {
   Receipt, Calendar, Banknote, User, FileText,
   CreditCard, Hash, Building2, Image, X, Download, Upload, Trash2
@@ -23,6 +24,9 @@ const ExpenseViewModal = ({
   formatDate: formatDateProp = null
 }) => {
   const { formatDate: systemFormatDate } = useSystemSettings();
+  // Load categories from database for label display
+  // Purchase expenses use 'operational' type categories
+  const { getCategoryLabel } = useExpenseCategories(expense?.expenseType === 'purchase' ? 'operational' : expense?.expenseType || 'operational');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
 
@@ -92,20 +96,24 @@ const ExpenseViewModal = ({
     }
   };
 
-  const categoryLabels = {
-    'transportation': 'Transportation',
-    'loading_unloading': 'Loading/Unloading',
-    'customs_duty': 'Customs Duty',
-    'inspection': 'Inspection',
-    'storage': 'Storage',
-    'insurance': 'Insurance',
-    'documentation': 'Documentation',
-    'fuel': 'Fuel',
-    'permits_fees': 'Permits & Fees',
-    'equipment_rental': 'Equipment Rental',
-    'meals_accommodation': 'Meals & Accommodation',
-    'maintenance': 'Maintenance',
-    'other': 'Other'
+  // Helper to view receipt properly (handles base64 data URIs)
+  const viewReceipt = (receiptData) => {
+    if (!receiptData) return;
+
+    if (receiptData.startsWith('data:')) {
+      const isPDF = receiptData.startsWith('data:application/pdf');
+      const newWindow = window.open();
+      if (newWindow) {
+        if (isPDF) {
+          newWindow.document.write(`<embed src="${receiptData}" width="100%" height="100%" type="application/pdf" />`);
+        } else {
+          newWindow.document.write(`<html><head><title>Receipt</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a1a;"><img src="${receiptData}" style="max-width:100%;max-height:100vh;object-fit:contain;"/></body></html>`);
+        }
+        newWindow.document.close();
+      }
+    } else {
+      window.open(receiptData, '_blank');
+    }
   };
 
   const paymentMethodLabels = {
@@ -136,7 +144,7 @@ const ExpenseViewModal = ({
               <Receipt size={16} />
             </span>
             <span className="category-label">
-              {categoryLabels[expense.category] || expense.category}
+              {getCategoryLabel(expense.category)}
             </span>
           </div>
           <div className="expense-amount">
@@ -269,18 +277,18 @@ const ExpenseViewModal = ({
 
           {expense.receiptPhoto ? (
             <div className="receipt-preview">
-              {expense.receiptPhoto.startsWith('data:') || expense.receiptPhoto.startsWith('http') ? (
+              {expense.receiptPhoto.startsWith('data:image') || expense.receiptPhoto.startsWith('http') ? (
                 <>
                   <img
                     src={expense.receiptPhoto}
                     alt="Receipt"
                     className="receipt-image"
-                    onClick={() => window.open(expense.receiptPhoto, '_blank')}
+                    onClick={() => viewReceipt(expense.receiptPhoto)}
                   />
                   <div className="receipt-actions">
                     <button
                       className="btn-view-receipt"
-                      onClick={() => window.open(expense.receiptPhoto, '_blank')}
+                      onClick={() => viewReceipt(expense.receiptPhoto)}
                     >
                       <Image size={14} />
                       View Full Size
@@ -305,6 +313,30 @@ const ExpenseViewModal = ({
                     )}
                   </div>
                 </>
+              ) : expense.receiptPhoto.startsWith('data:application/pdf') ? (
+                <div className="receipt-pdf-preview">
+                  <FileText size={32} />
+                  <span>PDF Document</span>
+                  <div className="receipt-actions">
+                    <button
+                      className="btn-view-receipt"
+                      onClick={() => viewReceipt(expense.receiptPhoto)}
+                    >
+                      <FileText size={14} />
+                      View PDF
+                    </button>
+                    {onRemoveReceipt && (
+                      <button
+                        className="btn-remove-receipt"
+                        onClick={handleRemoveReceipt}
+                        disabled={uploading}
+                      >
+                        <Trash2 size={14} />
+                        {uploading ? 'Removing...' : 'Remove'}
+                      </button>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <div className="receipt-text">
                   <FileText size={24} />

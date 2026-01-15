@@ -2605,6 +2605,81 @@ button.empty-action-btn:hover {
 }
 
 /* -----------------------------------------------------------------------------
+   Input with Leading Icon
+   Two patterns available:
+   1. .ds-input-icon-wrapper (new) - for design system forms
+   2. .input-with-icon (legacy) - for existing forms using this pattern
+   ----------------------------------------------------------------------------- */
+
+/* New Design System Pattern */
+.ds-input-icon-wrapper {
+  position: relative;
+  display: block;
+}
+
+.ds-input-icon-wrapper .input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ds-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ds-input-icon-wrapper input,
+.ds-input-icon-wrapper .ds-form-input {
+  padding-left: 38px;
+}
+
+/* Legacy Pattern - input-with-icon (used across many forms) */
+.input-with-icon {
+  position: relative;
+  display: block;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ds-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-with-icon .input-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.input-with-icon input,
+.input-with-icon select,
+.input-with-icon textarea {
+  padding-left: 38px;
+}
+
+/* RTL support for icon inputs */
+[dir="rtl"] .ds-input-icon-wrapper .input-icon,
+[dir="rtl"] .input-with-icon .input-icon {
+  left: auto;
+  right: 12px;
+}
+
+[dir="rtl"] .ds-input-icon-wrapper input,
+[dir="rtl"] .ds-input-icon-wrapper .ds-form-input,
+[dir="rtl"] .input-with-icon input,
+[dir="rtl"] .input-with-icon select,
+[dir="rtl"] .input-with-icon textarea {
+  padding-left: 0.75rem;
+  padding-right: 38px;
+}
+
+/* -----------------------------------------------------------------------------
    Dark Mode Support for Forms
    ----------------------------------------------------------------------------- */
 [data-theme="dark"] .ds-form-modal .modal-header,

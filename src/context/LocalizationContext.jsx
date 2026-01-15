@@ -50,6 +50,7 @@ const translations = {
     all: 'All',
     new: 'New',
     add: 'Add',
+    addItem: 'Add Item',
     update: 'Update',
     create: 'Create',
     remove: 'Remove',
@@ -75,6 +76,8 @@ const translations = {
     columns: 'Columns',
     rows: 'Rows',
     draft: 'Draft',
+    draftMode: 'Draft Mode',
+    draftModeInfo: 'This order is in draft mode. Complete all required fields and save to finalize.',
     active: 'Active',
     inactive: 'Inactive',
     expired: 'Expired',
@@ -408,6 +411,7 @@ const translations = {
     salesOrdersSubtitle: 'Manage sales orders and invoices',
     searchSalesOrders: 'Search Sales Orders',
     salesOrder: 'Sales Order',
+    salesOrderDetails: 'Sales Order Details',
 
     // FIFO & Batch Allocation
     fifoPreview: 'FIFO Allocation Preview',
@@ -982,6 +986,8 @@ const translations = {
     invalidEmailFormat: 'Invalid email format',
     firstNameMinLength: 'First name must be at least 2 characters',
     lastNameMinLength: 'Last name must be at least 2 characters',
+    passwordRequirements: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character',
+    passwordSameAsCurrent: 'New password must be different from current password',
     roleRequired: 'Role is required',
     vatRegistrationNumber: 'VAT Registration Number',
 
@@ -1708,6 +1714,7 @@ const translations = {
     orderNotes: 'Order Notes',
     contractRate: 'Contract Rate',
     createSalesOrder: 'Create Sales Order',
+    editSalesOrder: 'Edit Sales Order',
     expectedDeliveryDate: 'Expected Delivery Date',
     specialInstructions: 'Special Instructions',
     rateOverrideRequired: 'Rate Override Required',
@@ -2103,6 +2110,7 @@ const translations = {
     no: 'لا',
     ok: 'موافق',
     add: 'إضافة',
+    addItem: 'إضافة عنصر',
     update: 'تحديث',
     create: 'إنشاء',
     remove: 'إزالة',
@@ -2143,6 +2151,8 @@ const translations = {
     warning: 'تحذير',
     new: 'جديد',
     draft: 'مسودة',
+    draftMode: 'وضع المسودة',
+    draftModeInfo: 'هذا الطلب في وضع المسودة. أكمل جميع الحقول المطلوبة واحفظ للإنهاء.',
     active: 'نشط',
     inactive: 'غير نشط',
     expired: 'منتهي الصلاحية',
@@ -2591,6 +2601,7 @@ const translations = {
     orderStatus: 'حالة الطلب',
     orderType: 'نوع الطلب',
     salesOrder: 'طلب بيع',
+    salesOrderDetails: 'تفاصيل طلب البيع',
 
     // FIFO & Batch Allocation
     fifoPreview: 'معاينة تخصيص الدفعات',
@@ -3381,6 +3392,8 @@ const translations = {
     invalidEmailFormat: 'صيغة البريد الإلكتروني غير صحيحة',
     firstNameMinLength: 'يجب أن يكون الاسم الأول حرفين على الأقل',
     lastNameMinLength: 'يجب أن يكون اسم العائلة حرفين على الأقل',
+    passwordRequirements: 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل مع أحرف كبيرة وصغيرة ورقم ورمز خاص',
+    passwordSameAsCurrent: 'يجب أن تختلف كلمة المرور الجديدة عن كلمة المرور الحالية',
     roleRequired: 'الدور مطلوب',
 
     // Time & Date
@@ -3838,6 +3851,7 @@ const translations = {
     orderNotes: 'ملاحظات الطلب',
     contractRate: 'سعر العقد',
     createSalesOrder: 'إنشاء أمر مبيعات',
+    editSalesOrder: 'تعديل أمر مبيعات',
     expectedDeliveryDate: 'تاريخ التسليم المتوقع',
     specialInstructions: 'تعليمات خاصة',
     rateOverrideRequired: 'يتطلب تجاوز السعر',

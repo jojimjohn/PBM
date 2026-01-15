@@ -15,10 +15,16 @@ import '../styles/DashboardModern.css'
 const ScrapMaterialsDashboard = () => {
   const { user, selectedCompany } = useAuth()
   const { t } = useLocalization()
-  const { selectedProjectId, getProjectQueryParam } = useProjects()
+  const { selectedProjectId, getProjectQueryParam, isProjectRequired, initialized: projectsInitialized } = useProjects()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Wait for project context to be fully initialized
+    if (!projectsInitialized) return
+
+    // For non-admin users, wait until a project is selected (auto-selection happens in ProjectContext)
+    if (isProjectRequired && !selectedProjectId) return
+
     // Load dashboard data when company or project changes
     const loadDashboardData = async () => {
       setLoading(true)
@@ -39,7 +45,8 @@ const ScrapMaterialsDashboard = () => {
     }
 
     loadDashboardData()
-  }, [selectedCompany, selectedProjectId, getProjectQueryParam])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompany, selectedProjectId, projectsInitialized, isProjectRequired])
 
   // Skeleton loading state
   if (loading) {
