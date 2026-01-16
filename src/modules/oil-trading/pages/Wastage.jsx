@@ -1,25 +1,34 @@
-import React, { useState, useEffect } from 'react'
+/**
+ * Wastage Page
+ *
+ * Main page for wastage management. Uses custom hooks for:
+ * - Data loading (useWastages)
+ * - Filter management (useWastageFilters)
+ * - Approval workflow (useWastageApproval)
+ */
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useProjects } from '../../../context/ProjectContext'
 import { usePermissions } from '../../../hooks/usePermissions'
-import LoadingSpinner from '../../../components/LoadingSpinner'
 import DataTable from '../../../components/ui/DataTable'
 import wastageService from '../../../services/wastageService'
-import materialService from '../../../services/materialService'
 import WastageForm from '../components/WastageForm'
 import WastageDetails from '../components/WastageDetails'
 import WastageAnalytics from '../components/WastageAnalytics'
+import { WastageSummaryCards } from '../components/wastage'
+// Import custom hooks
+import { useWastages } from '../hooks/useWastages'
+import { useWastageFilters } from '../hooks/useWastageFilters'
+import { useWastageApproval } from '../hooks/useWastageApproval'
 import {
   Plus,
   AlertTriangle,
   Eye,
   Edit,
   Trash2,
-  Banknote,
-  CheckCircle,
-  Clock,
   BarChart3
 } from 'lucide-react'
 import '../styles/Wastage.css'
@@ -42,132 +51,151 @@ export const WASTAGE_TYPE_COLORS = {
 const Wastage = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
-  const { selectedProjectId, getProjectQueryParam } = useProjects()
+  const { selectedProjectId } = useProjects()
   const { hasPermission } = usePermissions()
   const [searchParams] = useSearchParams()
 
   // Read search param from URL (used when clicking tasks from dashboard)
   const urlSearchTerm = searchParams.get('search') || ''
 
-  // Data state
-  const [loading, setLoading] = useState(true)
-  const [wastages, setWastages] = useState([])
-  const [wasteTypes, setWasteTypes] = useState([])
-  const [wasteTypesMap, setWasteTypesMap] = useState({})
-  const [materials, setMaterials] = useState([])
-  const [error, setError] = useState(null)
-
-  // Summary data state
-  const [summaryData, setSummaryData] = useState({
-    totalWastages: 0,
-    totalCost: 0,
-    pendingCount: 0,
-    approvedCount: 0
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOOK: useWastages - Data loading with parallel fetching
+  // ═══════════════════════════════════════════════════════════════════════════
+  const {
+    wastages,
+    isLoading,
+    error: loadError,
+    materials,
+    wastageTypes,
+    refresh: refreshData
+  } = useWastages({
+    autoLoad: true,
+    projectId: selectedProjectId
   })
 
-  // Modal state
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOOK: useWastageFilters - Filter state management
+  // ═══════════════════════════════════════════════════════════════════════════
+  const {
+    filters,
+    setFilter,
+    hasActiveFilters
+  } = useWastageFilters({
+    initialFilters: { searchTerm: urlSearchTerm }
+  })
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOOK: useWastageApproval - Approval/rejection workflow
+  // ═══════════════════════════════════════════════════════════════════════════
+  const {
+    approve,
+    reject,
+    isApproving,
+    isRejecting,
+    error: approvalError,
+    clearError: clearApprovalError
+  } = useWastageApproval({
+    onSuccess: async () => {
+      // Refresh data and close details modal after successful action
+      await refreshData()
+      setShowWastageDetails(false)
+      setSelectedWastage(null)
+    }
+  })
+
+  // Reload data when company or project changes
+  useEffect(() => {
+    refreshData()
+  }, [selectedCompany, selectedProjectId])
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOCAL STATE - UI modals and selections
+  // ═══════════════════════════════════════════════════════════════════════════
   const [showWastageForm, setShowWastageForm] = useState(false)
   const [showWastageDetails, setShowWastageDetails] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [selectedWastage, setSelectedWastage] = useState(null)
   const [editingWastage, setEditingWastage] = useState(null)
-
-  // Filter state
-  const [filters, setFilters] = useState({
-    status: 'all',
-    wasteType: 'all'
-  })
+  const [deleteError, setDeleteError] = useState(null)
   const [pendingFilterActive, setPendingFilterActive] = useState(false)
 
-  useEffect(() => {
-    loadWastageData()
-  }, [selectedCompany, selectedProjectId])
+  // Combine errors from different sources
+  const error = loadError || deleteError || approvalError
 
-  const loadWastageData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Get project filter params
-      const projectParams = getProjectQueryParam()
-
-      // PERFORMANCE: Run ALL API calls in parallel
-      const [wastageResult, typesResult, materialsResult] = await Promise.all([
-        wastageService.getAll(projectParams),
-        wastageService.getTypes().catch(() => ({ success: false, data: [] })),
-        materialService.getAll().catch(() => ({ success: false, data: [] }))
-      ])
-
-      // Process wastage data
-      if (wastageResult.success) {
-        const wastageData = wastageResult.data || []
-        setWastages(wastageData)
-
-        // Calculate summary from loaded data
-        const pending = wastageData.filter(w => w.status === 'pending' || w.status === 'pending_approval').length
-        const approved = wastageData.filter(w => w.status === 'approved').length
-        const totalCost = wastageData.reduce((sum, w) => sum + (w.totalCost || (w.quantity * w.unitCost) || 0), 0)
-
-        setSummaryData({
-          totalWastages: wastageData.length,
-          totalCost,
-          pendingCount: pending,
-          approvedCount: approved
-        })
-      } else {
-        throw new Error(wastageResult.error || 'Failed to load wastages')
-      }
-
-      // Process wastage types
-      if (typesResult.success && typesResult.data) {
-        const typesArray = typesResult.data.map(type => ({
-          value: type.key || type.value,
-          label: type.name || type.label
-        }))
-        setWasteTypes(typesArray)
-
-        const typesObj = {}
-        typesResult.data.forEach(type => {
-          typesObj[type.key || type.value] = {
-            name: type.name || type.label,
-            color: type.color || WASTAGE_TYPE_COLORS[type.key || type.value] || WASTAGE_TYPE_COLORS.other
-          }
-        })
-        setWasteTypesMap(typesObj)
-      }
-
-      // Process materials
-      if (materialsResult.success) {
-        setMaterials(materialsResult.data || [])
-      }
-
-    } catch (error) {
-      console.error('Error loading wastage data:', error)
-      setError(error.message)
-      setWastages([])
-      setMaterials([])
-    } finally {
-      setLoading(false)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPUTED: Summary statistics from wastages data
+  // ═══════════════════════════════════════════════════════════════════════════
+  const summaryData = useMemo(() => {
+    if (!wastages.length) {
+      return { totalWastages: 0, totalCost: 0, pendingCount: 0, approvedCount: 0 }
     }
-  }
 
-  // Refresh summary data after operations
-  const refreshSummary = async () => {
-    try {
-      const result = await wastageService.getAnalytics({})
-      if (result.success && result.data?.summary) {
-        setSummaryData({
-          totalWastages: result.data.summary.totalWastages || 0,
-          totalCost: result.data.summary.totalCost || 0,
-          pendingCount: result.data.summary.pendingCount || 0,
-          approvedCount: result.data.summary.approvedCount || 0
-        })
-      }
-    } catch (error) {
-      console.error('Error refreshing summary:', error)
+    const pending = wastages.filter(w => w.status === 'pending' || w.status === 'pending_approval').length
+    const approved = wastages.filter(w => w.status === 'approved').length
+    const totalCost = wastages.reduce((sum, w) => sum + (w.totalCost || (w.quantity * w.unitCost) || 0), 0)
+
+    return {
+      totalWastages: wastages.length,
+      totalCost,
+      pendingCount: pending,
+      approvedCount: approved
     }
-  }
+  }, [wastages])
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPUTED: Wastage types map for quick lookup
+  // ═══════════════════════════════════════════════════════════════════════════
+  const wasteTypesMap = useMemo(() => {
+    const map = {}
+    wastageTypes.forEach(type => {
+      const key = type.key || type.value
+      map[key] = {
+        name: type.name || type.label,
+        color: type.color || WASTAGE_TYPE_COLORS[key] || WASTAGE_TYPE_COLORS.other
+      }
+    })
+    return map
+  }, [wastageTypes])
+
+  // Convert wastageTypes to format needed by WastageForm
+  const wasteTypesForForm = useMemo(() => {
+    return wastageTypes.map(type => ({
+      value: type.key || type.value,
+      label: type.name || type.label
+    }))
+  }, [wastageTypes])
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPUTED: Filtered wastages based on current filters
+  // ═══════════════════════════════════════════════════════════════════════════
+  const filteredWastages = useMemo(() => {
+    return wastages.filter(wastage => {
+      // Status filter
+      if (filters.status !== 'all') {
+        if (filters.status === 'pending') {
+          if (wastage.status !== 'pending' && wastage.status !== 'pending_approval') return false
+        } else if (wastage.status !== filters.status) {
+          return false
+        }
+      }
+
+      // Material filter
+      if (filters.materialId !== 'all' && String(wastage.materialId) !== String(filters.materialId)) {
+        return false
+      }
+
+      // Wastage type filter
+      if (filters.wastageTypeId !== 'all' && wastage.wasteType !== filters.wastageTypeId) {
+        return false
+      }
+
+      return true
+    })
+  }, [wastages, filters])
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPERS: Formatting functions
+  // ═══════════════════════════════════════════════════════════════════════════
   const formatCurrency = (amount) => {
     return `OMR ${parseFloat(amount || 0).toFixed(3)}`
   }
@@ -184,7 +212,6 @@ const Wastage = () => {
       approved: { label: t('approved', 'Approved'), class: 'success' },
       rejected: { label: t('rejected', 'Rejected'), class: 'danger' }
     }
-
     return statusConfig[status] || { label: status, class: 'default' }
   }
 
@@ -192,7 +219,9 @@ const Wastage = () => {
     return wasteTypesMap[wasteType] || { name: wasteType, color: WASTAGE_TYPE_COLORS.other }
   }
 
-  // Handlers
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS: User interactions
+  // ═══════════════════════════════════════════════════════════════════════════
   const handleAddWastage = () => {
     setEditingWastage(null)
     setShowWastageForm(true)
@@ -211,7 +240,7 @@ const Wastage = () => {
   const handleFormSave = async () => {
     setShowWastageForm(false)
     setEditingWastage(null)
-    await loadWastageData()
+    await refreshData()
   }
 
   const handleFormClose = () => {
@@ -222,89 +251,65 @@ const Wastage = () => {
   const handleDetailsClose = () => {
     setShowWastageDetails(false)
     setSelectedWastage(null)
+    clearApprovalError()
   }
 
-  const handleApproveWastage = async (wastageId, approvalData) => {
-    try {
-      const result = await wastageService.approve(wastageId, approvalData)
-      if (result.success) {
-        await loadWastageData()
-        setShowWastageDetails(false)
-        setSelectedWastage(null)
-      } else {
-        throw new Error(result.error || 'Failed to approve wastage')
-      }
-    } catch (error) {
-      console.error('Error approving wastage:', error)
-      throw error // Re-throw for WastageDetails to handle
+  // Approval handler - uses useWastageApproval hook
+  const handleApproveWastage = useCallback(async (wastageId, approvalData) => {
+    const success = await approve(String(wastageId), approvalData.approvalNotes)
+    if (!success) {
+      throw new Error(approvalError || 'Failed to approve wastage')
     }
-  }
+  }, [approve, approvalError])
 
-  const handleRejectWastage = async (wastageId, rejectionData) => {
-    try {
-      const result = await wastageService.reject(wastageId, rejectionData)
-      if (result.success) {
-        await loadWastageData()
-        setShowWastageDetails(false)
-        setSelectedWastage(null)
-      } else {
-        throw new Error(result.error || 'Failed to reject wastage')
-      }
-    } catch (error) {
-      console.error('Error rejecting wastage:', error)
-      throw error // Re-throw for WastageDetails to handle
+  // Rejection handler - uses useWastageApproval hook
+  const handleRejectWastage = useCallback(async (wastageId, rejectionData) => {
+    const success = await reject(String(wastageId), rejectionData.approvalNotes)
+    if (!success) {
+      throw new Error(approvalError || 'Failed to reject wastage')
     }
-  }
+  }, [reject, approvalError])
 
+  // Delete handler
   const handleDeleteWastage = async (wastageId) => {
     if (window.confirm(t('confirmDelete', 'Are you sure you want to delete this item?'))) {
       try {
-        setLoading(true)
+        setDeleteError(null)
         const result = await wastageService.delete(wastageId)
 
         if (result.success) {
-          await loadWastageData()
+          await refreshData()
         } else {
           throw new Error(result.error || 'Failed to delete wastage')
         }
-      } catch (error) {
-        console.error('Error deleting wastage:', error)
-        setError(error.message)
-      } finally {
-        setLoading(false)
+      } catch (err) {
+        setDeleteError(err.message)
       }
     }
   }
 
-  // Handle pending card click
+  // Handle pending card click - toggles pending filter
   const handlePendingCardClick = () => {
     if (!hasPermission('APPROVE_WASTAGE')) return
 
     if (pendingFilterActive) {
-      // Remove filter
-      setFilters(prev => ({ ...prev, status: 'all' }))
+      setFilter('status', 'all')
       setPendingFilterActive(false)
     } else {
-      // Apply pending filter
-      setFilters(prev => ({ ...prev, status: 'pending' }))
+      setFilter('status', 'pending')
       setPendingFilterActive(true)
     }
   }
 
-  // Filter wastages
-  const filteredWastages = wastages.filter(wastage => {
-    if (filters.status !== 'all') {
-      // Handle both 'pending' and 'pending_approval' status values
-      if (filters.status === 'pending') {
-        if (wastage.status !== 'pending' && wastage.status !== 'pending_approval') return false
-      } else if (wastage.status !== filters.status) {
-        return false
-      }
-    }
-    if (filters.wasteType !== 'all' && wastage.wasteType !== filters.wasteType) return false
-    return true
-  })
+  // Clear all errors
+  const clearAllErrors = () => {
+    setDeleteError(null)
+    clearApprovalError()
+  }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div className="page-container">
       {/* Error Display */}
@@ -312,58 +317,22 @@ const Wastage = () => {
         <div className="alert-error mb-4">
           <AlertTriangle size={16} />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="btn-icon-close">×</button>
+          <button onClick={clearAllErrors} className="btn-icon-close">×</button>
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="summary-cards">
-        <div className="summary-card">
-          <div className="summary-icon warning">
-            <AlertTriangle size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{summaryData.totalWastages}</div>
-            <div className="summary-label">{t('totalWastages', 'Total Wastages')}</div>
-          </div>
-        </div>
+      {/* Summary Cards - Using reusable WastageSummaryCards component */}
+      <WastageSummaryCards
+        totalWastages={summaryData.totalWastages}
+        totalCost={summaryData.totalCost}
+        pendingCount={summaryData.pendingCount}
+        approvedCount={summaryData.approvedCount}
+        loading={isLoading}
+        onPendingClick={hasPermission('APPROVE_WASTAGE') ? handlePendingCardClick : undefined}
+        pendingFilterActive={pendingFilterActive}
+      />
 
-        <div className="summary-card">
-          <div className="summary-icon danger">
-            <Banknote size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{formatCurrency(summaryData.totalCost)}</div>
-            <div className="summary-label">{t('totalWasteCost', 'Total Waste Cost')}</div>
-          </div>
-        </div>
-
-        <div
-          className={`summary-card ${hasPermission('APPROVE_WASTAGE') ? 'clickable' : ''} ${pendingFilterActive ? 'active' : ''}`}
-          onClick={handlePendingCardClick}
-          title={hasPermission('APPROVE_WASTAGE') ? t('clickToFilter', 'Click to filter pending wastages') : ''}
-        >
-          <div className="summary-icon info">
-            <Clock size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{summaryData.pendingCount}</div>
-            <div className="summary-label">{t('pendingApproval', 'Pending Approval')}</div>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon success">
-            <CheckCircle size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{summaryData.approvedCount}</div>
-            <div className="summary-label">{t('approved', 'Approved')}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Wastage Data Table - DataTable has built-in filtering */}
+      {/* Wastage Data Table */}
       <DataTable
         data={filteredWastages.map(wastage => ({
           ...wastage,
@@ -373,97 +342,97 @@ const Wastage = () => {
           formattedCost: formatCurrency(wastage.totalCost || (wastage.quantity * wastage.unitCost))
         }))}
         columns={[
-            {
-              key: 'materialCode',
-              header: t('material', 'Material'),
-              sortable: true,
-              filterable: true,
-              render: (value, row) => {
-                const material = materials.find(m => m.id === row.materialId || m.materialCode === value)
-                return (
-                  <div className="cell-info">
-                    <span className="cell-code">{value || row.materialCode || '-'}</span>
-                    {material && <span className="cell-text-secondary">{material.name}</span>}
-                  </div>
-                )
-              }
-            },
-            {
-              key: 'wasteType',
-              header: t('wasteType', 'Waste Type'),
-              sortable: true,
-              filterable: true,
-              render: (value, row) => (
-                <span className={`waste-type-badge ${value || 'other'}`}>
-                  {row.wasteTypeInfo?.name || value}
-                </span>
-              )
-            },
-            {
-              key: 'quantity',
-              header: t('quantity', 'Quantity'),
-              sortable: true,
-              align: 'right',
-              render: (value, row) => `${value} ${row.unit || ''}`
-            },
-            {
-              key: 'totalCost',
-              header: t('totalCost', 'Total Cost'),
-              sortable: true,
-              align: 'right',
-              render: (value, row) => row.formattedCost
-            },
-            {
-              key: 'formattedDate',
-              header: t('date', 'Date'),
-              sortable: true
-            },
-            {
-              key: 'status',
-              header: t('status', 'Status'),
-              sortable: true,
-              filterable: true,
-              render: (value, row) => (
-                <span className={`status-badge ${row.statusInfo.class}`}>
-                  {row.statusInfo.label}
-                </span>
-              )
-            },
-            {
-              key: 'actions',
-              header: t('actions', 'Actions'),
-              sortable: false,
-              render: (value, row) => (
-                <div className="cell-actions">
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={() => handleViewWastage(row)}
-                    title={t('viewDetails', 'View Details')}
-                  >
-                    <Eye size={14} />
-                  </button>
-                  {hasPermission('EDIT_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => handleEditWastage(row)}
-                      title={t('edit', 'Edit')}
-                    >
-                      <Edit size={14} />
-                    </button>
-                  )}
-                  {hasPermission('DELETE_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDeleteWastage(row.id)}
-                      title={t('delete', 'Delete')}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
+          {
+            key: 'materialCode',
+            header: t('material', 'Material'),
+            sortable: true,
+            filterable: true,
+            render: (value, row) => {
+              const material = materials.find(m => m.id === row.materialId || m.materialCode === value)
+              return (
+                <div className="cell-info">
+                  <span className="cell-code">{value || row.materialCode || '-'}</span>
+                  {material && <span className="cell-text-secondary">{material.name}</span>}
                 </div>
               )
             }
-          ]}
+          },
+          {
+            key: 'wasteType',
+            header: t('wasteType', 'Waste Type'),
+            sortable: true,
+            filterable: true,
+            render: (value, row) => (
+              <span className={`waste-type-badge ${value || 'other'}`}>
+                {row.wasteTypeInfo?.name || value}
+              </span>
+            )
+          },
+          {
+            key: 'quantity',
+            header: t('quantity', 'Quantity'),
+            sortable: true,
+            align: 'right',
+            render: (value, row) => `${value} ${row.unit || ''}`
+          },
+          {
+            key: 'totalCost',
+            header: t('totalCost', 'Total Cost'),
+            sortable: true,
+            align: 'right',
+            render: (value, row) => row.formattedCost
+          },
+          {
+            key: 'formattedDate',
+            header: t('date', 'Date'),
+            sortable: true
+          },
+          {
+            key: 'status',
+            header: t('status', 'Status'),
+            sortable: true,
+            filterable: true,
+            render: (value, row) => (
+              <span className={`status-badge ${row.statusInfo.class}`}>
+                {row.statusInfo.label}
+              </span>
+            )
+          },
+          {
+            key: 'actions',
+            header: t('actions', 'Actions'),
+            sortable: false,
+            render: (value, row) => (
+              <div className="cell-actions">
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => handleViewWastage(row)}
+                  title={t('viewDetails', 'View Details')}
+                >
+                  <Eye size={14} />
+                </button>
+                {hasPermission('EDIT_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => handleEditWastage(row)}
+                    title={t('edit', 'Edit')}
+                  >
+                    <Edit size={14} />
+                  </button>
+                )}
+                {hasPermission('DELETE_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDeleteWastage(row.id)}
+                    title={t('delete', 'Delete')}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            )
+          }
+        ]}
         title={t('wastageManagement', 'Wastage Management')}
         subtitle={t('trackWastageAndLosses', 'Track material wastage and losses')}
         headerActions={
@@ -486,7 +455,7 @@ const Wastage = () => {
             )}
           </>
         }
-        loading={loading}
+        loading={isLoading}
         searchable={true}
         filterable={true}
         sortable={true}
@@ -502,7 +471,7 @@ const Wastage = () => {
         onClose={handleFormClose}
         onSave={handleFormSave}
         materials={materials}
-        wasteTypes={wasteTypes}
+        wasteTypes={wasteTypesForForm}
         initialData={editingWastage}
         isEditing={!!editingWastage}
       />
@@ -513,7 +482,7 @@ const Wastage = () => {
         onClose={handleDetailsClose}
         wastage={selectedWastage}
         materials={materials}
-        wasteTypes={wasteTypes}
+        wasteTypes={wasteTypesForForm}
         onApprove={handleApproveWastage}
         onReject={handleRejectWastage}
         canApprove={hasPermission('APPROVE_WASTAGE')}

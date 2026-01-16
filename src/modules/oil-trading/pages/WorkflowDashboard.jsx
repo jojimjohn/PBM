@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { useProjects } from '../../../hooks/useProjects'
+import useDashboardCache from '../../../hooks/useDashboardCache'
 import { useNavigate } from 'react-router-dom'
 import workflowService from '../../../services/workflowService'
 import {
@@ -79,18 +80,96 @@ const WorkflowDashboard = () => {
   const { selectedProjectId, getProjectQueryParam, isProjectRequired, initialized: projectsInitialized, canViewAllProjects } = useProjects()
   const navigate = useNavigate()
 
-  const [loading, setLoading] = useState(true)
-  const [pendingActions, setPendingActions] = useState({ high: [], normal: [], stats: {} })
-  const [activityFeed, setActivityFeed] = useState([])
-  const [workflowStats, setWorkflowStats] = useState({})
-  const [notifications, setNotifications] = useState({ notifications: [], total: 0, hasUrgent: false })
   const [taskTypeTab, setTaskTypeTab] = useState('all') // 'all', 'purchases', 'sales', 'approvals', 'finance', 'alerts'
   const [showNotifications, setShowNotifications] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  // Function to trigger a refresh
-  const handleRefresh = () => setRefreshTrigger(prev => prev + 1)
+  // Determine if caching should be enabled
+  const cacheEnabled = projectsInitialized && (!isProjectRequired || selectedProjectId)
+
+  // Memoize project params to prevent unnecessary cache invalidations
+  const projectParams = useMemo(() => {
+    if (!cacheEnabled) return null
+    return getProjectQueryParam()
+  }, [cacheEnabled, selectedProjectId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cache configuration - shared across all dashboard data
+  const cacheOptions = useMemo(() => ({
+    ttlMinutes: 5, // Data stays fresh for 5 minutes
+    enabled: cacheEnabled,
+    projectId: selectedProjectId || 'all',
+    companyId: selectedCompany?.id || 'default'
+  }), [cacheEnabled, selectedProjectId, selectedCompany?.id])
+
+  /**
+   * SESSION-LEVEL CACHING (Jan 2026):
+   * Tasks and notifications don't need real-time refresh on every navigation.
+   * Cache in sessionStorage with 5-minute TTL. Only fetch from API when:
+   * 1. First load (no cache)
+   * 2. Cache expired (>5 minutes old)
+   * 3. Manual refresh button clicked
+   * 4. Project/company context changed
+   */
+
+  // Pending Actions cache
+  const {
+    data: pendingActions,
+    loading: actionsLoading,
+    refresh: refreshActions
+  } = useDashboardCache(
+    'pending-actions',
+    useCallback(() => workflowService.getPendingActions(projectParams), [projectParams]),
+    { ...cacheOptions, defaultValue: { high: [], normal: [], stats: {} } }
+  )
+
+  // Workflow Stats cache
+  const {
+    data: workflowStats,
+    loading: statsLoading,
+    refresh: refreshStats
+  } = useDashboardCache(
+    'workflow-stats',
+    useCallback(() => workflowService.getWorkflowStats(projectParams), [projectParams]),
+    { ...cacheOptions, defaultValue: {} }
+  )
+
+  // Activity Feed cache
+  const {
+    data: activityData,
+    loading: activityLoading,
+    refresh: refreshActivity
+  } = useDashboardCache(
+    'activity-feed',
+    useCallback(() => workflowService.getActivityFeed(10, projectParams), [projectParams]),
+    { ...cacheOptions, defaultValue: { activities: [] } }
+  )
+
+  // Notifications cache
+  const {
+    data: notificationsData,
+    loading: notificationsLoading,
+    refresh: refreshNotifications
+  } = useDashboardCache(
+    'notifications',
+    useCallback(() => workflowService.getNotifications(10, projectParams), [projectParams]),
+    { ...cacheOptions, defaultValue: { notifications: [], total: 0, hasUrgent: false } }
+  )
+
+  // Derive activity feed array from cache data
+  const activityFeed = activityData?.activities || []
+  const notifications = notificationsData || { notifications: [], total: 0, hasUrgent: false }
+
+  // Overall loading state - only show skeleton on initial load (no cached data)
+  const loading = (actionsLoading && !pendingActions?.stats) ||
+                  (statsLoading && !workflowStats?.collections)
+
+  // Manual refresh - refreshes all caches
+  const handleRefresh = useCallback(async () => {
+    console.log('[Dashboard] Manual refresh triggered')
+    // Stagger refreshes to prevent DB overload (same as before)
+    await Promise.all([refreshActions(), refreshStats()])
+    await Promise.all([refreshActivity(), refreshNotifications()])
+  }, [refreshActions, refreshStats, refreshActivity, refreshNotifications])
 
   // Task type groupings for tabs
   const taskTypeGroups = {
@@ -103,7 +182,7 @@ const WorkflowDashboard = () => {
 
   // Filter tasks by type group
   const getFilteredTasks = () => {
-    const allTasks = [...(pendingActions.high || []), ...(pendingActions.normal || [])]
+    const allTasks = [...(pendingActions?.high || []), ...(pendingActions?.normal || [])]
     if (taskTypeTab === 'all') return allTasks
     const allowedTypes = taskTypeGroups[taskTypeTab] || []
     return allTasks.filter(task => allowedTypes.includes(task.type))
@@ -111,69 +190,11 @@ const WorkflowDashboard = () => {
 
   // Count tasks per group
   const getTaskCountByGroup = (group) => {
-    if (group === 'all') return (pendingActions.stats?.totalPending || 0)
-    const allTasks = [...(pendingActions.high || []), ...(pendingActions.normal || [])]
+    if (group === 'all') return (pendingActions?.stats?.totalPending || 0)
+    const allTasks = [...(pendingActions?.high || []), ...(pendingActions?.normal || [])]
     const allowedTypes = taskTypeGroups[group] || []
     return allTasks.filter(task => allowedTypes.includes(task.type)).length
   }
-
-  useEffect(() => {
-    // Wait for project context to be fully initialized (localStorage checked & projects loaded)
-    // This prevents duplicate API calls during initialization
-    if (!projectsInitialized) return
-
-    // For non-admin users, wait until a project is selected (auto-selection happens in ProjectContext)
-    // This prevents loading data before the user's project is selected
-    if (isProjectRequired && !selectedProjectId) return
-
-    // Define loadDashboardData inside useEffect to avoid stale closure issues
-    const loadDashboardData = async () => {
-      setLoading(true)
-      try {
-        // Use centralized helper that validates project access
-        const projectParams = getProjectQueryParam()
-
-        console.log('Dashboard loading with project filter:', {
-          selectedProjectId,
-          projectParams,
-          canViewAllProjects,
-          isProjectRequired
-        })
-
-        const [actionsResult, activityResult, statsResult, notificationsResult] = await Promise.all([
-          workflowService.getPendingActions(projectParams),
-          workflowService.getActivityFeed(10, projectParams),
-          workflowService.getWorkflowStats(projectParams),
-          workflowService.getNotifications(10, projectParams)
-        ])
-
-        if (actionsResult.success) {
-          setPendingActions(actionsResult.data)
-        }
-
-        if (activityResult.success) {
-          setActivityFeed(activityResult.data.activities || [])
-        }
-
-        if (statsResult.success) {
-          setWorkflowStats(statsResult.data)
-        }
-
-        if (notificationsResult.success) {
-          setNotifications(notificationsResult.data)
-        }
-      } catch (error) {
-        console.error('Error loading dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadDashboardData()
-    // Note: getProjectQueryParam not in deps - it's derived from selectedProjectId which IS in deps
-    // Including it would cause duplicate calls since it changes reference when projects array loads
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCompany, selectedProjectId, projectsInitialized, isProjectRequired, refreshTrigger])
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 60000)

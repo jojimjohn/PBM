@@ -7,6 +7,10 @@ import authService from './authService';
 
 import { API_BASE_URL } from '../config/api.js';
 
+// Conditional logging - only in development
+const isDev = import.meta.env.DEV;
+const logError = isDev ? console.error.bind(console, '[wastageService]') : () => {};
+
 class WastageService {
   /**
    * Get all wastages for the current company
@@ -30,7 +34,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching wastages:', error);
+      logError('Error fetching wastages:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch wastages',
@@ -52,7 +56,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching wastage:', error);
+      logError('Error fetching wastage:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch wastage',
@@ -80,7 +84,7 @@ class WastageService {
         message: data.message || 'Wastage record created successfully'
       };
     } catch (error) {
-      console.error('Error creating wastage record:', error);
+      logError('Error creating wastage record:', error);
       return {
         success: false,
         error: error.message || 'Failed to create wastage record'
@@ -107,7 +111,7 @@ class WastageService {
         message: data.message || 'Wastage record updated successfully'
       };
     } catch (error) {
-      console.error('Error updating wastage record:', error);
+      logError('Error updating wastage record:', error);
       return {
         success: false,
         error: error.message || 'Failed to update wastage record'
@@ -129,7 +133,7 @@ class WastageService {
         message: data.message || 'Wastage record deleted successfully'
       };
     } catch (error) {
-      console.error('Error deleting wastage record:', error);
+      logError('Error deleting wastage record:', error);
       return {
         success: false,
         error: error.message || 'Failed to delete wastage record'
@@ -158,7 +162,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error searching wastage records:', error);
+      logError('Error searching wastage records:', error);
       return {
         success: false,
         error: error.message || 'Failed to search wastage records',
@@ -180,7 +184,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching pending approval wastages:', error);
+      logError('Error fetching pending approval wastages:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch pending approval wastages',
@@ -208,7 +212,7 @@ class WastageService {
         message: data.message || 'Wastage record approved successfully'
       };
     } catch (error) {
-      console.error('Error approving wastage record:', error);
+      logError('Error approving wastage record:', error);
       return {
         success: false,
         error: error.message || 'Failed to approve wastage record'
@@ -247,7 +251,7 @@ class WastageService {
         message: data.message || 'Wastage record amended successfully'
       };
     } catch (error) {
-      console.error('Error amending wastage record:', error);
+      logError('Error amending wastage record:', error);
       return {
         success: false,
         error: error.message || 'Failed to amend wastage record'
@@ -274,7 +278,7 @@ class WastageService {
         message: data.message || 'Wastage record rejected successfully'
       };
     } catch (error) {
-      console.error('Error rejecting wastage record:', error);
+      logError('Error rejecting wastage record:', error);
       return {
         success: false,
         error: error.message || 'Failed to reject wastage record'
@@ -308,7 +312,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching wastage analytics:', error);
+      logError('Error fetching wastage analytics:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch wastage analytics',
@@ -330,7 +334,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching material wastages:', error);
+      logError('Error fetching material wastages:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch material wastages',
@@ -352,7 +356,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching wastage types:', error);
+      logError('Error fetching wastage types:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch wastage types',
@@ -374,7 +378,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching wastage cost impact:', error);
+      logError('Error fetching wastage cost impact:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch wastage cost impact',
@@ -396,7 +400,7 @@ class WastageService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching monthly wastage trends:', error);
+      logError('Error fetching monthly wastage trends:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch monthly wastage trends',

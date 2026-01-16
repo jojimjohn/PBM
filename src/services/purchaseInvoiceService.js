@@ -30,7 +30,6 @@ class PurchaseInvoiceService {
       const data = await authService.makeAuthenticatedRequest(url);
       return data;
     } catch (error) {
-      console.error('Error fetching purchase invoices:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch purchase invoices',
@@ -113,7 +112,6 @@ class PurchaseInvoiceService {
       const data = await authService.makeAuthenticatedRequest(url);
       return data;
     } catch (error) {
-      console.error('Error fetching unlinked company bills:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch unlinked company bills',
@@ -142,7 +140,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error updating company bill status:', error);
       return {
         success: false,
         error: error.message || 'Failed to update company bill status'
@@ -160,7 +157,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error fetching purchase invoice:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch purchase invoice',
@@ -214,7 +210,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error creating purchase invoice:', error);
       return {
         success: false,
         error: error.message || 'Failed to create purchase invoice'
@@ -249,7 +244,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error creating vendor bill:', error);
       return {
         success: false,
         error: error.message || 'Failed to create vendor bill'
@@ -290,7 +284,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error updating purchase invoice:', error);
       return {
         success: false,
         error: error.message || 'Failed to update purchase invoice'
@@ -311,7 +304,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error deleting purchase invoice:', error);
       return {
         success: false,
         error: error.message || 'Failed to delete purchase invoice'
@@ -336,7 +328,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error recording invoice payment:', error);
       return {
         success: false,
         error: error.message || 'Failed to record invoice payment'
@@ -361,7 +352,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error uploading invoice attachment:', error);
       return {
         success: false,
         error: error.message || 'Failed to upload invoice attachment'
@@ -425,7 +415,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error syncing payment status:', error);
       return {
         success: false,
         error: error.message || 'Failed to sync payment status'
@@ -451,7 +440,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error syncing invoice prefixes:', error);
       return {
         success: false,
         error: error.message || 'Failed to sync invoice prefixes'
@@ -477,7 +465,6 @@ class PurchaseInvoiceService {
       );
       return data;
     } catch (error) {
-      console.error('Error resetting orphan payments:', error);
       return {
         success: false,
         error: error.message || 'Failed to reset orphan payments'

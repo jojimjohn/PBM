@@ -538,7 +538,7 @@ const PurchaseOrderAmendmentModal = ({
         ) : purchaseOrder?.status !== 'draft' && (
           <button
             type="button"
-            className="btn-create-invoice"
+            className="btn btn-primary"
             onClick={handleCreateAmendment}
           >
             <Plus size={16} />
@@ -603,7 +603,7 @@ const PurchaseOrderAmendmentModal = ({
               <div className="amendment-card-actions">
                 <button
                   type="button"
-                  className="btn-amendment-action"
+                  className="btn btn-primary btn-sm"
                   onClick={() => handleViewDetails(amendment)}
                 >
                   View Details
@@ -637,7 +637,7 @@ const PurchaseOrderAmendmentModal = ({
           <h3>Create Amendment for {purchaseOrder?.orderNumber}</h3>
           <button
             type="button"
-            className="btn-back"
+            className="btn btn-outline"
             onClick={handleBackToList}
           >
             ← Back to List
@@ -728,24 +728,12 @@ const PurchaseOrderAmendmentModal = ({
 
           {/* Items Table */}
           <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
               <label style={{ margin: 0 }}>Order Items</label>
               <button
                 type="button"
+                className="btn btn-success btn-sm"
                 onClick={handleAddItem}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  padding: '0.375rem 0.75rem',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.75rem',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
               >
                 <Plus size={14} />
                 Add Material
@@ -820,16 +808,8 @@ const PurchaseOrderAmendmentModal = ({
                       <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                         <button
                           type="button"
+                          className="ds-form-btn-icon danger"
                           onClick={() => handleRemoveItem(index)}
-                          style={{
-                            padding: '0.25rem 0.5rem',
-                            backgroundColor: '#fee2e2',
-                            color: '#991b1b',
-                            border: 'none',
-                            borderRadius: '0.25rem',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem'
-                          }}
                           title="Remove item"
                         >
                           <Trash2 size={14} />
@@ -917,7 +897,7 @@ const PurchaseOrderAmendmentModal = ({
           <div className="form-actions">
             <button
               type="button"
-              className="btn-cancel"
+              className="btn btn-outline"
               onClick={handleBackToList}
               disabled={submitting}
             >
@@ -925,7 +905,7 @@ const PurchaseOrderAmendmentModal = ({
             </button>
             <button
               type="submit"
-              className="btn-submit"
+              className="btn btn-primary"
               disabled={
                 submitting ||
                 !formData.reason ||
@@ -958,7 +938,7 @@ const PurchaseOrderAmendmentModal = ({
         <h3>Amendment #{selectedAmendment.amendment_number} Details</h3>
         <button
           type="button"
-          className="btn-back"
+          className="btn btn-outline"
           onClick={handleBackToList}
         >
           ← Back to List
@@ -1074,54 +1054,20 @@ const PurchaseOrderAmendmentModal = ({
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="header-actions">
                 <button
+                  className="btn btn-success"
                   onClick={handleApproveAmendment}
                   disabled={submitting}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: submitting ? '#9ca3af' : '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => !submitting && (e.target.style.backgroundColor = '#059669')}
-                  onMouseLeave={(e) => !submitting && (e.target.style.backgroundColor = '#10b981')}
                 >
                   <ThumbsUp size={16} />
                   {submitting ? 'Processing...' : 'Approve Amendment'}
                 </button>
 
                 <button
+                  className="btn btn-danger"
                   onClick={handleRejectAmendment}
                   disabled={submitting}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.75rem 1.5rem',
-                    backgroundColor: submitting ? '#9ca3af' : '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => !submitting && (e.target.style.backgroundColor = '#dc2626')}
-                  onMouseLeave={(e) => !submitting && (e.target.style.backgroundColor = '#ef4444')}
                 >
                   <ThumbsDown size={16} />
                   {submitting ? 'Processing...' : 'Reject Amendment'}

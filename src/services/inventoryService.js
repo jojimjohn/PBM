@@ -68,7 +68,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching inventory:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch inventory',
@@ -90,7 +89,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching inventory item:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch inventory item',
@@ -112,7 +110,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching material inventory:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch material inventory',
@@ -140,7 +137,6 @@ class InventoryService {
         message: data.message || 'Inventory item created successfully'
       };
     } catch (error) {
-      console.error('Error creating inventory item:', error);
       return {
         success: false,
         error: error.message || 'Failed to create inventory item'
@@ -167,7 +163,6 @@ class InventoryService {
         message: data.message || 'Inventory item updated successfully'
       };
     } catch (error) {
-      console.error('Error updating inventory item:', error);
       return {
         success: false,
         error: error.message || 'Failed to update inventory item'
@@ -189,7 +184,6 @@ class InventoryService {
         message: data.message || 'Inventory item deleted successfully'
       };
     } catch (error) {
-      console.error('Error deleting inventory item:', error);
       return {
         success: false,
         error: error.message || 'Failed to delete inventory item'
@@ -216,7 +210,6 @@ class InventoryService {
         message: data.message || 'Stock updated successfully'
       };
     } catch (error) {
-      console.error('Error updating stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to update stock'
@@ -246,7 +239,6 @@ class InventoryService {
         message: data.message || 'Opening stock set successfully'
       };
     } catch (error) {
-      console.error('Error setting opening stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to set opening stock'
@@ -267,7 +259,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching current stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch current stock',
@@ -294,7 +285,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching batch stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch batch stock',
@@ -330,7 +320,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error validating stock availability:', error);
       return {
         success: false,
         error: error.message || 'Failed to validate stock availability',
@@ -362,7 +351,6 @@ class InventoryService {
         message: data.message || 'Stock reduced successfully'
       };
     } catch (error) {
-      console.error('Error reducing stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to reduce stock'
@@ -393,7 +381,6 @@ class InventoryService {
         message: data.message || 'Stock added successfully'
       };
     } catch (error) {
-      console.error('Error adding stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to add stock'
@@ -414,7 +401,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching low stock items:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch low stock items',
@@ -436,7 +422,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching inventory value:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch inventory value',
@@ -466,7 +451,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching inventory movements:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch inventory movements',
@@ -494,7 +478,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error searching inventory:', error);
       return {
         success: false,
         error: error.message || 'Failed to search inventory',
@@ -516,7 +499,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching inventory analytics:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch inventory analytics',
@@ -550,7 +532,6 @@ class InventoryService {
         message: data.message || 'Stock adjusted successfully'
       };
     } catch (error) {
-      console.error('Error adjusting stock:', error);
       return {
         success: false,
         error: error.message || 'Failed to adjust stock'
@@ -577,7 +558,6 @@ class InventoryService {
         message: data.message || 'Reorder levels updated successfully'
       };
     } catch (error) {
-      console.error('Error updating reorder levels:', error);
       return {
         success: false,
         error: error.message || 'Failed to update reorder levels'
@@ -603,7 +583,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching composite receipts:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch composite receipts',
@@ -644,7 +623,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching stock movements:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch stock movements',
@@ -683,7 +661,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching chart data:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch chart data',
@@ -737,7 +714,6 @@ class InventoryService {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching batch movements:', error);
       return {
         success: false,
         error: error.message || 'Failed to fetch batch movements',

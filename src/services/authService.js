@@ -296,6 +296,11 @@ class AuthService {
   /**
    * Refresh access token
    * Server handles token rotation via cookies
+   *
+   * RACE CONDITION HANDLING:
+   * If multiple tabs try to refresh simultaneously, the server returns
+   * REFRESH_IN_PROGRESS (429) with Retry-After header. The caller should
+   * retry after a short delay using exponential backoff.
    */
   async refreshAccessToken() {
     try {
@@ -310,7 +315,32 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Token refresh failed');
+        // Create error with code for proper handling
+        const error = new Error(data.error || 'Token refresh failed');
+        error.code = data.code;
+        error.status = response.status;
+
+        // Special handling for concurrent refresh attempts
+        // IMPORTANT: Only check data.code, NOT response.status === 429
+        // Other 429s (rate limiter) should NOT trigger retry logic
+        if (data.code === 'REFRESH_IN_PROGRESS') {
+          // Prefer Retry-After header, fallback to body value, default to 1 second
+          // FIXED: Validate parsed value to avoid NaN propagating to backoff calculation
+          const retryAfterHeader = response.headers.get('Retry-After');
+          let retryAfter = data.retryAfter || 1; // Default from body or 1 second
+          if (retryAfterHeader) {
+            const parsed = parseInt(retryAfterHeader, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              retryAfter = parsed;
+            }
+          }
+          error.retryAfter = retryAfter;
+          if (import.meta.env.DEV) {
+            console.log('[Auth] Token refresh in progress on another tab, should retry');
+          }
+        }
+
+        throw error;
       }
 
       if (data.success && data.data?.user) {
@@ -318,11 +348,16 @@ class AuthService {
         this.user = data.data.user;
         return true;
       } else {
-        throw new Error(data.error || 'Token refresh failed');
+        const error = new Error(data.error || 'Token refresh failed');
+        error.code = data.code;
+        throw error;
       }
     } catch (error) {
-      console.error('Token refresh error:', error);
-      this.user = null;
+      // Don't clear user for REFRESH_IN_PROGRESS - it's a retry scenario
+      if (error.code !== 'REFRESH_IN_PROGRESS') {
+        console.error('Token refresh error:', error);
+        this.user = null;
+      }
       throw error;
     }
   }

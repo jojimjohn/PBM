@@ -31,7 +31,8 @@ import {
   useInventoryData,
   useStockAlerts,
   useMaterialComposition,
-  useMaterialMaster
+  useMaterialMaster,
+  useStockMovements
 } from '../hooks'
 
 // Table Configurations
@@ -47,7 +48,6 @@ import {
 
 // Services
 import inventoryService from '../../../services/inventoryService'
-import transactionService from '../../../services/transactionService'
 
 // Icons
 import { Package, Plus, TrendingUp, Droplets, Clock, Banknote, BarChart3 } from 'lucide-react'
@@ -84,10 +84,6 @@ const Inventory = () => {
   // Batch modal state
   const [showBatchModal, setShowBatchModal] = useState(false)
   const [selectedMaterialBatches, setSelectedMaterialBatches] = useState(null)
-
-  // Stock movements for transactions tab
-  const [stockMovements, setStockMovements] = useState([])
-  const [loadingMovements, setLoadingMovements] = useState(false)
 
   // =============================================
   // CUSTOM HOOKS
@@ -137,6 +133,13 @@ const Inventory = () => {
     closeForm: closeMaterialForm
   } = useMaterialMaster({ onRefresh: refreshInventory })
 
+  // Stock movements hook (for Stock Movements tab)
+  const {
+    movements: stockMovements,
+    loading: loadingMovements,
+    loadMovements: loadStockMovements
+  } = useStockMovements({ initialLimit: 100 })
+
   // =============================================
   // EFFECTS
   // =============================================
@@ -144,9 +147,9 @@ const Inventory = () => {
   // Load stock movements when transactions tab is activated
   useEffect(() => {
     if (activeTab === 'transactions') {
-      loadStockMovements()
+      loadStockMovements({})
     }
-  }, [activeTab])
+  }, [activeTab, loadStockMovements])
 
   // Close alert dropdown when clicking outside
   useEffect(() => {
@@ -162,18 +165,6 @@ const Inventory = () => {
   // =============================================
   // HANDLERS
   // =============================================
-
-  const loadStockMovements = async () => {
-    try {
-      setLoadingMovements(true)
-      const movements = await transactionService.getStockMovements({ limit: 100 })
-      setStockMovements(movements)
-    } catch (error) {
-      setStockMovements([])
-    } finally {
-      setLoadingMovements(false)
-    }
-  }
 
   const formatCurrency = (amount) => {
     const numAmount = parseFloat(amount) || 0

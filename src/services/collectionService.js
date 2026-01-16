@@ -253,7 +253,6 @@ export const collectionOrderService = {
         message: data.message || 'WCN finalized successfully',
       };
     } catch (error) {
-      console.error('Error finalizing WCN:', error);
       return {
         success: false,
         error: error.message || 'Network error',
@@ -281,7 +280,6 @@ export const collectionOrderService = {
         message: data.message || 'WCN rectified successfully',
       };
     } catch (error) {
-      console.error('Error rectifying WCN:', error);
       return {
         success: false,
         error: error.message || 'Network error',
@@ -308,7 +306,6 @@ export const collectionOrderService = {
         message: data.message,
       };
     } catch (error) {
-      console.error('Error fetching linked wastages:', error);
       return {
         success: false,
         error: error.message || 'Network error',
@@ -380,7 +377,6 @@ export const contractLocationService = {
         message: data.message
       };
     } catch (error) {
-      console.error('Error fetching supplier locations:', error);
       return {
         success: false,
         error: error.message,
@@ -406,7 +402,6 @@ export const contractLocationService = {
         message: data.message
       };
     } catch (error) {
-      console.error('Error creating location:', error);
       return {
         success: false,
         error: error.message
@@ -431,7 +426,6 @@ export const contractLocationService = {
         message: data.message
       };
     } catch (error) {
-      console.error('Error updating location:', error);
       return {
         success: false,
         error: error.message

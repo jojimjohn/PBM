@@ -32,6 +32,8 @@ import purchaseInvoiceService from '../../../services/purchaseInvoiceService'
 import expenseService from '../../../services/expenseService'
 import purchaseOrderExpenseService from '../../../services/purchaseOrderExpenseService'
 import dataCacheService from '../../../services/dataCacheService'
+// Custom hooks for purchase data management
+import { usePurchaseOrders, usePurchaseBills, usePurchaseExpenses } from '../hooks'
 import {
   Plus, Search, Filter, Eye, Edit, Edit3, Truck, Package,
   CheckCircle, Clock, AlertTriangle, FileText, Download,
@@ -66,32 +68,67 @@ const Purchase = () => {
     }
   }, [searchParams])
 
-  
-  // Data states
-  const [purchaseOrders, setPurchaseOrders] = useState([])
-  const [purchaseExpenses, setPurchaseExpenses] = useState([])
-  const [bills, setBills] = useState([])
-  const [billTypeFilter, setBillTypeFilter] = useState('all') // 'all', 'company', 'vendor'
-  const [billPaymentFilter, setBillPaymentFilter] = useState('all') // 'all', 'unpaid', 'partial', 'paid', 'overdue'
-  const [amendmentCounts, setAmendmentCounts] = useState({}) // Map of orderId -> amendment count
-  const [vendors, setVendors] = useState([])
-  const [materials, setMaterials] = useState([])
-  const [orderStatuses, setOrderStatuses] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [billsLoading, setBillsLoading] = useState(false)
 
-  // Server-side pagination state for purchase orders
-  // Initialize search from URL param (used when clicking tasks from dashboard)
-  const [ordersPagination, setOrdersPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-    search: urlSearchTerm,
-    sortBy: 'created_at',
-    sortOrder: 'desc',
-    status: ''
+  // =====================================================
+  // CUSTOM HOOKS - Data management extracted for reuse
+  // =====================================================
+
+  // Purchase Orders Hook - handles orders, pagination, vendors, materials
+  const {
+    orders: purchaseOrders,
+    loading: ordersLoading,
+    pagination: ordersPagination,
+    amendmentCounts,
+    vendors,
+    materials,
+    orderStatuses,
+    loadOrders: loadPurchaseOrders,
+    loadFullData: loadPurchaseData,
+    updateOrder: hookUpdateOrder,
+    receiveOrder: hookReceiveOrder,
+    setOrders: setPurchaseOrders,
+    updatePagination: setOrdersPagination
+  } = usePurchaseOrders({
+    initialLimit: 10,
+    initialSearch: urlSearchTerm,
+    getProjectQueryParam
   })
+
+  // Purchase Bills Hook - handles bills, filters, grouping
+  const {
+    bills,
+    loading: billsLoading,
+    summary: billSummary,
+    groupedBills: groupedBillsData,
+    filters: billFilters,
+    loadBills,
+    setFilters: setBillFilters,
+    recordPayment: hookRecordPayment,
+    createVendorBill: hookCreateVendorBill,
+    updateBill: hookUpdateBill,
+    updateCompanyBillStatus: hookUpdateCompanyBillStatus
+  } = usePurchaseBills({ getProjectQueryParam })
+
+  // Purchase Expenses Hook - handles expenses CRUD
+  const {
+    expenses: purchaseExpenses,
+    loading: expensesLoading,
+    loadExpenses,
+    createExpense: hookCreateExpense,
+    deleteExpense: hookDeleteExpense,
+    uploadReceipt: hookUploadReceipt,
+    removeReceipt: hookRemoveReceipt,
+    setExpenses: setPurchaseExpenses
+  } = usePurchaseExpenses({ getProjectQueryParam })
+
+  // Combined loading state for UI
+  const loading = ordersLoading
+
+  // Helper accessors for bill filters (maintaining backward compatibility)
+  const billTypeFilter = billFilters.billType
+  const billPaymentFilter = billFilters.paymentStatus
+  const setBillTypeFilter = (value) => setBillFilters({ billType: value })
+  const setBillPaymentFilter = (value) => setBillFilters({ paymentStatus: value })
   
   // Modal states
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -121,213 +158,74 @@ const Purchase = () => {
   const [showExpenseViewModal, setShowExpenseViewModal] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState(null)
 
+  // Track previous state to detect actual changes (prevents duplicate loads)
+  const prevStateRef = React.useRef({ activeTab: null, projectId: null, companyId: null })
+
+  /**
+   * CONSOLIDATED DATA LOADING (Performance Fix - Jan 2026)
+   *
+   * PROBLEM: Multiple useEffects were firing simultaneously on mount, causing:
+   * - 2-3x API calls on page load
+   * - Project filter middleware running multiple times per navigation
+   *
+   * SOLUTION: Single effect that:
+   * 1. Tracks what actually changed (tab vs project vs company)
+   * 2. Loads only the data needed for the current tab
+   * 3. Prevents duplicate loads on mount
+   */
   useEffect(() => {
-    loadPurchaseData()
-  }, [selectedCompany, selectedProjectId])
+    const prev = prevStateRef.current
+    const companyChanged = prev.companyId !== selectedCompany?.id
+    const projectChanged = prev.projectId !== selectedProjectId
+    const tabChanged = prev.activeTab !== activeTab
 
-  // Load purchase orders with server-side pagination
-  const loadPurchaseOrders = useCallback(async (paginationParams = {}) => {
-    try {
-      setLoading(true)
+    // Update ref for next comparison
+    prevStateRef.current = {
+      activeTab,
+      projectId: selectedProjectId,
+      companyId: selectedCompany?.id
+    }
 
-      // Get project filter params
-      const projectParams = getProjectQueryParam()
+    // Skip if nothing actually changed (prevents duplicate on mount)
+    if (!companyChanged && !projectChanged && !tabChanged && prev.activeTab !== null) {
+      return
+    }
 
-      // Merge current pagination with new params and project filter
-      const params = {
-        page: paginationParams.page ?? ordersPagination.page,
-        limit: paginationParams.limit ?? ordersPagination.limit,
-        search: paginationParams.search ?? ordersPagination.search,
-        status: paginationParams.status ?? ordersPagination.status,
-        sortBy: paginationParams.sortBy ?? ordersPagination.sortBy,
-        sortOrder: paginationParams.sortOrder ?? ordersPagination.sortOrder,
-        ...projectParams  // Include project_id filter
-      }
-
-      const ordersResult = await purchaseOrderService.getAll(params)
-
-      if (ordersResult.success) {
-        setPurchaseOrders(ordersResult.data || [])
-        // Update pagination state with server response
-        if (ordersResult.pagination) {
-          setOrdersPagination(prev => ({
-            ...prev,
-            ...params,
-            total: ordersResult.pagination.total || 0,
-            totalPages: ordersResult.pagination.totalPages || 0
-          }))
+    // Load data based on active tab
+    switch (activeTab) {
+      case 'orders':
+      case 'collections':
+        // Orders and collections share the same data
+        loadPurchaseData()
+        break
+      case 'bills':
+        // Load bills when tab is active or project/company changed
+        loadBills()
+        // Also load orders for reference data (vendor names, etc.)
+        if (companyChanged || projectChanged || prev.activeTab === null) {
+          loadPurchaseData()
         }
-      } else {
-        setPurchaseOrders([])
-      }
-    } catch (error) {
-      console.error('Error loading purchase orders:', error)
-      setPurchaseOrders([])
-    } finally {
-      setLoading(false)
-    }
-  }, [ordersPagination, getProjectQueryParam])
-
-  const loadPurchaseData = async () => {
-    try {
-      setLoading(true)
-
-      // Set default order statuses immediately (no API call needed)
-      setOrderStatuses({
-        draft: { name: 'Draft', color: '#6b7280' },
-        pending: { name: 'Pending Approval', color: '#f59e0b' },
-        approved: { name: 'Approved', color: '#10b981' },
-        sent: { name: 'Sent to Vendor', color: '#3b82f6' },
-        received: { name: 'Received', color: '#059669' },
-        completed: { name: 'Completed', color: '#059669' },
-        cancelled: { name: 'Cancelled', color: '#ef4444' }
-      })
-
-      // PERFORMANCE FIX: Use dataCacheService for instant loading of cached data
-      // Suppliers and materials use 5-min cache, purchase orders use 2-min cache
-      // Get project filter params
-      const projectParams = getProjectQueryParam()
-
-      const [
-        ordersResult,
-        expensesResult,
-        countsResult,
-        suppliersData,
-        materialsData
-      ] = await Promise.all([
-        // 1. Purchase orders with pagination (no cache for paginated data)
-        purchaseOrderService.getAll({
-          page: ordersPagination.page,
-          limit: ordersPagination.limit,
-          search: ordersPagination.search,
-          status: ordersPagination.status,
-          sortBy: ordersPagination.sortBy,
-          sortOrder: ordersPagination.sortOrder,
-          ...projectParams  // Include project_id filter
-        }),
-        // 2. Purchase expenses with project filter
-        expenseService.getAll({ expenseType: 'purchase', ...projectParams }).catch(err => {
-          console.error('Error loading purchase expenses:', err)
-          return { success: false, data: [] }
-        }),
-        // 3. Amendment counts
-        purchaseOrderAmendmentService.getAllCounts().catch(err => {
-          console.error('Error loading amendment counts:', err)
-          return { success: false, data: {} }
-        }),
-        // 4. Suppliers (vendors) - CACHED (5 min TTL)
-        dataCacheService.getSuppliers().catch(err => {
-          console.error('Error loading suppliers:', err)
-          return []
-        }),
-        // 5. Materials - CACHED (5 min TTL)
-        dataCacheService.getMaterials().catch(err => {
-          console.error('Error loading materials:', err)
-          return []
-        })
-      ])
-
-      // Process purchase orders result
-      const companyOrders = ordersResult.success ? ordersResult.data : []
-      setPurchaseOrders(companyOrders)
-
-      // Update pagination from server response
-      if (ordersResult.success && ordersResult.pagination) {
-        setOrdersPagination(prev => ({
-          ...prev,
-          total: ordersResult.pagination.total || 0,
-          totalPages: ordersResult.pagination.totalPages || 0
-        }))
-      }
-
-      // Process expenses result
-      const expenses = expensesResult.success ? expensesResult.data : []
-      const normalizedExpenses = expenses.map(expense => {
-        const po = companyOrders.find(p => p.id === expense.referenceId)
-        return {
-          ...expense,
-          orderNumber: po?.orderNumber || expense.orderNumber || `PO #${expense.referenceId}`,
-          vendor: expense.vendor || expense.vendorName || expense.supplierName || '',
-          status: expense.status || (expense.referenceType === 'purchase_order' ? 'recorded' : 'pending')
+        break
+      case 'expenses':
+        loadExpenses()
+        // Also load orders for reference data
+        if (companyChanged || projectChanged || prev.activeTab === null) {
+          loadPurchaseData()
         }
-      })
-      setPurchaseExpenses(normalizedExpenses)
-
-      // Process amendment counts result
-      if (countsResult.success && countsResult.data) {
-        setAmendmentCounts(countsResult.data)
-      } else {
-        setAmendmentCounts({})
-      }
-
-      // Process suppliers result (dataCacheService returns array directly)
-      const supplierVendors = (suppliersData || []).map(supplier => ({
-        id: supplier.id,
-        name: supplier.name,
-        vendorCode: supplier.supplierCode || `VEN-${supplier.id.toString().padStart(3, '0')}`,
-        contactPerson: supplier.contactPerson,
-        phone: supplier.phone,
-        email: supplier.email
-      }))
-      setVendors(supplierVendors)
-
-      // Process materials result (dataCacheService returns array directly)
-      setMaterials(materialsData || [])
-      
-    } catch (error) {
-      console.error('Error loading purchase data:', error)
-    } finally {
-      setLoading(false)
+        break
+      default:
+        loadPurchaseData()
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompany?.id, selectedProjectId, activeTab])
 
-  // Phase 1.5: Load bills when switching to bills tab
-  const loadBills = async () => {
-    try {
-      setBillsLoading(true)
-
-      // Get project filter params
-      const projectParams = getProjectQueryParam()
-
-      // Build filters
-      const filters = {
-        ...projectParams  // Include project_id filter
-      }
-      if (billTypeFilter !== 'all') {
-        filters.billType = billTypeFilter
-      }
-      if (billPaymentFilter !== 'all') {
-        filters.paymentStatus = billPaymentFilter
-      }
-
-      const result = await purchaseInvoiceService.getAll(filters)
-      if (result.success) {
-        setBills(result.data || [])
-      } else {
-        console.error('Error loading bills:', result.error)
-        setBills([])
-      }
-    } catch (error) {
-      console.error('Error loading bills:', error)
-      setBills([])
-    } finally {
-      setBillsLoading(false)
-    }
-  }
-
-  // Reload purchase orders when orders tab becomes active (for fresh data after WCN finalization)
+  // Handle bill filter changes separately (only when on bills tab)
   useEffect(() => {
-    if (activeTab === 'orders') {
-      loadPurchaseData()
-    }
-  }, [activeTab])
-
-  // Load bills when bills tab is active, filters change, or project changes
-  useEffect(() => {
-    if (activeTab === 'bills') {
+    if (activeTab === 'bills' && prevStateRef.current.activeTab === 'bills') {
       loadBills()
     }
-  }, [activeTab, billTypeFilter, billPaymentFilter, selectedProjectId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billTypeFilter, billPaymentFilter])
 
   // Handle URL search param changes (from dashboard task navigation)
   useEffect(() => {
@@ -345,107 +243,9 @@ const Purchase = () => {
     }
   }, [urlSearchTerm])
 
-  // Calculate bill summary
-  const calculateBillSummary = () => {
-    const summary = {
-      total: bills.length,
-      companyBills: bills.filter(b => b.bill_type === 'company').length,
-      vendorBills: bills.filter(b => b.bill_type === 'vendor').length,
-      unpaid: bills.filter(b => b.payment_status === 'unpaid').length,
-      overdue: bills.filter(b => b.payment_status === 'overdue').length,
-      totalAmount: bills.reduce((sum, b) => sum + (parseFloat(b.invoice_amount) || 0), 0),
-      paidAmount: bills.reduce((sum, b) => sum + (parseFloat(b.paid_amount) || 0), 0),
-      balanceDue: bills.reduce((sum, b) => sum + (parseFloat(b.balance_due) || 0), 0)
-    }
-    return summary
-  }
-
-  /**
-   * Group bills for hierarchical display
-   * - Vendor bills become parent rows with nested company bills
-   * - Orphan company bills (not linked to vendor bill) shown separately
-   * - Calculates reconciliation metrics for each vendor bill
-   *
-   * New Workflow (covers_company_bills):
-   * - Vendor bills link directly to company bills via covers_company_bills array
-   *
-   * Legacy Workflow (covers_purchase_orders):
-   * - Vendor bills link to POs, we find company bills by PO ID
-   * - Kept for backward compatibility during migration
-   */
-  const groupBillsForDisplay = () => {
-    const vendorBills = bills.filter(b => b.bill_type === 'vendor')
-    const companyBills = bills.filter(b => b.bill_type === 'company')
-
-    // Map company bills by ID for direct lookup (new workflow)
-    const companyBillsById = {}
-    companyBills.forEach(cb => {
-      companyBillsById[cb.id] = cb
-    })
-
-    // Map company bills by PO ID for legacy lookup
-    const companyBillsByPO = {}
-    companyBills.forEach(cb => {
-      if (cb.purchase_order_id) {
-        companyBillsByPO[cb.purchase_order_id] = cb
-      }
-    })
-
-    // Track which company bills are linked to vendor bills
-    const linkedCompanyBillIds = new Set()
-
-    // Group vendor bills with their linked company bills
-    const groupedBills = vendorBills.map(vb => {
-      let linkedCompanyBills = []
-
-      // New workflow: Use covers_company_bills (direct company bill IDs)
-      if (vb.covers_company_bills && vb.covers_company_bills.length > 0) {
-        linkedCompanyBills = vb.covers_company_bills
-          .map(cbId => companyBillsById[cbId])
-          .filter(Boolean)
-      }
-      // Legacy workflow: Use covers_purchase_orders (PO IDs → company bills)
-      else if (vb.covers_purchase_orders && vb.covers_purchase_orders.length > 0) {
-        linkedCompanyBills = vb.covers_purchase_orders
-          .map(poId => companyBillsByPO[poId])
-          .filter(Boolean)
-      }
-
-      // Mark these company bills as linked
-      linkedCompanyBills.forEach(cb => linkedCompanyBillIds.add(cb.id))
-
-      // Calculate reconciliation metrics
-      const companyTotal = linkedCompanyBills.reduce(
-        (sum, cb) => sum + parseFloat(cb.invoice_amount || 0), 0
-      )
-      const vendorAmount = parseFloat(vb.invoice_amount || 0)
-      const difference = vendorAmount - companyTotal
-
-      // Count covered items (use company bills count or PO count for legacy)
-      const coveredCount = vb.covers_company_bills?.length ||
-        vb.covers_purchase_orders?.length || 0
-
-      return {
-        ...vb,
-        childBills: linkedCompanyBills,
-        isExpanded: false, // Will be managed in component state
-        reconciliation: {
-          companyTotal,
-          vendorAmount,
-          difference,
-          isMatched: Math.abs(difference) < 0.01,
-          coveredPOs: coveredCount,
-          linkedBills: linkedCompanyBills.length,
-          missingBills: coveredCount - linkedCompanyBills.length
-        }
-      }
-    })
-
-    // Find orphan company bills (not linked to any vendor bill)
-    const orphanBills = companyBills.filter(cb => !linkedCompanyBillIds.has(cb.id))
-
-    return { groupedBills, orphanBills }
-  }
+  // Bill summary and grouping are now provided by usePurchaseBills hook
+  // - billSummary: calculated summary statistics
+  // - groupedBillsData: { groupedBills, orphanBills } for hierarchical display
 
   // Helper to get PO order number from ID
   const getPOOrderNumber = (poId) => {
@@ -491,7 +291,6 @@ const Purchase = () => {
         throw new Error(result.error || 'Failed to create vendor bill')
       }
     } catch (error) {
-      console.error('Error creating vendor bill:', error)
       throw error // Re-throw to let modal handle the error
     }
   }
@@ -515,7 +314,6 @@ const Purchase = () => {
         throw new Error(result.error || 'Failed to update vendor bill')
       }
     } catch (error) {
-      console.error('Error updating vendor bill:', error)
       throw error // Re-throw to let modal handle the error
     }
   }
@@ -531,7 +329,6 @@ const Purchase = () => {
         setMessage({ type: 'error', text: result.error || 'Failed to update bill status' })
       }
     } catch (error) {
-      console.error('Error marking bill as sent:', error)
       setMessage({ type: 'error', text: 'Failed to update bill status' })
     }
   }
@@ -552,7 +349,6 @@ const Purchase = () => {
         throw new Error(result.error || 'Failed to load order details')
       }
     } catch (error) {
-      console.error('Error loading order for edit:', error)
       setMessage({
         type: 'error',
         text: `Failed to load order: ${error.message}`
@@ -588,7 +384,6 @@ const Purchase = () => {
         alert('Failed to load purchase order details: ' + (result.error || 'Unknown error'))
       }
     } catch (error) {
-      console.error('Error loading purchase order:', error)
       alert('Failed to load purchase order details')
     }
   }
@@ -603,31 +398,30 @@ const Purchase = () => {
 
     try {
       setReceivingOrder(true)
-      
+
       // Call the receive API endpoint which will automatically update inventory
       const result = await purchaseOrderService.receive(selectedOrder.id, receiptData)
-      
+
       if (result.success) {
         // Update the order status locally
-        setPurchaseOrders(prev => prev.map(order => 
-          order.id === selectedOrder.id 
+        setPurchaseOrders(prev => prev.map(order =>
+          order.id === selectedOrder.id
             ? { ...order, status: 'received', actualDeliveryDate: new Date().toISOString() }
             : order
         ))
-        
+
         // Close the receipt form
         setShowReceiptForm(false)
         setSelectedOrder(null)
-        
+
         alert('Purchase order received successfully! Inventory has been updated automatically.')
-        
+
         // Optionally reload data to get the latest state
         await loadPurchaseData()
       } else {
         alert(`Failed to receive purchase order: ${result.error}`)
       }
     } catch (error) {
-      console.error('Error receiving purchase order:', error)
       alert('Failed to receive purchase order. Please try again.')
     } finally {
       setReceivingOrder(false)
@@ -636,14 +430,12 @@ const Purchase = () => {
 
   const handleSaveOrder = async (orderData) => {
     try {
-      setLoading(true)
-      
       let result
       if (selectedOrder) {
         // Update existing order
         result = await purchaseOrderService.update(selectedOrder.id, orderData)
         if (result.success) {
-          setPurchaseOrders(prev => prev.map(order => 
+          setPurchaseOrders(prev => prev.map(order =>
             order.id === selectedOrder.id ? { ...result.data } : order
           ))
         }
@@ -658,17 +450,14 @@ const Purchase = () => {
       if (result && result.success) {
         // Close forms on success
         setShowCreateForm(false)
-        setShowEditForm(false) 
+        setShowEditForm(false)
         setSelectedOrder(null)
       } else {
         alert(`Failed to save purchase order: ${result?.error || 'Unknown error'}`)
       }
-      
+
     } catch (error) {
-      console.error('Error saving purchase order:', error)
       alert('Failed to save purchase order. Please try again.')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -706,7 +495,6 @@ const Purchase = () => {
       setSelectedOrder(null)
       alert('Purchase expenses added successfully!')
     } catch (error) {
-      console.error('Error saving expense:', error)
       alert(`Failed to save expense: ${error.message}`)
     }
   }
@@ -724,7 +512,6 @@ const Purchase = () => {
         throw new Error(result.error || 'Failed to delete expense')
       }
     } catch (error) {
-      console.error('Error deleting expense:', error)
       alert(`Failed to delete expense: ${error.message}`)
     }
   }
@@ -760,7 +547,6 @@ const Purchase = () => {
         throw new Error(result.error || 'Failed to upload receipt')
       }
     } catch (error) {
-      console.error('Error uploading receipt:', error)
       throw error
     }
   }
@@ -796,7 +582,6 @@ const Purchase = () => {
         throw new Error(result.error || 'Failed to remove receipt')
       }
     } catch (error) {
-      console.error('Error removing receipt:', error)
       throw error
     }
   }
@@ -811,21 +596,20 @@ const Purchase = () => {
         alert(`❌ Failed to load order details: ${result.error || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Error loading order details:', error)
       alert(`❌ Failed to load order details: ${error.message}`)
     }
   }
 
   const handleApproveOrder = async (order) => {
     const approvalNotes = prompt(`Approve Purchase Order ${order.orderNumber}?\nOptional approval notes:`, '')
-    
+
     if (approvalNotes === null) return // User cancelled
-    
+
     try {
       const result = await purchaseOrderService.approve(order.id, { approvalNotes })
-      
+
       if (result.success) {
-        setPurchaseOrders(prev => prev.map(po => 
+        setPurchaseOrders(prev => prev.map(po =>
           po.id === order.id ? { ...po, orderStatus: 'approved' } : po
         ))
         alert(`✅ Purchase order ${order.orderNumber} approved successfully!`)
@@ -833,21 +617,20 @@ const Purchase = () => {
         alert(`❌ Failed to approve order: ${result.error}`)
       }
     } catch (error) {
-      console.error('Error approving order:', error)
       alert(`❌ Failed to approve order: ${error.message}`)
     }
   }
 
   const handleStatusUpdate = async (order, newStatus) => {
     const statusNotes = prompt(`Update status of Purchase Order ${order.orderNumber} to "${newStatus}"?\nOptional notes:`, '')
-    
+
     if (statusNotes === null) return // User cancelled
-    
+
     try {
       const result = await purchaseOrderService.updateStatus(order.id, newStatus, { notes: statusNotes })
-      
+
       if (result.success) {
-        setPurchaseOrders(prev => prev.map(po => 
+        setPurchaseOrders(prev => prev.map(po =>
           po.id === order.id ? { ...po, orderStatus: newStatus } : po
         ))
         alert(`✅ Purchase order ${order.orderNumber} status updated to ${newStatus}!`)
@@ -855,7 +638,6 @@ const Purchase = () => {
         alert(`❌ Failed to update status: ${result.error}`)
       }
     } catch (error) {
-      console.error('Error updating order status:', error)
       alert(`❌ Failed to update status: ${error.message}`)
     }
   }
@@ -927,7 +709,7 @@ const Purchase = () => {
     { id: 'analytics', name: t('analytics'), icon: Calculator }
   ]
 
-  const billSummary = calculateBillSummary()
+  // billSummary is now provided by usePurchaseBills hook
 
   return (
     <div className="page-container">
@@ -1338,24 +1120,19 @@ const Purchase = () => {
                 description={t('billsEmptyDescription')}
               />
             ) : (
-              (() => {
-                const { groupedBills, orphanBills } = groupBillsForDisplay()
-                return (
-                  <GroupedBillsTable
-                    groupedBills={groupedBills}
-                    orphanBills={orphanBills}
-                    onViewDetails={(bill) => {
-                      setSelectedBill(bill)
-                      setShowBillDetailsModal(true)
-                    }}
-                    onRecordPayment={handleRecordPayment}
-                    onEditVendorBill={handleEditVendorBill}
-                    onMarkAsSent={handleMarkAsSent}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                  />
-                )
-              })()
+              <GroupedBillsTable
+                groupedBills={groupedBillsData.groupedBills}
+                orphanBills={groupedBillsData.orphanBills}
+                onViewDetails={(bill) => {
+                  setSelectedBill(bill)
+                  setShowBillDetailsModal(true)
+                }}
+                onRecordPayment={handleRecordPayment}
+                onEditVendorBill={handleEditVendorBill}
+                onMarkAsSent={handleMarkAsSent}
+                formatCurrency={formatCurrency}
+                formatDate={formatDate}
+              />
             )}
           </div>
         )}

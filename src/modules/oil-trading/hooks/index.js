@@ -43,4 +43,22 @@ export { useMaterialComposition } from './useMaterialComposition'
 // Material CRUD operations
 export { useMaterialMaster } from './useMaterialMaster'
 
-// Type definitions: See types/inventory.types.js
+// Stock movements (NEW - Jan 2026)
+export { useStockMovements } from './useStockMovements'
+
+// =============================================
+// PURCHASE HOOKS
+// =============================================
+// Purchase orders loading, pagination, and CRUD
+export { usePurchaseOrders } from './usePurchaseOrders'
+
+// Purchase bills/invoices management
+export { usePurchaseBills } from './usePurchaseBills'
+
+// Purchase expenses management
+export { usePurchaseExpenses } from './usePurchaseExpenses'
+
+// Collections dashboard data
+export { useCollections } from './useCollections'
+
+// Type definitions: See types/purchase.types.ts, types/inventory.types.ts

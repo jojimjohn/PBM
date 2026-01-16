@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../../components/ui/Modal'
-import { Textarea } from '../../../components/ui/Input'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { WASTAGE_TYPE_COLORS } from '../pages/Wastage'
+import { WastageApprovalDialog } from './wastage'
 import {
   Package,
   Calendar,
@@ -17,8 +17,6 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Download,
-  AlertTriangle,
-  Loader2,
   ExternalLink,
   Edit
 } from 'lucide-react'
@@ -39,11 +37,8 @@ const WastageDetails = ({
   const { t } = useLocalization()
   const navigate = useNavigate()
 
-  // Dialog state
-  const [showApprovalDialog, setShowApprovalDialog] = useState(false)
-  const [showRejectionDialog, setShowRejectionDialog] = useState(false)
-  const [approvalNotes, setApprovalNotes] = useState('')
-  const [rejectionReason, setRejectionReason] = useState('')
+  // Dialog state - using unified state for both approve/reject dialogs
+  const [dialogMode, setDialogMode] = useState(null) // 'approve' | 'reject' | null
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState(null)
 
@@ -116,33 +111,18 @@ const WastageDetails = ({
   // Check if wastage can be edited (not approved - so pending or rejected)
   const isEditable = wastage.status !== 'approved'
 
-  // Handle approval
-  const handleApprove = async () => {
+  // Handle approval/rejection via WastageApprovalDialog
+  const handleDialogConfirm = async (notes) => {
     setProcessing(true)
     setError(null)
 
     try {
-      await onApprove(wastage.id, { status: 'approved', approvalNotes: approvalNotes })
-      setShowApprovalDialog(false)
-      setApprovalNotes('')
-    } catch (err) {
-      setError(err.message || t('networkErrorRetry', 'Network error. Please try again.'))
-    } finally {
-      setProcessing(false)
-    }
-  }
-
-  // Handle rejection
-  const handleReject = async () => {
-    if (rejectionReason.length < 10) return
-
-    setProcessing(true)
-    setError(null)
-
-    try {
-      await onReject(wastage.id, { status: 'rejected', approvalNotes: rejectionReason })
-      setShowRejectionDialog(false)
-      setRejectionReason('')
+      if (dialogMode === 'approve') {
+        await onApprove(wastage.id, { status: 'approved', approvalNotes: notes })
+      } else {
+        await onReject(wastage.id, { status: 'rejected', approvalNotes: notes })
+      }
+      setDialogMode(null)
     } catch (err) {
       setError(err.message || t('networkErrorRetry', 'Network error. Please try again.'))
     } finally {
@@ -426,7 +406,7 @@ const WastageDetails = ({
                   className="btn btn-danger"
                   onClick={() => {
                     setError(null)
-                    setShowRejectionDialog(true)
+                    setDialogMode('reject')
                   }}
                 >
                   <XCircle size={16} />
@@ -436,7 +416,7 @@ const WastageDetails = ({
                   className="btn btn-success"
                   onClick={() => {
                     setError(null)
-                    setShowApprovalDialog(true)
+                    setDialogMode('approve')
                   }}
                 >
                   <CheckCircle size={16} />
@@ -451,124 +431,22 @@ const WastageDetails = ({
         </div>
       </Modal>
 
-      {/* Approval Confirmation Dialog */}
-      <Modal
-        isOpen={showApprovalDialog}
-        onClose={() => !processing && setShowApprovalDialog(false)}
-        title={t('approveWastage', 'Approve Wastage')}
-        className="approval-dialog"
-      >
-        <div className="dialog-content">
-          {error && (
-            <div className="dialog-error">
-              <AlertTriangle size={16} />
-              {error}
-            </div>
-          )}
-          <p className="dialog-message">
-            {t('approveWastageConfirm', 'Are you sure you want to approve this wastage?')}
-          </p>
-          <div className="dialog-input">
-            <label>{t('approvalNotesLabel', 'Approval Notes')}</label>
-            <Textarea
-              value={approvalNotes}
-              onChange={(e) => setApprovalNotes(e.target.value)}
-              placeholder={t('optionalNotes', 'Optional notes...')}
-              rows={3}
-              disabled={processing}
-            />
-          </div>
-          <div className="dialog-actions">
-            <button
-              className="btn btn-outline"
-              onClick={() => setShowApprovalDialog(false)}
-              disabled={processing}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button
-              className="btn btn-success"
-              onClick={handleApprove}
-              disabled={processing}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="spin" size={16} />
-                  {t('approving', 'Approving...')}
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={16} />
-                  {t('confirm', 'Confirm')}
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Rejection Dialog */}
-      <Modal
-        isOpen={showRejectionDialog}
-        onClose={() => !processing && setShowRejectionDialog(false)}
-        title={t('rejectWastage', 'Reject Wastage')}
-        className="rejection-dialog"
-      >
-        <div className="dialog-content">
-          {error && (
-            <div className="dialog-error">
-              <AlertTriangle size={16} />
-              {error}
-            </div>
-          )}
-          <p className="dialog-message">
-            {t('rejectWastageConfirm', 'Please provide a reason for rejection:')}
-          </p>
-          <div className="dialog-input">
-            <Textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder={t('enterRejectionReason', 'Enter rejection reason...')}
-              rows={3}
-              disabled={processing}
-            />
-            <div className="char-count">
-              <span className={rejectionReason.length < 10 ? 'insufficient' : 'sufficient'}>
-                {rejectionReason.length}/10
-              </span>
-              {rejectionReason.length < 10 && (
-                <span className="hint">{t('minRejectionChars', 'Minimum 10 characters required')}</span>
-              )}
-            </div>
-          </div>
-          <div className="dialog-actions">
-            <button
-              className="btn btn-outline"
-              onClick={() => setShowRejectionDialog(false)}
-              disabled={processing}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button
-              className="btn btn-danger"
-              onClick={handleReject}
-              disabled={processing || rejectionReason.length < 10}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="spin" size={16} />
-                  {t('rejecting', 'Rejecting...')}
-                </>
-              ) : (
-                <>
-                  <XCircle size={16} />
-                  {t('confirmReject', 'Confirm Rejection')}
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Unified Approval/Rejection Dialog - Using reusable WastageApprovalDialog component */}
+      <WastageApprovalDialog
+        isOpen={dialogMode !== null}
+        onClose={() => !processing && setDialogMode(null)}
+        mode={dialogMode || 'approve'}
+        wastage={{
+          ...wastage,
+          materialName: material.name || wastage.materialName,
+          materialUnit: material.unit || wastage.unit,
+          totalCost: totalCost,
+          wastageTypeName: wasteType.label || wastage.wasteType
+        }}
+        onConfirm={handleDialogConfirm}
+        isLoading={processing}
+        error={error}
+      />
     </>
   )
 }

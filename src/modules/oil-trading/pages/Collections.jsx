@@ -1,31 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Plus, Search, Filter, Calendar, MapPin, Truck, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { AlertCircle, Calendar, Truck, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useLocalization } from '../../../context/LocalizationContext';
-import { calloutService, collectionOrderService, collectionUtils } from '../../../services/collectionService';
 import LoadingSpinner from '../../../components/LoadingSpinner';
-import Modal from '../../../components/ui/Modal';
 import CollectionDashboard from '../../../components/collections/CollectionDashboard';
 import CalloutManager from '../../../components/collections/CalloutManager';
+// Custom hook for collections dashboard data
+import { useCollections } from '../hooks';
 import '../styles/Collections.css';
 
 const Collections = () => {
   const { t, isRTL } = useLocalization();
   const [activeTab, setActiveTab] = useState('orders');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  // Dashboard data
-  const [dashboardData, setDashboardData] = useState({
-    activeCallouts: [],
-    recentOrders: [],
-    statistics: {
-      pending: 0,
-      scheduled: 0,
-      inTransit: 0,
-      collecting: 0,
-      completed: 0
+  // Use the custom hook for dashboard data management
+  const {
+    dashboardData,
+    loading,
+    error,
+    loadDashboardData,
+    refresh
+  } = useCollections({ statsLimit: 50, recentLimit: 10 });
+
+  // Local error state for UI management (can be cleared by user)
+  const [displayError, setDisplayError] = useState('');
+
+  // Sync hook error with display error
+  useEffect(() => {
+    if (error) {
+      setDisplayError(t('errorLoadingDashboard') || error);
     }
-  });
+  }, [error, t]);
 
   const tabs = [
     {
@@ -42,74 +46,16 @@ const Collections = () => {
     }
   ];
 
+  // Load dashboard data when switching to dashboard tab
   useEffect(() => {
     if (activeTab === 'dashboard') {
       loadDashboardData();
     }
-  }, [activeTab]);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      // Load collection orders for dashboard
-      console.log('Loading collection orders...'); // Debug log
-
-      const [allOrdersResponse, recentOrdersResponse] = await Promise.all([
-        collectionOrderService.getCollectionOrders({
-          page: 1,
-          limit: 50 // Get more data for statistics
-        }).catch(err => {
-          console.error('Error loading all orders:', err);
-          return { success: false, error: err.message };
-        }),
-        collectionOrderService.getCollectionOrders({
-          page: 1,
-          limit: 10
-        }).catch(err => {
-          console.error('Error loading recent orders:', err);
-          return { success: false, error: err.message };
-        })
-      ]);
-
-      console.log('All orders response:', allOrdersResponse); // Debug log
-      console.log('Recent orders response:', recentOrdersResponse); // Debug log
-
-      // Handle both successful and failed API responses gracefully
-      const allOrders = (allOrdersResponse?.success ? allOrdersResponse.data : []) || [];
-      const recentOrders = (recentOrdersResponse?.success ? recentOrdersResponse.data : []) || [];
-
-      setDashboardData({
-        activeCallouts: [], // No more callouts - removed functionality
-        recentOrders: recentOrders,
-        statistics: {
-          pending: 0, // No more pending callouts
-          scheduled: allOrders.filter(o => o.status === 'scheduled').length || 0,
-          inTransit: allOrders.filter(o => o.status === 'in_transit').length || 0,
-          collecting: allOrders.filter(o => o.status === 'collecting').length || 0,
-          completed: allOrders.filter(o => o.status === 'completed').length || 0
-        }
-      });
-
-      // Log API errors but don't fail the dashboard load
-      if (!allOrdersResponse?.success) {
-        console.warn('Failed to load all orders:', allOrdersResponse?.error);
-      }
-      if (!recentOrdersResponse?.success) {
-        console.warn('Failed to load recent orders:', recentOrdersResponse?.error);
-      }
-    } catch (err) {
-      console.error('Error loading dashboard:', err);
-      setError(t('errorLoadingDashboard') || 'Failed to load dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [activeTab, loadDashboardData]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    setError(''); // Clear any errors when switching tabs
+    setDisplayError(''); // Clear any errors when switching tabs
   };
 
   const renderActiveTab = () => {
@@ -123,8 +69,8 @@ const Collections = () => {
         <Component
           data={dashboardData}
           loading={loading}
-          error={error}
-          onRefresh={loadDashboardData}
+          error={displayError}
+          onRefresh={refresh}
         />
       );
     }
@@ -147,7 +93,7 @@ const Collections = () => {
         <div className="header-actions">
           <button
             className="refresh-btn"
-            onClick={loadDashboardData}
+            onClick={refresh}
             disabled={loading}
           >
             <Clock className="w-4 h-4" />
@@ -172,12 +118,12 @@ const Collections = () => {
 
       {/* Content Area */}
       <div className="collections-content">
-        {error && (
+        {displayError && (
           <div className="error-banner">
             <AlertCircle className="w-5 h-5" />
-            <span>{error}</span>
+            <span>{displayError}</span>
             <button
-              onClick={() => setError('')}
+              onClick={() => setDisplayError('')}
               className="error-close"
             >
               <XCircle className="w-4 h-4" />

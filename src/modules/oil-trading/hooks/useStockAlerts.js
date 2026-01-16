@@ -2,15 +2,28 @@
  * useStockAlerts Hook
  * Manages stock alert calculations and display
  *
+ * Updated to use shared stockStatusUtils for consistent stock calculations
+ *
  * @module hooks/useStockAlerts
  */
 import { useState, useCallback, useMemo } from 'react'
+import {
+  calculateStockStatus,
+  getEffectiveStock as getEffectiveStockUtil
+} from '../utils/stockStatusUtils'
+
+/**
+ * @typedef {import('../types/inventory.types').StockStatus} StockStatus
+ * @typedef {import('../types/inventory.types').StockAlert} StockAlert
+ * @typedef {import('../types/inventory.types').InventoryMap} InventoryMap
+ * @typedef {import('../types/inventory.types').Material} Material
+ */
 
 /**
  * Hook for managing stock alerts
  * @param {Object} options
- * @param {Object} options.inventory - Inventory map keyed by material ID
- * @param {Array} options.materials - Materials array
+ * @param {InventoryMap} options.inventory - Inventory map keyed by material ID
+ * @param {Material[]} options.materials - Materials array
  * @param {Object} options.materialCompositions - Composite material compositions
  * @returns {Object} Alert state and operations
  */
@@ -19,55 +32,25 @@ export const useStockAlerts = ({ inventory, materials, materialCompositions }) =
 
   /**
    * Calculate effective stock for a material (handles composites)
-   * For composite materials, calculates how many complete units can be made
-   * based on the limiting component
+   * Uses shared utility for consistent calculation across the app
    *
    * @param {number} materialId - Material ID
-   * @returns {Object} { currentStock, reorderLevel }
+   * @returns {{ currentStock: number, reorderLevel: number }}
    */
   const getEffectiveStock = useCallback((materialId) => {
-    const matId = Number(materialId)
-    const material = materials.find(m => Number(m.id) === matId)
-
-    // For composite materials, calculate based on components
-    if (material?.is_composite) {
-      const components = materialCompositions[matId] || []
-      if (components.length === 0) return { currentStock: 0, reorderLevel: 0 }
-
-      let minUnits = Infinity
-      for (const comp of components) {
-        const compStock = inventory[comp.component_material_id]?.currentStock || 0
-        // Use Math.max to prevent division by zero or negative values
-        const qtyPerComposite = Math.max(parseFloat(comp.quantity_per_composite) || 1, 0.001)
-        const availableUnits = Math.floor(compStock / qtyPerComposite)
-        minUnits = Math.min(minUnits, availableUnits)
-      }
-
-      return {
-        currentStock: minUnits === Infinity ? 0 : Math.max(0, minUnits),
-        reorderLevel: material.minimumStockLevel || 0
-      }
-    }
-
-    // For regular materials, return inventory directly
-    const stock = inventory[matId]
-    return stock || { currentStock: 0, reorderLevel: 0 }
+    return getEffectiveStockUtil(materialId, materials, inventory, materialCompositions)
   }, [inventory, materials, materialCompositions])
 
   /**
    * Get stock status for a material
+   * Uses shared utility for consistent status calculation
+   *
    * @param {number} materialId - Material ID
-   * @returns {'good'|'low'|'critical'|'out-of-stock'} Stock status
+   * @returns {StockStatus} Stock status
    */
   const getStockStatus = useCallback((materialId) => {
     const stock = getEffectiveStock(materialId)
-
-    if (stock.currentStock === 0) return 'out-of-stock'
-    if (stock.reorderLevel > 0) {
-      if (stock.currentStock <= stock.reorderLevel * 0.5) return 'critical'
-      if (stock.currentStock <= stock.reorderLevel) return 'low'
-    }
-    return 'good'
+    return calculateStockStatus(stock.currentStock, stock.reorderLevel)
   }, [getEffectiveStock])
 
   /**
