@@ -31,7 +31,7 @@ import { useSalesContractRates } from '../hooks/useSalesContractRates'
 import { useStockValidation } from '../hooks/useStockValidation'
 import RateOverrideModal from './RateOverrideModal'
 import { Plus, Trash2, AlertTriangle, Check, User, FileText, ChevronDown, ChevronUp, Package } from 'lucide-react'
-import './SalesOrderForm.css'
+// CSS migrated to Tailwind - design-system.css provides form-section, form-grid, form-group, btn classes
 
 const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, editingOrder = null }) => {
   const { t } = useLocalization()
@@ -453,7 +453,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       closeOnOverlayClick={false}
       tourId="SalesOrderForm"
     >
-      <form className="sales-order-form" onSubmit={handleSubmit}>
+      <form className="max-h-[calc(90vh-160px)] overflow-y-auto p-0" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}
         {formData.status === 'draft' && (
           <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -520,7 +520,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             <User size={20} />
             {t('customerDetails', 'Customer Details')}
             {formData.customer?.contractDetails && (
-              <span className="contract-indicator">
+              <span className="inline-flex items-center gap-1 px-3 py-1 ml-auto bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 rounded-full text-xs font-medium">
                 <Check size={16} />
                 {t('contractCustomer', 'Contract Customer')}
               </span>
@@ -585,15 +585,15 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Contract Terms Display - Collapsible */}
         {formData.customer?.contractDetails && (
-          <div className="form-section contract-terms-display">
+          <div className="form-section bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-200">
             <div
-              className="form-section-title clickable"
+              className="form-section-title cursor-pointer transition-all px-3 py-3 -mx-5 -mt-5 mb-5 rounded-t-lg hover:bg-blue-50/50"
               onClick={() => setContractTermsExpanded(!contractTermsExpanded)}
             >
               <Check size={20} />
               {t('activeContractTerms', 'Active Contract Terms')}
-              <div className="contract-header-right">
-                <span className="contract-status-badge active">
+              <div className="flex items-center gap-3 ml-auto">
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300">
                   {t('validUntil', 'Valid until')} {formData.customer.contractDetails.endDate}
                 </span>
                 {contractTermsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -601,56 +601,65 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             </div>
 
             {contractTermsExpanded && (
-              <div className="contract-summary">
-                <div className="contract-info-grid">
-                  <div className="contract-detail">
-                    <label>{t('contractId', 'Contract ID')}:</label>
-                    <span>{formData.customer.contractDetails.contractId}</span>
+              <div className="bg-white rounded-lg p-6 border border-blue-200">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t('contractId', 'Contract ID')}:</label>
+                    <span className="text-sm font-medium text-gray-800">{formData.customer.contractDetails.contractId}</span>
                   </div>
-                  <div className="contract-detail">
-                    <label>{t('status', 'Status')}:</label>
-                    <span className={`status-badge ${formData.customer.contractDetails.status}`}>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t('status', 'Status')}:</label>
+                    <span className={`inline-flex w-fit px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                      formData.customer.contractDetails.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
                       {formData.customer.contractDetails.status.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
                 </div>
 
                 {formData.customer.contractDetails.specialTerms && (
-                  <div className="special-terms">
-                    <label>{t('specialTerms', 'Special Terms')}:</label>
-                    <p>{formData.customer.contractDetails.specialTerms}</p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                    <label className="text-sm font-semibold text-amber-800 block mb-2">{t('specialTerms', 'Special Terms')}:</label>
+                    <p className="text-sm text-amber-700 m-0 leading-relaxed">{formData.customer.contractDetails.specialTerms}</p>
                   </div>
                 )}
 
-                <div className="material-rates-summary">
-                  <h4>{t('contractRates', 'Contract Rates')}:</h4>
-                  <div className="rates-compact">
+                <div>
+                  <h4 className="text-base font-semibold text-gray-800 m-0 mb-3">{t('contractRates', 'Contract Rates')}:</h4>
+                  <div className="flex flex-wrap gap-2">
                     {Object.entries(formData.customer.contractDetails.rates || {}).map(([materialId, rateInfo]) => {
                       const material = materials.find(m => m.id === materialId)
                       if (!material) return null
 
                       const rateDetails = contractRates.getRateDetails(materialId)
                       const isActive = contractRates.isContractActive(materialId)
-                      const statusClass = isActive ? 'active' : 'expired'
 
                       return (
                         <div
                           key={materialId}
-                          className={`rate-compact-item ${statusClass}`}
+                          className={`flex items-center gap-2 bg-white px-3 py-2 rounded-lg border cursor-help transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                            isActive ? 'border-blue-200 hover:border-blue-300' : 'border-red-200 bg-gradient-to-r from-red-50 to-white hover:border-red-300'
+                          }`}
                           title={rateDetails?.description || ''}
                         >
-                          <span className="material-name">{material.name}</span>
-                          <div className="rate-info">
+                          <span className="font-medium text-gray-700 text-sm">{material.name}</span>
+                          <div className="flex items-center gap-2">
                             {typeof rateInfo === 'object' ? (
-                              <span className={`rate-badge ${rateInfo.type}`}>
+                              <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
+                                rateInfo.type === 'fixed_rate' ? 'bg-green-100 text-green-800 border border-green-300' :
+                                rateInfo.type === 'discount_percentage' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                                'bg-amber-100 text-amber-800 border border-amber-300'
+                              }`}>
                                 {rateInfo.type === 'fixed_rate' && `OMR ${rateInfo.contractRate.toFixed(3)}`}
                                 {rateInfo.type === 'discount_percentage' && `${rateInfo.discountPercentage}% OFF`}
                                 {rateInfo.type === 'minimum_price_guarantee' && `MAX OMR ${rateInfo.contractRate.toFixed(3)}`}
                               </span>
                             ) : (
-                              <span className="rate-badge fixed_rate">OMR {rateInfo.toFixed(3)}</span>
+                              <span className="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-800 border border-green-300">OMR {rateInfo.toFixed(3)}</span>
                             )}
-                            <span className={`status-indicator ${statusClass}`}>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${
+                              isActive ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'
+                            }`}>
                               {isActive ? t('active', 'ACTIVE') : t('expired', 'EXPIRED')}
                             </span>
                           </div>
@@ -666,10 +675,16 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Warnings */}
         {contractRates.warnings.length > 0 && (
-          <div className="warnings-section">
+          <div className="mb-6">
             {contractRates.warnings.map((warning, index) => (
-              <div key={index} className={`warning-item ${warning.type}`}>
-                <AlertTriangle size={16} />
+              <div key={index} className={`flex items-center gap-3 p-4 rounded-lg mb-3 text-sm font-medium ${
+                warning.type === 'contract_expired' ? 'bg-gradient-to-br from-red-50 to-red-100 text-red-700 border border-red-200' :
+                warning.type === 'contract_rate_applied' ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200' :
+                warning.type === 'contract_rate_above_market' ? 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border border-amber-200' :
+                warning.type === 'rate_override_applied' ? 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-700 border border-orange-200' :
+                'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border border-blue-200'
+              }`}>
+                <AlertTriangle size={16} className="shrink-0" />
                 <span>{warning.message}</span>
               </div>
             ))}
@@ -679,11 +694,11 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         {/* Order Items */}
         <div className="form-section" data-tour="so-items-section">
           <div className="form-section-title">
-            <div className="title-with-action">
+            <div className="flex items-center justify-between w-full">
               <span>{t('orderItems', 'Order Items')}</span>
               <button
                 type="button"
-                className="btn btn-outline btn-small"
+                className="btn btn-outline btn-sm"
                 onClick={formHook.addItem}
               >
                 <Plus size={16} />
@@ -692,9 +707,9 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             </div>
           </div>
 
-          <div className="items-table">
-            <div className="items-header">
-              <span>{t('material', 'Material')}</span>
+          <div className="bg-slate-50 rounded-lg overflow-hidden border border-slate-200">
+            <div className="grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1.2fr_0.8fr] gap-4 p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-semibold text-sm text-center max-md:hidden">
+              <span className="text-left">{t('material', 'Material')}</span>
               <span>{t('quantity', 'Quantity')}</span>
               <span>{t('unit', 'Unit')}</span>
               <span>{t('rateOMR', 'Rate (OMR)')}</span>
@@ -713,8 +728,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               const stockWarning = stockValidation.getStockWarning(item.materialId, item.quantity)
 
               return (
-                <div key={item.tempId || index} className="item-row">
-                  <div className="item-field material-autocomplete-field">
+                <div key={item.tempId || index} className="grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1.2fr_0.8fr] gap-4 p-4 border-b border-slate-200 bg-white items-center last:border-b-0 max-md:grid-cols-1 max-md:gap-2">
+                  <div className="flex flex-col gap-1">
                     <Autocomplete
                       options={materials}
                       value={item.materialId}
@@ -733,7 +748,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     />
                   </div>
 
-                  <div className="item-field">
+                  <div className="flex flex-col gap-1">
                     <input
                       type="number"
                       value={item.quantity}
@@ -742,31 +757,32 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       min="0"
                       step="0.001"
                       required={!isDraft}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                     {/* Stock validation display */}
                     {item.materialId && stock && (
-                      <div className="stock-info">
+                      <div className="mt-2 text-sm">
                         {stock.isOutOfStock || stock.currentStock <= 0 ? (
-                          <div className="stock-error">
-                            <AlertTriangle size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-red-50 text-red-600 border border-red-200 text-[13px] font-medium">
+                            <AlertTriangle size={14} className="shrink-0" />
                             <span>{t('outOfStock', 'Out of stock!')}</span>
                           </div>
                         ) : stockWarning?.type === 'error' ? (
-                          <div className="stock-warning">
-                            <AlertTriangle size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-red-50 text-red-600 border border-red-200 text-[13px] font-medium">
+                            <AlertTriangle size={14} className="shrink-0" />
                             <span>
                               {t('insufficient', 'Insufficient!')} {t('available', 'Available')}: {stock.currentStock.toFixed(3)} {stock.unit}
                               {formData.status !== 'draft' && <strong> ({t('cannotSubmit', 'Cannot submit')})</strong>}
                             </span>
                           </div>
                         ) : stock.isLowStock ? (
-                          <div className="stock-low">
-                            <Package size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 text-[13px] font-medium">
+                            <Package size={14} className="shrink-0" />
                             <span>{t('lowStock', 'Low stock')}: {stock.currentStock.toFixed(3)} {stock.unit}</span>
                           </div>
                         ) : (
-                          <div className="stock-ok">
-                            <Check size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 text-[13px] font-medium">
+                            <Check size={14} className="shrink-0" />
                             <span>{t('available', 'Available')}: {stock.currentStock.toFixed(3)} {stock.unit}</span>
                           </div>
                         )}
@@ -774,13 +790,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     )}
                   </div>
 
-                  <div className="item-field">
-                    <span className="unit-display">
+                  <div className="flex flex-col gap-1">
+                    <span className="px-3 py-2 bg-slate-100 rounded-lg text-sm text-center text-slate-600">
                       {selectedMaterial ? selectedMaterial.unit : '-'}
                     </span>
                   </div>
 
-                  <div className="item-field rate-field">
+                  <div className="flex flex-col gap-1 relative">
                     <input
                       type="number"
                       value={item.rate}
@@ -790,17 +806,17 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       step="0.001"
                       required={!isDraft}
                       readOnly={rateLocked}
-                      className={rateLocked ? 'locked-rate' : ''}
+                      className={`w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${rateLocked ? 'bg-slate-50 text-slate-600 cursor-not-allowed border-slate-300' : ''}`}
                       title={rateLocked ? t('contractRateLocked', 'Contract rate is locked. Attempt to change will require manager approval.') : ''}
                     />
                     {hasContractRate && (
-                      <div className="contract-indicators">
-                        <span className={`contract-rate-indicator ${isOverridden ? 'overridden' : ''}`}>
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        <span className={`text-xs font-medium text-center flex items-center gap-1 ${isOverridden ? 'text-orange-600' : 'text-emerald-600'}`}>
                           {isOverridden ? t('rateOverridden', 'Rate Overridden') : t('contractRate', 'Contract Rate')}
-                          {rateLocked && <span className="lock-icon">🔒</span>}
+                          {rateLocked && <span className="text-[10px]">🔒</span>}
                         </span>
                         {discountInfo.hasDiscount && (
-                          <span className="discount-indicator">
+                          <span className="text-xs font-medium text-center px-1.5 py-0.5 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 rounded-full border border-blue-200 whitespace-nowrap">
                             {discountInfo.percentage}% {t('discountApplied', 'Discount Applied')}
                           </span>
                         )}
@@ -808,16 +824,16 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     )}
                   </div>
 
-                  <div className="item-field">
-                    <span className="amount-display">
+                  <div className="flex flex-col gap-1">
+                    <span className="px-3 py-2 bg-slate-100 rounded-lg text-sm text-right font-medium text-slate-800">
                       {(parseFloat(item.amount) || 0).toFixed(3)}
                     </span>
                   </div>
 
-                  <div className="item-field">
+                  <div className="flex flex-col gap-1">
                     <button
                       type="button"
-                      className="btn btn-outline btn-small"
+                      className="btn btn-outline btn-sm"
                       onClick={() => formHook.removeItem(index)}
                       disabled={formData.items.length === 1}
                     >
@@ -832,13 +848,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Order Totals */}
         <div className="form-section">
-          <div className="totals-section">
-            <div className="totals-row">
-              <label>{t('subtotal', 'Subtotal')}:</label>
-              <span>OMR {formData.totalAmount.toFixed(3)}</span>
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-6 rounded-lg border border-slate-200 max-w-md ml-auto">
+            <div className="flex justify-between items-center py-2 text-sm">
+              <label className="font-medium text-slate-700">{t('subtotal', 'Subtotal')}:</label>
+              <span className="font-semibold text-slate-800">OMR {formData.totalAmount.toFixed(3)}</span>
             </div>
-            <div className="totals-row">
-              <label>
+            <div className="flex justify-between items-center py-2 text-sm">
+              <label className="flex items-center gap-2 font-medium text-slate-700">
                 {t('discount', 'Discount')}:
                 <input
                   type="number"
@@ -848,21 +864,21 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                   min="0"
                   max="100"
                   step="0.1"
-                  className="discount-input"
+                  className="w-20 px-2 py-1 mx-1 border border-slate-300 rounded text-sm text-center"
                 />
                 %
               </label>
-              <span>OMR {formData.discountAmount.toFixed(3)}</span>
+              <span className="font-semibold text-slate-800">OMR {formData.discountAmount.toFixed(3)}</span>
             </div>
             {formData.vatAmount > 0 && (
-              <div className="totals-row">
-                <label>{t('vat', 'VAT')} ({formData.vatRate}%):</label>
-                <span>OMR {formData.vatAmount.toFixed(3)}</span>
+              <div className="flex justify-between items-center py-2 text-sm">
+                <label className="font-medium text-slate-700">{t('vat', 'VAT')} ({formData.vatRate}%):</label>
+                <span className="font-semibold text-slate-800">OMR {formData.vatAmount.toFixed(3)}</span>
               </div>
             )}
-            <div className="totals-row total-row">
-              <label>{t('totalAmount', 'Total Amount')}:</label>
-              <span>OMR {formData.netAmount.toFixed(3)}</span>
+            <div className="flex justify-between items-center pt-4 mt-2 border-t-2 border-slate-300 text-lg">
+              <label className="font-bold text-slate-900">{t('totalAmount', 'Total Amount')}:</label>
+              <span className="font-bold text-xl text-blue-600">OMR {formData.netAmount.toFixed(3)}</span>
             </div>
           </div>
         </div>

@@ -14,7 +14,7 @@ import StatusUpdateModal from './StatusUpdateModal';
 import WCNFinalizationModal from './WCNFinalizationModal';
 import WCNRectificationModal from './WCNRectificationModal';
 import WorkflowProgressBar, { WORKFLOW_STAGES } from './WorkflowProgressBar';
-import './collections-managers.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * CalloutManager - Main collection orders management interface
@@ -500,18 +500,18 @@ const CalloutManager = () => {
       header: t('actions'),
       render: (value, row) => {
         const primaryAction = getPrimaryAction(row);
-        // Map variant to button class
+        // Map variant to table-action-btn class
         const getButtonClass = (variant) => {
           switch (variant) {
-            case 'primary': return 'btn btn-primary btn-sm';
-            case 'success': return 'btn btn-success btn-sm';
-            case 'danger': return 'btn btn-danger btn-sm';
-            default: return 'btn btn-outline btn-sm';
+            case 'primary': return 'table-action-btn primary-action';
+            case 'success': return 'table-action-btn wcn-action';
+            case 'danger': return 'table-action-btn delete';
+            default: return 'table-action-btn';
           }
         };
 
         return (
-          <div className="cell-actions">
+          <div className="table-actions">
             {/* Primary "Next Step" Action - Icon only with tooltip */}
             {primaryAction && (
               <button
@@ -526,7 +526,7 @@ const CalloutManager = () => {
             {/* View Details */}
             <button
               onClick={() => handleViewCallout(row)}
-              className="btn btn-outline btn-sm"
+              className="table-action-btn view"
               title={t('viewDetails')}
             >
               <Eye size={14} />
@@ -537,14 +537,14 @@ const CalloutManager = () => {
               <>
                 <button
                   onClick={() => handleEditCallout(row)}
-                  className="btn btn-outline btn-sm"
+                  className="table-action-btn edit"
                   title={t('edit')}
                 >
                   <Edit size={14} />
                 </button>
                 <button
                   onClick={() => handleDeleteCallout(row.id)}
-                  className="btn btn-danger btn-sm"
+                  className="table-action-btn delete"
                   title={t('delete')}
                 >
                   <Trash2 size={14} />
@@ -614,16 +614,6 @@ const CalloutManager = () => {
 
   return (
     <div className={`callout-manager ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Workflow Progress Bar - Stage-based filtering unique to collections workflow */}
-      <div style={{ marginBottom: '16px' }}>
-        <WorkflowProgressBar
-          activeStage={workflowStage}
-          onStageChange={handleWorkflowStageChange}
-          stats={globalStats}
-          compact={true}
-        />
-      </div>
-
       {/* Collection Orders Table */}
       <div className="callouts-table">
         {!loading && callouts.length === 0 ? (
@@ -652,6 +642,14 @@ const CalloutManager = () => {
                   {t('newCollectionOrder')}
                 </button>
               </div>
+            }
+            customFilters={
+              <WorkflowProgressBar
+                activeStage={workflowStage}
+                onStageChange={handleWorkflowStageChange}
+                stats={globalStats}
+                compact={true}
+              />
             }
             initialPageSize={25}
             paginated={true}

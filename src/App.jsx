@@ -8,7 +8,7 @@ import { TourProvider } from './context/TourContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './components/MainLayout'
 import PageLoader from './components/ui/PageLoader'
-import './App.css'
+// CSS moved to global index.css Tailwind
 import './styles/rtl.css'
 import './styles/responsive.css'
 

@@ -11,7 +11,7 @@ import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Modal from './Modal'
 import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react'
-import './AlertDialog.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * Icon mapping for each variant
@@ -24,13 +24,13 @@ const VARIANT_ICONS = {
 }
 
 /**
- * Icon color class mapping for each variant
+ * Icon Tailwind class mapping for each variant - uses global status colors
  */
 const VARIANT_ICON_CLASSES = {
-  success: 'alert-dialog-icon-success',
-  error: 'alert-dialog-icon-error',
-  warning: 'alert-dialog-icon-warning',
-  info: 'alert-dialog-icon-info'
+  success: 'bg-status-success-bg text-status-success-text',
+  error: 'bg-status-error-bg text-status-error-text',
+  warning: 'bg-status-warning-bg text-status-warning-text',
+  info: 'bg-status-info-bg text-status-info-text'
 }
 
 /**
@@ -78,11 +78,11 @@ const AlertDialog = ({
   }
 
   const footer = (
-    <div className="alert-dialog-actions">
+    <div className="alert-dialog-actions flex justify-center w-full">
       <button
         ref={buttonRef}
         type="button"
-        className="btn btn-primary"
+        className="btn-tw-primary min-w-[100px]"
         onClick={handleDismiss}
       >
         {buttonText || t('ok', 'OK')}
@@ -101,10 +101,10 @@ const AlertDialog = ({
       footer={footer}
       className={`alert-dialog alert-dialog-${variant}`}
     >
-      <div className="alert-dialog-content">
+      <div className="flex flex-col items-center text-center gap-4 py-2">
         {showIcon && (
           <motion.div
-            className={`alert-dialog-icon ${iconClass}`}
+            className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${iconClass}`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
@@ -112,10 +112,10 @@ const AlertDialog = ({
             <Icon size={28} />
           </motion.div>
         )}
-        <div className="alert-dialog-text">
-          {title && <h3 className="alert-dialog-title">{title}</h3>}
+        <div className="flex flex-col gap-2">
+          {title && <h3 className="alert-dialog-title text-lg font-semibold text-slate-800 leading-tight">{title}</h3>}
           {message && (
-            <div className="alert-dialog-message">
+            <div className="text-sm text-slate-600 leading-relaxed">
               {typeof message === 'string' ? <p>{message}</p> : message}
             </div>
           )}

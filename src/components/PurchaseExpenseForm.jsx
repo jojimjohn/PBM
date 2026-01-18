@@ -10,7 +10,7 @@ import {
   Package, Banknote, MapPin, Calendar, Upload, X, Image,
   ChevronDown, ChevronUp, AlertCircle
 } from 'lucide-react'
-import './PurchaseExpenseForm.css'
+// CSS moved to global index.css Tailwind
 
 // Icon mapping for displaying selected category icons
 const CATEGORY_ICONS = {

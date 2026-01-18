@@ -45,99 +45,100 @@ const StockHistoryModal = ({
     return null
   }
 
+  const modalFooter = (
+    <>
+      <button className="btn btn-outline" onClick={onClose}>
+        {t('close')}
+      </button>
+      <button
+        className="btn btn-primary"
+        onClick={() => {
+          onClose()
+          onAdjustStock(material)
+        }}
+      >
+        {t('adjustStock')}
+      </button>
+    </>
+  )
+
   return (
     <Modal
       isOpen={true}
       title={`Stock History - ${material.name}`}
       onClose={onClose}
       size="lg"
+      footer={modalFooter}
     >
-      <div className="stock-history-modal">
-        <div className="history-summary">
-          <div className="summary-item">
-            <label>Material Code</label>
-            <span>{material.code}</span>
-          </div>
-          <div className="summary-item">
-            <label>Current Stock</label>
-            <span className="stock-value">
-              {currentStock} {material.unit}
-            </span>
-          </div>
-          <div className="summary-item">
-            <label>Status</label>
-            <span className={`status-badge ${stockStatus}`}>
-              {stockStatus}
-            </span>
-          </div>
+      <div className="history-summary">
+        <div className="summary-item">
+          <label>Material Code</label>
+          <span>{material.code}</span>
         </div>
-
-        {loading ? (
-          <div className="loading-state">
-            <p>{t('loading')}</p>
-          </div>
-        ) : movements.length > 0 ? (
-          <div className="movements-table-container">
-            <table className="history-table">
-              <thead>
-                <tr>
-                  <th>{t('type')}</th>
-                  <th className="text-right">{t('quantity')}</th>
-                  <th className="text-right">Balance</th>
-                  <th>{t('reason')}</th>
-                  <th>{t('reference')}</th>
-                  <th>{t('date')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movements.map((movement, index) => (
-                  <tr key={movement.id} className={index % 2 === 0 ? 'even' : 'odd'}>
-                    <td>
-                      <span className={`movement-type-badge ${movement.type}`}>
-                        {movement.type === 'in' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                        {movement.type === 'in' ? 'In' : 'Out'}
-                      </span>
-                    </td>
-                    <td className={`text-right quantity ${movement.type}`}>
-                      {movement.type === 'in' ? '+' : '-'}{movement.quantity} {material.unit}
-                    </td>
-                    <td className="text-right balance">
-                      {movement.runningBalance !== undefined
-                        ? `${movement.runningBalance.toFixed(2)} ${material.unit}`
-                        : '-'}
-                    </td>
-                    <td className="reason">{movement.reason || '-'}</td>
-                    <td>
-                      {movement.reference ? <code className="reference-code">{movement.reference}</code> : '-'}
-                    </td>
-                    <td className="date">{movement.date ? formatDate(new Date(movement.date)) : '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty-state">
-            <Clock size={48} />
-            <p>{t('noMovementsFound')}</p>
-          </div>
-        )}
-
-        <div className="modal-footer">
-          <button className="btn btn-outline" onClick={onClose}>
-            {t('close')}
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              onClose()
-              onAdjustStock(material)
-            }}
-          >
-            {t('adjustStock')}
-          </button>
+        <div className="summary-item">
+          <label>Current Stock</label>
+          <span className="stock-value">
+            {currentStock} {material.unit}
+          </span>
+        </div>
+        <div className="summary-item">
+          <label>Status</label>
+          <span className={`status-badge ${stockStatus}`}>
+            {stockStatus}
+          </span>
         </div>
       </div>
+
+      {loading ? (
+        <div className="loading-state">
+          <p>{t('loading')}</p>
+        </div>
+      ) : movements.length > 0 ? (
+        <div className="movements-table-container">
+          <table className="history-table">
+            <thead>
+              <tr>
+                <th>{t('type')}</th>
+                <th className="text-right">{t('quantity')}</th>
+                <th className="text-right">Balance</th>
+                <th>{t('reason')}</th>
+                <th>{t('reference')}</th>
+                <th>{t('date')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {movements.map((movement, index) => (
+                <tr key={movement.id} className={index % 2 === 0 ? 'even' : 'odd'}>
+                  <td>
+                    <span className={`movement-type-badge ${movement.type}`}>
+                      {movement.type === 'in' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                      {movement.type === 'in' ? 'In' : 'Out'}
+                    </span>
+                  </td>
+                  <td className={`text-right quantity ${movement.type}`}>
+                    {movement.type === 'in' ? '+' : '-'}{movement.quantity} {material.unit}
+                  </td>
+                  <td className="text-right balance">
+                    {movement.runningBalance !== undefined
+                      ? `${movement.runningBalance.toFixed(2)} ${material.unit}`
+                      : '-'}
+                  </td>
+                  <td className="reason">{movement.reason || '-'}</td>
+                  <td>
+                    {movement.reference ? <code className="reference-code">{movement.reference}</code> : '-'}
+                  </td>
+                  <td className="date">{movement.date ? formatDate(new Date(movement.date)) : '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="empty-state">
+          <Clock size={48} />
+          <p>{t('noMovementsFound')}</p>
+        </div>
+      )}
     </Modal>
   )
 }

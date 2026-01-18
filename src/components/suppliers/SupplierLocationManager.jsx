@@ -11,13 +11,12 @@
  */
 
 import React, { useState, useCallback } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
 import DataTable from '../ui/DataTable'
 import LocationFormModal from './LocationFormModal'
 import { getLocationColumns } from './locationsTableConfig'
 import { useSupplierLocations } from '../../modules/oil-trading/hooks/useSupplierLocations'
-import '../../modules/oil-trading/styles/Suppliers.css'
 
 /**
  * Supplier Location Manager
@@ -36,15 +35,23 @@ const SupplierLocationManager = () => {
     updateLocation,
     deleteLocation,
     reactivateLocation,
-    generateLocationCode
+    generateLocationCode,
+    loadLocations
   } = useSupplierLocations()
 
   // Modal state
   const [showModal, setShowModal] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Event handlers
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await loadLocations()
+    setIsRefreshing(false)
+  }, [loadLocations])
+
   const handleAddLocation = useCallback(() => {
     setSelectedLocation(null)
     setShowModal(true)
@@ -116,19 +123,29 @@ const SupplierLocationManager = () => {
   })
 
   return (
-    <div className="supplier-locations-page">
+    <div className="flex flex-col min-h-full bg-gray-50">
       {/* Data Table */}
-      <div className="locations-table-container">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <DataTable
           data={locations}
           columns={columns}
           title={t('supplierLocations', 'Supplier Locations')}
           subtitle={`${t('manageCollectionPointsSubtitle', 'View and manage all supplier collection points')} - ${locations.length} ${t('locations', 'locations')}`}
           headerActions={
-            <button className="btn btn-primary" onClick={handleAddLocation}>
-              <Plus size={16} />
-              {t('addLocation', 'Add Location')}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title={t('refresh', 'Refresh')}
+              >
+                <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+              </button>
+              <button className="btn btn-primary" onClick={handleAddLocation}>
+                <Plus size={16} />
+                {t('addLocation', 'Add Location')}
+              </button>
+            </div>
           }
           loading={loading}
           searchable={true}

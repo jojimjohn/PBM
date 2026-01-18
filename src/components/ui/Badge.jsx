@@ -1,5 +1,5 @@
 import React from 'react'
-import './Badge.css'
+// CSS moved to global index.css Tailwind
 
 function Badge({ className = '', variant = 'default', ...props }) {
   return (

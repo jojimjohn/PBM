@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { usePermissions } from '../../../hooks/usePermissions'
 import DataTable from '../../../components/ui/DataTable'
@@ -27,7 +28,6 @@ import {
   ContractEditModal
 } from '../components/customers'
 import { getTableColumns } from './customersTableConfig'
-import '../styles/Customers.css'
 
 /**
  * @typedef {import('../types/customer.types').Customer} Customer
@@ -35,7 +35,7 @@ import '../styles/Customers.css'
 
 const OilTradingCustomers = () => {
   const { t } = useLocalization()
-  const { canEdit, canDelete, hasPermission } = usePermissions()
+  const { hasPermission } = usePermissions()
 
   // Customer data and operations from hook
   const {
@@ -45,8 +45,12 @@ const OilTradingCustomers = () => {
     updateCustomer,
     deleteCustomer,
     toggleCustomerStatus,
-    updateLocalCustomer
+    updateLocalCustomer,
+    refreshCustomers
   } = useCustomers()
+
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Customer types from database
   const [customerTypes, setCustomerTypes] = useState([])
@@ -84,6 +88,13 @@ const OilTradingCustomers = () => {
   // ─────────────────────────────────────────────────────────────────────────────
   // Event Handlers
   // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await refreshCustomers()
+    setIsRefreshing(false)
+    showToast.success(t('dataRefreshed', 'Data refreshed'))
+  }
 
   const handleAddCustomer = async (customerData) => {
     const result = await createCustomer(customerData)
@@ -233,8 +244,6 @@ const OilTradingCustomers = () => {
   const columns = getTableColumns({
     t,
     customerTypes,
-    canEdit,
-    canDelete,
     onViewDetails: handleViewDetails,
     onCreateOrder: handleCreateOrder,
     onViewContract: handleViewContract,
@@ -248,17 +257,27 @@ const OilTradingCustomers = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="oil-customers-page">
-      <div className="customers-content">
+    <div className="flex flex-col min-h-full bg-[var(--ds-bg)] p-0">
+      <div className="flex-1">
         <DataTable
           data={customers}
           columns={columns}
           title={t('customerManagement')}
           subtitle={`${t('customerSubtitle')} - ${customers.length} ${t('customers')}`}
           headerActions={
-            hasPermission('MANAGE_CUSTOMERS') && (
-              <AddCustomerButton onClick={() => setShowAddForm(true)} t={t} />
-            )
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title={t('refresh', 'Refresh')}
+              >
+                <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+              </button>
+              {hasPermission('MANAGE_CUSTOMERS') && (
+                <AddCustomerButton onClick={() => setShowAddForm(true)} t={t} />
+              )}
+            </div>
           }
           loading={loading}
           searchable={true}
@@ -269,7 +288,6 @@ const OilTradingCustomers = () => {
           selectable={false}
           onRowClick={handleViewDetails}
           emptyMessage={t('noCustomersFound')}
-          className="customers-table"
           initialPageSize={10}
           stickyHeader={true}
           enableColumnToggle={true}

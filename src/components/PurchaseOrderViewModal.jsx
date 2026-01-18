@@ -5,7 +5,7 @@ import {
   CheckCircle, AlertTriangle, Truck, Edit3, Link2,
   MapPin, Clock, Receipt
 } from 'lucide-react';
-import './PurchaseOrderViewModal.css';
+// CSS moved to global index.css Tailwind
 import purchaseOrderService from '../services/purchaseOrderService';
 import purchaseOrderExpenseService from '../services/purchaseOrderExpenseService';
 import { useSystemSettings } from '../context/SystemSettingsContext';

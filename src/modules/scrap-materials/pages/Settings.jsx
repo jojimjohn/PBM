@@ -9,6 +9,7 @@ import branchService from '../../../services/branchService'
 import dataCacheService from '../../../services/dataCacheService'
 import MFASetup from '../../../components/MFASetup'
 import ExpenseCategoryManager from '../../../components/ExpenseCategoryManager'
+import Modal from '../../../components/ui/Modal'
 import {
   Settings as SettingsIcon,
   Globe,
@@ -29,12 +30,11 @@ import {
   Plus,
   Edit,
   Trash2,
-  X,
   MapPin,
   Lock,
   Tag
 } from 'lucide-react'
-import '../../../pages/Settings.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const Settings = () => {
   const { user } = useAuth()
@@ -644,177 +644,169 @@ const Settings = () => {
               </div>
 
               {/* Branch Modal */}
-              {showBranchModal && (
-                <div className="modal-overlay" onClick={() => !savingBranch && setShowBranchModal(false)}>
-                  <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <div className="modal-header">
-                      <h3>
-                        <Building size={20} />
-                        {editingBranch ? t('editBranch', 'Edit Branch') : t('addBranch', 'Add Branch')}
-                      </h3>
-                      <button
-                        className="modal-close"
-                        onClick={() => setShowBranchModal(false)}
+              <Modal
+                isOpen={showBranchModal}
+                onClose={() => !savingBranch && setShowBranchModal(false)}
+                title={
+                  <span className="flex items-center gap-2">
+                    <Building size={20} />
+                    {editingBranch ? t('editBranch', 'Edit Branch') : t('addBranch', 'Add Branch')}
+                  </span>
+                }
+                size="md"
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => setShowBranchModal(false)}
+                      disabled={savingBranch}
+                    >
+                      {t('cancel', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      form="branch-form"
+                      className="btn btn-primary"
+                      disabled={savingBranch}
+                    >
+                      {savingBranch ? t('saving', 'Saving...') : t('save', 'Save')}
+                    </button>
+                  </>
+                }
+              >
+                <form id="branch-form" onSubmit={handleSaveBranch}>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label htmlFor="branchCode">
+                        {t('branchCode', 'Branch Code')} <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="branchCode"
+                        value={branchForm.code}
+                        onChange={(e) => setBranchForm({...branchForm, code: e.target.value})}
+                        required
                         disabled={savingBranch}
-                      >
-                        <X size={20} />
-                      </button>
+                        placeholder="HQ, BR1, BR2"
+                      />
+                      <small>{t('branchCodeHint', 'Unique identifier (e.g., HQ, BR1)')}</small>
                     </div>
 
-                    <form onSubmit={handleSaveBranch}>
-                      <div className="modal-body">
-                        <div className="form-grid">
-                          <div className="form-group">
-                            <label htmlFor="branchCode">
-                              {t('branchCode', 'Branch Code')} <span className="required">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="branchCode"
-                              value={branchForm.code}
-                              onChange={(e) => setBranchForm({...branchForm, code: e.target.value})}
-                              required
-                              disabled={savingBranch}
-                              placeholder="HQ, BR1, BR2"
-                            />
-                            <small>{t('branchCodeHint', 'Unique identifier (e.g., HQ, BR1)')}</small>
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchName">
+                        {t('branchName', 'Branch Name')} <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="branchName"
+                        value={branchForm.name}
+                        onChange={(e) => setBranchForm({...branchForm, name: e.target.value})}
+                        required
+                        disabled={savingBranch}
+                        placeholder="Head Office, Muscat Branch"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchName">
-                              {t('branchName', 'Branch Name')} <span className="required">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="branchName"
-                              value={branchForm.name}
-                              onChange={(e) => setBranchForm({...branchForm, name: e.target.value})}
-                              required
-                              disabled={savingBranch}
-                              placeholder="Head Office, Muscat Branch"
-                            />
-                          </div>
+                    <div className="form-group full-width">
+                      <label htmlFor="branchAddress">{t('address', 'Address')}</label>
+                      <input
+                        type="text"
+                        id="branchAddress"
+                        value={branchForm.address}
+                        onChange={(e) => setBranchForm({...branchForm, address: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="Street address"
+                      />
+                    </div>
 
-                          <div className="form-group full-width">
-                            <label htmlFor="branchAddress">{t('address', 'Address')}</label>
-                            <input
-                              type="text"
-                              id="branchAddress"
-                              value={branchForm.address}
-                              onChange={(e) => setBranchForm({...branchForm, address: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="Street address"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchCity">{t('city', 'City')}</label>
+                      <input
+                        type="text"
+                        id="branchCity"
+                        value={branchForm.city}
+                        onChange={(e) => setBranchForm({...branchForm, city: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="Muscat"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchCity">{t('city', 'City')}</label>
-                            <input
-                              type="text"
-                              id="branchCity"
-                              value={branchForm.city}
-                              onChange={(e) => setBranchForm({...branchForm, city: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="Muscat"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchPhone">{t('phone', 'Phone')}</label>
+                      <input
+                        type="tel"
+                        id="branchPhone"
+                        value={branchForm.phone}
+                        onChange={(e) => setBranchForm({...branchForm, phone: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="+968 1234 5678"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchPhone">{t('phone', 'Phone')}</label>
-                            <input
-                              type="tel"
-                              id="branchPhone"
-                              value={branchForm.phone}
-                              onChange={(e) => setBranchForm({...branchForm, phone: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="+968 1234 5678"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchEmail">{t('email', 'Email')}</label>
+                      <input
+                        type="email"
+                        id="branchEmail"
+                        value={branchForm.email}
+                        onChange={(e) => setBranchForm({...branchForm, email: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="branch@company.com"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchEmail">{t('email', 'Email')}</label>
-                            <input
-                              type="email"
-                              id="branchEmail"
-                              value={branchForm.email}
-                              onChange={(e) => setBranchForm({...branchForm, email: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="branch@company.com"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="managerName">{t('managerName', 'Manager Name')}</label>
+                      <input
+                        type="text"
+                        id="managerName"
+                        value={branchForm.manager_name}
+                        onChange={(e) => setBranchForm({...branchForm, manager_name: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="John Doe"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="managerName">{t('managerName', 'Manager Name')}</label>
-                            <input
-                              type="text"
-                              id="managerName"
-                              value={branchForm.manager_name}
-                              onChange={(e) => setBranchForm({...branchForm, manager_name: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="John Doe"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="managerPhone">{t('managerPhone', 'Manager Phone')}</label>
+                      <input
+                        type="tel"
+                        id="managerPhone"
+                        value={branchForm.manager_phone}
+                        onChange={(e) => setBranchForm({...branchForm, manager_phone: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="+968 9876 5432"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="managerPhone">{t('managerPhone', 'Manager Phone')}</label>
-                            <input
-                              type="tel"
-                              id="managerPhone"
-                              value={branchForm.manager_phone}
-                              onChange={(e) => setBranchForm({...branchForm, manager_phone: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="+968 9876 5432"
-                            />
-                          </div>
+                    <div className="form-group full-width">
+                      <label htmlFor="branchNotes">{t('notes', 'Notes')}</label>
+                      <textarea
+                        id="branchNotes"
+                        value={branchForm.notes}
+                        onChange={(e) => setBranchForm({...branchForm, notes: e.target.value})}
+                        disabled={savingBranch}
+                        rows="3"
+                        placeholder="Additional information..."
+                      />
+                    </div>
 
-                          <div className="form-group full-width">
-                            <label htmlFor="branchNotes">{t('notes', 'Notes')}</label>
-                            <textarea
-                              id="branchNotes"
-                              value={branchForm.notes}
-                              onChange={(e) => setBranchForm({...branchForm, notes: e.target.value})}
-                              disabled={savingBranch}
-                              rows="3"
-                              placeholder="Additional information..."
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={branchForm.is_active}
-                                onChange={(e) => setBranchForm({...branchForm, is_active: e.target.checked})}
-                                disabled={savingBranch}
-                              />
-                              {t('active', 'Active')}
-                            </label>
-                            <small>{t('activeHint', 'Active branches can be selected in orders')}</small>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="modal-footer">
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          onClick={() => setShowBranchModal(false)}
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={branchForm.is_active}
+                          onChange={(e) => setBranchForm({...branchForm, is_active: e.target.checked})}
                           disabled={savingBranch}
-                        >
-                          {t('cancel', 'Cancel')}
-                        </button>
-                        <button
-                          type="submit"
-                          className="btn btn-primary"
-                          disabled={savingBranch}
-                        >
-                          {savingBranch ? t('saving', 'Saving...') : t('save', 'Save')}
-                        </button>
-                      </div>
-                    </form>
+                        />
+                        {t('active', 'Active')}
+                      </label>
+                      <small>{t('activeHint', 'Active branches can be selected in orders')}</small>
+                    </div>
                   </div>
-                </div>
-              )}
+                </form>
+              </Modal>
             </div>
           )}
 

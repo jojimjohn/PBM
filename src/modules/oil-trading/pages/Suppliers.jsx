@@ -26,9 +26,9 @@ import {
   Package,
   Banknote,
   Users,
-  MapPin
+  MapPin,
+  RefreshCw
 } from 'lucide-react'
-import '../styles/Suppliers.css'
 
 /**
  * Format currency for display
@@ -55,8 +55,12 @@ const OilTradingSuppliers = () => {
     updateSupplier,
     deleteSupplier,
     generateNextCode,
-    getSummaryStats
+    getSummaryStats,
+    refreshSuppliers
   } = useSuppliers()
+
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // UI State
   const [activeTab, setActiveTab] = useState('suppliers')
@@ -70,6 +74,12 @@ const OilTradingSuppliers = () => {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, supplierId: null })
 
   // Event Handlers
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refreshSuppliers()
+    setIsRefreshing(false)
+  }, [refreshSuppliers])
+
   const handleAddSupplier = useCallback(() => {
     setSelectedSupplier(null)
     setShowAddModal(true)
@@ -145,7 +155,7 @@ const OilTradingSuppliers = () => {
   const stats = getSummaryStats()
 
   return (
-    <div className="oil-suppliers-page">
+    <div className="flex flex-col min-h-full bg-gray-50">
       {/* Tab Navigation */}
       <div className="tab-navigation">
         <button
@@ -178,12 +188,22 @@ const OilTradingSuppliers = () => {
               title={t('supplierManagement', 'Supplier Management')}
               subtitle={`${t('supplierSubtitle', 'Manage oil trading suppliers and collection partners')} - ${suppliers.length} ${t('suppliers', 'suppliers')}`}
               headerActions={
-                hasPermission('MANAGE_SUPPLIERS') && (
-                  <button className="btn btn-primary" onClick={handleAddSupplier}>
-                    <Plus size={16} />
-                    {t('addSupplier')}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn btn-outline"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    title={t('refresh', 'Refresh')}
+                  >
+                    <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
                   </button>
-                )
+                  {hasPermission('MANAGE_SUPPLIERS') && (
+                    <button className="btn btn-primary" onClick={handleAddSupplier}>
+                      <Plus size={16} />
+                      {t('addSupplier')}
+                    </button>
+                  )}
+                </div>
               }
               loading={loading}
               searchable={true}
@@ -205,7 +225,7 @@ const OilTradingSuppliers = () => {
 
       {/* Supplier Locations Tab */}
       {activeTab === 'locations' && (
-        <div className="supplier-locations-container">
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
           <SupplierLocationManager />
         </div>
       )}
@@ -281,7 +301,7 @@ const OilTradingSuppliers = () => {
  * Summary cards showing supplier statistics
  */
 const SummaryCards = ({ stats, t, formatCurrency }) => (
-  <div className="suppliers-summary">
+  <div className="grid grid-cols-4 gap-4 mb-6 max-lg:grid-cols-2 max-md:grid-cols-1">
     <div className="summary-card">
       <div className="summary-icon">
         <User size={24} />
@@ -293,7 +313,7 @@ const SummaryCards = ({ stats, t, formatCurrency }) => (
     </div>
 
     <div className="summary-card">
-      <div className="summary-icon business">
+      <div className="summary-icon !bg-emerald-500">
         <Building size={24} />
       </div>
       <div className="summary-info">
@@ -303,7 +323,7 @@ const SummaryCards = ({ stats, t, formatCurrency }) => (
     </div>
 
     <div className="summary-card">
-      <div className="summary-icon success">
+      <div className="summary-icon !bg-blue-500">
         <Package size={24} />
       </div>
       <div className="summary-info">
@@ -313,7 +333,7 @@ const SummaryCards = ({ stats, t, formatCurrency }) => (
     </div>
 
     <div className="summary-card">
-      <div className="summary-icon profit">
+      <div className="summary-icon !bg-amber-500">
         <Banknote size={24} />
       </div>
       <div className="summary-info">

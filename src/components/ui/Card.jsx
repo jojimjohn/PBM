@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from "../../lib/utils"
 import { cardHoverVariants } from '../../config/animations'
-import './Card.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * Enhanced Card Component

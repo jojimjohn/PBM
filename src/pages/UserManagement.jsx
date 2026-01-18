@@ -46,7 +46,7 @@ import {
   Copy,
   Circle
 } from 'lucide-react'
-import './UserManagement.css'
+// CSS moved to global index.css - using Tailwind classes
 
 // Permission categories for grouping display
 const PERMISSION_CATEGORIES = {

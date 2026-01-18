@@ -16,14 +16,12 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react'
-import './MaterialEntryForm.css'
-
-const MaterialEntryForm = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  initialData = null, 
-  availableMaterials = [] 
+const MaterialEntryForm = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialData = null,
+  availableMaterials = []
 }) => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
@@ -270,7 +268,7 @@ const MaterialEntryForm = ({
       title={initialData ? t('editMaterialEntry', 'Edit Material Entry') : t('addMaterialEntry', 'Add Material Entry')}
       className="modal-xl"
     >
-      <form onSubmit={handleSubmit} className="material-entry-form">
+      <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto px-1 max-md:max-h-[70vh]">
         
         {/* Material Selection */}
         <div className="form-section">
@@ -304,24 +302,24 @@ const MaterialEntryForm = ({
                   type="text" 
                   value={formData.materialCode} 
                   readOnly 
-                  className="readonly"
+                  className="bg-gray-100 text-gray-500 cursor-not-allowed"
                 />
               </div>
             )}
           </div>
 
           {selectedMaterial && (
-            <div className="material-info-card">
-              <div className="material-detail">
-                <strong>{t('category', 'Category')}:</strong> {selectedMaterial.category}
+            <div className="bg-white p-4 rounded-lg border border-gray-200 mt-4">
+              <div className="mb-2 text-sm text-gray-600">
+                <strong className="text-gray-800">{t('category', 'Category')}:</strong> {selectedMaterial.category}
               </div>
-              <div className="material-detail">
-                <strong>{t('standardPrice', 'Standard Price')}:</strong> OMR {selectedMaterial.standardPrice?.toFixed(3)}
+              <div className="mb-2 text-sm text-gray-600">
+                <strong className="text-gray-800">{t('standardPrice', 'Standard Price')}:</strong> OMR {selectedMaterial.standardPrice?.toFixed(3)}
               </div>
-              <p className="material-description">{selectedMaterial.description}</p>
-              
+              <p className="mt-3 text-[13px] text-gray-500 italic">{selectedMaterial.description}</p>
+
               {isTyre && (
-                <div className="tyre-notice">
+                <div className="flex items-center gap-2 mt-3 p-3 bg-blue-100 border border-blue-300 rounded-md text-blue-700 text-[13px]">
                   <Info size={16} />
                   <span>{t('tyreSpecialFields', 'Special fields required for tyres: photos and condition')}</span>
                 </div>
@@ -358,7 +356,7 @@ const MaterialEntryForm = ({
               <div className="form-group">
                 <label>{t('selectSupplier', 'Select Supplier')} *</label>
                 {loadingSuppliers ? (
-                  <div className="loading-suppliers">
+                  <div className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 italic text-center">
                     <span>{t('loadingSuppliers', 'Loading suppliers...')}</span>
                   </div>
                 ) : (
@@ -442,7 +440,7 @@ const MaterialEntryForm = ({
                 type="text"
                 value={formData.unit}
                 readOnly
-                className="readonly"
+                className="bg-gray-100 text-gray-500 cursor-not-allowed"
               />
             </div>
             
@@ -466,7 +464,7 @@ const MaterialEntryForm = ({
                 value={formData.quantity && formData.costPerUnit ? 
                   (parseFloat(formData.quantity) * parseFloat(formData.costPerUnit)).toFixed(3) : '0.000'}
                 readOnly
-                className="readonly total-value"
+                className="bg-emerald-50 text-emerald-600 font-semibold cursor-not-allowed"
               />
             </div>
           </div>
@@ -488,7 +486,7 @@ const MaterialEntryForm = ({
           <h3 className="section-title">
             <Camera size={20} />
             {t('photos', 'Photos')}
-            {requiresPhotos && <span className="required-indicator"> *</span>}
+            {requiresPhotos && <span className="text-red-500"> *</span>}
           </h3>
           
           <ImageUpload
@@ -508,25 +506,39 @@ const MaterialEntryForm = ({
         {isTyre && (
           <>
             {/* Condition Classification */}
-            <div className="form-section tyre-section">
+            <div className="form-section bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
               <h3 className="section-title">
                 <CheckCircle size={20} />
                 {t('tyreCondition', 'Tyre Condition')} *
               </h3>
-              
-              <div className="condition-options">
+
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 mb-2 max-md:grid-cols-1">
                 {conditionOptions.map(option => (
-                  <label key={option.value} className={`condition-option ${formData.condition === option.value ? 'selected' : ''} ${option.class}`}>
+                  <label
+                    key={option.value}
+                    className={`relative cursor-pointer border-2 rounded-xl p-4 transition-all bg-white ${
+                      formData.condition === option.value
+                        ? option.class === 'success'
+                          ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100'
+                          : 'border-red-500 bg-gradient-to-br from-red-50 to-red-100'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="condition"
                       value={option.value}
                       checked={formData.condition === option.value}
                       onChange={(e) => handleInputChange('condition', e.target.value)}
+                      className="absolute opacity-0 pointer-events-none"
                     />
-                    <div className="condition-content">
-                      {option.value === 'good' ? 
-                        <CheckCircle size={16} /> : 
+                    <div className={`flex items-center gap-3 font-medium ${
+                      formData.condition === option.value
+                        ? option.class === 'success' ? 'text-emerald-600' : 'text-red-600'
+                        : 'text-gray-700'
+                    }`}>
+                      {option.value === 'good' ?
+                        <CheckCircle size={16} /> :
                         <AlertTriangle size={16} />
                       }
                       <span>{option.label}</span>
@@ -538,39 +550,40 @@ const MaterialEntryForm = ({
             </div>
 
             {/* Serial Numbers */}
-            <div className="form-section tyre-section">
+            <div className="form-section bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
               <h3 className="section-title">
                 <Hash size={20} />
                 {t('serialNumbers', 'Serial Numbers')} ({t('optional', 'Optional')})
               </h3>
-              
-              <div className="serial-number-input">
+
+              <div className="flex gap-3 mb-4 max-md:flex-col">
                 <input
                   type="text"
                   value={serialNumberInput}
                   onChange={(e) => setSerialNumberInput(e.target.value)}
                   placeholder={t('enterSerialNumber', 'Enter serial number')}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSerialNumber())}
+                  className="flex-1 p-3 border border-gray-300 rounded-lg"
                 />
                 <button
                   type="button"
                   onClick={addSerialNumber}
                   disabled={!serialNumberInput.trim()}
-                  className="add-serial-btn"
+                  className="px-5 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all"
                 >
                   {t('add', 'Add')}
                 </button>
               </div>
-              
+
               {formData.serialNumbers.length > 0 && (
-                <div className="serial-numbers-list">
+                <div className="flex flex-wrap gap-2">
                   {formData.serialNumbers.map((serial, index) => (
-                    <div key={index} className="serial-number-tag">
+                    <div key={index} className="flex items-center gap-2 bg-indigo-100 text-indigo-800 py-1.5 px-3 rounded-full text-[13px] font-medium">
                       <span>{serial}</span>
                       <button
                         type="button"
                         onClick={() => removeSerialNumber(index)}
-                        className="remove-serial-btn"
+                        className="bg-transparent border-none text-violet-600 cursor-pointer text-base font-bold w-5 h-5 flex items-center justify-center rounded-full hover:bg-indigo-200 transition-all"
                       >
                         ×
                       </button>
@@ -598,11 +611,18 @@ const MaterialEntryForm = ({
         </div>
 
         {/* Form Actions */}
-        <div className="form-actions">
-          <button type="button" onClick={onClose} className="btn-cancel">
+        <div className="flex justify-end gap-4 p-6 bg-white border-t border-gray-200 -mx-6 -mb-6 sticky bottom-0 rounded-b-xl max-md:flex-col-reverse max-md:gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-200 transition-all max-md:w-full max-md:py-3.5"
+          >
             {t('cancel', 'Cancel')}
           </button>
-          <button type="submit" className="btn-save">
+          <button
+            type="submit"
+            className="px-6 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 hover:shadow-lg transition-all max-md:w-full max-md:py-3.5"
+          >
             {t('save', 'Save')} {isTyre && t('tyreEntry', 'Tyre Entry')}
           </button>
         </div>

@@ -18,7 +18,7 @@ import {
   RefreshCw,
   Lock
 } from 'lucide-react'
-import './ChangePasswordModal.css'
+// CSS moved to global index.css Tailwind
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const { t } = useLocalization()

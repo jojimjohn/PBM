@@ -31,7 +31,6 @@ import {
   TrendingUp,
   Package
 } from 'lucide-react'
-import './WastageAnalytics.css'
 
 const WastageAnalytics = ({ isOpen, onClose }) => {
   const { t } = useLocalization()
@@ -227,10 +226,10 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
-        <div className="chart-tooltip">
-          <p className="tooltip-label">{data.wasteType}</p>
-          <p className="tooltip-value">Count: {data.count}</p>
-          <p className="tooltip-value">Cost: {formatCurrency(data.totalCost)}</p>
+        <div className="bg-white border border-gray-200 rounded-md px-3 py-2 shadow-lg">
+          <p className="text-xs font-semibold text-gray-700 m-0 mb-1">{data.wasteType}</p>
+          <p className="text-xs text-gray-500 m-0">Count: {data.count}</p>
+          <p className="text-xs text-gray-500 m-0">Cost: {formatCurrency(data.totalCost)}</p>
         </div>
       )
     }
@@ -241,9 +240,9 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
   const CustomBarTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="chart-tooltip">
-          <p className="tooltip-label">{label}</p>
-          <p className="tooltip-value">Cost: {formatCurrency(payload[0].value)}</p>
+        <div className="bg-white border border-gray-200 rounded-md px-3 py-2 shadow-lg">
+          <p className="text-xs font-semibold text-gray-700 m-0 mb-1">{label}</p>
+          <p className="text-xs text-gray-500 m-0">Cost: {formatCurrency(payload[0].value)}</p>
         </div>
       )
     }
@@ -257,17 +256,17 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
       isOpen={isOpen}
       onClose={onClose}
       title={t('wastageAnalytics', 'Wastage Analytics')}
-      className="wastage-analytics-modal"
+      className="max-w-[1400px] w-[98vw] min-w-[900px] max-h-[90vh] max-md:min-w-0"
     >
-      <div className="wastage-analytics">
+      <div className="flex flex-col gap-6">
         {/* Header with Date Filter and Export */}
-        <div className="analytics-header">
-          <div className="date-filter">
-            <Calendar size={18} />
+        <div className="flex justify-between items-center flex-wrap gap-4 pb-4 border-b border-gray-200 max-md:flex-col max-md:items-start">
+          <div className="flex items-center gap-3 flex-wrap max-md:flex-col max-md:items-start max-md:w-full">
+            <Calendar size={18} className="text-gray-500" />
             <Select
               value={dateRange}
               onChange={(e) => handleDateRangeChange(e.target.value)}
-              className="date-range-select"
+              className="min-w-[150px] max-md:w-full"
             >
               {dateRangeOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -275,13 +274,13 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
             </Select>
 
             {dateRange === 'custom' && (
-              <div className="custom-date-pickers">
+              <div className="flex items-center gap-2 max-md:w-full">
                 <DateInput
                   value={customDateFrom}
                   onChange={setCustomDateFrom}
                   maxDate={customDateTo || new Date().toISOString().split('T')[0]}
                 />
-                <span className="date-separator">-</span>
+                <span className="text-gray-500">-</span>
                 <DateInput
                   value={customDateTo}
                   onChange={setCustomDateTo}
@@ -292,7 +291,7 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          <button className="btn btn-outline export-btn" onClick={handleExport} disabled={loading}>
+          <button className="btn btn-outline flex items-center gap-2 max-md:w-full max-md:justify-center" onClick={handleExport} disabled={loading}>
             <Download size={16} />
             {t('exportAnalytics', 'Export to CSV')}
           </button>
@@ -300,17 +299,17 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
 
         {/* Loading State */}
         {loading && (
-          <div className="analytics-loading">
+          <div className="flex justify-center items-center min-h-[300px]">
             <LoadingSpinner />
           </div>
         )}
 
         {/* Error State */}
         {error && !loading && (
-          <div className="analytics-error">
+          <div className="flex flex-col items-center justify-center gap-4 p-12 text-center text-red-600">
             <AlertTriangle size={48} />
-            <p>{error}</p>
-            <button className="btn btn-primary" onClick={fetchAnalytics}>
+            <p className="text-gray-700 m-0">{error}</p>
+            <button className="btn btn-primary flex items-center gap-2" onClick={fetchAnalytics}>
               <RefreshCw size={16} />
               {t('retry', 'Retry')}
             </button>
@@ -321,63 +320,63 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
         {!loading && !error && (
           <>
             {/* Summary Metric Cards */}
-            <div className="analytics-metrics">
-              <div className="metric-card">
-                <div className="metric-icon total">
+            <div className="grid grid-cols-5 gap-4 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
+              <div className="summary-card">
+                <div className="summary-icon bg-blue-100 text-blue-600">
                   <TrendingUp size={20} />
                 </div>
-                <div className="metric-content">
-                  <span className="metric-value">{summary.totalWastages}</span>
-                  <span className="metric-label">{t('totalWastagesCard', 'Total Wastages')}</span>
+                <div className="summary-info">
+                  <span className="summary-value">{summary.totalWastages}</span>
+                  <span className="summary-label">{t('totalWastagesCard', 'Total Wastages')}</span>
                 </div>
               </div>
 
-              <div className="metric-card">
-                <div className="metric-icon cost">
+              <div className="summary-card">
+                <div className="summary-icon bg-amber-100 text-amber-600">
                   <DollarSign size={20} />
                 </div>
-                <div className="metric-content">
-                  <span className="metric-value">{formatCurrency(summary.totalCost)}</span>
-                  <span className="metric-label">{t('totalWasteCostCard', 'Total Waste Cost')}</span>
+                <div className="summary-info">
+                  <span className="summary-value">{formatCurrency(summary.totalCost)}</span>
+                  <span className="summary-label">{t('totalWasteCostCard', 'Total Waste Cost')}</span>
                 </div>
               </div>
 
-              <div className="metric-card">
-                <div className="metric-icon pending">
+              <div className="summary-card">
+                <div className="summary-icon bg-yellow-100 text-yellow-600">
                   <Clock size={20} />
                 </div>
-                <div className="metric-content">
-                  <span className="metric-value">{summary.pendingCount}</span>
-                  <span className="metric-label">{t('pendingApprovalsCard', 'Pending Approvals')}</span>
+                <div className="summary-info">
+                  <span className="summary-value">{summary.pendingCount}</span>
+                  <span className="summary-label">{t('pendingApprovalsCard', 'Pending Approvals')}</span>
                 </div>
               </div>
 
-              <div className="metric-card">
-                <div className="metric-icon approved">
+              <div className="summary-card">
+                <div className="summary-icon bg-emerald-100 text-emerald-600">
                   <CheckCircle size={20} />
                 </div>
-                <div className="metric-content">
-                  <span className="metric-value">{summary.approvedCount}</span>
-                  <span className="metric-label">{t('approvedWastagesCard', 'Approved')}</span>
+                <div className="summary-info">
+                  <span className="summary-value">{summary.approvedCount}</span>
+                  <span className="summary-label">{t('approvedWastagesCard', 'Approved')}</span>
                 </div>
               </div>
 
-              <div className="metric-card">
-                <div className="metric-icon rejected">
+              <div className="summary-card">
+                <div className="summary-icon bg-red-100 text-red-600">
                   <XCircle size={20} />
                 </div>
-                <div className="metric-content">
-                  <span className="metric-value">{summary.rejectedCount}</span>
-                  <span className="metric-label">{t('rejectedWastagesCard', 'Rejected')}</span>
+                <div className="summary-info">
+                  <span className="summary-value">{summary.rejectedCount}</span>
+                  <span className="summary-label">{t('rejectedWastagesCard', 'Rejected')}</span>
                 </div>
               </div>
             </div>
 
             {/* Charts Row */}
-            <div className="analytics-charts">
+            <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
               {/* Monthly Trends Bar Chart */}
-              <div className="chart-container">
-                <h4 className="chart-title">{t('monthlyTrendsChart', 'Monthly Trends')}</h4>
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h4 className="text-sm font-semibold text-gray-700 m-0 mb-4 pb-2 border-b border-gray-200">{t('monthlyTrendsChart', 'Monthly Trends')}</h4>
                 {barChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={barChartData}>
@@ -389,15 +388,15 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="no-chart-data">
+                  <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm">
                     {t('noAnalyticsData', 'No analytics data available for selected period')}
                   </div>
                 )}
               </div>
 
               {/* Wastage by Type Pie Chart */}
-              <div className="chart-container">
-                <h4 className="chart-title">{t('wastageByTypeChart', 'Wastage by Type')}</h4>
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h4 className="text-sm font-semibold text-gray-700 m-0 mb-4 pb-2 border-b border-gray-200">{t('wastageByTypeChart', 'Wastage by Type')}</h4>
                 {pieChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
@@ -419,7 +418,7 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="no-chart-data">
+                  <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm">
                     {t('noAnalyticsData', 'No analytics data available for selected period')}
                   </div>
                 )}
@@ -427,36 +426,36 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
             </div>
 
             {/* Top Materials Table */}
-            <div className="analytics-table">
-              <h4 className="table-title">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-700 m-0 mb-4 pb-2 border-b border-gray-200">
                 <Package size={18} />
                 {t('topMaterialsTable', 'Top Materials by Wastage Cost')}
               </h4>
               {analyticsData.topMaterials.length > 0 ? (
-                <table className="top-materials-table">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th>{t('materialCode', 'Material Code')}</th>
-                      <th>{t('materialName', 'Material Name')}</th>
-                      <th>{t('count', 'Count')}</th>
-                      <th>{t('totalCost', 'Total Cost')}</th>
+                      <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-200 w-[50px] text-center max-md:py-2 max-md:px-2 max-md:text-xs">#</th>
+                      <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{t('materialCode', 'Material Code')}</th>
+                      <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{t('materialName', 'Material Name')}</th>
+                      <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{t('count', 'Count')}</th>
+                      <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700 bg-gray-50 border-b-2 border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{t('totalCost', 'Total Cost')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {analyticsData.topMaterials.slice(0, 10).map((item, index) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>{item.materialCode}</td>
-                        <td>{item.materialName}</td>
-                        <td>{item.count}</td>
-                        <td>{formatCurrency(item.totalCost)}</td>
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="py-3 px-4 text-sm text-gray-500 border-b border-gray-200 text-center max-md:py-2 max-md:px-2 max-md:text-xs">{index + 1}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{item.materialCode}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{item.materialName}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700 border-b border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{item.count}</td>
+                        <td className="py-3 px-4 text-sm font-medium text-emerald-600 border-b border-gray-200 max-md:py-2 max-md:px-2 max-md:text-xs">{formatCurrency(item.totalCost)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               ) : (
-                <div className="no-table-data">
+                <div className="flex items-center justify-center p-8 text-gray-500 text-sm">
                   {t('noAnalyticsData', 'No analytics data available for selected period')}
                 </div>
               )}
@@ -465,7 +464,7 @@ const WastageAnalytics = ({ isOpen, onClose }) => {
         )}
 
         {/* Close Button */}
-        <div className="modal-actions">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-2">
           <button className="btn btn-primary" onClick={onClose}>
             {t('close', 'Close')}
           </button>

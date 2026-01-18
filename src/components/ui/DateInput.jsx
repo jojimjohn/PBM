@@ -25,7 +25,7 @@ import {
   formatDateForAPI,
   isDateInRange
 } from '../../utils/dateParser';
-import './DateInput.css';
+// CSS moved to global index.css Tailwind
 
 const DateInput = React.forwardRef(({
   value,

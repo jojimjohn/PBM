@@ -7,7 +7,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { Clock, LogOut, RefreshCw } from 'lucide-react';
-import './SessionTimeoutWarning.css';
 
 const SessionTimeoutWarning = ({
   show,
@@ -50,32 +49,41 @@ const SessionTimeoutWarning = ({
   if (!show) return null;
 
   return (
-    <div className="session-timeout-overlay">
-      <div className="session-timeout-modal">
-        <div className="session-timeout-icon">
-          <Clock size={48} className="clock-icon" />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center animate-in fade-in zoom-in duration-200">
+        {/* Icon */}
+        <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-amber-100 text-amber-600 rounded-full">
+          <Clock size={40} className="animate-pulse" />
         </div>
 
-        <h2 className="session-timeout-title">Session Expiring Soon</h2>
+        {/* Title */}
+        <h2 className="text-2xl font-bold text-slate-800 mb-3">
+          Session Expiring Soon
+        </h2>
 
-        <p className="session-timeout-message">
+        {/* Countdown */}
+        <p className="text-slate-600 mb-2">
           Your session will expire in{' '}
-          <span className="countdown">{formatTime(countdown)}</span>
+          <span className="inline-block px-3 py-1 bg-red-100 text-red-700 font-mono font-bold text-xl rounded-lg">
+            {formatTime(countdown)}
+          </span>
         </p>
 
-        <p className="session-timeout-submessage">
+        {/* Submessage */}
+        <p className="text-slate-500 mb-6">
           Would you like to stay logged in?
         </p>
 
-        <div className="session-timeout-actions">
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            className="btn btn-primary extend-btn"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             onClick={onExtend}
             disabled={isExtending}
           >
             {isExtending ? (
               <>
-                <RefreshCw size={18} className="spinning" />
+                <RefreshCw size={18} className="animate-spin" />
                 Extending...
               </>
             ) : (
@@ -87,7 +95,7 @@ const SessionTimeoutWarning = ({
           </button>
 
           <button
-            className="btn btn-secondary logout-btn"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 focus:ring-4 focus:ring-slate-200 transition-all"
             onClick={onLogout}
           >
             <LogOut size={18} />

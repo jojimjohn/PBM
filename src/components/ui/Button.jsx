@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { buttonTapVariants } from '../../config/animations'
-import './Button.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * Enhanced Button Component

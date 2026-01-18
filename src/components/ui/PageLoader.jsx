@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import './PageLoader.css'
+// CSS moved to global index.css Tailwind
 
 const PageLoader = () => {
   return (

@@ -12,7 +12,6 @@ import ScrapMaterialsDashboard from '../modules/scrap-materials/pages/Dashboard'
 // ============================================================================
 // LAZY LOADED - Oil Trading Module Components
 // ============================================================================
-const OilTradingDashboard = lazy(() => import('../modules/oil-trading/pages/Dashboard'))
 const OilTradingCustomers = lazy(() => import('../modules/oil-trading/pages/Customers'))
 const OilTradingSuppliers = lazy(() => import('../modules/oil-trading/pages/Suppliers'))
 const OilTradingInventory = lazy(() => import('../modules/oil-trading/pages/Inventory'))

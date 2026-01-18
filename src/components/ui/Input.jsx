@@ -1,6 +1,6 @@
 import React from 'react'
 import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
-import './Input.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * Enhanced Input Component
@@ -68,20 +68,34 @@ const Input = React.forwardRef(({
   // Combine right icon with validation icon and password toggle
   const combinedRightIcon = validationIcon || passwordToggle || rightIcon
 
+  // Size mapping to Tailwind classes
+  const sizeClasses = {
+    small: 'h-8 text-xs',
+    medium: 'h-10 text-sm',
+    large: 'h-12 text-base'
+  }
+
+  // State classes using Tailwind
+  const getContainerStateClasses = () => {
+    if (hasError) return 'border-red-500 focus-within:ring-red-500/20 focus-within:border-red-500'
+    if (success) return 'border-green-500 focus-within:ring-green-500/20 focus-within:border-green-500'
+    return 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-blue-500/20'
+  }
+
   return (
-    <div className={`input-wrapper ${fullWidth ? 'input-wrapper-full' : ''} ${className}`}>
+    <div className={`form-group-tw ${fullWidth ? 'w-full' : ''} ${className}`}>
       {label && (
-        <label htmlFor={inputId} className="input-label">
+        <label htmlFor={inputId} className="form-label-tw">
           {label}
-          {required && <span className="input-required">*</span>}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
 
       <div
-        className={`input-container input-container-${size} ${isFocused ? 'input-container-focused' : ''} ${hasError ? 'input-container-error' : ''} ${success ? 'input-container-success' : ''}`}
+        className={`input-container relative flex items-center w-full bg-white border rounded transition-all focus-within:ring-2 ${sizeClasses[size]} ${getContainerStateClasses()}`}
       >
         {leftIcon && (
-          <div className="input-icon-wrapper input-icon-left">
+          <div className="input-icon-wrapper input-icon-left absolute flex items-center justify-center w-10 h-full text-slate-500 pointer-events-none">
             {leftIcon}
           </div>
         )}
@@ -90,7 +104,7 @@ const Input = React.forwardRef(({
           id={inputId}
           ref={ref}
           type={inputType}
-          className={`input input-${size} ${leftIcon ? 'input-with-left-icon' : ''} ${combinedRightIcon ? 'input-with-right-icon' : ''}`}
+          className={`flex-1 w-full px-3 py-2 bg-transparent border-none outline-none text-slate-800 placeholder:text-slate-400 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 ${leftIcon ? 'pl-10' : ''} ${combinedRightIcon ? 'pr-10' : ''}`}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           aria-invalid={hasError}
@@ -99,7 +113,7 @@ const Input = React.forwardRef(({
         />
 
         {combinedRightIcon && (
-          <div className="input-icon-wrapper input-icon-right">
+          <div className="input-icon-wrapper input-icon-right absolute right-0 flex items-center justify-center w-10 h-full text-slate-500 pointer-events-none">
             {combinedRightIcon}
           </div>
         )}
@@ -108,7 +122,7 @@ const Input = React.forwardRef(({
       {(helperText || error) && (
         <div
           id={`${inputId}-helper`}
-          className={`input-helper ${hasError ? 'input-helper-error' : ''}`}
+          className={hasError ? 'form-error-tw' : 'form-hint-tw'}
         >
           {error || helperText}
         </div>
@@ -136,39 +150,39 @@ export const Textarea = React.forwardRef(({
   rows = 4,
   ...props
 }, ref) => {
-  const [isFocused, setIsFocused] = React.useState(false)
   const inputId = id || React.useId()
   const hasError = !!error
 
+  // State classes using Tailwind
+  const getStateClasses = () => {
+    if (hasError) return 'border-red-500 focus:ring-red-500/20 focus:border-red-500'
+    if (success) return 'border-green-500 focus:ring-green-500/20 focus:border-green-500'
+    return 'border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'
+  }
+
   return (
-    <div className={`input-wrapper ${fullWidth ? 'input-wrapper-full' : ''} ${className}`}>
+    <div className={`form-group-tw ${fullWidth ? 'w-full' : ''} ${className}`}>
       {label && (
-        <label htmlFor={inputId} className="input-label">
+        <label htmlFor={inputId} className="form-label-tw">
           {label}
-          {required && <span className="input-required">*</span>}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
 
-      <div
-        className={`textarea-container ${isFocused ? 'textarea-container-focused' : ''} ${hasError ? 'textarea-container-error' : ''} ${success ? 'textarea-container-success' : ''}`}
-      >
-        <textarea
-          id={inputId}
-          ref={ref}
-          rows={rows}
-          className="textarea"
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          aria-invalid={hasError}
-          aria-describedby={helperText || error ? `${inputId}-helper` : undefined}
-          {...props}
-        />
-      </div>
+      <textarea
+        id={inputId}
+        ref={ref}
+        rows={rows}
+        className={`form-input-tw resize-y min-h-[80px] ${getStateClasses()}`}
+        aria-invalid={hasError}
+        aria-describedby={helperText || error ? `${inputId}-helper` : undefined}
+        {...props}
+      />
 
       {(helperText || error) && (
         <div
           id={`${inputId}-helper`}
-          className={`input-helper ${hasError ? 'input-helper-error' : ''}`}
+          className={hasError ? 'form-error-tw' : 'form-hint-tw'}
         >
           {error || helperText}
         </div>

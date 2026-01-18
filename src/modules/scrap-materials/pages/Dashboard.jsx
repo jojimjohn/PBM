@@ -9,8 +9,6 @@ import Alert from '../../../components/ui/Alert'
 import { Skeleton, SkeletonCard } from '../../../components/ui/Progress'
 import { Button } from '../../../components/ui/Button'
 import { gridContainerVariants, gridItemVariants, fadeUpVariants } from '../../../config/animations'
-import '../styles/Dashboard.css'
-import '../styles/DashboardModern.css'
 
 const ScrapMaterialsDashboard = () => {
   const { user, selectedCompany } = useAuth()
@@ -51,19 +49,19 @@ const ScrapMaterialsDashboard = () => {
   // Skeleton loading state
   if (loading) {
     return (
-      <div className="scrap-dashboard-page">
-        <div className="page-header">
+      <div className="p-0">
+        <div className="mb-8">
           <Skeleton variant="text" width="300px" height="36px" />
           <Skeleton variant="text" width="400px" height="20px" />
         </div>
 
-        <div className="dashboard-content">
-          <div className="stats-grid">
+        <div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 mb-8">
             {[...Array(4)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
-          <div className="dashboard-grid-modern">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 max-lg:grid-cols-1">
             {[...Array(3)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -74,24 +72,24 @@ const ScrapMaterialsDashboard = () => {
   }
   
   return (
-    <div className="scrap-dashboard-page">
+    <div className="p-0">
       {/* Page Header */}
       <motion.div
-        className="page-header-modern"
+        className="mb-8"
         variants={fadeUpVariants}
         initial="hidden"
         animate="visible"
       >
         <div>
-          <h1 className="page-title">{t('scrapMaterials')} {t('dashboard')}</h1>
-          <p className="page-subtitle">Welcome back to {selectedCompany?.name}, {user?.name}</p>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2 leading-tight max-md:text-3xl">{t('scrapMaterials')} {t('dashboard')}</h1>
+          <p className="text-lg text-gray-600 leading-normal max-md:text-base">Welcome back to {selectedCompany?.name}, {user?.name}</p>
         </div>
       </motion.div>
 
-      <div className="dashboard-content">
+      <div>
         {/* Stats Grid with Modern Cards */}
         <motion.div
-          className="stats-grid-modern"
+          className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 mb-8 max-md:grid-cols-1 max-md:gap-4"
           variants={gridContainerVariants}
           initial="hidden"
           animate="visible"
@@ -99,14 +97,14 @@ const ScrapMaterialsDashboard = () => {
           {/* Total Suppliers Stat */}
           <motion.div variants={gridItemVariants}>
             <Card variant="elevated" hoverable animate>
-              <CardContent className="stat-card-modern">
-                <div className="stat-icon-wrapper suppliers-icon">
-                  <Users className="stat-icon" />
+              <CardContent className="flex items-start gap-4 !p-6">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                  <Users className="w-7 h-7" />
                 </div>
-                <div className="stat-content">
-                  <p className="stat-label">{t('suppliers')}</p>
-                  <h3 className="stat-value">89</h3>
-                  <p className="stat-trend positive">
+                <div className="flex-1 flex flex-col gap-1">
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{t('suppliers')}</p>
+                  <h3 className="text-3xl font-bold text-gray-900 leading-none tabular-nums max-md:text-2xl">89</h3>
+                  <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
                     <TrendingUp size={16} />
                     <span>+7% {t('fromLastMonth')}</span>
                   </p>
@@ -118,14 +116,14 @@ const ScrapMaterialsDashboard = () => {
           {/* Material Weight Stat */}
           <motion.div variants={gridItemVariants}>
             <Card variant="elevated" hoverable animate>
-              <CardContent className="stat-card-modern">
-                <div className="stat-icon-wrapper inventory-icon">
-                  <Package className="stat-icon" />
+              <CardContent className="flex items-start gap-4 !p-6">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl shrink-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                  <Package className="w-7 h-7" />
                 </div>
-                <div className="stat-content">
-                  <p className="stat-label">Total Material Weight</p>
-                  <h3 className="stat-value">12,340 KG</h3>
-                  <p className="stat-trend positive">
+                <div className="flex-1 flex flex-col gap-1">
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Material Weight</p>
+                  <h3 className="text-3xl font-bold text-gray-900 leading-none tabular-nums max-md:text-2xl">12,340 KG</h3>
+                  <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
                     <TrendingUp size={16} />
                     <span>+15% {t('fromLastMonth')}</span>
                   </p>
@@ -137,14 +135,14 @@ const ScrapMaterialsDashboard = () => {
           {/* Monthly Revenue Stat */}
           <motion.div variants={gridItemVariants}>
             <Card variant="elevated" hoverable animate>
-              <CardContent className="stat-card-modern">
-                <div className="stat-icon-wrapper revenue-icon">
-                  <Banknote className="stat-icon" />
+              <CardContent className="flex items-start gap-4 !p-6">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl shrink-0 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                  <Banknote className="w-7 h-7" />
                 </div>
-                <div className="stat-content">
-                  <p className="stat-label">Monthly Revenue</p>
-                  <h3 className="stat-value">OMR 45,780</h3>
-                  <p className="stat-trend positive">
+                <div className="flex-1 flex flex-col gap-1">
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Monthly Revenue</p>
+                  <h3 className="text-3xl font-bold text-gray-900 leading-none tabular-nums max-md:text-2xl">OMR 45,780</h3>
+                  <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
                     <TrendingUp size={16} />
                     <span>+22% {t('fromLastMonth')}</span>
                   </p>
@@ -156,14 +154,14 @@ const ScrapMaterialsDashboard = () => {
           {/* Materials Processed Stat */}
           <motion.div variants={gridItemVariants}>
             <Card variant="elevated" hoverable animate>
-              <CardContent className="stat-card-modern">
-                <div className="stat-icon-wrapper processed-icon">
-                  <Activity className="stat-icon" />
+              <CardContent className="flex items-start gap-4 !p-6">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl shrink-0 bg-gradient-to-br from-primary-500 to-primary-600 text-white">
+                  <Activity className="w-7 h-7" />
                 </div>
-                <div className="stat-content">
-                  <p className="stat-label">Materials Processed</p>
-                  <h3 className="stat-value">8,950 KG</h3>
-                  <p className="stat-trend positive">
+                <div className="flex-1 flex flex-col gap-1">
+                  <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Materials Processed</p>
+                  <h3 className="text-3xl font-bold text-gray-900 leading-none tabular-nums max-md:text-2xl">8,950 KG</h3>
+                  <p className="flex items-center gap-1 text-sm font-medium text-emerald-600">
                     <TrendingUp size={16} />
                     <span>+28% {t('fromLastMonth')}</span>
                   </p>
@@ -175,7 +173,7 @@ const ScrapMaterialsDashboard = () => {
 
         {/* Modern Alerts Section */}
         <motion.div
-          className="alerts-section-modern"
+          className="mb-6"
           variants={fadeUpVariants}
           initial="hidden"
           animate="visible"
@@ -194,7 +192,7 @@ const ScrapMaterialsDashboard = () => {
         </motion.div>
 
         <motion.div
-          className="alerts-section-modern"
+          className="mb-6"
           variants={fadeUpVariants}
           initial="hidden"
           animate="visible"
@@ -214,7 +212,7 @@ const ScrapMaterialsDashboard = () => {
 
         {/* Quick Actions Row */}
         <motion.div
-          className="quick-actions-modern"
+          className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-8 max-md:grid-cols-2 max-sm:grid-cols-1"
           variants={gridContainerVariants}
           initial="hidden"
           animate="visible"
@@ -225,7 +223,7 @@ const ScrapMaterialsDashboard = () => {
               size="large"
               icon={<ShoppingCart />}
               fullWidth
-              className="action-button-modern"
+              className="h-20 text-base font-semibold max-sm:h-[60px]"
             >
               Purchase
             </Button>
@@ -237,7 +235,7 @@ const ScrapMaterialsDashboard = () => {
               size="large"
               icon={<Banknote />}
               fullWidth
-              className="action-button-modern"
+              className="h-20 text-base font-semibold max-sm:h-[60px]"
             >
               Sell
             </Button>
@@ -249,7 +247,7 @@ const ScrapMaterialsDashboard = () => {
               size="large"
               icon={<Scale />}
               fullWidth
-              className="action-button-modern"
+              className="h-20 text-base font-semibold max-sm:h-[60px]"
             >
               Weigh
             </Button>
@@ -261,7 +259,7 @@ const ScrapMaterialsDashboard = () => {
               size="large"
               icon={<Activity />}
               fullWidth
-              className="action-button-modern"
+              className="h-20 text-base font-semibold max-sm:h-[60px]"
             >
               Reports
             </Button>
@@ -271,7 +269,7 @@ const ScrapMaterialsDashboard = () => {
 
         {/* Main Content Grid */}
         <motion.div
-          className="dashboard-grid-modern"
+          className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 max-lg:grid-cols-1"
           variants={gridContainerVariants}
           initial="hidden"
           animate="visible"
@@ -287,68 +285,68 @@ const ScrapMaterialsDashboard = () => {
                 <CardDescription>Current stock levels and values</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="material-list-modern">
+                <div className="flex flex-col gap-6">
                   {/* Copper Wire */}
-                  <div className="material-item-modern">
-                    <div className="material-header">
+                  <div className="flex flex-col gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="material-name">Copper Wire</h4>
-                        <p className="material-grade">Grade A</p>
+                        <h4 className="text-base font-semibold text-gray-900 mb-1">Copper Wire</h4>
+                        <p className="text-sm text-gray-600">Grade A</p>
                       </div>
-                      <span className="material-status high-value">High Value</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700">High Value</span>
                     </div>
-                    <div className="material-details">
-                      <span className="material-weight">1,250 KG</span>
-                      <span className="material-rate">OMR 3.20/KG</span>
-                      <span className="material-value">OMR 4,000</span>
+                    <div className="flex justify-between items-center gap-3 max-md:flex-col max-md:items-start">
+                      <span className="text-sm font-semibold text-gray-700">1,250 KG</span>
+                      <span className="text-sm text-gray-600">OMR 3.20/KG</span>
+                      <span className="text-base font-bold text-gray-900 tabular-nums">OMR 4,000</span>
                     </div>
                   </div>
 
                   {/* Aluminum Cans */}
-                  <div className="material-item-modern">
-                    <div className="material-header">
+                  <div className="flex flex-col gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="material-name">Aluminum Cans</h4>
-                        <p className="material-grade">Recycled</p>
+                        <h4 className="text-base font-semibold text-gray-900 mb-1">Aluminum Cans</h4>
+                        <p className="text-sm text-gray-600">Recycled</p>
                       </div>
-                      <span className="material-status ready">Ready to Sell</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-blue-100 text-blue-700">Ready to Sell</span>
                     </div>
-                    <div className="material-details">
-                      <span className="material-weight">2,800 KG</span>
-                      <span className="material-rate">OMR 1.50/KG</span>
-                      <span className="material-value">OMR 4,200</span>
+                    <div className="flex justify-between items-center gap-3 max-md:flex-col max-md:items-start">
+                      <span className="text-sm font-semibold text-gray-700">2,800 KG</span>
+                      <span className="text-sm text-gray-600">OMR 1.50/KG</span>
+                      <span className="text-base font-bold text-gray-900 tabular-nums">OMR 4,200</span>
                     </div>
                   </div>
 
                   {/* Steel Scrap */}
-                  <div className="material-item-modern">
-                    <div className="material-header">
+                  <div className="flex flex-col gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="material-name">Steel Scrap</h4>
-                        <p className="material-grade">Mixed Grade</p>
+                        <h4 className="text-base font-semibold text-gray-900 mb-1">Steel Scrap</h4>
+                        <p className="text-sm text-gray-600">Mixed Grade</p>
                       </div>
-                      <span className="material-status processing">Processing</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-amber-100 text-amber-700">Processing</span>
                     </div>
-                    <div className="material-details">
-                      <span className="material-weight">4,200 KG</span>
-                      <span className="material-rate">OMR 0.85/KG</span>
-                      <span className="material-value">OMR 3,570</span>
+                    <div className="flex justify-between items-center gap-3 max-md:flex-col max-md:items-start">
+                      <span className="text-sm font-semibold text-gray-700">4,200 KG</span>
+                      <span className="text-sm text-gray-600">OMR 0.85/KG</span>
+                      <span className="text-base font-bold text-gray-900 tabular-nums">OMR 3,570</span>
                     </div>
                   </div>
 
                   {/* Brass Fittings */}
-                  <div className="material-item-modern">
-                    <div className="material-header">
+                  <div className="flex flex-col gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="material-name">Brass Fittings</h4>
-                        <p className="material-grade">Clean</p>
+                        <h4 className="text-base font-semibold text-gray-900 mb-1">Brass Fittings</h4>
+                        <p className="text-sm text-gray-600">Clean</p>
                       </div>
-                      <span className="material-status high-value">High Value</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700">High Value</span>
                     </div>
-                    <div className="material-details">
-                      <span className="material-weight">890 KG</span>
-                      <span className="material-rate">OMR 2.80/KG</span>
-                      <span className="material-value">OMR 2,492</span>
+                    <div className="flex justify-between items-center gap-3 max-md:flex-col max-md:items-start">
+                      <span className="text-sm font-semibold text-gray-700">890 KG</span>
+                      <span className="text-sm text-gray-600">OMR 2.80/KG</span>
+                      <span className="text-base font-bold text-gray-900 tabular-nums">OMR 2,492</span>
                     </div>
                   </div>
                 </div>
@@ -368,47 +366,47 @@ const ScrapMaterialsDashboard = () => {
                 <CardDescription>Latest material activities</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="transactions-list-modern">
+                <div className="flex flex-col gap-4">
                   {/* Purchase Transaction */}
-                  <div className="transaction-item-modern">
-                    <div className="transaction-header">
-                      <h4 className="transaction-title">Material Purchase</h4>
-                      <span className="transaction-type purchase">Purchase</span>
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-base font-semibold text-gray-900">Material Purchase</h4>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-amber-100 text-amber-700">Purchase</span>
                     </div>
-                    <p className="transaction-party">Al Noor Scrap Collectors</p>
-                    <div className="transaction-footer">
-                      <span className="transaction-material">Copper Wire - 150 KG</span>
-                      <span className="transaction-amount purchase">-OMR 480</span>
+                    <p className="text-sm font-medium text-gray-700 mb-3">Al Noor Scrap Collectors</p>
+                    <div className="flex justify-between items-center mb-2 max-sm:flex-col max-sm:items-start">
+                      <span className="text-sm text-gray-600">Copper Wire - 150 KG</span>
+                      <span className="text-base font-bold text-red-600 tabular-nums">-OMR 480</span>
                     </div>
-                    <p className="transaction-time">1 hour ago</p>
+                    <p className="text-xs text-gray-500">1 hour ago</p>
                   </div>
 
                   {/* Sale Transaction */}
-                  <div className="transaction-item-modern">
-                    <div className="transaction-header">
-                      <h4 className="transaction-title">Material Sale</h4>
-                      <span className="transaction-type sale">Sale</span>
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-base font-semibold text-gray-900">Material Sale</h4>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700">Sale</span>
                     </div>
-                    <p className="transaction-party">Emirates Recycling</p>
-                    <div className="transaction-footer">
-                      <span className="transaction-material">Aluminum Cans - 200 KG</span>
-                      <span className="transaction-amount sale">+OMR 300</span>
+                    <p className="text-sm font-medium text-gray-700 mb-3">Emirates Recycling</p>
+                    <div className="flex justify-between items-center mb-2 max-sm:flex-col max-sm:items-start">
+                      <span className="text-sm text-gray-600">Aluminum Cans - 200 KG</span>
+                      <span className="text-base font-bold text-emerald-600 tabular-nums">+OMR 300</span>
                     </div>
-                    <p className="transaction-time">3 hours ago</p>
+                    <p className="text-xs text-gray-500">3 hours ago</p>
                   </div>
 
                   {/* Processing Transaction */}
-                  <div className="transaction-item-modern">
-                    <div className="transaction-header">
-                      <h4 className="transaction-title">Material Processing</h4>
-                      <span className="transaction-type processing">Processing</span>
+                  <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-base font-semibold text-gray-900">Material Processing</h4>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-blue-100 text-blue-700">Processing</span>
                     </div>
-                    <p className="transaction-party">Sorting & Cleaning</p>
-                    <div className="transaction-footer">
-                      <span className="transaction-material">Steel Scrap - 500 KG</span>
-                      <span className="transaction-status">In Progress</span>
+                    <p className="text-sm font-medium text-gray-700 mb-3">Sorting & Cleaning</p>
+                    <div className="flex justify-between items-center mb-2 max-sm:flex-col max-sm:items-start">
+                      <span className="text-sm text-gray-600">Steel Scrap - 500 KG</span>
+                      <span className="text-sm font-semibold text-blue-600">In Progress</span>
                     </div>
-                    <p className="transaction-time">5 hours ago</p>
+                    <p className="text-xs text-gray-500">5 hours ago</p>
                   </div>
                 </div>
               </CardContent>
@@ -427,16 +425,16 @@ const ScrapMaterialsDashboard = () => {
                 <CardDescription>Real-time material pricing</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="price-list-modern">
+                <div className="flex flex-col gap-4">
                   {/* Copper */}
-                  <div className="price-item-modern">
-                    <div className="price-info">
-                      <h4 className="price-name">Copper</h4>
-                      <p className="price-unit">per kilogram</p>
+                  <div className="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md">
+                    <div className="flex-1">
+                      <h4 className="text-base font-semibold text-gray-900 mb-1">Copper</h4>
+                      <p className="text-xs text-gray-600">per kilogram</p>
                     </div>
-                    <div className="price-value">
-                      <span className="current-price">OMR 3.25</span>
-                      <span className="price-change positive">
+                    <div className="flex flex-col items-end gap-1 max-sm:flex-col max-sm:items-start">
+                      <span className="text-xl font-bold text-gray-900 tabular-nums max-md:text-lg">OMR 3.25</span>
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-700">
                         <TrendingUp size={14} />
                         +5.2%
                       </span>
@@ -444,26 +442,26 @@ const ScrapMaterialsDashboard = () => {
                   </div>
 
                   {/* Aluminum */}
-                  <div className="price-item-modern">
-                    <div className="price-info">
-                      <h4 className="price-name">Aluminum</h4>
-                      <p className="price-unit">per kilogram</p>
+                  <div className="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md">
+                    <div className="flex-1">
+                      <h4 className="text-base font-semibold text-gray-900 mb-1">Aluminum</h4>
+                      <p className="text-xs text-gray-600">per kilogram</p>
                     </div>
-                    <div className="price-value">
-                      <span className="current-price">OMR 1.48</span>
-                      <span className="price-change neutral">±0.1%</span>
+                    <div className="flex flex-col items-end gap-1 max-sm:flex-col max-sm:items-start">
+                      <span className="text-xl font-bold text-gray-900 tabular-nums max-md:text-lg">OMR 1.48</span>
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700">±0.1%</span>
                     </div>
                   </div>
 
                   {/* Steel */}
-                  <div className="price-item-modern">
-                    <div className="price-info">
-                      <h4 className="price-name">Steel</h4>
-                      <p className="price-unit">per kilogram</p>
+                  <div className="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md">
+                    <div className="flex-1">
+                      <h4 className="text-base font-semibold text-gray-900 mb-1">Steel</h4>
+                      <p className="text-xs text-gray-600">per kilogram</p>
                     </div>
-                    <div className="price-value">
-                      <span className="current-price">OMR 0.82</span>
-                      <span className="price-change negative">
+                    <div className="flex flex-col items-end gap-1 max-sm:flex-col max-sm:items-start">
+                      <span className="text-xl font-bold text-gray-900 tabular-nums max-md:text-lg">OMR 0.82</span>
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-700">
                         <TrendingUp size={14} className="rotate-180" />
                         -2.8%
                       </span>
@@ -471,14 +469,14 @@ const ScrapMaterialsDashboard = () => {
                   </div>
 
                   {/* Brass */}
-                  <div className="price-item-modern">
-                    <div className="price-info">
-                      <h4 className="price-name">Brass</h4>
-                      <p className="price-unit">per kilogram</p>
+                  <div className="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50 transition-all hover:bg-white hover:shadow-md">
+                    <div className="flex-1">
+                      <h4 className="text-base font-semibold text-gray-900 mb-1">Brass</h4>
+                      <p className="text-xs text-gray-600">per kilogram</p>
                     </div>
-                    <div className="price-value">
-                      <span className="current-price">OMR 2.85</span>
-                      <span className="price-change positive">
+                    <div className="flex flex-col items-end gap-1 max-sm:flex-col max-sm:items-start">
+                      <span className="text-xl font-bold text-gray-900 tabular-nums max-md:text-lg">OMR 2.85</span>
+                      <span className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-700">
                         <TrendingUp size={14} />
                         +3.1%
                       </span>

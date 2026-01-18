@@ -29,10 +29,9 @@ import {
   Eye,
   Edit,
   Trash2,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react'
-import '../styles/Wastage.css'
-
 // Wastage type colors for consistent styling across components
 export const WASTAGE_TYPE_COLORS = {
   spillage: '#ef4444',        // red
@@ -46,6 +45,23 @@ export const WASTAGE_TYPE_COLORS = {
   transport_loss: '#d946ef',  // fuchsia
   handling_damage: '#f43f5e', // rose
   other: '#6b7280'            // gray
+}
+
+// Helper to get badge style for wastage type (replaces CSS classes)
+const getWastageTypeBadgeStyle = (type) => {
+  const color = WASTAGE_TYPE_COLORS[type] || WASTAGE_TYPE_COLORS.other
+  return {
+    display: 'inline-block',
+    padding: '4px 10px',
+    borderRadius: '9999px',
+    fontSize: '11px',
+    fontWeight: 500,
+    textTransform: 'uppercase',
+    letterSpacing: '0.025em',
+    border: `1px solid ${color}`,
+    backgroundColor: `${color}20`,
+    color: color
+  }
 }
 
 const Wastage = () => {
@@ -118,6 +134,7 @@ const Wastage = () => {
   const [editingWastage, setEditingWastage] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
   const [pendingFilterActive, setPendingFilterActive] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Combine errors from different sources
   const error = loadError || deleteError || approvalError
@@ -222,6 +239,12 @@ const Wastage = () => {
   // ═══════════════════════════════════════════════════════════════════════════
   // HANDLERS: User interactions
   // ═══════════════════════════════════════════════════════════════════════════
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refreshData()
+    setIsRefreshing(false)
+  }, [refreshData])
+
   const handleAddWastage = () => {
     setEditingWastage(null)
     setShowWastageForm(true)
@@ -363,7 +386,7 @@ const Wastage = () => {
             sortable: true,
             filterable: true,
             render: (value, row) => (
-              <span className={`waste-type-badge ${value || 'other'}`}>
+              <span style={getWastageTypeBadgeStyle(value || 'other')}>
                 {row.wasteTypeInfo?.name || value}
               </span>
             )
@@ -436,7 +459,15 @@ const Wastage = () => {
         title={t('wastageManagement', 'Wastage Management')}
         subtitle={t('trackWastageAndLosses', 'Track material wastage and losses')}
         headerActions={
-          <>
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title={t('refresh', 'Refresh')}
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
             <button
               className="btn btn-outline"
               onClick={() => setShowAnalytics(true)}
@@ -453,7 +484,7 @@ const Wastage = () => {
                 {t('reportWastage', 'Report Wastage')}
               </button>
             )}
-          </>
+          </div>
         }
         loading={isLoading}
         searchable={true}

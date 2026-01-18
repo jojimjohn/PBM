@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, FileText, Image, AlertCircle, Download, Eye } from 'lucide-react';
 import { useSystemSettings } from '../context/SystemSettingsContext';
-import './DocumentUpload.css';
+// CSS moved to global index.css Tailwind
 
 const DocumentUpload = ({
   attachments = [],

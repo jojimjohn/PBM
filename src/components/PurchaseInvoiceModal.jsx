@@ -6,7 +6,7 @@ import purchaseInvoiceService from '../services/purchaseInvoiceService';
 import purchaseOrderService from '../services/purchaseOrderService';
 import uploadService from '../services/uploadService';
 import { FileText, Banknote, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import './PurchaseInvoiceModal.css';
+// CSS moved to global index.css Tailwind
 
 const PurchaseInvoiceModal = ({
   isOpen,

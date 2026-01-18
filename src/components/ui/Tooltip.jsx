@@ -1,6 +1,6 @@
 import React from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import './Tooltip.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Tooltip Provider Component

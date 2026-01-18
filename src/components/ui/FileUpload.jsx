@@ -3,10 +3,9 @@ import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, X, FileText, Image as ImageIcon, Loader, AlertCircle, Check, File } from 'lucide-react'
 import { API_BASE_URL } from '../../config/api.js'
-import './FileUpload.css'
 
 /**
- * FileUpload Component (Modernized)
+ * FileUpload Component (Modernized with Tailwind CSS)
  *
  * Drag & drop file uploader with preview, progress, and form integration
  *
@@ -56,7 +55,6 @@ const FileUpload = forwardRef(({
   ...props
 }, ref) => {
   const [uploadProgress, setUploadProgress] = useState({})
-  const [uploadErrors, setUploadErrors] = useState({})
   const [internalError, setInternalError] = useState(null)
 
   // Determine which API pattern is being used
@@ -186,52 +184,64 @@ const FileUpload = forwardRef(({
 
   // Get file icon
   const getFileIcon = (fileType) => {
-    if (fileType?.startsWith('image/')) return <ImageIcon size={20} />
-    if (fileType?.includes('pdf')) return <FileText size={20} />
-    return <File size={20} />
+    if (fileType?.startsWith('image/')) return <ImageIcon size={18} className="text-blue-500" />
+    if (fileType?.includes('pdf')) return <FileText size={18} className="text-red-500" />
+    return <File size={18} className="text-slate-500" />
+  }
+
+  // Dropzone styling based on state
+  const getDropzoneClasses = () => {
+    let base = 'relative flex flex-col items-center justify-center p-6 border-2 border-dashed transition-all cursor-pointer'
+
+    if (disabled) {
+      return `${base} border-slate-200 bg-slate-50 cursor-not-allowed opacity-60`
+    }
+    if (isDragReject || hasError) {
+      return `${base} border-red-400 bg-red-50`
+    }
+    if (isDragAccept) {
+      return `${base} border-emerald-400 bg-emerald-50`
+    }
+    if (isDragActive) {
+      return `${base} border-blue-400 bg-blue-50`
+    }
+    return `${base} border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/50`
   }
 
   return (
-    <div ref={ref} className={`file-upload-wrapper ${className}`} {...props}>
+    <div ref={ref} className={`space-y-3 ${className}`} {...props}>
       {label && (
-        <label className="file-upload-label">
+        <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
           {label}
-          {required && <span className="required-indicator">*</span>}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
 
       {/* Drop Zone */}
       {!disabled && (
-        <div
-          {...getRootProps()}
-          className={`
-            file-upload-dropzone
-            ${isDragActive ? 'dropzone-active' : ''}
-            ${isDragAccept ? 'dropzone-accept' : ''}
-            ${isDragReject ? 'dropzone-reject' : ''}
-            ${hasError ? 'dropzone-error' : ''}
-          `}
-        >
+        <div {...getRootProps()} className={getDropzoneClasses()}>
           <input {...getInputProps()} />
 
-          <div className="dropzone-content">
-            <motion.div
-              className="dropzone-icon"
-              animate={{ y: isDragActive ? -5 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Upload size={48} />
-            </motion.div>
+          <motion.div
+            animate={{ y: isDragActive ? -3 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-center"
+          >
+            <div className={`w-12 h-12 flex items-center justify-center mb-3 ${
+              isDragActive ? 'text-blue-500' : 'text-slate-400'
+            }`}>
+              <Upload size={32} />
+            </div>
 
-            <p className="dropzone-text">
+            <p className="text-sm font-medium text-slate-700 mb-1">
               {uploadText || (isDragActive ? 'Drop files here...' : 'Drag & drop files here, or click to browse')}
             </p>
 
-            <p className="dropzone-hint">
-              Accepted: {accept} • Max size: {formatFileSize(maxSize)}
-              {effectiveMode === 'multiple' && ` • Max files: ${maxFiles}`}
+            <p className="text-xs text-slate-400">
+              {accept} • Max: {formatFileSize(maxSize)}
+              {effectiveMode === 'multiple' && ` • Up to ${maxFiles} files`}
             </p>
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -239,7 +249,7 @@ const FileUpload = forwardRef(({
       <AnimatePresence>
         {files.length > 0 && (
           <motion.div
-            className="file-upload-list"
+            className="space-y-2"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -258,37 +268,37 @@ const FileUpload = forwardRef(({
               return (
                 <motion.div
                   key={fileId}
-                  className={`file-item ${isUploading ? 'file-item-uploading' : ''}`}
+                  className={`flex items-center gap-3 p-3 bg-white border transition-all ${
+                    isUploading ? 'border-blue-300 bg-blue-50/50' : 'border-slate-200'
+                  }`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.2, delay: index * 0.05 }}
                 >
                   {/* File Preview/Icon */}
-                  <div className="file-preview">
+                  <div className="w-10 h-10 flex items-center justify-center bg-slate-100 shrink-0">
                     {showPreview && preview ? (
-                      <img src={preview} alt={fileName} className="file-preview-image" />
+                      <img src={preview} alt={fileName} className="w-full h-full object-cover" />
                     ) : isUploading ? (
-                      <div className="file-icon file-icon-uploading">
-                        <Loader size={20} className="spin" />
-                      </div>
+                      <Loader size={18} className="text-blue-500 animate-spin" />
                     ) : (
-                      <div className="file-icon">{getFileIcon(fileType)}</div>
+                      getFileIcon(fileType)
                     )}
                   </div>
 
                   {/* File Info */}
-                  <div className="file-info">
-                    <p className="file-name">{fileName}</p>
-                    <p className="file-size">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-700 truncate">{fileName}</p>
+                    <p className="text-xs text-slate-400">
                       {formatFileSize(fileSize)}
                       {isUploading && ` • ${progress}%`}
                     </p>
                     {/* Progress Bar */}
                     {isUploading && (
-                      <div className="file-progress-bar">
+                      <div className="h-1 w-full bg-slate-200 mt-1.5">
                         <div
-                          className="file-progress-fill"
+                          className="h-full bg-blue-500 transition-all"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -296,33 +306,32 @@ const FileUpload = forwardRef(({
                   </div>
 
                   {/* Actions */}
-                  <div className="file-actions">
+                  <div className="flex items-center gap-2 shrink-0">
                     {isLegacyFile && (
                       <a
                         href={`${API_BASE_URL}/uploads/${fileData.path}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="file-view-btn"
-                        title="View file"
+                        className="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                       >
                         View
                       </a>
                     )}
 
                     {fileData.uploaded && (
-                      <div className="file-status-success">
-                        <Check size={18} />
+                      <div className="w-6 h-6 flex items-center justify-center text-emerald-500">
+                        <Check size={16} />
                       </div>
                     )}
 
                     {!disabled && !isUploading && (
                       <button
                         type="button"
-                        className="file-remove-btn"
+                        className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                         onClick={() => handleRemoveFile(index)}
                         title="Remove file"
                       >
-                        <X size={18} />
+                        <X size={16} />
                       </button>
                     )}
                   </div>
@@ -337,25 +346,25 @@ const FileUpload = forwardRef(({
       <AnimatePresence>
         {(error || internalError) && (
           <motion.div
-            className="file-upload-error"
+            className="flex items-start gap-2 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs"
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: 0.15 }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={14} className="mt-0.5 shrink-0" />
             <span>{error || internalError}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {helperText && !error && !internalError && (
-        <p className="file-upload-helper-text">{helperText}</p>
+        <p className="text-xs text-slate-400">{helperText}</p>
       )}
 
       {/* Empty State */}
       {files.length === 0 && !hasError && (
-        <p className="file-upload-empty-state">No files attached</p>
+        <p className="text-xs text-slate-400 text-center py-2">No files attached</p>
       )}
     </div>
   )

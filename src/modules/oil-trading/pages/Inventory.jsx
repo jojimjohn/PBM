@@ -50,10 +50,7 @@ import {
 import inventoryService from '../../../services/inventoryService'
 
 // Icons
-import { Package, Plus, TrendingUp, Droplets, Clock, Banknote, BarChart3 } from 'lucide-react'
-
-// Styles
-import '../styles/Inventory.css'
+import { Package, Plus, TrendingUp, Droplets, Clock, Banknote, BarChart3, RefreshCw } from 'lucide-react'
 
 const Inventory = () => {
   const { selectedCompany } = useAuth()
@@ -74,6 +71,9 @@ const Inventory = () => {
   const [adjustmentMaterialId, setAdjustmentMaterialId] = useState('')
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [message, setMessage] = useState(null)
+
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Stock history modal state
   const [showStockHistory, setShowStockHistory] = useState(false)
@@ -165,6 +165,13 @@ const Inventory = () => {
   // =============================================
   // HANDLERS
   // =============================================
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refreshInventory()
+    setIsRefreshing(false)
+    showMessage('success', 'Data refreshed')
+  }, [refreshInventory])
 
   const formatCurrency = (amount) => {
     const numAmount = parseFloat(amount) || 0
@@ -302,7 +309,16 @@ const Inventory = () => {
   // HEADER ACTIONS
   // =============================================
   const stockOverviewHeaderActions = (
-    <div className="inventory-toolbar">
+    <div className="flex items-center gap-3 flex-wrap">
+      <button
+        className="btn btn-outline"
+        onClick={handleRefresh}
+        disabled={isRefreshing}
+        title={t('refresh', 'Refresh')}
+      >
+        <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+      </button>
+
       <AlertDropdown
         alerts={alerts}
         criticalAlerts={criticalAlerts}
@@ -312,13 +328,13 @@ const Inventory = () => {
         onCreatePurchaseOrder={handleCreatePurchaseOrder}
       />
 
-      <div className="quick-stats">
-        <div className="quick-stat">
-          <Package size={14} />
+      <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <Package size={14} className="text-blue-500" />
           <span>{totalMaterials} Materials</span>
         </div>
-        <div className="quick-stat">
-          <Banknote size={14} />
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <Banknote size={14} className="text-emerald-500" />
           <span>{formatCurrency(totalInventoryValue)}</span>
         </div>
       </div>
@@ -348,10 +364,15 @@ const Inventory = () => {
   // RENDER
   // =============================================
   return (
-    <div className="oil-inventory-page">
+    <div className="page-container">
       {/* Message Display */}
       {message && (
-        <div className={`message ${message.type}`}>
+        <div className={`px-4 py-3 rounded-lg text-sm font-medium mb-4 ${
+          message.type === 'success' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+          message.type === 'error' ? 'bg-red-100 text-red-700 border border-red-200' :
+          message.type === 'warning' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+          'bg-blue-100 text-blue-700 border border-blue-200'
+        }`}>
           {message.text}
         </div>
       )}
@@ -390,7 +411,7 @@ const Inventory = () => {
 
       {/* Charts Section */}
       {showCharts && activeTab === 'stock' && (
-        <div className="charts-section">
+        <div className="mb-6">
           <InventoryCharts materials={materials} />
         </div>
       )}
@@ -425,10 +446,10 @@ const Inventory = () => {
 
       {/* Transactions Timeline Tab */}
       {activeTab === 'movements' && (
-        <div className="movements-timeline-view data-table-container">
-          <div className="data-table-header">
-            <h2 className="data-table-title">{t('transactions', 'Transactions')}</h2>
-            <p className="data-table-subtitle">{t('transactionsSubtitle', 'View and filter all inventory transactions')}</p>
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-800 m-0">{t('transactions', 'Transactions')}</h2>
+            <p className="text-sm text-slate-500 mt-1 m-0">{t('transactionsSubtitle', 'View and filter all inventory transactions')}</p>
           </div>
           <TimelineView />
         </div>

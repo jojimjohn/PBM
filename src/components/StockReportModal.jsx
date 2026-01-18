@@ -12,7 +12,6 @@ import {
   Calendar,
   X
 } from 'lucide-react'
-import './StockReportModal.css'
 
 /**
  * Stock Report Modal
@@ -115,7 +114,7 @@ const StockReportModal = ({
             .report-table th { background: #f3f4f6; padding: 12px 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #6b7280; border-bottom: 2px solid #e5e7eb; }
             .report-table td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
             .report-table tr:nth-child(even) { background: #f9fafb; }
-            .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+            .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; text-transform: uppercase; }
             .status-good { background: #d1fae5; color: #047857; }
             .status-low { background: #fef3c7; color: #92400e; }
             .status-critical { background: #fee2e2; color: #b91c1c; }
@@ -180,118 +179,140 @@ const StockReportModal = ({
     }
   }
 
+  const getStatusClasses = (status) => {
+    switch (status) {
+      case 'good': return 'bg-emerald-100 text-emerald-700'
+      case 'low': return 'bg-amber-100 text-amber-700'
+      case 'critical': return 'bg-red-100 text-red-700'
+      case 'out-of-stock': return 'bg-slate-100 text-slate-500'
+      default: return 'bg-slate-100 text-slate-600'
+    }
+  }
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={
-        <div className="stock-report-modal-title">
-          <Package size={24} />
-          <span>{t('stockValuationReport', 'Stock Valuation Report')}</span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 flex items-center justify-center bg-blue-100 text-blue-600 rounded-lg">
+            <Package size={22} />
+          </div>
+          <span className="text-xl font-bold text-slate-800">{t('stockValuationReport', 'Stock Valuation Report')}</span>
         </div>
       }
       size="xl"
-      className="stock-report-modal"
     >
-      <div className="stock-report-content">
+      <div className="space-y-6">
         {/* Action Buttons */}
-        <div className="report-actions">
-          <button className="btn btn-outline" onClick={handlePrint}>
+        <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
+            onClick={handlePrint}
+          >
             <Printer size={16} />
             {t('print', 'Print')}
           </button>
-          <button className="btn btn-outline" onClick={handleExport}>
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
+            onClick={handleExport}
+          >
             <Download size={16} />
-            {t('exportCSV', 'Export CSV')}
+            {t('exportCSV', 'Export to CSV')}
           </button>
         </div>
 
         {/* Printable Report Content */}
-        <div ref={reportRef} className="report-printable">
+        <div ref={reportRef}>
           {/* Report Header */}
-          <div className="report-header">
-            <div className="company-name">
-              <Building2 size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />
+          <div className="report-header text-center pb-4 mb-6 border-b-2 border-slate-200">
+            <div className="company-name flex items-center justify-center gap-2 text-xl font-bold text-slate-800 mb-1">
+              <Building2 size={20} className="text-slate-600" />
               {selectedCompany?.name || 'Company'}
             </div>
-            <div className="report-title">{t('stockValuationReport', 'Stock Valuation Report')}</div>
-            <div className="report-date">
-              <Calendar size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+            <div className="report-title text-base text-slate-500 mb-2">{t('stockValuationReport', 'Stock Valuation Report')}</div>
+            <div className="report-date flex items-center justify-center gap-1 text-sm text-slate-400">
+              <Calendar size={14} />
               Generated: {formatDate(today)}
             </div>
           </div>
 
           {/* Summary Statistics */}
-          <div className="summary-grid">
-            <div className="summary-card">
-              <div className="summary-value">{stats.totalMaterials}</div>
-              <div className="summary-label">{t('totalMaterials', 'Total Materials')}</div>
+          <div className="summary-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="summary-card bg-slate-50 border border-slate-200 rounded-lg p-4 text-center">
+              <div className="summary-value text-2xl font-bold text-slate-800">{stats.totalMaterials}</div>
+              <div className="summary-label text-xs font-medium text-blue-600 uppercase tracking-wide mt-1">{t('totalMaterials', 'Total Materials')}</div>
             </div>
-            <div className="summary-card">
-              <div className="summary-value">{formatCurrency(stats.totalValue)}</div>
-              <div className="summary-label">{t('totalInventoryValue', 'Total Value')}</div>
+            <div className="summary-card bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
+              <div className="summary-value text-2xl font-bold text-slate-800">{formatCurrency(stats.totalValue)}</div>
+              <div className="summary-label text-xs font-medium text-emerald-600 uppercase tracking-wide mt-1">{t('totalInventoryValue', 'Total Inventory Value')}</div>
             </div>
-            <div className={`summary-card ${stats.lowStockCount > 0 ? 'warning' : ''}`}>
-              <div className="summary-value">{stats.lowStockCount}</div>
-              <div className="summary-label">{t('lowStockItems', 'Low Stock Items')}</div>
+            <div className={`summary-card rounded-lg p-4 text-center ${stats.lowStockCount > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}`}>
+              <div className={`summary-value text-2xl font-bold ${stats.lowStockCount > 0 ? 'text-amber-600' : 'text-slate-800'}`}>{stats.lowStockCount}</div>
+              <div className={`summary-label text-xs font-medium uppercase tracking-wide mt-1 ${stats.lowStockCount > 0 ? 'text-amber-600' : 'text-slate-500'}`}>{t('lowStockItems', 'Low Stock Items')}</div>
             </div>
-            <div className={`summary-card ${stats.outOfStockCount > 0 ? 'danger' : ''}`}>
-              <div className="summary-value">{stats.outOfStockCount}</div>
-              <div className="summary-label">{t('outOfStock', 'Out of Stock')}</div>
+            <div className={`summary-card rounded-lg p-4 text-center ${stats.outOfStockCount > 0 ? 'bg-red-50 border border-red-200' : 'bg-slate-50 border border-slate-200'}`}>
+              <div className={`summary-value text-2xl font-bold ${stats.outOfStockCount > 0 ? 'text-red-600' : 'text-slate-800'}`}>{stats.outOfStockCount}</div>
+              <div className={`summary-label text-xs font-medium uppercase tracking-wide mt-1 ${stats.outOfStockCount > 0 ? 'text-red-600' : 'text-slate-500'}`}>{t('outOfStock', 'Out of Stock')}</div>
             </div>
           </div>
 
           {/* Detailed Table */}
-          <table className="report-table">
-            <thead>
-              <tr>
-                <th>{t('code', 'Code')}</th>
-                <th>{t('material', 'Material')}</th>
-                <th>{t('category', 'Category')}</th>
-                <th className="text-right">{t('currentStock', 'Current Stock')}</th>
-                <th className="text-right">{t('reorderLevel', 'Reorder Level')}</th>
-                <th className="text-right">{t('unitCost', 'Unit Cost')}</th>
-                <th className="text-right">{t('totalValue', 'Total Value')}</th>
-                <th>{t('status', 'Status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reportData.map(item => (
-                <tr key={item.id}>
-                  <td><strong>{item.code}</strong></td>
-                  <td>{item.name}</td>
-                  <td>{item.category}</td>
-                  <td className="text-right">{item.currentStock} {item.unit}</td>
-                  <td className="text-right">{item.reorderLevel} {item.unit}</td>
-                  <td className="text-right">{formatCurrency(item.unitCost)}</td>
-                  <td className="text-right"><strong>{formatCurrency(item.totalValue)}</strong></td>
-                  <td>
-                    <span className={`status-badge status-${item.status}`}>
-                      {getStatusLabel(item.status)}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="report-table w-full text-sm">
+              <thead>
+                <tr className="bg-slate-100 border-b-2 border-slate-200">
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('code', 'Code')}</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('material', 'Material')}</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('category', 'Category')}</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('currentStock', 'Current Stock')}</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('reorderLevel', 'Reorder Level')}</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('unitCost', 'Unit Cost')}</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('totalValue', 'Total Value')}</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">{t('status', 'Status')}</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr style={{ backgroundColor: '#f3f4f6', fontWeight: 600 }}>
-                <td colSpan="6" className="text-right">{t('grandTotal', 'Grand Total')}:</td>
-                <td className="text-right"><strong>{formatCurrency(stats.totalValue)}</strong></td>
-                <td></td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                {reportData.map((item, index) => (
+                  <tr key={item.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+                    <td className="px-3 py-2.5 font-mono text-sm font-medium text-slate-800">{item.code}</td>
+                    <td className="px-3 py-2.5 text-slate-700">{item.name}</td>
+                    <td className="px-3 py-2.5 text-slate-500">{item.category}</td>
+                    <td className="px-3 py-2.5 text-right text-slate-700 tabular-nums">{item.currentStock} {item.unit}</td>
+                    <td className="px-3 py-2.5 text-right text-slate-500 tabular-nums">{item.reorderLevel} {item.unit}</td>
+                    <td className="px-3 py-2.5 text-right text-slate-700 tabular-nums">{formatCurrency(item.unitCost)}</td>
+                    <td className="px-3 py-2.5 text-right font-semibold text-slate-800 tabular-nums">{formatCurrency(item.totalValue)}</td>
+                    <td className="px-3 py-2.5">
+                      <span className={`status-badge inline-block px-2 py-0.5 text-xs font-medium rounded-full uppercase tracking-wide ${getStatusClasses(item.status)}`}>
+                        {getStatusLabel(item.status)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-100 border-t-2 border-slate-200">
+                  <td colSpan="6" className="px-3 py-3 text-right text-sm font-semibold text-slate-700">{t('grandTotal', 'Grand Total')}:</td>
+                  <td className="px-3 py-3 text-right text-base font-bold text-slate-800 tabular-nums">{formatCurrency(stats.totalValue)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
 
           {/* Report Footer */}
-          <div className="report-footer">
+          <div className="report-footer flex items-center justify-between mt-6 pt-4 border-t border-slate-200 text-xs text-slate-400">
             <span>Generated by: {user?.name || user?.username || 'System'}</span>
             <span>{selectedCompany?.name} - Petroleum Business Management System</span>
           </div>
         </div>
 
         {/* Modal Actions */}
-        <div className="report-modal-actions">
-          <button className="btn btn-secondary" onClick={onClose}>
+        <div className="flex justify-start pt-4 border-t border-slate-200">
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-md hover:bg-slate-800 transition-colors"
+            onClick={onClose}
+          >
             <X size={16} />
             {t('close', 'Close')}
           </button>

@@ -4,7 +4,7 @@ import {
   Bell, X, Check, AlertTriangle, Info, CheckCircle,
   Clock, Trash2, Settings as SettingsIcon, MoreVertical
 } from 'lucide-react'
-import './NotificationPanel.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * NotificationPanel Component
@@ -88,16 +88,18 @@ const NotificationPanel = ({
 
   return (
     <div className="notification-panel-container">
-      {/* Notification Button */}
+      {/* Notification Button - Premium action button style */}
       <button
         ref={buttonRef}
-        className="notification-button"
+        className="action-btn relative"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Notifications"
       >
-        <Bell size={20} />
+        <Bell size={20} className="text-slate-500" />
         {unreadCount > 0 && (
-          <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
         )}
       </button>
 

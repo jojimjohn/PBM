@@ -13,7 +13,7 @@ import {
   FolderKanban,
 } from 'lucide-react';
 import { fadeUpVariants } from '../../config/animations';
-import './EmptyState.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Empty State Component

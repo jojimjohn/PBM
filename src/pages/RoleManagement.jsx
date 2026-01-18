@@ -37,7 +37,7 @@ import {
   ToggleLeft,
   ToggleRight
 } from 'lucide-react'
-import './RoleManagement.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const RoleManagement = ({ embedded = false }) => {
   const { user } = useAuth()

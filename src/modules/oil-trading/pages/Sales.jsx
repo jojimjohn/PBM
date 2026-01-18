@@ -27,8 +27,7 @@ import { useSalesOrders } from '../hooks'
 import salesOrderService from '../../../services/salesOrderService'
 import { getSalesOrderColumns, STATUS_LABELS } from './salesOrdersTableConfig'
 import { getInvoiceColumns, filterOrdersWithInvoices } from './invoicesTableConfig'
-import { Plus, ClipboardList, Receipt, AlertTriangle } from 'lucide-react'
-import '../styles/Sales.css'
+import { Plus, ClipboardList, Receipt, AlertTriangle, RefreshCw } from 'lucide-react'
 
 /**
  * Sales Page Component
@@ -61,6 +60,7 @@ const Sales = () => {
 
   // UI state
   const [activeTab, setActiveTab] = useState('orders')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Modal state
   const [showOrderForm, setShowOrderForm] = useState(false)
@@ -88,6 +88,13 @@ const Sales = () => {
   }, [])
 
   // Event handlers
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await loadSalesData()
+    setIsRefreshing(false)
+    showToast.success(t('dataRefreshed', 'Data refreshed'))
+  }, [loadSalesData, t])
+
   const handleCreateOrder = useCallback((customer = null) => {
     setSelectedCustomer(customer)
     setEditingOrder(null)
@@ -305,7 +312,7 @@ const Sales = () => {
   })
 
   return (
-    <div className="sales-page">
+    <div className="p-0">
       {/* Error Banner */}
       {error && (
         <div className="error-banner">
@@ -345,14 +352,24 @@ const Sales = () => {
           title={t('salesOrders', 'Sales Orders')}
           subtitle={`${t('salesOrdersSubtitle', 'Manage and track all sales orders')} - ${salesOrders.length} ${t('orders', 'orders')}`}
           headerActions={
-            <button
-              className="btn btn-primary"
-              onClick={() => handleCreateOrder()}
-              data-tour="new-sales-order-button"
-            >
-              <Plus size={16} />
-              {t('newSaleOrder', 'New Sale Order')}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn btn-outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title={t('refresh', 'Refresh')}
+              >
+                <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleCreateOrder()}
+                data-tour="new-sales-order-button"
+              >
+                <Plus size={16} />
+                {t('newSaleOrder', 'New Sale Order')}
+              </button>
+            </div>
           }
           loading={loading}
           searchable
@@ -375,6 +392,16 @@ const Sales = () => {
           columns={invoiceColumns}
           title={t('invoices', 'Invoices')}
           subtitle={t('invoicesSubtitle', 'Generated sales invoices')}
+          headerActions={
+            <button
+              className="btn btn-outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title={t('refresh', 'Refresh')}
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+          }
           loading={loading}
           searchable
           filterable

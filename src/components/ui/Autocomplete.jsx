@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Check, ChevronDown, Loader } from 'lucide-react'
-import './Autocomplete.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * Autocomplete Component

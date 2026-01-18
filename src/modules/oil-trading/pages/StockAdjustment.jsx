@@ -17,8 +17,7 @@ import {
   Check,
   FileText
 } from 'lucide-react'
-import '../../../styles/theme.css'
-import './StockAdjustment.css'
+// theme.css is loaded via index.css
 
 /**
  * Stock Adjustment Page
@@ -193,18 +192,18 @@ const StockAdjustment = () => {
 
   if (loading) {
     return (
-      <div className="stock-adjustment-page">
+      <div className="p-6 max-w-[800px] mx-auto">
         <LoadingSpinner />
       </div>
     )
   }
 
   return (
-    <div className="stock-adjustment-page">
+    <div className="p-6 max-w-[800px] mx-auto">
       {/* Header */}
       <div className="page-header">
         <div className="header-left">
-          <button className="btn btn-ghost" onClick={() => navigate('/inventory')}>
+          <button className="bg-transparent border-none text-gray-600 p-2 rounded-md cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all" onClick={() => navigate('/inventory')}>
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -219,7 +218,11 @@ const StockAdjustment = () => {
 
       {/* Message Display */}
       {message && (
-        <div className={`message ${message.type}`}>
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-md mb-6 text-sm ${
+          message.type === 'success'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-red-50 text-red-700 border border-red-200'
+        }`}>
           {message.type === 'success' && <Check size={16} />}
           {message.type === 'error' && <AlertTriangle size={16} />}
           {message.text}
@@ -227,11 +230,11 @@ const StockAdjustment = () => {
       )}
 
       {/* Main Form */}
-      <div className="adjustment-form-container">
-        <form onSubmit={handleSubmit} className="adjustment-form">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <form onSubmit={handleSubmit} className="p-6">
           {/* Material Selection */}
           <div className="form-section">
-            <h3 className="section-title">{t('selectMaterial', 'Select Material')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">{t('selectMaterial', 'Select Material')}</h3>
             <div className="form-group">
               <label htmlFor="material">{t('material', 'Material')} *</label>
               <select
@@ -251,10 +254,10 @@ const StockAdjustment = () => {
 
             {/* Current Stock Display */}
             {selectedMaterialId && (
-              <div className="current-stock-card">
-                <div className="stock-info">
-                  <span className="stock-label">{t('currentStock', 'Current Stock')}</span>
-                  <span className="stock-value">{currentStock.toFixed(2)} {unit}</span>
+              <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">{t('currentStock', 'Current Stock')}</span>
+                  <span className="text-xl font-semibold text-gray-900">{currentStock.toFixed(2)} {unit}</span>
                 </div>
               </div>
             )}
@@ -262,41 +265,41 @@ const StockAdjustment = () => {
 
           {/* Adjustment Type */}
           <div className="form-section">
-            <h3 className="section-title">{t('adjustmentType', 'Adjustment Type')}</h3>
-            <div className="adjustment-type-grid">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">{t('adjustmentType', 'Adjustment Type')}</h3>
+            <div className="grid grid-cols-3 gap-4">
               <button
                 type="button"
-                className={`type-card ${adjustmentType === 'increase' ? 'active increase' : ''}`}
+                className={`flex flex-col items-center gap-2 py-5 px-4 border-2 rounded-lg cursor-pointer transition-all text-center ${adjustmentType === 'increase' ? 'bg-green-50 border-green-500 text-green-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}
                 onClick={() => setAdjustmentType('increase')}
               >
                 <Plus size={24} />
-                <span>{t('increase', 'Increase')}</span>
-                <small>{t('addStock', 'Add to stock')}</small>
+                <span className="font-semibold">{t('increase', 'Increase')}</span>
+                <small className="text-xs opacity-75">{t('addStock', 'Add to stock')}</small>
               </button>
               <button
                 type="button"
-                className={`type-card ${adjustmentType === 'decrease' ? 'active decrease' : ''}`}
+                className={`flex flex-col items-center gap-2 py-5 px-4 border-2 rounded-lg cursor-pointer transition-all text-center ${adjustmentType === 'decrease' ? 'bg-red-50 border-red-500 text-red-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}
                 onClick={() => setAdjustmentType('decrease')}
               >
                 <Minus size={24} />
-                <span>{t('decrease', 'Decrease')}</span>
-                <small>{t('removeStock', 'Remove from stock')}</small>
+                <span className="font-semibold">{t('decrease', 'Decrease')}</span>
+                <small className="text-xs opacity-75">{t('removeStock', 'Remove from stock')}</small>
               </button>
               <button
                 type="button"
-                className={`type-card ${adjustmentType === 'set' ? 'active set' : ''}`}
+                className={`flex flex-col items-center gap-2 py-5 px-4 border-2 rounded-lg cursor-pointer transition-all text-center ${adjustmentType === 'set' ? 'bg-amber-50 border-amber-500 text-amber-700' : 'bg-white border-gray-200 hover:border-gray-300'}`}
                 onClick={() => setAdjustmentType('set')}
               >
                 <RefreshCw size={24} />
-                <span>{t('setTo', 'Set To')}</span>
-                <small>{t('setAbsolute', 'Set absolute value')}</small>
+                <span className="font-semibold">{t('setTo', 'Set To')}</span>
+                <small className="text-xs opacity-75">{t('setAbsolute', 'Set absolute value')}</small>
               </button>
             </div>
           </div>
 
           {/* Quantity Input */}
           <div className="form-section">
-            <h3 className="section-title">{t('quantity', 'Quantity')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">{t('quantity', 'Quantity')}</h3>
             <div className="form-group">
               <label htmlFor="quantity">
                 {adjustmentType === 'set'
@@ -306,7 +309,7 @@ const StockAdjustment = () => {
                     : t('quantityToRemove', 'Quantity to Remove')
                 } *
               </label>
-              <div className="input-with-unit">
+              <div className="relative flex items-center">
                 <input
                   type="number"
                   id="quantity"
@@ -316,11 +319,12 @@ const StockAdjustment = () => {
                   step="0.01"
                   placeholder="0.00"
                   required
+                  className="pr-16"
                 />
-                <span className="unit-suffix">{unit}</span>
+                <span className="absolute right-3 text-gray-500 text-sm pointer-events-none">{unit}</span>
               </div>
               {adjustmentType === 'decrease' && parseFloat(quantity) > currentStock && (
-                <span className="error-hint">
+                <span className="flex items-center gap-1 text-red-600 text-[0.8125rem] mt-2">
                   <AlertTriangle size={14} />
                   Cannot remove more than current stock
                 </span>
@@ -329,9 +333,9 @@ const StockAdjustment = () => {
 
             {/* New Stock Preview */}
             {selectedMaterialId && quantity && (
-              <div className="stock-preview">
-                <span className="preview-label">{t('newStock', 'New Stock Level')}:</span>
-                <span className={`preview-value ${getNewStock() === 0 ? 'warning' : ''}`}>
+              <div className="flex items-center gap-2 mt-4 px-4 py-3 bg-gray-50 rounded-md">
+                <span className="text-sm text-gray-600">{t('newStock', 'New Stock Level')}:</span>
+                <span className={`text-base font-semibold ${getNewStock() === 0 ? 'text-amber-600' : 'text-gray-900'}`}>
                   {getNewStock().toFixed(2)} {unit}
                 </span>
               </div>
@@ -340,7 +344,7 @@ const StockAdjustment = () => {
 
           {/* Reason Selection */}
           <div className="form-section">
-            <h3 className="section-title">{t('reason', 'Reason')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">{t('reason', 'Reason')}</h3>
             <div className="form-group">
               <label htmlFor="reason">{t('adjustmentReason', 'Adjustment Reason')} *</label>
               <select
@@ -373,7 +377,7 @@ const StockAdjustment = () => {
 
           {/* Notes */}
           <div className="form-section">
-            <h3 className="section-title">{t('additionalNotes', 'Additional Notes')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">{t('additionalNotes', 'Additional Notes')}</h3>
             <div className="form-group">
               <label htmlFor="notes">{t('notes', 'Notes')} ({t('optional', 'optional')})</label>
               <textarea

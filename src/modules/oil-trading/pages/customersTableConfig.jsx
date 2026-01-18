@@ -6,7 +6,9 @@
  */
 
 import React from 'react'
-import { Eye, Edit, ShoppingCart, FileText, Trash, RotateCcw, Phone, Mail } from 'lucide-react'
+import { Eye, Edit, ShoppingCart, FileText, Trash2, RotateCcw, Phone, Mail } from 'lucide-react'
+import PermissionGate from '../../../components/PermissionGate'
+import { PERMISSIONS } from '../../../config/roles'
 
 /**
  * Generate table columns with event handlers
@@ -14,8 +16,6 @@ import { Eye, Edit, ShoppingCart, FileText, Trash, RotateCcw, Phone, Mail } from
  * @param {Object} config - Column configuration
  * @param {Function} config.t - Translation function
  * @param {Array} config.customerTypes - Available customer types
- * @param {Function} config.canEdit - Permission check function
- * @param {Function} config.canDelete - Permission check function
  * @param {Function} config.onViewDetails - View details handler
  * @param {Function} config.onCreateOrder - Create order handler
  * @param {Function} config.onViewContract - View contract handler
@@ -27,8 +27,6 @@ import { Eye, Edit, ShoppingCart, FileText, Trash, RotateCcw, Phone, Mail } from
 export const getTableColumns = ({
   t,
   customerTypes,
-  canEdit,
-  canDelete,
   onViewDetails,
   onCreateOrder,
   onViewContract,
@@ -133,12 +131,10 @@ export const getTableColumns = ({
     key: 'actions',
     header: t('actions'),
     sortable: false,
-    width: '200px',
+    width: '240px',
     render: (value, row) => (
       <CustomerActions
         customer={row}
-        canEdit={canEdit}
-        canDelete={canDelete}
         onViewDetails={onViewDetails}
         onCreateOrder={onCreateOrder}
         onViewContract={onViewContract}
@@ -170,8 +166,6 @@ const CustomerAvatar = ({ name }) => {
  */
 const CustomerActions = ({
   customer,
-  canEdit,
-  canDelete,
   onViewDetails,
   onCreateOrder,
   onViewContract,
@@ -181,82 +175,92 @@ const CustomerActions = ({
   t
 }) => {
   // Prevent row click when clicking action buttons
-  const stopPropagation = (handler) => (e) => {
+  const handleClick = (handler) => (e) => {
     e.stopPropagation()
     handler(customer)
   }
 
   return (
-    <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+    <div className="table-actions">
       {/* View Details */}
-      <button
-        className="btn btn-outline btn-sm"
-        onClick={stopPropagation(onViewDetails)}
-        title={t('viewDetails')}
-      >
-        <Eye size={14} />
-      </button>
+      <PermissionGate permission={PERMISSIONS.VIEW_CUSTOMERS}>
+        <button
+          className="btn btn-outline btn-sm"
+          onClick={handleClick(onViewDetails)}
+          title={t('viewDetails')}
+        >
+          <Eye size={14} />
+        </button>
+      </PermissionGate>
 
       {/* Create Order */}
-      <button
-        className="btn btn-primary btn-sm"
-        onClick={stopPropagation(onCreateOrder)}
-        disabled={!customer.isActive}
-        title={t('createOrder')}
-      >
-        <ShoppingCart size={14} />
-      </button>
+      <PermissionGate permission={PERMISSIONS.CREATE_SALES}>
+        <button
+          className="btn btn-outline btn-sm"
+          onClick={handleClick(onCreateOrder)}
+          disabled={!customer.isActive}
+          title={t('createOrder')}
+        >
+          <ShoppingCart size={14} />
+        </button>
+      </PermissionGate>
 
       {/* View Contract (only for contract customers) */}
       {customer.type === 'contract' && customer.contractDetails && (
-        <button
-          className="btn btn-outline btn-sm"
-          onClick={stopPropagation(onViewContract)}
-          title={t('viewContract')}
-        >
-          <FileText size={14} />
-        </button>
+        <PermissionGate permission={PERMISSIONS.VIEW_CONTRACTS}>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={handleClick(onViewContract)}
+            title={t('viewContract')}
+          >
+            <FileText size={14} />
+          </button>
+        </PermissionGate>
       )}
 
       {/* Edit (permission required) */}
-      {canEdit('customers') && (
+      <PermissionGate permission={PERMISSIONS.MANAGE_CUSTOMERS}>
         <button
           className="btn btn-outline btn-sm"
-          onClick={stopPropagation(onEdit)}
+          onClick={handleClick(onEdit)}
           title={t('edit')}
         >
           <Edit size={14} />
         </button>
-      )}
+      </PermissionGate>
 
       {/* Delete (permission required, only for active customers) */}
-      {canDelete('customers') && customer.isActive && (
-        <button
-          className="btn btn-danger btn-sm"
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(customer.id)
-          }}
-          title={t('delete')}
-        >
-          <Trash size={14} />
-        </button>
+      {customer.isActive && (
+        <PermissionGate permission={PERMISSIONS.MANAGE_CUSTOMERS}>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(customer.id)
+            }}
+            title={t('delete')}
+          >
+            <Trash2 size={14} />
+          </button>
+        </PermissionGate>
       )}
 
       {/* Reactivate (permission required, only for inactive customers) */}
-      {canEdit('customers') && !customer.isActive && (
-        <button
-          className="btn btn-success btn-sm"
-          onClick={(e) => {
-            e.stopPropagation()
-            if (window.confirm(`Reactivate customer "${customer.name}"?`)) {
-              onReactivate(customer.id)
-            }
-          }}
-          title="Reactivate Customer"
-        >
-          <RotateCcw size={14} />
-        </button>
+      {!customer.isActive && (
+        <PermissionGate permission={PERMISSIONS.MANAGE_CUSTOMERS}>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (window.confirm(`Reactivate customer "${customer.name}"?`)) {
+                onReactivate(customer.id)
+              }
+            }}
+            title={t('reactivate')}
+          >
+            <RotateCcw size={14} />
+          </button>
+        </PermissionGate>
       )}
     </div>
   )

@@ -13,8 +13,6 @@ import {
   FileText,
   X
 } from 'lucide-react'
-import './StockAdjustmentModal.css'
-
 /**
  * Stock Adjustment Modal
  * Allows users to adjust inventory quantities with reason tracking
@@ -168,24 +166,28 @@ const StockAdjustmentModal = ({
       isOpen={isOpen}
       onClose={onClose}
       title={
-        <div className="stock-adjustment-modal-title">
+        <div className="flex items-center gap-2 text-gray-900">
           <Package size={24} />
           <span>{t('stockAdjustment', 'Stock Adjustment')}</span>
         </div>
       }
-      className="stock-adjustment-modal"
+      className="max-w-[600px] w-[95vw]"
     >
-      <div className="stock-adjustment-content">
+      <div className="flex flex-col gap-4">
         {/* Message Display */}
         {message && (
-          <div className={`adjustment-message ${message.type}`}>
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-md text-sm font-medium ${
+            message.type === 'success'
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
             {message.type === 'success' && <Check size={16} />}
             {message.type === 'error' && <AlertTriangle size={16} />}
             {message.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="adjustment-form-modal">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {/* Material Selection */}
           <div className="form-section">
             <div className="form-group">
@@ -208,20 +210,20 @@ const StockAdjustmentModal = ({
 
             {/* Current Stock Display */}
             {selectedMaterialId && (
-              <div className="current-stock-display">
-                <span className="stock-label">{t('currentStock', 'Current Stock')}:</span>
-                <span className="stock-value">{currentStock.toFixed(2)} {unit}</span>
+              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-md">
+                <span className="text-[0.8125rem] text-gray-600">{t('currentStock', 'Current Stock')}:</span>
+                <span className="text-base font-semibold text-gray-900">{currentStock.toFixed(2)} {unit}</span>
               </div>
             )}
           </div>
 
           {/* Adjustment Type */}
           <div className="form-section">
-            <label className="section-label">{t('adjustmentType', 'Adjustment Type')}</label>
-            <div className="adjustment-type-buttons">
+            <label className="text-sm font-semibold text-gray-700">{t('adjustmentType', 'Adjustment Type')}</label>
+            <div className="grid grid-cols-3 gap-2 mt-2">
               <button
                 type="button"
-                className={`type-btn ${adjustmentType === 'increase' ? 'active increase' : ''}`}
+                className={`flex flex-col items-center gap-1 py-3 px-4 border-2 rounded-md text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'increase' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
                 onClick={() => setAdjustmentType('increase')}
                 disabled={submitting}
               >
@@ -230,7 +232,7 @@ const StockAdjustmentModal = ({
               </button>
               <button
                 type="button"
-                className={`type-btn ${adjustmentType === 'decrease' ? 'active decrease' : ''}`}
+                className={`flex flex-col items-center gap-1 py-3 px-4 border-2 rounded-md text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'decrease' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
                 onClick={() => setAdjustmentType('decrease')}
                 disabled={submitting}
               >
@@ -239,7 +241,7 @@ const StockAdjustmentModal = ({
               </button>
               <button
                 type="button"
-                className={`type-btn ${adjustmentType === 'set' ? 'active set' : ''}`}
+                className={`flex flex-col items-center gap-1 py-3 px-4 border-2 rounded-md text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'set' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
                 onClick={() => setAdjustmentType('set')}
                 disabled={submitting}
               >
@@ -260,7 +262,7 @@ const StockAdjustmentModal = ({
                     : t('quantityToRemove', 'Quantity to Remove')
                 } *
               </label>
-              <div className="input-with-unit">
+              <div className="flex items-stretch">
                 <input
                   type="number"
                   id="quantity"
@@ -271,11 +273,12 @@ const StockAdjustmentModal = ({
                   placeholder="0.00"
                   required
                   disabled={submitting}
+                  className="flex-1 rounded-r-none"
                 />
-                <span className="unit-suffix">{unit}</span>
+                <span className="flex items-center px-3 bg-gray-100 border border-gray-300 border-l-0 rounded-r-md text-[0.8125rem] text-gray-600">{unit}</span>
               </div>
               {adjustmentType === 'decrease' && parseFloat(quantity) > currentStock && (
-                <span className="error-hint">
+                <span className="flex items-center gap-1.5 text-xs text-red-600 mt-1">
                   <AlertTriangle size={14} />
                   {t('cannotRemoveMoreThanStock', 'Cannot remove more than current stock')}
                 </span>
@@ -284,9 +287,9 @@ const StockAdjustmentModal = ({
 
             {/* New Stock Preview */}
             {selectedMaterialId && quantity && (
-              <div className="stock-preview">
-                <span className="preview-label">{t('newStock', 'New Stock Level')}:</span>
-                <span className={`preview-value ${getNewStock() === 0 ? 'warning' : ''}`}>
+              <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-200 rounded-md">
+                <span className="text-[0.8125rem] text-blue-700">{t('newStock', 'New Stock Level')}:</span>
+                <span className={`font-semibold ${getNewStock() === 0 ? 'text-amber-600' : 'text-blue-700'}`}>
                   {getNewStock().toFixed(2)} {unit}
                 </span>
               </div>
@@ -343,10 +346,10 @@ const StockAdjustmentModal = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="modal-actions">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-2">
             <button
               type="button"
-              className="btn btn-outline"
+              className="btn btn-outline flex items-center gap-1.5"
               onClick={onClose}
               disabled={submitting}
             >
@@ -355,7 +358,7 @@ const StockAdjustmentModal = ({
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary flex items-center gap-1.5"
               disabled={!isValid() || submitting}
             >
               {submitting ? (

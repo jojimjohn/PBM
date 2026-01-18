@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import { FileText, Calendar, User, Package, Banknote, CheckCircle, AlertTriangle, Layers, DollarSign, TrendingUp, ChevronDown, ChevronUp, Hash } from 'lucide-react';
-import './SalesOrderViewModal.css';
+// CSS moved to global index.css Tailwind
 
 const SalesOrderViewModal = ({
   isOpen,

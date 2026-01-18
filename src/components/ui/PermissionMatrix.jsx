@@ -40,7 +40,7 @@ import {
   CheckSquare
 } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
-import './PermissionMatrix.css'
+// CSS moved to global index.css Tailwind
 
 // Map module keys to icons
 const MODULE_ICONS = {

@@ -3,7 +3,7 @@ import { AlertCircle, Truck, MapPin, Calendar, Clock, Package, TrendingUp, Users
 import { useLocalization } from '../../context/LocalizationContext';
 import { collectionUtils } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
-import './CollectionDashboard.css';
+// CSS moved to global index.css Tailwind
 
 const CollectionDashboard = ({ data, loading, error, onRefresh }) => {
   const { t, isRTL } = useLocalization();

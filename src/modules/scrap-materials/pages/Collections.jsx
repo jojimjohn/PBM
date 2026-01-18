@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Truck, FileText, HelpCircle } from 'lucide-react';
 import { useLocalization } from '../../../context/LocalizationContext';
 import CalloutManager from '../../../components/collections/CalloutManager';
-import '../styles/Collections.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Collections Page - Sprint 4.5 WCN Workflow

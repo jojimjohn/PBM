@@ -1,9 +1,9 @@
 import React from 'react'
-import './Select.css'
+// CSS moved to global index.css Tailwind
 
 const Select = React.forwardRef(({ className = '', children, ...props }, ref) => (
   <select
-    className={`select ${className}`}
+    className={`form-input-tw h-10 cursor-pointer ${className}`}
     ref={ref}
     {...props}
   >
@@ -15,7 +15,7 @@ Select.displayName = "Select"
 const SelectOption = React.forwardRef(({ className = '', ...props }, ref) => (
   <option
     ref={ref}
-    className={`select-option ${className}`}
+    className={`bg-white text-slate-800 p-2 ${className}`}
     {...props}
   />
 ))

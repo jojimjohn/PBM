@@ -5,7 +5,7 @@ import 'driver.js/dist/driver.css';
 import { useTour, TOUR_IDS } from '../../context/TourContext';
 import { getTourSteps, WORKFLOW_GUIDES, getLocalizedWorkflowStep } from '../../config/tours';
 import { useLocalization } from '../../context/LocalizationContext';
-import './ProductTour.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * ProductTour Component

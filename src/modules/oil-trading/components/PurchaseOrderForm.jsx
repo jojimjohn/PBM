@@ -13,7 +13,7 @@ import branchService from '../../../services/branchService'
 import uploadService from '../../../services/uploadService'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import { Plus, Trash2, Save, Truck, FileText, Calculator, Package, AlertTriangle, Building } from 'lucide-react'
-import './PurchaseOrderForm.css'
+// CSS moved to global index.css Tailwind
 
 const PurchaseOrderForm = ({ 
   isOpen, 
@@ -408,9 +408,9 @@ const PurchaseOrderForm = ({
       <form className="purchase-order-form" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}
         {formData.status === 'draft' && (
-          <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={18} style={{ color: '#1976d2' }} />
-            <span style={{ color: '#1565c0' }}>
+          <div className="flex items-center gap-2 p-3 mb-5 bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+            <AlertTriangle size={18} className="shrink-0" />
+            <span>
               <strong>Draft Mode:</strong> You can save with minimal information (Supplier and Order Date only). Additional details can be added later.
             </span>
           </div>
@@ -520,31 +520,33 @@ const PurchaseOrderForm = ({
               <Truck size={20} />
               Supplier Information
             </div>
-            
-            <div className="vendor-info-grid">
-              <div className="vendor-detail">
-                <label>Supplier Name:</label>
-                <span>{selectedSupplier.name}</span>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Supplier Name</span>
+                <span className="text-sm font-medium text-slate-700">{selectedSupplier.name}</span>
               </div>
-              <div className="vendor-detail">
-                <label>Contact Person:</label>
-                <span>{selectedSupplier.contactPerson}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Contact Person</span>
+                <span className="text-sm font-medium text-slate-700">{selectedSupplier.contactPerson || '-'}</span>
               </div>
-              <div className="vendor-detail">
-                <label>Phone:</label>
-                <span>{selectedSupplier.phone}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Phone</span>
+                <span className="text-sm font-medium text-slate-700">{selectedSupplier.phone || '-'}</span>
               </div>
-              <div className="vendor-detail">
-                <label>Email:</label>
-                <span>{selectedSupplier.email}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Email</span>
+                <span className="text-sm font-medium text-slate-700">{selectedSupplier.email || '-'}</span>
               </div>
-              <div className="vendor-detail">
-                <label>Payment Terms:</label>
-                <span>{selectedSupplier.paymentTermDays || 30} days</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Payment Terms</span>
+                <span className="text-sm font-medium text-slate-700">{selectedSupplier.paymentTermDays || 30} days</span>
               </div>
-              <div className="vendor-detail">
-                <label>Status:</label>
-                <span>{selectedSupplier.isActive ? 'Active' : 'Inactive'}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Status</span>
+                <span className={`inline-flex w-fit px-2 py-0.5 text-xs font-medium ${selectedSupplier.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                  {selectedSupplier.isActive ? 'Active' : 'Inactive'}
+                </span>
               </div>
             </div>
           </div>
@@ -553,47 +555,51 @@ const PurchaseOrderForm = ({
         {/* Order Items */}
         <div className="form-section" data-tour="po-items-section">
           <div className="form-section-title">
-            <div className="title-with-action">
-              <span>
+            <div className="flex items-center justify-between w-full">
+              <span className="flex items-center gap-2">
                 <Package size={20} />
                 Order Items
               </span>
               <button
                 type="button"
-                className="btn btn-outline btn-small"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
                 onClick={addItem}
               >
-                <Plus size={16} />
+                <Plus size={14} />
                 Add Item
               </button>
             </div>
           </div>
-          
+
           {errors.items && (
-            <div className="error-banner">
-              <AlertTriangle size={16} />
+            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-200 text-red-700 text-sm">
+              <AlertTriangle size={16} className="shrink-0" />
               {errors.items}
             </div>
           )}
-          
-          <div className="items-table">
-            <div className="items-header">
+
+          <div className="bg-slate-50 border border-slate-200 overflow-hidden">
+            {/* Table Header */}
+            <div className="grid grid-cols-[2fr_1fr_0.7fr_1.2fr_1.2fr_0.7fr] gap-3 p-3 bg-slate-800 text-white text-xs font-semibold uppercase tracking-wider max-md:hidden">
               <span>Material</span>
-              <span>Quantity</span>
-              <span>Unit</span>
-              <span>Rate (OMR)</span>
-              <span>Amount (OMR)</span>
-              <span>Actions</span>
+              <span className="text-center">Quantity</span>
+              <span className="text-center">Unit</span>
+              <span className="text-center">Rate (OMR)</span>
+              <span className="text-center">Amount (OMR)</span>
+              <span className="text-center">Actions</span>
             </div>
-            
+
             {formData.items.map((item, index) => {
               const selectedMaterial = materials.find(m => m.id === item.materialId)
               const hasContractRate = selectedSupplier?.contractDetails?.rates?.[item.materialId]
               const isDraft = formData.status === 'draft'
 
               return (
-                <div key={index} className={`item-row ${errors[`item_${index}`] ? 'error' : ''}`}>
-                  <div className="item-field">
+                <div
+                  key={index}
+                  className={`grid grid-cols-[2fr_1fr_0.7fr_1.2fr_1.2fr_0.7fr] gap-3 p-3 bg-white border-b border-slate-200 items-center last:border-b-0 max-md:grid-cols-1 max-md:gap-2 ${errors[`item_${index}`] ? 'bg-red-50' : ''}`}
+                >
+                  <div>
                     <Autocomplete
                       options={materials}
                       value={item.materialId}
@@ -607,7 +613,7 @@ const PurchaseOrderForm = ({
                     />
                   </div>
 
-                  <div className="item-field">
+                  <div>
                     <input
                       type="number"
                       value={item.quantity}
@@ -616,16 +622,17 @@ const PurchaseOrderForm = ({
                       min="0"
                       step="0.001"
                       required={!isDraft}
+                      className="w-full h-9 px-2.5 text-sm bg-white border border-slate-300 text-slate-700 text-center focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
-                  <div className="item-field">
-                    <span className="unit-display">
+                  <div className="flex items-center justify-center">
+                    <span className="px-2 py-1.5 bg-slate-100 text-slate-600 text-sm text-center w-full">
                       {selectedMaterial ? selectedMaterial.unit : '-'}
                     </span>
                   </div>
 
-                  <div className="item-field rate-field">
+                  <div className="flex flex-col gap-1">
                     <input
                       type="number"
                       value={item.rate}
@@ -634,28 +641,27 @@ const PurchaseOrderForm = ({
                       min="0"
                       step="0.001"
                       required={!isDraft}
+                      className="w-full h-9 px-2.5 text-sm bg-white border border-slate-300 text-slate-700 text-center focus:outline-none focus:border-blue-500"
                     />
                     {hasContractRate && (
-                      <div className="contract-rate-indicator">
-                        <span className="contract-badge">Contract Rate</span>
-                      </div>
+                      <span className="text-[10px] font-medium text-emerald-600 text-center">Contract Rate</span>
                     )}
                   </div>
-                  
-                  <div className="item-field">
-                    <span className="amount-display">
+
+                  <div className="flex items-center justify-center">
+                    <span className="px-2 py-1.5 bg-slate-100 text-slate-800 text-sm font-medium text-center w-full">
                       {formatCurrency(item.amount)}
                     </span>
                   </div>
-                  
-                  <div className="item-field">
+
+                  <div className="flex items-center justify-center">
                     <button
                       type="button"
-                      className="btn btn-outline btn-small"
+                      className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
                       onClick={() => removeItem(index)}
                       disabled={formData.items.length === 1}
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -670,31 +676,22 @@ const PurchaseOrderForm = ({
             <Calculator size={20} />
             Order Totals
           </div>
-          
-          <div className="totals-section">
-            <div className="totals-row">
-              <label>Subtotal:</label>
-              <span>{formatCurrency(formData.subtotal)}</span>
+
+          <div className="max-w-md ml-auto p-4 bg-slate-50 border border-slate-200">
+            <div className="flex justify-between items-center py-2 text-sm">
+              <span className="font-medium text-slate-600">Subtotal:</span>
+              <span className="font-semibold text-slate-800">{formatCurrency(formData.subtotal)}</span>
             </div>
-            <div className="totals-row">
-              <label>
+            <div className="flex justify-between items-center py-2 text-sm">
+              <span className="font-medium text-slate-600 flex items-center gap-2">
                 Tax ({formData.taxPercent}%):
-                <span style={{
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: '#f3f4f6',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  color: '#6b7280',
-                  marginLeft: '0.5rem'
-                }}>
-                  From system settings
-                </span>
-              </label>
-              <span>{formatCurrency(formData.taxAmount)}</span>
+                <span className="px-2 py-0.5 bg-slate-200 text-slate-500 text-xs">From system settings</span>
+              </span>
+              <span className="font-semibold text-slate-800">{formatCurrency(formData.taxAmount)}</span>
             </div>
-            <div className="totals-row total-row">
-              <label>Total Amount:</label>
-              <span>{formatCurrency(formData.totalAmount)}</span>
+            <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-slate-300 text-base">
+              <span className="font-bold text-slate-900">Total Amount:</span>
+              <span className="font-bold text-lg text-blue-600">{formatCurrency(formData.totalAmount)}</span>
             </div>
           </div>
         </div>

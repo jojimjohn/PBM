@@ -35,7 +35,7 @@ import DataTable from '../ui/DataTable';
 import Modal from '../ui/Modal';
 import pettyCashUsersService from '../../services/pettyCashUsersService';
 import pettyCashService from '../../services/pettyCashService';
-import './PettyCashUsersSection.css';
+// CSS moved to global index.css Tailwind
 
 const PettyCashUsersSection = ({
   cards = [],
@@ -597,7 +597,7 @@ const PettyCashUsersSection = ({
       render: (value, row) => {
         if (!row) return null;
         return (
-          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-1 flex-wrap">
             <button
               className="btn btn-outline btn-sm"
               onClick={() => openViewModal(row)}
@@ -663,21 +663,20 @@ const PettyCashUsersSection = ({
   const availableCards = getAvailableCards();
 
   return (
-    <div className="pc-users-section">
-      {/* Section Header */}
-      <div className="section-header">
-        <h2>
-          <Users size={24} />
+    <div>
+      {/* Section Header - Right-aligned actions like other pages */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+          <Users size={20} />
           {t('pettyCashUsers', 'Petty Cash Users')}
         </h2>
-        <div className="section-actions">
+        <div className="flex items-center gap-2">
           <button
-            className="btn btn-secondary"
+            className="btn btn-outline"
             onClick={loadUsers}
             disabled={loading}
-            style={{ marginRight: '8px' }}
           >
-            <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
           {hasPermission('MANAGE_PETTY_CASH') && (
             <button className="btn btn-primary" onClick={openCreateModal}>
@@ -689,8 +688,8 @@ const PettyCashUsersSection = ({
       </div>
 
       {/* Info Banner */}
-      <div className="info-banner">
-        <AlertCircle size={16} />
+      <div className="flex items-center gap-2 p-3 mb-4 bg-blue-50 border border-blue-200 text-blue-800 text-sm">
+        <AlertCircle size={16} className="flex-shrink-0" />
         <span>
           {t(
             'pcUsersInfo',
@@ -701,10 +700,15 @@ const PettyCashUsersSection = ({
 
       {/* Error Display */}
       {error && (
-        <div className="error-banner">
-          <AlertCircle size={16} />
-          <span>{error}</span>
-          <button onClick={() => setError(null)}>×</button>
+        <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-200 text-red-800 text-sm">
+          <AlertCircle size={16} className="flex-shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="p-1 hover:bg-red-100 transition-colors"
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -848,7 +852,7 @@ const PettyCashUsersSection = ({
             >
               {submitting ? (
                 <>
-                  <Loader2 size={16} className="spinning" />
+                  <Loader2 size={16} className="animate-spin" />
                   {t('creating', 'Creating...')}
                 </>
               ) : (
@@ -958,7 +962,7 @@ const PettyCashUsersSection = ({
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? (
                 <>
-                  <Loader2 size={16} className="spinning" />
+                  <Loader2 size={16} className="animate-spin" />
                   {t('saving', 'Saving...')}
                 </>
               ) : (
@@ -1025,7 +1029,7 @@ const PettyCashUsersSection = ({
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? (
                 <>
-                  <Loader2 size={16} className="spinning" />
+                  <Loader2 size={16} className="animate-spin" />
                   {t('resetting', 'Resetting...')}
                 </>
               ) : (
@@ -1046,57 +1050,48 @@ const PettyCashUsersSection = ({
         title={t('qrCode', 'QR Code')}
         size="sm"
       >
-        <div className="qr-modal-content">
+        <div className="flex flex-col items-center">
           {qrCodeData?.qrCode && (
             <>
-              <div className="qr-code-container">
-                <img src={qrCodeData.qrCode} alt="QR Code" />
+              {/* QR Code Display */}
+              <div className="p-4 bg-white border border-slate-200 mb-4">
+                <img src={qrCodeData.qrCode} alt="QR Code" className="w-48 h-48" />
               </div>
-              <p className="qr-user-name">{qrCodeData.userName || selectedUser?.name}</p>
-              <p className="qr-instructions">
+
+              {/* User Name */}
+              <p className="text-lg font-semibold text-slate-800 mb-2">
+                {qrCodeData.userName || selectedUser?.name}
+              </p>
+
+              {/* Instructions */}
+              <p className="text-sm text-slate-500 text-center mb-4">
                 {t('scanQrInstructions', 'Scan this QR code with a mobile device to access the expense portal')}
               </p>
 
               {/* Portal URL Display */}
               {qrCodeData?.portalUrl && (
-                <div className="portal-url-container" style={{
-                  background: '#f5f5f5',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  padding: '0.75rem',
-                  marginBottom: '1rem',
-                  wordBreak: 'break-all'
-                }}>
-                  <label style={{
-                    fontSize: '0.75rem',
-                    color: '#666',
-                    display: 'block',
-                    marginBottom: '0.25rem',
-                    fontWeight: '600'
-                  }}>
+                <div className="w-full p-3 bg-slate-50 border border-slate-200 mb-4">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                     {t('portalUrl', 'Portal URL')}
                   </label>
-                  <code style={{
-                    fontSize: '0.8rem',
-                    color: '#333',
-                    fontFamily: 'monospace'
-                  }}>
+                  <code className="text-xs text-slate-700 font-mono break-all">
                     {qrCodeData.portalUrl}
                   </code>
                 </div>
               )}
 
-              <div className="qr-actions">
-                <button className="btn btn-secondary" onClick={copyPortalUrl}>
-                  <Copy size={16} />
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                <button className="btn btn-outline btn-sm" onClick={copyPortalUrl}>
+                  <Copy size={14} />
                   {t('copyLink', 'Copy Link')}
                 </button>
-                <button className="btn btn-secondary" onClick={printQrCode}>
-                  <Printer size={16} />
+                <button className="btn btn-outline btn-sm" onClick={printQrCode}>
+                  <Printer size={14} />
                   {t('print', 'Print')}
                 </button>
-                <button className="btn btn-warning" onClick={handleRegenerateQr}>
-                  <RefreshCw size={16} />
+                <button className="btn btn-warning btn-sm" onClick={handleRegenerateQr}>
+                  <RefreshCw size={14} />
                   {t('regenerate', 'Regenerate')}
                 </button>
               </div>
@@ -1113,86 +1108,76 @@ const PettyCashUsersSection = ({
         size="md"
       >
         {selectedUser && (
-          <div className="user-details">
-            <div className="user-header">
-              <div className="user-avatar">
-                <Users size={32} />
+          <div className="space-y-4">
+            {/* User Header */}
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-200">
+              <div className="w-14 h-14 bg-slate-100 flex items-center justify-center text-slate-500">
+                <Users size={28} />
               </div>
-              <div className="user-info">
-                <h3>{selectedUser.name}</h3>
-                <span className={`status-badge ${selectedUser.is_active ? 'active' : 'inactive'}`}>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-slate-800">{selectedUser.name}</h3>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium mt-1 ${
+                  selectedUser.is_active
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-slate-100 text-slate-500 border border-slate-200'
+                }`}>
                   {selectedUser.is_active ? t('active', 'Active') : t('inactive', 'Inactive')}
                 </span>
               </div>
             </div>
 
-            <div className="user-stats">
-              <div className="stat">
-                <span className="stat-label">{t('cardNumber', 'Card Number')}</span>
-                <span className="stat-value">{selectedUser.cardNumber || '-'}</span>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-200">
+                <span className="block text-xs text-slate-500 uppercase tracking-wider mb-1">{t('cardNumber', 'Card Number')}</span>
+                <span className="text-sm font-semibold text-slate-800 font-mono">{selectedUser.cardNumber || '-'}</span>
               </div>
-              <div className="stat">
-                <span className="stat-label">{t('balance', 'Balance')}</span>
-                <span className="stat-value">{formatCurrency(selectedUser.currentBalance)}</span>
+              <div className="p-3 bg-emerald-50 border border-emerald-200">
+                <span className="block text-xs text-emerald-600 uppercase tracking-wider mb-1">{t('balance', 'Balance')}</span>
+                <span className="text-lg font-bold text-emerald-700">{formatCurrency(selectedUser.currentBalance)}</span>
               </div>
             </div>
 
-            <div className="user-fields">
-              {selectedUser.phone && (
-                <div className="field">
-                  <Phone size={16} />
-                  <span>{selectedUser.phone}</span>
-                </div>
-              )}
-              {selectedUser.department && (
-                <div className="field">
-                  <Building size={16} />
-                  <span>{selectedUser.department}</span>
-                </div>
-              )}
-              {selectedUser.employee_id && (
-                <div className="field">
-                  <span className="field-label">{t('employeeId', 'Employee ID')}:</span>
-                  <span>{selectedUser.employee_id}</span>
-                </div>
-              )}
-            </div>
+            {/* User Fields */}
+            {(selectedUser.phone || selectedUser.department || selectedUser.employee_id) && (
+              <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                {selectedUser.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} className="text-slate-400" />
+                    <span>{selectedUser.phone}</span>
+                  </div>
+                )}
+                {selectedUser.department && (
+                  <div className="flex items-center gap-2">
+                    <Building size={14} className="text-slate-400" />
+                    <span>{selectedUser.department}</span>
+                  </div>
+                )}
+                {selectedUser.employee_id && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">{t('employeeId', 'Employee ID')}:</span>
+                    <span className="font-medium">{selectedUser.employee_id}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Portal Access Section with QR Code */}
             {(selectedUser.portalUrl || selectedUser.qrCode) && (
-              <div className="portal-access-section" style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '8px',
-                color: 'white'
-              }}>
-                <h4 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="p-4 bg-blue-50 border border-blue-200">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-blue-800 mb-3">
                   <QrCode size={16} />
                   {t('portalAccess', 'Portal Access')}
                 </h4>
 
                 {/* QR Code Display */}
                 {selectedUser.qrCode && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginBottom: '1rem'
-                  }}>
-                    <div style={{
-                      background: 'white',
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      display: 'inline-block'
-                    }}>
+                  <div className="flex justify-center mb-3">
+                    <div className="p-3 bg-white border border-blue-200">
                       <img
                         src={selectedUser.qrCode}
                         alt="QR Code"
-                        style={{
-                          width: '150px',
-                          height: '150px',
-                          display: 'block'
-                        }}
+                        className="w-32 h-32"
                       />
                     </div>
                   </div>
@@ -1200,44 +1185,34 @@ const PettyCashUsersSection = ({
 
                 {/* Portal URL */}
                 {selectedUser.portalUrl && (
-                  <div style={{
-                    background: 'rgba(255,255,255,0.15)',
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    marginBottom: '0.75rem'
-                  }}>
-                    <code style={{
-                      fontSize: '0.75rem',
-                      wordBreak: 'break-all',
-                      color: 'white',
-                      fontFamily: 'monospace'
-                    }}>
+                  <div className="p-2 bg-white border border-blue-200 mb-3">
+                    <code className="text-xs text-slate-700 font-mono break-all">
                       {selectedUser.portalUrl}
                     </code>
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div className="flex items-center justify-center gap-2">
                   {selectedUser.portalUrl && (
                     <>
                       <button
-                        className="btn btn-sm"
-                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '0.5rem' }}
+                        className="btn btn-outline btn-sm"
                         onClick={() => {
                           navigator.clipboard.writeText(selectedUser.portalUrl);
                           alert(t('urlCopied', 'URL copied to clipboard'));
                         }}
                         title={t('copyUrl', 'Copy URL')}
                       >
-                        <Copy size={18} />
+                        <Copy size={14} />
+                        {t('copy', 'Copy')}
                       </button>
                       <button
-                        className="btn btn-sm"
-                        style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '0.5rem' }}
+                        className="btn btn-outline btn-sm"
                         onClick={() => window.open(selectedUser.portalUrl, '_blank')}
                         title={t('openPortal', 'Open Portal')}
                       >
-                        <ExternalLink size={18} />
+                        <ExternalLink size={14} />
+                        {t('open', 'Open')}
                       </button>
                     </>
                   )}
@@ -1245,108 +1220,84 @@ const PettyCashUsersSection = ({
               </div>
             )}
 
+            {/* Expense Summary */}
             {selectedUser.expenseSummary && (
-              <div className="expense-summary">
-                <h4>{t('expenseSummary', 'Expense Summary')}</h4>
-                <div className="summary-grid">
-                  <div className="summary-item">
-                    <span className="label">{t('totalExpenses', 'Total Expenses')}</span>
-                    <span className="value">{selectedUser.expenseSummary.totalExpenses}</span>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-700 mb-3">{t('expenseSummary', 'Expense Summary')}</h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-slate-50 border border-slate-200 text-center">
+                    <span className="block text-xs text-slate-500 mb-1">{t('totalExpenses', 'Total')}</span>
+                    <span className="text-lg font-bold text-slate-800">{selectedUser.expenseSummary.totalExpenses}</span>
                   </div>
-                  <div className="summary-item">
-                    <span className="label">{t('approved', 'Approved')}</span>
-                    <span className="value success">{formatCurrency(selectedUser.expenseSummary.totalApproved)}</span>
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-center">
+                    <span className="block text-xs text-emerald-600 mb-1">{t('approved', 'Approved')}</span>
+                    <span className="text-lg font-bold text-emerald-700">{formatCurrency(selectedUser.expenseSummary.totalApproved)}</span>
                   </div>
-                  <div className="summary-item">
-                    <span className="label">{t('pending', 'Pending')}</span>
-                    <span className="value warning">{formatCurrency(selectedUser.expenseSummary.totalPending)}</span>
+                  <div className="p-3 bg-amber-50 border border-amber-200 text-center">
+                    <span className="block text-xs text-amber-600 mb-1">{t('pending', 'Pending')}</span>
+                    <span className="text-lg font-bold text-amber-700">{formatCurrency(selectedUser.expenseSummary.totalPending)}</span>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Recent Expenses */}
             {selectedUser.recentExpenses?.length > 0 && (
-              <div className="recent-expenses">
-                <h4>{t('recentExpenses', 'Recent Expenses')}</h4>
-                <ul>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-700 mb-3">{t('recentExpenses', 'Recent Expenses')}</h4>
+                <div className="border border-slate-200 divide-y divide-slate-200">
                   {selectedUser.recentExpenses.map((expense) => (
-                    <li key={expense.id}>
-                      <div className="expense-main">
-                        <span className="expense-desc">{expense.description}</span>
-                        <span className="expense-date">
+                    <div key={expense.id} className="flex items-center justify-between p-3 bg-white hover:bg-slate-50">
+                      <div>
+                        <span className="block text-sm text-slate-800">{expense.description}</span>
+                        <span className="text-xs text-slate-500">
                           {expense.created_at ? new Date(expense.created_at).toLocaleDateString('en-GB') : '-'}
                         </span>
                       </div>
-                      <div className="expense-meta">
-                        <span className="expense-amount">{formatCurrency(expense.amount)}</span>
-                        <span className={`expense-status ${expense.status}`}>{expense.status}</span>
+                      <div className="text-right">
+                        <span className="block text-sm font-semibold text-slate-800">{formatCurrency(expense.amount)}</span>
+                        <span className={`inline-block px-2 py-0.5 text-xs font-medium ${
+                          expense.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
+                          expense.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                          'bg-red-50 text-red-700'
+                        }`}>
+                          {expense.status}
+                        </span>
                       </div>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
             {/* Transaction History Section */}
-            <div className="transaction-history-section" style={{
-              marginTop: '1rem',
-              padding: '1rem',
-              background: '#f8f9fa',
-              borderRadius: '8px',
-              border: '1px solid #e9ecef'
-            }}>
-              <h4 style={{
-                marginBottom: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#333'
-              }}>
-                <History size={18} />
+            <div className="p-4 bg-slate-50 border border-slate-200">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
+                <History size={16} />
                 {t('transactionHistory', 'Transaction History')}
               </h4>
 
               {transactionsLoading ? (
-                <div style={{ textAlign: 'center', padding: '1rem' }}>
-                  <Loader2 size={24} className="spinning" />
-                  <p style={{ marginTop: '0.5rem', color: '#666' }}>
-                    {t('loadingTransactions', 'Loading transactions...')}
-                  </p>
+                <div className="flex flex-col items-center justify-center py-6 text-slate-500">
+                  <Loader2 size={24} className="animate-spin mb-2" />
+                  <p className="text-sm">{t('loadingTransactions', 'Loading transactions...')}</p>
                 </div>
               ) : transactions.length > 0 ? (
-                <div className="transaction-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <div className="max-h-72 overflow-y-auto border border-slate-200 bg-white divide-y divide-slate-200">
                   {transactions.map((txn) => {
                     const typeInfo = getTransactionTypeInfo(txn.transaction_type);
                     return (
-                      <div key={txn.id} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        padding: '0.75rem',
-                        borderBottom: '1px solid #e9ecef',
-                        background: 'white'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                          <div style={{
-                            color: typeInfo.color,
-                            marginTop: '2px'
-                          }}>
+                      <div key={txn.id} className="flex items-start justify-between p-3">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5" style={{ color: typeInfo.color }}>
                             {typeInfo.icon}
                           </div>
                           <div>
-                            <div style={{
-                              fontWeight: '500',
-                              color: '#333',
-                              marginBottom: '0.25rem'
-                            }}>
-                              {typeInfo.label}
-                            </div>
+                            <div className="text-sm font-medium text-slate-800">{typeInfo.label}</div>
                             {txn.description && (
-                              <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                                {txn.description}
-                              </div>
+                              <div className="text-xs text-slate-500">{txn.description}</div>
                             )}
-                            <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+                            <div className="text-xs text-slate-400 mt-1">
                               {txn.transaction_date
                                 ? new Date(txn.transaction_date).toLocaleString('en-GB', {
                                     day: '2-digit',
@@ -1359,15 +1310,12 @@ const PettyCashUsersSection = ({
                             </div>
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{
-                            fontWeight: '600',
-                            color: txn.amount >= 0 ? '#28a745' : '#dc3545'
-                          }}>
+                        <div className="text-right">
+                          <div className={`text-sm font-semibold ${txn.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                             {txn.amount >= 0 ? '+' : ''}{formatCurrency(txn.amount)}
                           </div>
                           {txn.balance_after !== null && (
-                            <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                            <div className="text-xs text-slate-500">
                               {t('balance', 'Balance')}: {formatCurrency(txn.balance_after)}
                             </div>
                           )}
@@ -1377,43 +1325,25 @@ const PettyCashUsersSection = ({
                   })}
                 </div>
               ) : (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '1.5rem',
-                  color: '#666',
-                  background: 'white',
-                  borderRadius: '4px'
-                }}>
-                  <History size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
-                  <p>{t('noTransactionsFound', 'No transactions found')}</p>
+                <div className="flex flex-col items-center justify-center py-6 bg-white border border-slate-200 text-slate-400">
+                  <History size={32} className="mb-2 opacity-30" />
+                  <p className="text-sm">{t('noTransactionsFound', 'No transactions found')}</p>
                 </div>
               )}
             </div>
 
             {/* Deactivation Info (if deactivated) */}
             {!selectedUser.is_active && selectedUser.deactivation_reason && (
-              <div style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                background: '#fff3cd',
-                border: '1px solid #ffc107',
-                borderRadius: '8px'
-              }}>
-                <h4 style={{
-                  marginBottom: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  color: '#856404'
-                }}>
+              <div className="p-4 bg-amber-50 border border-amber-200">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-2">
                   <Ban size={16} />
                   {t('deactivationInfo', 'Deactivation Information')}
                 </h4>
-                <p style={{ margin: 0, color: '#856404' }}>
+                <p className="text-sm text-amber-700">
                   <strong>{t('reason', 'Reason')}:</strong> {selectedUser.deactivation_reason}
                 </p>
                 {selectedUser.deactivated_at && (
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#856404' }}>
+                  <p className="text-xs text-amber-600 mt-1">
                     <strong>{t('deactivatedOn', 'Deactivated on')}:</strong>{' '}
                     {new Date(selectedUser.deactivated_at).toLocaleString('en-GB')}
                   </p>
@@ -1491,7 +1421,7 @@ const PettyCashUsersSection = ({
             >
               {submitting ? (
                 <>
-                  <Loader2 size={16} className="spinning" />
+                  <Loader2 size={16} className="animate-spin" />
                   {t('deactivating', 'Deactivating...')}
                 </>
               ) : (

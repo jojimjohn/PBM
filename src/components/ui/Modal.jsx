@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { modalVariants, backdropVariants } from '../../config/animations';
 import { useTourBroadcast } from '../../context/TourContext';
-import './Modal.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Enhanced Modal Component
@@ -111,30 +111,33 @@ const Modal = ({
     }
   };
 
+  // Size mapping to Tailwind max-width classes
+  const sizeClasses = {
+    sm: 'max-w-sm',      // 400px
+    md: 'max-w-xl',      // 600px
+    lg: 'max-w-3xl',     // 800px
+    xl: 'max-w-5xl',     // 1000px
+    xxl: 'max-w-6xl',    // 1200px
+    full: 'max-w-[95vw]' // 95% viewport
+  };
+
   const modalContent = (
     <AnimatePresence mode="wait">
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - using Tailwind for core layout */}
           <motion.div
-            className="modal-overlay"
+            className="modal-overlay-tw"
             variants={backdropVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
             onClick={handleOverlayClick}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
           >
-            {/* Modal Container */}
+            {/* Modal Container - using Tailwind classes */}
             <motion.div
               ref={modalRef}
-              className={`modal-container modal-${size} ${className}`}
+              className={`modal-content-tw ${sizeClasses[size] || sizeClasses.md} ${className}`}
               variants={modalVariants}
               initial="hidden"
               animate="visible"
@@ -145,44 +148,40 @@ const Modal = ({
               aria-labelledby={title ? 'modal-title' : undefined}
               aria-describedby={description ? 'modal-description' : undefined}
               tabIndex={-1}
-              style={{
-                position: 'relative',
-                margin: 'auto',
-              }}
             >
-              {/* Header */}
+              {/* Header - using Tailwind classes */}
               {(title || showCloseButton) && (
-                <div className="modal-header">
-                  <div className="modal-header-content">
+                <div className="modal-header-tw">
+                  <div className="flex-1 min-w-0">
                     {title && (
-                      <h2 id="modal-title" className="modal-title">
+                      <h2 id="modal-title" className="modal-title-tw">
                         {title}
                       </h2>
                     )}
                     {description && (
-                      <p id="modal-description" className="modal-description">
+                      <p id="modal-description" className="text-sm text-slate-500 mt-1">
                         {description}
                       </p>
                     )}
                   </div>
                   {showCloseButton && (
                     <button
-                      className="modal-close-btn"
+                      className="modal-close-tw"
                       onClick={onClose}
                       aria-label="Close modal"
                       type="button"
                     >
-                      <X className="modal-close-icon" />
+                      <X size={20} />
                     </button>
                   )}
                 </div>
               )}
 
-              {/* Body */}
-              <div className="modal-body">{children}</div>
+              {/* Body - using Tailwind class */}
+              <div className="modal-body-tw">{children}</div>
 
-              {/* Footer */}
-              {footer && <div className="modal-footer">{footer}</div>}
+              {/* Footer - using Tailwind class */}
+              {footer && <div className="modal-footer-tw">{footer}</div>}
             </motion.div>
           </motion.div>
         </>

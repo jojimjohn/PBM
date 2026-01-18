@@ -6,7 +6,7 @@ import {
   Receipt, Calendar, Banknote, User, FileText,
   CreditCard, Hash, Building2, Image, X, Download, Upload, Trash2
 } from 'lucide-react';
-import './ExpenseViewModal.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Expense View Modal

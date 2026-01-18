@@ -44,7 +44,14 @@ export const SystemSettingsProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    document.body.className = theme;
+    // Tailwind dark mode requires 'dark' class on documentElement (html)
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
   }, [theme]);
 
   // Update system date every minute to keep it current

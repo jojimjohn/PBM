@@ -8,67 +8,73 @@ import { useNavigate } from 'react-router-dom'
 import workflowService from '../../../services/workflowService'
 import {
   AlertTriangle, CheckCircle, Package, FileText,
-  Banknote, TrendingUp, Clock, Calendar,
+  Banknote, Clock, Calendar,
   ArrowRight, Activity, Bell, Zap, CreditCard,
-  Trash2, Truck, Building2, BarChart3, Warehouse,
-  AlertCircle, RefreshCw, Users, ChevronRight, ChevronDown
+  Trash2, Truck, Building2, Warehouse,
+  RefreshCw, ChevronDown
 } from 'lucide-react'
-import '../styles/WorkflowDashboard.css'
 
 /**
- * Workflow Dashboard - Design Principles Applied
+ * Workflow Dashboard
  *
  * Design Direction: Sophistication & Trust + Data & Analysis
- * - Cool slate/blue-gray foundation
+ * - Cool slate foundation
  * - Borders-only depth strategy (like Linear, Stripe)
  * - Monospace numbers with tabular alignment
- * - Dense but readable information hierarchy
- * - 4px grid system throughout
+ * - 4px grid system
  * - Color for meaning only (status, urgency)
  */
 
-// Skeleton Loading Components
+// Skeleton Loading Components - using global skeleton classes
 const SkeletonStatCard = ({ mini = false }) => (
-  <div className={`stat-card skeleton ${mini ? 'mini' : ''}`}>
-    <div className="stat-header">
-      <div className="skeleton-icon"></div>
-      <div className="skeleton-text short"></div>
-    </div>
-    <div className="stat-body">
-      <div className="skeleton-number"></div>
-      <div className="stat-detail">
-        <div className="skeleton-text tiny"></div>
-        <div className="skeleton-text short"></div>
-      </div>
-    </div>
+  <div className={mini ? 'stat-card-mini' : 'stat-card'}>
+    {mini ? (
+      <>
+        <div className="skeleton-avatar w-7 h-7" />
+        <div className="flex flex-col gap-1.5 flex-1">
+          <div className="skeleton-text w-10 h-5" />
+          <div className="skeleton-text w-16 h-3" />
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="skeleton-avatar w-8 h-8" />
+          <div className="skeleton-text w-20" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="skeleton-title w-16" />
+          <div className="flex items-center gap-2">
+            <div className="skeleton-text w-12 h-5" />
+            <div className="skeleton-text w-20" />
+          </div>
+        </div>
+      </>
+    )}
   </div>
 )
 
 const SkeletonTaskItem = () => (
-  <div className="task-item skeleton">
-    <div className="task-icon-wrapper">
-      <div className="skeleton-icon"></div>
+  <div className="task-item">
+    <div className="skeleton-avatar w-8 h-8" />
+    <div className="flex-1 flex flex-col gap-2 min-w-0">
+      <div className="skeleton-text w-40" />
+      <div className="skeleton-text w-56 h-3" />
     </div>
-    <div className="task-content">
-      <div className="skeleton-text medium"></div>
-      <div className="skeleton-text long"></div>
-    </div>
-    <div className="task-actions">
-      <div className="skeleton-badge"></div>
-      <div className="skeleton-button"></div>
+    <div className="flex items-center gap-3 shrink-0">
+      <div className="skeleton-text w-12 h-5" />
+      <div className="skeleton w-20 h-8" />
     </div>
   </div>
 )
 
 const SkeletonActivityItem = () => (
-  <div className="activity-item skeleton">
-    <div className="activity-icon-wrapper">
-      <div className="skeleton-icon small"></div>
-    </div>
-    <div className="activity-content">
-      <div className="skeleton-text medium"></div>
-      <div className="skeleton-text long"></div>
-      <div className="skeleton-text tiny"></div>
+  <div className="activity-item">
+    <div className="skeleton-avatar w-7 h-7" />
+    <div className="flex-1 flex flex-col gap-2 min-w-0">
+      <div className="skeleton-text w-40" />
+      <div className="skeleton-text w-56 h-3" />
+      <div className="skeleton-text w-10 h-3" />
     </div>
   </div>
 )
@@ -77,41 +83,27 @@ const WorkflowDashboard = () => {
   const { user, selectedCompany } = useAuth()
   const { t } = useLocalization()
   const { formatDate } = useSystemSettings()
-  const { selectedProjectId, getProjectQueryParam, isProjectRequired, initialized: projectsInitialized, canViewAllProjects } = useProjects()
+  const { selectedProjectId, getProjectQueryParam, isProjectRequired, initialized: projectsInitialized } = useProjects()
   const navigate = useNavigate()
 
-  const [taskTypeTab, setTaskTypeTab] = useState('all') // 'all', 'purchases', 'sales', 'approvals', 'finance', 'alerts'
+  const [taskTypeTab, setTaskTypeTab] = useState('all')
   const [showNotifications, setShowNotifications] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
 
-  // Determine if caching should be enabled
   const cacheEnabled = projectsInitialized && (!isProjectRequired || selectedProjectId)
 
-  // Memoize project params to prevent unnecessary cache invalidations
   const projectParams = useMemo(() => {
     if (!cacheEnabled) return null
     return getProjectQueryParam()
   }, [cacheEnabled, selectedProjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cache configuration - shared across all dashboard data
   const cacheOptions = useMemo(() => ({
-    ttlMinutes: 5, // Data stays fresh for 5 minutes
+    ttlMinutes: 5,
     enabled: cacheEnabled,
     projectId: selectedProjectId || 'all',
     companyId: selectedCompany?.id || 'default'
   }), [cacheEnabled, selectedProjectId, selectedCompany?.id])
 
-  /**
-   * SESSION-LEVEL CACHING (Jan 2026):
-   * Tasks and notifications don't need real-time refresh on every navigation.
-   * Cache in sessionStorage with 5-minute TTL. Only fetch from API when:
-   * 1. First load (no cache)
-   * 2. Cache expired (>5 minutes old)
-   * 3. Manual refresh button clicked
-   * 4. Project/company context changed
-   */
-
-  // Pending Actions cache
   const {
     data: pendingActions,
     loading: actionsLoading,
@@ -122,7 +114,6 @@ const WorkflowDashboard = () => {
     { ...cacheOptions, defaultValue: { high: [], normal: [], stats: {} } }
   )
 
-  // Workflow Stats cache
   const {
     data: workflowStats,
     loading: statsLoading,
@@ -133,7 +124,6 @@ const WorkflowDashboard = () => {
     { ...cacheOptions, defaultValue: {} }
   )
 
-  // Activity Feed cache
   const {
     data: activityData,
     loading: activityLoading,
@@ -144,7 +134,6 @@ const WorkflowDashboard = () => {
     { ...cacheOptions, defaultValue: { activities: [] } }
   )
 
-  // Notifications cache
   const {
     data: notificationsData,
     loading: notificationsLoading,
@@ -155,23 +144,17 @@ const WorkflowDashboard = () => {
     { ...cacheOptions, defaultValue: { notifications: [], total: 0, hasUrgent: false } }
   )
 
-  // Derive activity feed array from cache data
   const activityFeed = activityData?.activities || []
   const notifications = notificationsData || { notifications: [], total: 0, hasUrgent: false }
 
-  // Overall loading state - only show skeleton on initial load (no cached data)
   const loading = (actionsLoading && !pendingActions?.stats) ||
                   (statsLoading && !workflowStats?.collections)
 
-  // Manual refresh - refreshes all caches
   const handleRefresh = useCallback(async () => {
-    console.log('[Dashboard] Manual refresh triggered')
-    // Stagger refreshes to prevent DB overload (same as before)
     await Promise.all([refreshActions(), refreshStats()])
     await Promise.all([refreshActivity(), refreshNotifications()])
   }, [refreshActions, refreshStats, refreshActivity, refreshNotifications])
 
-  // Task type groupings for tabs
   const taskTypeGroups = {
     purchases: ['wcn_finalization', 'po_receipt', 'generate_bill'],
     sales: ['sales_delivery', 'customer_payment'],
@@ -180,7 +163,6 @@ const WorkflowDashboard = () => {
     alerts: ['low_stock', 'petty_cash_expiry', 'petty_cash_low_balance', 'contract_renewal']
   }
 
-  // Filter tasks by type group
   const getFilteredTasks = () => {
     const allTasks = [...(pendingActions?.high || []), ...(pendingActions?.normal || [])]
     if (taskTypeTab === 'all') return allTasks
@@ -188,7 +170,6 @@ const WorkflowDashboard = () => {
     return allTasks.filter(task => allowedTypes.includes(task.type))
   }
 
-  // Count tasks per group
   const getTaskCountByGroup = (group) => {
     if (group === 'all') return (pendingActions?.stats?.totalPending || 0)
     const allTasks = [...(pendingActions?.high || []), ...(pendingActions?.normal || [])]
@@ -207,57 +188,76 @@ const WorkflowDashboard = () => {
 
   const getActionIcon = (type) => {
     const iconProps = { size: 18, strokeWidth: 1.5 }
-    switch (type) {
-      case 'wcn_finalization':
-        return <CheckCircle {...iconProps} />
-      case 'po_receipt':
-        return <Package {...iconProps} />
-      case 'generate_bill':
-        return <FileText {...iconProps} />
-      case 'record_payment':
-        return <Banknote {...iconProps} />
-      case 'contract_renewal':
-        return <Calendar {...iconProps} />
-      case 'low_stock':
-        return <Warehouse {...iconProps} />
-      case 'petty_cash_expiry':
-      case 'petty_cash_low_balance':
-      case 'expense_approval':
-        return <CreditCard {...iconProps} />
-      case 'wastage_approval':
-        return <Trash2 {...iconProps} />
-      case 'sales_delivery':
-        return <Truck {...iconProps} />
-      case 'bank_reconciliation':
-        return <Building2 {...iconProps} />
-      default:
-        return <Bell {...iconProps} />
+    const icons = {
+      wcn_finalization: <CheckCircle {...iconProps} />,
+      po_receipt: <Package {...iconProps} />,
+      generate_bill: <FileText {...iconProps} />,
+      record_payment: <Banknote {...iconProps} />,
+      contract_renewal: <Calendar {...iconProps} />,
+      low_stock: <Warehouse {...iconProps} />,
+      petty_cash_expiry: <CreditCard {...iconProps} />,
+      petty_cash_low_balance: <CreditCard {...iconProps} />,
+      expense_approval: <CreditCard {...iconProps} />,
+      wastage_approval: <Trash2 {...iconProps} />,
+      sales_delivery: <Truck {...iconProps} />,
+      bank_reconciliation: <Building2 {...iconProps} />
     }
+    return icons[type] || <Bell {...iconProps} />
   }
 
   const getActivityIcon = (type) => {
     const iconProps = { size: 14, strokeWidth: 1.5 }
-    switch (type) {
-      case 'wcn_finalization':
-        return <CheckCircle {...iconProps} />
-      case 'po_receipt':
-        return <Package {...iconProps} />
-      case 'bill_generation':
-        return <FileText {...iconProps} />
-      case 'payment':
-        return <Banknote {...iconProps} />
-      case 'wastage_approved':
-        return <Trash2 {...iconProps} />
-      case 'expense_approved':
-        return <CreditCard {...iconProps} />
-      case 'sales_delivered':
-        return <Truck {...iconProps} />
-      case 'bank_deposit':
-      case 'bank_withdrawal':
-        return <Building2 {...iconProps} />
-      default:
-        return <Activity {...iconProps} />
+    const icons = {
+      wcn_finalization: <CheckCircle {...iconProps} />,
+      po_receipt: <Package {...iconProps} />,
+      bill_generation: <FileText {...iconProps} />,
+      payment: <Banknote {...iconProps} />,
+      wastage_approved: <Trash2 {...iconProps} />,
+      expense_approved: <CreditCard {...iconProps} />,
+      sales_delivered: <Truck {...iconProps} />,
+      bank_deposit: <Building2 {...iconProps} />,
+      bank_withdrawal: <Building2 {...iconProps} />
     }
+    return icons[type] || <Activity {...iconProps} />
+  }
+
+  // Color utilities - using global icon-bg-* classes from index.css
+  const getTaskIconStyle = (type) => {
+    const styles = {
+      wcn_finalization: 'icon-bg-invoices',
+      po_receipt: 'icon-bg-collections',
+      generate_bill: 'icon-bg-orders',
+      record_payment: 'icon-bg-alerts',
+      contract_renewal: 'icon-bg-contracts'
+    }
+    return styles[type] || 'bg-slate-100 text-slate-500'
+  }
+
+  const getActivityIconStyle = (type) => {
+    const styles = {
+      wcn_finalization: 'icon-bg-invoices',
+      po_receipt: 'icon-bg-collections',
+      bill_generation: 'icon-bg-orders',
+      payment: 'icon-bg-invoices'
+    }
+    return styles[type] || 'bg-slate-100 text-slate-500'
+  }
+
+  // Global icon background classes - change in tailwind.config.js to update everywhere
+  const getStatIconStyle = (type) => {
+    const styles = {
+      collections: 'icon-bg-collections',
+      orders: 'icon-bg-orders',
+      invoices: 'icon-bg-invoices',
+      alerts: 'icon-bg-alerts',
+      contracts: 'icon-bg-contracts',
+      inventory: 'icon-bg-inventory',
+      'petty-cash': 'icon-bg-petty-cash',
+      wastage: 'icon-bg-wastage',
+      sales: 'icon-bg-sales',
+      banking: 'icon-bg-banking'
+    }
+    return styles[type] || 'bg-slate-100 text-slate-500'
   }
 
   const formatTimeAgo = (timestamp) => {
@@ -280,51 +280,67 @@ const WorkflowDashboard = () => {
   }
 
   return (
-    <div className="workflow-dashboard">
-      {/* Header Section */}
-      <header className="dashboard-header-section">
-        <div className="header-main">
-          <div className="header-greeting">
-            <h1>{formatGreeting()}, {user?.name?.split(' ')[0]}</h1>
-            <p className="header-subtitle">{selectedCompany?.name}</p>
+    <div className="page-container">
+      {/* Header */}
+      <header className="page-header w-full">
+        <div className="flex justify-between items-start w-full gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 mb-1">
+              {formatGreeting()}, {user?.name?.split(' ')[0]}
+            </h1>
+            <p className="page-subtitle">{selectedCompany?.name}</p>
           </div>
-          <div className="header-actions">
-            <button className="btn-refresh" onClick={handleRefresh} disabled={loading}>
-              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-              <span>Refresh</span>
-            </button>
-          </div>
+          <button
+            className="refresh-data-btn"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <span>{t('refresh', 'Refresh')}</span>
+          </button>
         </div>
       </header>
 
       {/* Notifications Banner */}
       {notifications.total > 0 && (
-        <section className="notifications-banner">
-          <div className="notification-toggle" onClick={() => setShowNotifications(!showNotifications)}>
-            <div className="notification-indicator">
-              <Bell size={16} className={notifications.hasUrgent ? 'urgent' : ''} />
-              <span className="notification-count">{notifications.total}</span>
+        <section className="panel mb-6">
+          <div
+            className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <div className="flex items-center gap-2">
+              <Bell size={16} className={notifications.hasUrgent ? 'text-amber-500' : 'text-slate-400'} />
+              <span className="text-xs font-semibold font-mono text-white bg-amber-500 px-1.5 py-0.5 rounded min-w-[18px] text-center">
+                {notifications.total}
+              </span>
             </div>
-            <span className="notification-label">
+            <span className="flex-1 text-sm font-medium text-slate-600">
               {notifications.hasUrgent ? 'Urgent notifications' : 'Notifications'}
             </span>
-            <ChevronDown size={16} className={`chevron ${showNotifications ? 'open' : ''}`} />
+            <ChevronDown size={16} className={`text-slate-400 transition-transform ${showNotifications ? 'rotate-180' : ''}`} />
           </div>
 
           {showNotifications && (
-            <div className="notifications-dropdown">
+            <div className="border-t border-slate-100">
               {notifications.notifications.map((notif, index) => (
                 <div
                   key={index}
-                  className={`notification-item ${notif.severity}`}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors border-l-2 ${
+                    notif.severity === 'error' ? 'border-l-rose-500 bg-rose-50/50' :
+                    notif.severity === 'warning' ? 'border-l-amber-500 bg-amber-50/50' :
+                    'border-l-blue-500'
+                  }`}
                   onClick={() => navigate(notif.route)}
                 >
-                  <div className={`notification-dot ${notif.severity}`} />
-                  <div className="notification-body">
-                    <span className="notification-title">{notif.title}</span>
-                    <span className="notification-message">{notif.message}</span>
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    notif.severity === 'error' ? 'bg-rose-500' :
+                    notif.severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
+                  }`} />
+                  <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                    <span className="text-sm font-semibold text-slate-900">{notif.title}</span>
+                    <span className="text-xs text-slate-500 truncate">{notif.message}</span>
                   </div>
-                  <ArrowRight size={14} />
+                  <ArrowRight size={14} className="text-slate-400 shrink-0" />
                 </div>
               ))}
             </div>
@@ -332,9 +348,9 @@ const WorkflowDashboard = () => {
         </section>
       )}
 
-      {/* Primary Stats Grid */}
-      <section className="stats-section">
-        <div className="stats-grid primary">
+      {/* Primary Stats Grid - Reference Design: border-based grid */}
+      <section className="mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border border-slate-200">
           {loading ? (
             <>
               <SkeletonStatCard />
@@ -344,74 +360,80 @@ const WorkflowDashboard = () => {
             </>
           ) : (
             <>
-              <article className="stat-card" onClick={() => navigate('/purchase')}>
-                <div className="stat-header">
-                  <div className="stat-icon collections">
-                    <Package size={18} strokeWidth={1.5} />
+              <article
+                className="stat-card-primary stat-card-collections"
+                onClick={() => navigate('/purchase')}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="stat-icon-lg bg-slate-900 text-white">
+                    <Package size={20} strokeWidth={1.5} />
                   </div>
-                  <span className="stat-label">Collections</span>
+                  <span className="stat-label-right">{t('collections', 'Collections')}</span>
                 </div>
-                <div className="stat-body">
-                  <span className="stat-number">{workflowStats.collections?.total || 0}</span>
-                  <div className="stat-detail">
-                    <span className="stat-highlight warning">
-                      {workflowStats.collections?.pendingWCN || 0}
-                    </span>
-                    <span className="stat-text">pending WCN</span>
-                  </div>
-                </div>
-              </article>
-
-              <article className="stat-card" onClick={() => navigate('/purchase')}>
-                <div className="stat-header">
-                  <div className="stat-icon orders">
-                    <FileText size={18} strokeWidth={1.5} />
-                  </div>
-                  <span className="stat-label">Purchase Orders</span>
-                </div>
-                <div className="stat-body">
-                  <span className="stat-number">{workflowStats.purchaseOrders?.total || 0}</span>
-                  <div className="stat-detail">
-                    <span className="stat-highlight info">
-                      {workflowStats.purchaseOrders?.autoGenerated || 0}
-                    </span>
-                    <span className="stat-text">auto-generated</span>
+                <div className="mt-10">
+                  <span className="stat-value-lg">
+                    {workflowStats.collections?.total || 0}
+                  </span>
+                  <div className="mt-4 inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-accent cursor-pointer hover:underline">
+                    {workflowStats.collections?.pendingWCN || 0} {t('pendingWCN', 'PENDING WCN')}
+                    <ArrowRight size={12} className="ml-1" />
                   </div>
                 </div>
               </article>
 
-              <article className="stat-card" onClick={() => navigate('/purchase')}>
-                <div className="stat-header">
-                  <div className="stat-icon invoices">
-                    <Banknote size={18} strokeWidth={1.5} />
+              <article
+                className="stat-card-primary stat-card-orders"
+                onClick={() => navigate('/purchase')}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="stat-icon-lg bg-slate-100 text-slate-900">
+                    <FileText size={20} strokeWidth={1.5} />
                   </div>
-                  <span className="stat-label">Invoices</span>
+                  <span className="stat-label-right">{t('orders', 'Orders')}</span>
                 </div>
-                <div className="stat-body">
-                  <span className="stat-number">{workflowStats.invoices?.unpaid || 0}</span>
-                  <div className="stat-detail">
-                    <span className="stat-highlight danger">
-                      OMR {(workflowStats.invoices?.outstandingAmount || 0).toLocaleString()}
-                    </span>
-                    <span className="stat-text">outstanding</span>
+                <div className="mt-10">
+                  <span className="stat-value-lg">
+                    {workflowStats.purchaseOrders?.total || 0}
+                  </span>
+                  <div className="mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    {workflowStats.purchaseOrders?.autoGenerated || 0} {t('autoGenerated', 'AUTO-GENERATED')}
                   </div>
                 </div>
               </article>
 
-              <article className="stat-card highlight">
-                <div className="stat-header">
-                  <div className="stat-icon alerts">
-                    <AlertTriangle size={18} strokeWidth={1.5} />
+              <article
+                className="stat-card-primary stat-card-invoices"
+                onClick={() => navigate('/purchase')}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="stat-icon-lg bg-slate-100 text-slate-900">
+                    <Banknote size={20} strokeWidth={1.5} />
                   </div>
-                  <span className="stat-label">Pending Actions</span>
+                  <span className="stat-label-right">{t('invoices', 'Invoices')}</span>
                 </div>
-                <div className="stat-body">
-                  <span className="stat-number">{pendingActions.stats.totalPending || 0}</span>
-                  <div className="stat-detail">
-                    <span className="stat-highlight high">
-                      {pendingActions.stats.highPriority || 0}
-                    </span>
-                    <span className="stat-text">high priority</span>
+                <div className="mt-10">
+                  <span className="stat-value-lg">
+                    {workflowStats.invoices?.unpaid || 0}
+                  </span>
+                  <div className="mt-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    OMR {(workflowStats.invoices?.outstandingAmount || 0).toLocaleString()} {t('outstanding', 'OUTSTANDING')}
+                  </div>
+                </div>
+              </article>
+
+              <article className="stat-card-primary stat-card-alerts">
+                <div className="flex items-start justify-between">
+                  <div className="stat-icon-lg bg-red-100 text-red-600">
+                    <AlertTriangle size={20} strokeWidth={1.5} />
+                  </div>
+                  <span className="stat-label-right">{t('actions', 'Actions')}</span>
+                </div>
+                <div className="mt-10">
+                  <span className="stat-value-lg text-red-600">
+                    {pendingActions.stats.totalPending || 0}
+                  </span>
+                  <div className="mt-4 text-[10px] font-bold uppercase tracking-widest text-red-600">
+                    {t('urgentReviewRequired', 'URGENT REVIEW REQUIRED')}
                   </div>
                 </div>
               </article>
@@ -420,9 +442,9 @@ const WorkflowDashboard = () => {
         </div>
       </section>
 
-      {/* Secondary Stats (Mini Cards) */}
-      <section className="stats-section secondary">
-        <div className="stats-grid mini">
+      {/* Secondary Stats (Mini Cards) - Reference Design: border-based grid */}
+      <section className="mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 border-t border-l border-slate-200">
           {loading ? (
             <>
               <SkeletonStatCard mini />
@@ -434,271 +456,191 @@ const WorkflowDashboard = () => {
             </>
           ) : (
             <>
-              {workflowStats.contracts && (
-                <article className="stat-card mini" onClick={() => navigate('/contracts')}>
-                  <div className="stat-icon-mini contracts">
-                    <Calendar size={14} strokeWidth={1.5} />
-                  </div>
-                  <div className="stat-info-mini">
-                    <span className="stat-number-mini">{workflowStats.contracts?.active || 0}</span>
-                    <span className="stat-label-mini">Contracts</span>
-                  </div>
+              <article
+                className="stat-card-secondary"
+                onClick={() => navigate('/contracts')}
+              >
+                <p className="stat-label-secondary">{t('contracts', 'Contracts')}</p>
+                <div className="flex items-end justify-between">
+                  <span className="stat-value-secondary">
+                    {String(workflowStats.contracts?.active || 0).padStart(2, '0')}
+                  </span>
                   {workflowStats.contracts?.expiringSoon > 0 && (
-                    <span className="stat-badge-mini warning">{workflowStats.contracts.expiringSoon}</span>
+                    <span className="badge badge-pending">{t('pending', 'PENDING')}</span>
                   )}
-                </article>
-              )}
+                </div>
+              </article>
 
-              {workflowStats.inventory && (
-                <article className="stat-card mini" onClick={() => navigate('/inventory')}>
-                  <div className="stat-icon-mini inventory">
-                    <Warehouse size={14} strokeWidth={1.5} />
-                  </div>
-                  <div className="stat-info-mini">
-                    <span className="stat-number-mini">{workflowStats.inventory?.totalItems || 0}</span>
-                    <span className="stat-label-mini">Inventory</span>
-                  </div>
+              <article
+                className="stat-card-secondary"
+                onClick={() => navigate('/inventory')}
+              >
+                <p className="stat-label-secondary">{t('inventory', 'Inventory')}</p>
+                <div className="flex items-end justify-between">
+                  <span className="stat-value-secondary">
+                    {String(workflowStats.inventory?.totalItems || 0).padStart(2, '0')}
+                  </span>
                   {workflowStats.inventory?.lowStock > 0 && (
-                    <span className="stat-badge-mini warning">{workflowStats.inventory.lowStock}</span>
+                    <span className="badge badge-critical">{t('critical', 'CRITICAL')}</span>
                   )}
-                </article>
-              )}
+                </div>
+              </article>
 
-              {workflowStats.pettyCash && (
-                <article className="stat-card mini" onClick={() => navigate('/petty-cash')}>
-                  <div className="stat-icon-mini petty-cash">
-                    <CreditCard size={14} strokeWidth={1.5} />
-                  </div>
-                  <div className="stat-info-mini">
-                    <span className="stat-number-mini">{workflowStats.pettyCash?.activeCards || 0}</span>
-                    <span className="stat-label-mini">Petty Cash</span>
-                  </div>
-                  {workflowStats.pettyCash?.pendingApprovals > 0 && (
-                    <span className="stat-badge-mini info">{workflowStats.pettyCash.pendingApprovals}</span>
-                  )}
-                </article>
-              )}
+              <article
+                className="stat-card-secondary"
+                onClick={() => navigate('/petty-cash')}
+              >
+                <p className="stat-label-secondary">{t('pettyCash', 'Petty Cash')}</p>
+                <div className="flex items-end justify-between">
+                  <span className="stat-value-secondary">
+                    {String(workflowStats.pettyCash?.activeCards || 0).padStart(2, '0')}
+                  </span>
+                </div>
+              </article>
 
-              {workflowStats.wastage && (
-                <article className="stat-card mini" onClick={() => navigate('/wastage')}>
-                  <div className="stat-icon-mini wastage">
-                    <Trash2 size={14} strokeWidth={1.5} />
-                  </div>
-                  <div className="stat-info-mini">
-                    <span className="stat-number-mini">{workflowStats.wastage?.total || 0}</span>
-                    <span className="stat-label-mini">Wastage</span>
-                  </div>
-                  {workflowStats.wastage?.pending > 0 && (
-                    <span className="stat-badge-mini warning">{workflowStats.wastage.pending}</span>
-                  )}
-                </article>
-              )}
+              <article
+                className="stat-card-secondary"
+                onClick={() => navigate('/wastage')}
+              >
+                <p className="stat-label-secondary">{t('wastage', 'Wastage')}</p>
+                <div className="flex items-end justify-between">
+                  <span className="stat-value-secondary">
+                    {String(workflowStats.wastage?.total || 0).padStart(2, '0')}
+                  </span>
+                </div>
+              </article>
 
-              {workflowStats.sales && (
-                <article className="stat-card mini" onClick={() => navigate('/sales')}>
-                  <div className="stat-icon-mini sales">
-                    <Truck size={14} strokeWidth={1.5} />
-                  </div>
-                  <div className="stat-info-mini">
-                    <span className="stat-number-mini">{workflowStats.sales?.total || 0}</span>
-                    <span className="stat-label-mini">Sales</span>
-                  </div>
+              <article
+                className="stat-card-secondary"
+                onClick={() => navigate('/sales')}
+              >
+                <p className="stat-label-secondary">{t('salesDesk', 'Sales Desk')}</p>
+                <div className="flex items-end justify-between">
+                  <span className="stat-value-secondary">
+                    {String(workflowStats.sales?.total || 0).padStart(2, '0')}
+                  </span>
                   {workflowStats.sales?.pendingDelivery > 0 && (
-                    <span className="stat-badge-mini info">{workflowStats.sales.pendingDelivery}</span>
+                    <span className="badge badge-active">{t('active', 'ACTIVE')}</span>
                   )}
-                </article>
-              )}
+                </div>
+              </article>
 
-              {workflowStats.banking && (
-                <article className="stat-card mini" onClick={() => navigate('/banking')}>
-                  <div className="stat-icon-mini banking">
-                    <Building2 size={14} strokeWidth={1.5} />
-                  </div>
-                  <div className="stat-info-mini">
-                    <span className="stat-number-mini">{workflowStats.banking?.totalAccounts || 0}</span>
-                    <span className="stat-label-mini">Banking</span>
-                  </div>
-                  {workflowStats.banking?.unreconciled > 0 && (
-                    <span className="stat-badge-mini warning">{workflowStats.banking.unreconciled}</span>
-                  )}
-                </article>
-              )}
+              <article
+                className="stat-card-secondary"
+                onClick={() => navigate('/banking')}
+              >
+                <p className="stat-label-secondary">{t('banking', 'Banking')}</p>
+                <div className="flex items-end justify-between">
+                  <span className="stat-value-secondary">
+                    {String(workflowStats.banking?.totalAccounts || 0).padStart(2, '0')}
+                  </span>
+                </div>
+              </article>
             </>
           )}
         </div>
       </section>
 
       {/* Main Content Grid */}
-      <div className="content-grid">
-        {/* Tasks Panel */}
-        <section className="panel tasks-panel">
-          <div className="panel-header">
-            <div className="panel-title">
-              <Bell size={18} strokeWidth={1.5} />
-              <h2>Your Tasks</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
+        {/* Tasks Panel - Reference Design: Title and tabs on same row */}
+        <section className="panel">
+          <div className="p-8 border-b border-slate-200 flex items-center justify-between">
+            <h2 className="text-xl font-display font-bold uppercase tracking-tight">{t('yourTasks', 'Your Tasks')}</h2>
+            <div className="workflow-tabs">
+              {[
+                { id: 'all', labelKey: 'all', fallback: 'ALL' },
+                { id: 'purchases', labelKey: 'purchase', fallback: 'PURCHASES' },
+                { id: 'sales', labelKey: 'sales', fallback: 'SALES' },
+                { id: 'finance', labelKey: 'cashFlow', fallback: 'FINANCE' },
+                { id: 'approvals', labelKey: 'pendingApprovalsCard', fallback: 'APPROVALS' },
+                { id: 'alerts', labelKey: 'alerts', fallback: 'ALERTS' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  className={`workflow-tab ${taskTypeTab === tab.id ? 'workflow-tab-active' : ''}`}
+                  onClick={() => setTaskTypeTab(tab.id)}
+                >
+                  {t(tab.labelKey, tab.fallback).toUpperCase()}{tab.id === 'all' ? ` (${getTaskCountByGroup('all')})` : ''}
+                </button>
+              ))}
             </div>
-            <span className="panel-count">
-              {loading ? '...' : pendingActions.stats.totalPending || 0}
-            </span>
           </div>
 
-          {/* Task Type Tabs - Group tasks by category */}
-          <div className="task-type-tabs">
-            <button
-              className={`task-type-tab ${taskTypeTab === 'all' ? 'active' : ''}`}
-              onClick={() => setTaskTypeTab('all')}
-            >
-              <span className="tab-label">All</span>
-              <span className="tab-count">{getTaskCountByGroup('all')}</span>
-            </button>
-            <button
-              className={`task-type-tab ${taskTypeTab === 'purchases' ? 'active' : ''}`}
-              onClick={() => setTaskTypeTab('purchases')}
-            >
-              <Package size={12} />
-              <span className="tab-label">Purchases</span>
-              {getTaskCountByGroup('purchases') > 0 && (
-                <span className="tab-count">{getTaskCountByGroup('purchases')}</span>
-              )}
-            </button>
-            <button
-              className={`task-type-tab ${taskTypeTab === 'sales' ? 'active' : ''}`}
-              onClick={() => setTaskTypeTab('sales')}
-            >
-              <Truck size={12} />
-              <span className="tab-label">Sales</span>
-              {getTaskCountByGroup('sales') > 0 && (
-                <span className="tab-count">{getTaskCountByGroup('sales')}</span>
-              )}
-            </button>
-            <button
-              className={`task-type-tab ${taskTypeTab === 'approvals' ? 'active' : ''}`}
-              onClick={() => setTaskTypeTab('approvals')}
-            >
-              <CheckCircle size={12} />
-              <span className="tab-label">Approvals</span>
-              {getTaskCountByGroup('approvals') > 0 && (
-                <span className="tab-count">{getTaskCountByGroup('approvals')}</span>
-              )}
-            </button>
-            <button
-              className={`task-type-tab ${taskTypeTab === 'finance' ? 'active' : ''}`}
-              onClick={() => setTaskTypeTab('finance')}
-            >
-              <Banknote size={12} />
-              <span className="tab-label">Finance</span>
-              {getTaskCountByGroup('finance') > 0 && (
-                <span className="tab-count">{getTaskCountByGroup('finance')}</span>
-              )}
-            </button>
-            <button
-              className={`task-type-tab ${taskTypeTab === 'alerts' ? 'active' : ''}`}
-              onClick={() => setTaskTypeTab('alerts')}
-            >
-              <AlertTriangle size={12} />
-              <span className="tab-label">Alerts</span>
-              {getTaskCountByGroup('alerts') > 0 && (
-                <span className="tab-count">{getTaskCountByGroup('alerts')}</span>
-              )}
-            </button>
-          </div>
-
-          <div className="panel-body">
-            {/* Loading State */}
+          <div className="max-h-[500px] overflow-y-auto">
             {loading && (
-              <div className="task-list">
+              <>
                 <SkeletonTaskItem />
                 <SkeletonTaskItem />
                 <SkeletonTaskItem />
+              </>
+            )}
+
+            {!loading && getFilteredTasks().map((action, index) => (
+              <div
+                key={`task-${action.entityId}-${index}`}
+                className={action.urgency === 'high' ? 'task-item-urgent' : 'task-item'}
+              >
+                <div className={`task-icon ${getTaskIconStyle(action.type)}`}>
+                  {getActionIcon(action.type)}
+                </div>
+                <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                  <span className="task-title">{action.title}</span>
+                  <span className="task-desc">{action.description}</span>
+                  {action.metadata && (
+                    <div className="task-meta">
+                      {action.metadata.supplierName && <span>{action.metadata.supplierName}</span>}
+                      {action.metadata.contractNumber && <span>Contract: {action.metadata.contractNumber}</span>}
+                      {action.metadata.cardName && <span>Card: {action.metadata.cardName}</span>}
+                      {action.metadata.materialName && <span>{action.metadata.materialName}</span>}
+                      {action.metadata.customerName && <span>{action.metadata.customerName}</span>}
+                      {action.metadata.totalCost && <span className="font-mono">OMR {parseFloat(action.metadata.totalCost).toFixed(3)}</span>}
+                      {action.metadata.amount && <span className="font-mono">OMR {parseFloat(action.metadata.amount).toFixed(3)}</span>}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {action.daysPending !== undefined && (
+                    <span className={`badge ${action.urgency === 'high' ? 'badge-error' : 'badge-neutral'}`}>
+                      {action.urgency === 'high' ? <Zap size={10} /> : <Clock size={10} />}
+                      {action.daysPending}d
+                    </span>
+                  )}
+                  <button
+                    className={action.urgency === 'high' ? 'btn-tw-primary btn-tw-sm' : 'btn-tw-secondary btn-tw-sm'}
+                    onClick={() => handleActionClick(action)}
+                  >
+                    {action.actionLabel}
+                    {action.urgency === 'high' && <ArrowRight size={12} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {!loading && getFilteredTasks().length === 0 && taskTypeTab !== 'all' && (
+              <div className="empty-state py-8">
+                <CheckCircle size={32} strokeWidth={1} className="empty-state-icon" />
+                <p className="empty-state-text">No {taskTypeTab} tasks</p>
               </div>
             )}
 
-            {/* Task List - Filtered by task type */}
-            {!loading && (
-              <div className="task-list">
-                {getFilteredTasks().map((action, index) => (
-                  <div key={`task-${action.entityId}-${index}`} className={`task-item ${action.urgency === 'high' ? 'high' : ''}`}>
-                    <div className="task-icon-wrapper" data-type={action.type}>
-                      {getActionIcon(action.type)}
-                    </div>
-                    <div className="task-content">
-                      <span className="task-title">{action.title}</span>
-                      <span className="task-description">{action.description}</span>
-                      {action.metadata && (
-                        <div className="task-meta">
-                          {action.metadata.supplierName && (
-                            <span>{action.metadata.supplierName}</span>
-                          )}
-                          {action.metadata.contractNumber && (
-                            <span>Contract: {action.metadata.contractNumber}</span>
-                          )}
-                          {action.metadata.cardName && (
-                            <span>Card: {action.metadata.cardName}</span>
-                          )}
-                          {action.metadata.materialName && (
-                            <span>{action.metadata.materialName}</span>
-                          )}
-                          {action.metadata.customerName && (
-                            <span>{action.metadata.customerName}</span>
-                          )}
-                          {action.metadata.totalCost && (
-                            <span>OMR {parseFloat(action.metadata.totalCost).toFixed(3)}</span>
-                          )}
-                          {action.metadata.amount && (
-                            <span>OMR {parseFloat(action.metadata.amount).toFixed(3)}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="task-actions">
-                      {action.daysPending !== undefined && (
-                        <span className={`urgency-badge ${action.urgency === 'high' ? 'high' : ''}`}>
-                          {action.urgency === 'high' ? <Zap size={10} /> : <Clock size={10} />}
-                          {action.daysPending}d
-                        </span>
-                      )}
-                      <button
-                        className={`btn-task-action ${action.urgency === 'high' ? 'primary' : ''}`}
-                        onClick={() => handleActionClick(action)}
-                      >
-                        {action.actionLabel}
-                        {action.urgency === 'high' && <ArrowRight size={12} />}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Empty State for filtered view */}
-                {getFilteredTasks().length === 0 && taskTypeTab !== 'all' && (
-                  <div className="empty-state small">
-                    <CheckCircle size={32} strokeWidth={1} />
-                    <p>No {taskTypeTab} tasks</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Empty State - All */}
             {!loading && pendingActions.high.length === 0 && pendingActions.normal.length === 0 && (
               <div className="empty-state">
-                <CheckCircle size={40} strokeWidth={1} />
-                <h3>All caught up!</h3>
-                <p>No pending actions at the moment.</p>
+                <CheckCircle size={40} strokeWidth={1} className="text-emerald-500 mb-4" />
+                <h3 className="empty-state-title">All caught up!</h3>
+                <p className="empty-state-text">No pending actions at the moment.</p>
               </div>
             )}
           </div>
         </section>
 
         {/* Activity Feed Panel */}
-        <section className="panel activity-panel">
-          <div className="panel-header">
-            <div className="panel-title">
-              <Activity size={18} strokeWidth={1.5} />
-              <h2>Recent Activity</h2>
-            </div>
+        <section className="panel">
+          <div className="p-8 border-b border-slate-200">
+            <h2 className="text-xl font-display font-bold uppercase tracking-tight">{t('recentActivity', 'Recent Activity')}</h2>
           </div>
 
-          <div className="panel-body scrollable">
+          <div className="max-h-[500px] overflow-y-auto">
             {loading ? (
               <>
                 <SkeletonActivityItem />
@@ -714,20 +656,20 @@ const WorkflowDashboard = () => {
                   className="activity-item"
                   onClick={() => navigate(activity.route)}
                 >
-                  <div className="activity-icon-wrapper" data-type={activity.type}>
+                  <div className={`activity-icon ${getActivityIconStyle(activity.type)}`}>
                     {getActivityIcon(activity.type)}
                   </div>
-                  <div className="activity-content">
+                  <div className="flex-1 flex flex-col gap-0.5 min-w-0">
                     <span className="activity-title">{activity.title}</span>
-                    <span className="activity-description">{activity.description}</span>
+                    <span className="activity-desc">{activity.description}</span>
                     <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="empty-state small">
-                <Activity size={28} strokeWidth={1} />
-                <p>No recent activity</p>
+              <div className="empty-state py-8">
+                <Activity size={28} strokeWidth={1} className="empty-state-icon" />
+                <p className="empty-state-text">No recent activity</p>
               </div>
             )}
           </div>

@@ -15,7 +15,7 @@ import CollectionStats from '../../../components/purchase/CollectionStats'
 import ExpenseStats from '../../../components/purchase/ExpenseStats'
 import WorkflowStepper from '../../../components/purchase/WorkflowStepper'
 import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, Download, Banknote, MapPin, Edit3 } from 'lucide-react'
-import '../styles/Purchase.css'
+// CSS migrated to Tailwind - design-system.css provides base classes
 
 const Purchase = () => {
   const { selectedCompany } = useAuth()
@@ -279,7 +279,7 @@ const Purchase = () => {
   }
 
   return (
-    <div className="purchase-page">
+    <div className="p-0">
       <div className="page-header">
         <div className="header-left">
           <h1>Purchase Management</h1>
@@ -288,7 +288,7 @@ const Purchase = () => {
       </div>
 
       {/* Task 3.7a: Render tab-specific statistics */}
-      <div className="stats-section">
+      <div className="mb-6">
         {renderTabStatistics(activeTab)}
       </div>
 
@@ -298,7 +298,7 @@ const Purchase = () => {
         onStepClick={(tab) => setActiveTab(tab)}
       />
 
-      <div className="purchase-content">
+      <div className="flex flex-col gap-8">
         {/* Tabs ordered by workflow: Collections first → Purchase Orders → Expenses → Vendors */}
         <div className="tab-navigation">
           <button
@@ -330,27 +330,13 @@ const Purchase = () => {
             </svg>
             Expenses
           </button>
-          <button
-            className={`tab-btn ${activeTab === 'vendors' ? 'active' : ''}`}
-            onClick={() => {
-              // Redirect to suppliers module instead of showing vendors tab
-              window.location.href = '/suppliers';
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="8.5" cy="7" r="4" />
-              <path d="m22 2-5 10-5-5 10-5z" />
-            </svg>
-            Vendor Management
-          </button>
         </div>
 
 
         {activeTab === 'orders' && (
-          <div className="purchase-orders">
-            <div className="tab-header">
-              <h3>Purchase Orders</h3>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Purchase Orders</h3>
               <button className="btn btn-primary" onClick={handleCreatePurchaseOrder}>
                 <Plus size={18} />
                 {t('newPurchaseOrder')}
@@ -371,9 +357,9 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value, row) => (
-                    <div className="order-id-cell">
-                      <strong>{value}</strong>
-                      <small>{row.date}</small>
+                    <div className="flex flex-col">
+                      <strong className="text-gray-900 font-semibold">{value}</strong>
+                      <small className="text-xs text-gray-500">{row.date}</small>
                     </div>
                   )
                 },
@@ -385,14 +371,14 @@ const Purchase = () => {
                   render: (value, row) => {
                     if (value === 'wcn_auto') {
                       return (
-                        <span className="source-type-badge wcn-auto" title={`Auto-generated from WCN ${row.wcn_number || ''}`}>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 border border-emerald-300" title={`Auto-generated from WCN ${row.wcn_number || ''}`}>
                           <Truck size={12} />
                           AUTO
                         </span>
                       );
                     } else {
                       return (
-                        <span className="source-type-badge manual" title={row.collection_order_id ? `Linked to WCN ${row.wcn_number || ''}` : 'Manually created'}>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 border border-blue-300" title={row.collection_order_id ? `Linked to WCN ${row.wcn_number || ''}` : 'Manually created'}>
                           <Edit3 size={12} />
                           MANUAL
                         </span>
@@ -412,9 +398,9 @@ const Purchase = () => {
                   sortable: false,
                   filterable: true,
                   render: (value, row) => (
-                    <div className="items-cell">
-                      <span>{row.items.length} items</span>
-                      <small>{value}</small>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">{row.items.length} items</span>
+                      <small className="text-xs text-gray-500">{value}</small>
                     </div>
                   )
                 },
@@ -443,7 +429,9 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value) => (
-                    <span className={`payment-badge ${value}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      value === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                    }`}>
                       {value.charAt(0).toUpperCase() + value.slice(1)}
                     </span>
                   )
@@ -476,14 +464,14 @@ const Purchase = () => {
                           title="Mark as Received"
                         >
                           {processingOrder === row.id ? (
-                            <div className="loading-spinner-small"></div>
+                            <div className="w-3.5 h-3.5 border-2 border-transparent border-t-current rounded-full animate-spin"></div>
                           ) : (
                             <CheckCircle size={14} />
                           )}
                         </button>
                       )}
                       {row.status === 'received' && (
-                        <div className="received-indicator" title={`Received on ${row.receivedDate ? new Date(row.receivedDate).toLocaleDateString() : 'N/A'}`}>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md text-[13px] font-medium" title={`Received on ${row.receivedDate ? new Date(row.receivedDate).toLocaleDateString() : 'N/A'}`}>
                           <Truck size={14} />
                         </div>
                       )}
@@ -510,7 +498,7 @@ const Purchase = () => {
         )}
 
         {activeTab === 'expenses' && (
-          <div className="purchase-expenses">
+          <div>
             <DataTable
               data={expenses.map(expense => ({
                 ...expense,
@@ -523,9 +511,9 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value, row) => (
-                    <div className="expense-id-cell">
-                      <strong>{value}</strong>
-                      <small>{row.date}</small>
+                    <div className="flex flex-col">
+                      <strong className="text-gray-900 font-semibold">{value}</strong>
+                      <small className="text-xs text-gray-500">{row.date}</small>
                     </div>
                   )
                 },
@@ -535,7 +523,7 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value) => (
-                    <span className="category-badge">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-sm font-medium">
                       <Banknote size={14} />
                       {value}
                     </span>
@@ -547,9 +535,7 @@ const Purchase = () => {
                   sortable: true,
                   filterable: true,
                   render: (value) => (
-                    <div className="description-cell">
-                      <span>{value}</span>
-                    </div>
+                    <span className="text-sm text-gray-700 line-clamp-2">{value}</span>
                   )
                 },
                 {

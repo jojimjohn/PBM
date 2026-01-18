@@ -3,7 +3,7 @@ import Modal from './ui/Modal';
 import { useSystemSettings } from '../context/SystemSettingsContext';
 import purchaseOrderExpenseService from '../services/purchaseOrderExpenseService';
 import { Plus, Edit2, Trash2, Banknote, TrendingUp, Package } from 'lucide-react';
-import './PurchaseOrderExpenseModal.css';
+// CSS moved to global index.css Tailwind
 
 const PurchaseOrderExpenseModal = ({
   isOpen,

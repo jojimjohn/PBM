@@ -6,7 +6,7 @@ import { collectionOrderService } from '../../services/collectionService';
 import materialService from '../../services/materialService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
-import './WCNFinalizationModal.css';
+// CSS moved to global index.css Tailwind
 
 // NOTE: Wastage is NOT recorded during WCN finalization.
 // After finalization, users can record wastage separately from the Collection Details modal.

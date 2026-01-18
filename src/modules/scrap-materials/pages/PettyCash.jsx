@@ -36,7 +36,7 @@ import {
   Lock,
   FileText
 } from 'lucide-react'
-import '../../../pages/PettyCash.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const PettyCash = () => {
   const { selectedCompany } = useAuth()

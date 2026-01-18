@@ -6,7 +6,7 @@ import {
   Plus, Edit, Trash2, Save, MapPin, Warehouse, 
   Building, Package, AlertTriangle, CheckCircle 
 } from 'lucide-react'
-import './StorageLocationManager.css'
+// CSS moved to global index.css Tailwind
 
 const LOCATION_TYPES = [
   { id: 'tank_farm', name: 'Tank Farm', icon: Package },

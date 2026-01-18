@@ -5,7 +5,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import purchaseOrderAmendmentService from '../services/purchaseOrderAmendmentService';
 import purchaseOrderService from '../services/purchaseOrderService';
 import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Plus, Trash2, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
-import './PurchaseOrderAmendmentModal.css';
+// CSS moved to global index.css Tailwind
 
 const PurchaseOrderAmendmentModal = ({
   isOpen,

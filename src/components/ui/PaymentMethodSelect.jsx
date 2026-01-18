@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CreditCard, Banknote, Wallet, AlertCircle, Fuel, Building2 } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
-import './PaymentMethodSelect.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * PaymentMethodSelect Component
@@ -98,40 +98,53 @@ const PaymentMethodSelect = forwardRef(({
   const selectedMethod = PAYMENT_METHODS.find(m => m.value === value)
   const isFuelCategory = category === 'fuel'
 
-  // Compact mode: inline horizontal layout
+  // Compact mode: inline horizontal layout with Tailwind
   if (compact) {
     return (
-      <div ref={ref} className={`payment-method-select compact ${className} ${isRTL ? 'rtl' : ''}`} {...props}>
+      <div ref={ref} className={`space-y-2 ${className} ${isRTL ? 'rtl' : ''}`} {...props}>
         {label && (
-          <label className="payment-method-label">
+          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
             {label}
-            {required && <span className="required-indicator">*</span>}
+            {required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
         )}
 
-        <div className="payment-method-compact-row">
+        <div className="flex flex-wrap items-center gap-2">
           {PAYMENT_METHODS.map((method) => {
             const Icon = method.icon
             const isSelected = value === method.value
             const isPetrolDisabled = method.fuelOnly && !isFuelCategory
             const isMethodDisabled = disabled || isPetrolDisabled
 
+            // Color classes based on method
+            const getColorClasses = () => {
+              if (isMethodDisabled) return 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+              if (!isSelected) return 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+              // Selected state with method-specific colors
+              switch (method.value) {
+                case 'top_up_card': return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
+                case 'petrol_card': return 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500'
+                case 'company_card': return 'border-violet-500 bg-violet-50 text-violet-700 ring-1 ring-violet-500'
+                case 'iou': return 'border-red-500 bg-red-50 text-red-700 ring-1 ring-red-500'
+                default: return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
+              }
+            }
+
             return (
               <button
                 key={method.value}
                 type="button"
-                className={`payment-method-chip ${isSelected ? 'selected' : ''} ${isMethodDisabled ? 'disabled' : ''}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border transition-all duration-150 ${getColorClasses()}`}
                 onClick={() => !isMethodDisabled && handleSelect(method.value)}
                 disabled={isMethodDisabled}
-                style={{ '--method-color': method.color }}
                 title={isPetrolDisabled
                   ? t('petrolCardFuelOnly', 'Petrol card can only be used for fuel expenses')
                   : t(method.descKey, method.defaultDesc)
                 }
               >
-                <Icon size={16} />
+                <Icon size={14} />
                 <span>{t(method.labelKey, method.defaultLabel)}</span>
-                {method.fuelOnly && !isFuelCategory && <span className="chip-fuel-tag">⛽</span>}
+                {method.fuelOnly && !isFuelCategory && <span className="text-amber-500">⛽</span>}
               </button>
             )
           })}
@@ -141,31 +154,31 @@ const PaymentMethodSelect = forwardRef(({
         <AnimatePresence>
           {showReimbursementWarning && selectedMethod?.requiresReimbursement && (
             <motion.div
-              className="compact-info-message warning"
+              className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <AlertCircle size={14} />
+              <AlertCircle size={14} className="shrink-0" />
               <span>{t('iouReimbursementNote', 'Personal expense - reimbursed when approved')}</span>
             </motion.div>
           )}
           {value === 'petrol_card' && (
             <motion.div
-              className="compact-info-message info"
+              className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <Fuel size={14} />
+              <Fuel size={14} className="shrink-0" />
               <span>{t('petrolCardSharedNote', 'Using shared company petrol card')}</span>
             </motion.div>
           )}
         </AnimatePresence>
 
         {error && (
-          <div className="payment-method-error compact">
-            <AlertCircle size={14} />
+          <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs">
+            <AlertCircle size={14} className="shrink-0" />
             <span>{error}</span>
           </div>
         )}

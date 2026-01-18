@@ -11,7 +11,7 @@ import branchService from '../../../services/branchService'
 import uploadService from '../../../services/uploadService'
 import purchaseOrderService from '../../../services/purchaseOrderService'
 import { Plus, Trash2, Save, Truck, FileText, Calculator, Package, AlertTriangle, Building } from 'lucide-react'
-import './PurchaseOrderForm.css'
+// CSS moved to global index.css Tailwind
 
 const PurchaseOrderForm = ({ 
   isOpen, 

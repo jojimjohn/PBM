@@ -22,7 +22,7 @@ import pettyCashPortalService from '../../services/pettyCashPortalService';
 import PinEntryScreen from './PinEntryScreen';
 import ExpenseSubmitForm from './ExpenseSubmitForm';
 import ExpenseHistory from './ExpenseHistory';
-import './PettyCashPortal.css';
+// CSS moved to global index.css - using Tailwind classes
 
 // View modes
 const VIEWS = {
@@ -147,11 +147,13 @@ const PettyCashPortal = () => {
   // Invalid QR code screen
   if (!token && !pettyCashPortalService.isAuthenticated()) {
     return (
-      <div className="pc-portal">
-        <div className="pc-portal-error">
-          <AlertTriangle size={64} />
-          <h1>Invalid Link</h1>
-          <p>Please scan the QR code on your petty cash card to access the portal.</p>
+      <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200 flex items-center justify-center p-6">
+        <div className="flex flex-col items-center text-center max-w-sm">
+          <div className="w-20 h-20 flex items-center justify-center bg-amber-100 text-amber-600 rounded-full mb-6">
+            <AlertTriangle size={40} />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Invalid Link</h1>
+          <p className="text-slate-600">Please scan the QR code on your petty cash card to access the portal.</p>
         </div>
       </div>
     );
@@ -160,17 +162,17 @@ const PettyCashPortal = () => {
   // Loading screen
   if (isLoading && view === VIEWS.PIN_ENTRY) {
     return (
-      <div className="pc-portal">
-        <div className="pc-portal-loading">
-          <Loader2 size={48} className="spinning" />
-          <p>Loading...</p>
+      <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200 flex items-center justify-center">
+        <div className="flex flex-col items-center text-slate-500">
+          <Loader2 size={48} className="animate-spin text-blue-500 mb-4" />
+          <p className="text-sm">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pc-portal">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-slate-200">
       {/* PIN Entry View */}
       {view === VIEWS.PIN_ENTRY && (
         <PinEntryScreen
@@ -184,62 +186,73 @@ const PettyCashPortal = () => {
 
       {/* Dashboard View */}
       {view === VIEWS.DASHBOARD && user && (
-        <div className="pc-dashboard">
+        <div className="max-w-md mx-auto px-4 py-6 space-y-4">
           {/* Header */}
-          <header className="pc-header">
-            <div className="pc-header-left">
-              <Wallet size={28} />
-              <span className="pc-title">Petty Cash</span>
+          <header className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg">
+                <Wallet size={22} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">
+                  PETTY CASH
+                </h1>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Employee Portal</p>
+              </div>
             </div>
-            <button className="pc-logout-btn" onClick={handleLogout}>
+            <button
+              className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              onClick={handleLogout}
+            >
               <LogOut size={20} />
             </button>
           </header>
 
           {/* User Info Card */}
-          <div className="pc-user-card">
-            <div className="pc-user-info">
-              <div className="pc-user-avatar">
-                <User size={32} />
+          <div className="bg-white border border-slate-200 p-4 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full shrink-0">
+                <User size={28} />
               </div>
-              <div className="pc-user-details">
-                <h2 className="pc-user-name">{user.name}</h2>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-semibold text-slate-800 truncate">{user.name}</h2>
                 {user.department && (
-                  <p className="pc-user-department">{user.department}</p>
+                  <p className="text-sm text-slate-500">{user.department}</p>
                 )}
-                <p className="pc-card-number">{user.cardNumber}</p>
+                <p className="text-xs font-mono text-slate-400 mt-1">{user.cardNumber}</p>
               </div>
             </div>
           </div>
 
           {/* Balance Card */}
-          <div className="pc-balance-card">
-            <div className="pc-balance-header">
-              <span className="pc-balance-label">Available Balance</span>
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-5 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-emerald-100 uppercase tracking-wider">Available Balance</span>
               <button
-                className="pc-refresh-btn"
+                className="w-8 h-8 flex items-center justify-center text-emerald-200 hover:text-white hover:bg-emerald-400/30 rounded-full transition-colors"
                 onClick={refreshUserData}
                 disabled={isRefreshing}
               >
-                <RefreshCw size={16} className={isRefreshing ? 'spinning' : ''} />
+                <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
               </button>
             </div>
-            <div className="pc-balance-amount">
-              <span className="pc-currency">OMR</span>
-              <span className="pc-amount">{(user.currentBalance || 0).toFixed(3)}</span>
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-lg font-medium text-emerald-200">OMR</span>
+              <span className="text-4xl font-bold tracking-tight">{(user.currentBalance || 0).toFixed(3)}</span>
             </div>
             {user.thisMonth && (
-              <div className="pc-balance-footer">
-                <div className="pc-stat">
-                  <span className="pc-stat-label">This Month</span>
-                  <span className="pc-stat-value pc-approved">
+              <div className="pt-3 border-t border-emerald-400/40 space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-200">This Month</span>
+                  <span className="font-medium">
                     {user.thisMonth.approvedTotal?.toFixed(3) || '0.000'} approved
                   </span>
                 </div>
                 {user.thisMonth.pendingTotal > 0 && (
-                  <div className="pc-stat">
-                    <span className="pc-stat-value pc-pending">
-                      {user.thisMonth.pendingTotal.toFixed(3)} pending
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-emerald-200">Pending</span>
+                    <span className="font-medium text-amber-200">
+                      {user.thisMonth.pendingTotal.toFixed(3)}
                     </span>
                   </div>
                 )}
@@ -248,19 +261,19 @@ const PettyCashPortal = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="pc-actions">
+          <div className="grid grid-cols-2 gap-3 pt-2">
             <button
-              className="pc-action-btn pc-action-primary"
+              className="flex flex-col items-center justify-center gap-2 p-5 bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all"
               onClick={() => setView(VIEWS.NEW_EXPENSE)}
             >
-              <Plus size={24} />
+              <Plus size={28} />
               <span>New Expense</span>
             </button>
             <button
-              className="pc-action-btn pc-action-secondary"
+              className="flex flex-col items-center justify-center gap-2 p-5 bg-white text-slate-700 font-semibold border border-slate-200 shadow-sm hover:bg-slate-50 active:scale-[0.98] transition-all"
               onClick={() => setView(VIEWS.HISTORY)}
             >
-              <History size={24} />
+              <History size={28} />
               <span>History</span>
             </button>
           </div>
@@ -269,7 +282,7 @@ const PettyCashPortal = () => {
 
       {/* New Expense View */}
       {view === VIEWS.NEW_EXPENSE && user && (
-        <div className="pc-view">
+        <div className="max-w-md mx-auto">
           <ExpenseSubmitForm
             user={user}
             categories={categories}
@@ -281,13 +294,14 @@ const PettyCashPortal = () => {
 
       {/* History View */}
       {view === VIEWS.HISTORY && user && (
-        <div className="pc-view">
-          <header className="pc-view-header">
+        <div className="max-w-md mx-auto">
+          <header className="sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-3 border-b border-slate-200 shadow-sm">
             <button
-              className="pc-back-btn"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 transition-colors"
               onClick={() => setView(VIEWS.DASHBOARD)}
             >
-              ← Back
+              <span className="text-lg">←</span>
+              <span>Back to Dashboard</span>
             </button>
           </header>
           <ExpenseHistory user={user} />

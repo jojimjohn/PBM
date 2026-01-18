@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useLocalization } from '../../context/LocalizationContext';
 import Modal from '../ui/Modal';
 import { calloutService } from '../../services/collectionService';
-import '../../styles/CustomToast.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * StatusUpdateModal Component

@@ -36,7 +36,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import FileUpload from '../components/ui/FileUpload'
 import FileViewer from '../components/ui/FileViewer'
 import uploadService from '../services/uploadService'
-import './Banking.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const Banking = () => {
   const { user } = useAuth()

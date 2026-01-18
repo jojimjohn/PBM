@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, Image, AlertCircle } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
-import './ImageUpload.css'
+// CSS moved to global index.css Tailwind
 
 const ImageUpload = ({ 
   images = [], 

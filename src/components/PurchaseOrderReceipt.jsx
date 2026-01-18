@@ -6,7 +6,7 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { Input } from './ui/Input';
 import { Plus, Package, AlertTriangle, CheckCircle, Truck, Warehouse, ClipboardCheck, X, Star, FileText, Camera, Shield } from 'lucide-react';
-import './PurchaseOrderReceipt.css';
+// CSS moved to global index.css Tailwind
 
 const PurchaseOrderReceipt = ({ 
   purchaseOrder, 

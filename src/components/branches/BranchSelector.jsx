@@ -16,7 +16,7 @@ import React, { useEffect } from 'react';
 import { useLocalization } from '../../context/LocalizationContext';
 import useBranches from '../../hooks/useBranches';
 import { Building2, AlertTriangle } from 'lucide-react';
-import './BranchSelector.css';
+// CSS moved to global index.css Tailwind
 
 const BranchSelector = ({
   value,

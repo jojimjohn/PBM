@@ -1,7 +1,7 @@
 import React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { motion } from 'framer-motion';
-import './Tabs.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Tabs Root Component

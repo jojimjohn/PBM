@@ -11,7 +11,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react'
-import './FileViewer.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * FileViewer Component

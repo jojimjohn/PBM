@@ -188,8 +188,8 @@ export const getSalesOrderColumns = ({
     header: t('orderNumber', 'Order Number'),
     sortable: true,
     render: (value, row) => (
-      <div className="order-id">
-        <strong>{value || row.orderNumber || row.id}</strong>
+      <div>
+        <strong className="font-semibold text-gray-900">{value || row.orderNumber || row.id}</strong>
       </div>
     )
   },
@@ -222,9 +222,9 @@ export const getSalesOrderColumns = ({
     render: (value) => {
       const count = parseInt(value) || 0
       return (
-        <div className="items-count-badge">
-          <span className="count-number">{count}</span>
-          <span className="count-label">{count === 1 ? t('item', 'item') : t('items', 'items')}</span>
+        <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 border border-gray-200 rounded text-sm">
+          <span className="font-semibold text-gray-900">{count}</span>
+          <span className="text-gray-500 text-xs">{count === 1 ? t('item', 'item') : t('items', 'items')}</span>
         </div>
       )
     }
@@ -247,9 +247,9 @@ export const getSalesOrderColumns = ({
     render: (value, row) => {
       if (value || row.invoiceNumber) {
         return (
-          <div className="invoice-info">
-            <FileText size={14} />
-            <span>{value || row.invoiceNumber}</span>
+          <div className="flex items-center gap-1.5">
+            <FileText size={14} className="text-green-600 shrink-0" />
+            <span className="text-green-600 font-medium">{value || row.invoiceNumber}</span>
           </div>
         )
       }

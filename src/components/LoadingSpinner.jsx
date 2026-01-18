@@ -1,5 +1,5 @@
 import React from 'react'
-import './LoadingSpinner.css'
+// CSS moved to global index.css Tailwind
 
 const LoadingSpinner = ({ message = 'Loading...', size = 'medium' }) => {
   return (

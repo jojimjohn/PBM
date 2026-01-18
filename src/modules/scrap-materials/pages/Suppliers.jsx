@@ -31,8 +31,6 @@ import {
   Save,
   X
 } from 'lucide-react'
-import '../styles/Suppliers.css'
-
 const ScrapMaterialsSuppliers = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
@@ -347,8 +345,8 @@ const ScrapMaterialsSuppliers = () => {
       sortable: true,
       filterable: true,
       render: (value) => (
-        <div className="supplier-code">
-          <strong>{value}</strong>
+        <div className="font-mono font-semibold text-gray-700">
+          {value}
         </div>
       )
     },
@@ -358,13 +356,13 @@ const ScrapMaterialsSuppliers = () => {
       sortable: true,
       filterable: true,
       render: (value, row) => (
-        <div className="supplier-info">
-          <div className="supplier-avatar" style={{ backgroundColor: getTypeColor(row.type) }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs text-white shrink-0" style={{ backgroundColor: getTypeColor(row.type) }}>
             {value.substring(0, 2).toUpperCase()}
           </div>
-          <div className="supplier-details">
-            <strong>{value}</strong>
-            <span className="supplier-type">{supplierTypes[row.type]?.name || row.type}</span>
+          <div className="flex flex-col gap-1">
+            <strong className="text-gray-900 font-semibold">{value}</strong>
+            <span className="text-xs text-gray-600 capitalize">{supplierTypes[row.type]?.name || row.type}</span>
           </div>
         </div>
       )
@@ -374,7 +372,7 @@ const ScrapMaterialsSuppliers = () => {
       header: t('contactPerson'),
       sortable: true,
       render: (value, row) => (
-        <div className="contact-info">
+        <div className="flex items-center gap-2 text-gray-700">
           <User size={14} />
           <span>{value || 'N/A'}</span>
         </div>
@@ -385,7 +383,7 @@ const ScrapMaterialsSuppliers = () => {
       header: t('phone'),
       sortable: false,
       render: (value, row) => (
-        <div className="phone-info">
+        <div className="flex items-center gap-2 text-gray-700">
           <Phone size={14} />
           <span>{row.phone || row.contactPhone || row.contact_phone || 'N/A'}</span>
         </div>
@@ -396,7 +394,7 @@ const ScrapMaterialsSuppliers = () => {
       header: t('city'),
       sortable: true,
       render: (value, row) => (
-        <div className="location-info">
+        <div className="flex items-center gap-2 text-gray-700">
           <MapPin size={14} />
           <span>{row.city || 'N/A'}</span>
         </div>
@@ -407,14 +405,14 @@ const ScrapMaterialsSuppliers = () => {
       header: t('specialization'),
       sortable: false,
       render: (value) => (
-        <div className="specialization-tags">
+        <div className="flex flex-wrap gap-1 max-w-[200px]">
           {value?.slice(0, 2).map((spec, index) => (
-            <span key={index} className="spec-tag">
+            <span key={index} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium capitalize">
               {spec.replace('_', ' ')}
             </span>
           ))}
           {value?.length > 2 && (
-            <span className="more-specs">+{value.length - 2}</span>
+            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-medium">+{value.length - 2}</span>
           )}
         </div>
       )
@@ -426,7 +424,7 @@ const ScrapMaterialsSuppliers = () => {
       align: 'right',
       sortable: true,
       render: (value, row) => (
-        <div className="volume-info">
+        <div className="flex items-center gap-2 text-gray-700">
           <Package size={14} />
           <span>{row.performance?.monthlyVolume || 0} KG</span>
         </div>
@@ -446,10 +444,7 @@ const ScrapMaterialsSuppliers = () => {
       sortable: true,
       filterable: true,
       render: (value, row) => (
-        <span 
-          className="supplier-status-badge"
-          style={{ backgroundColor: value ? '#10b981' : '#ef4444' }}
-        >
+        <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${value ? 'bg-emerald-500' : 'bg-red-500'}`}>
           {value ? 'Active' : 'Inactive'}
         </span>
       )
@@ -459,10 +454,10 @@ const ScrapMaterialsSuppliers = () => {
       header: t('actions'),
       sortable: false,
       render: (value, row) => (
-        <div className="table-actions">
+        <div className="flex items-center gap-2">
           <PermissionGate permission={PERMISSIONS.VIEW_SUPPLIERS}>
-            <button 
-              className="btn btn-outline btn-sm" 
+            <button
+              className="btn btn-outline btn-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 handleViewSupplier(row)
@@ -472,10 +467,10 @@ const ScrapMaterialsSuppliers = () => {
               <Eye size={14} />
             </button>
           </PermissionGate>
-          
+
           <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
-            <button 
-              className="btn btn-outline btn-sm" 
+            <button
+              className="btn btn-outline btn-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 handleEditSupplier(row)
@@ -485,10 +480,10 @@ const ScrapMaterialsSuppliers = () => {
               <Edit size={14} />
             </button>
           </PermissionGate>
-          
+
           <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
-            <button 
-              className="btn btn-outline btn-sm btn-danger" 
+            <button
+              className="btn btn-outline btn-sm btn-danger"
               onClick={(e) => {
                 e.stopPropagation()
                 handleDeleteSupplier(row.id)
@@ -504,16 +499,16 @@ const ScrapMaterialsSuppliers = () => {
   ]
 
   return (
-    <div className="scrap-suppliers-page">
+    <div className="flex flex-col min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="page-header">
         <div className="page-title-section">
           <h1>{t('supplierManagement')}</h1>
           <p>{t('manageScrapSuppliers')}</p>
         </div>
-        
+
         <PermissionGate permission={PERMISSIONS.MANAGE_SUPPLIERS}>
           <div className="page-actions">
-            <button 
+            <button
               className="btn btn-primary"
               onClick={handleAddSupplier}
             >
@@ -525,7 +520,7 @@ const ScrapMaterialsSuppliers = () => {
       </div>
 
       {/* Suppliers Summary Cards */}
-      <div className="suppliers-summary">
+      <div className="grid grid-cols-4 gap-2 mb-3 flex-shrink-0 max-lg:grid-cols-2 max-md:grid-cols-1">
         <div className="summary-card">
           <div className="summary-icon">
             <User size={24} />
@@ -537,7 +532,7 @@ const ScrapMaterialsSuppliers = () => {
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon business">
+          <div className="summary-icon !bg-blue-100 !text-blue-600">
             <Building size={24} />
           </div>
           <div className="summary-info">
@@ -547,7 +542,7 @@ const ScrapMaterialsSuppliers = () => {
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon success">
+          <div className="summary-icon !bg-green-100 !text-green-600">
             <Package size={24} />
           </div>
           <div className="summary-info">
@@ -559,7 +554,7 @@ const ScrapMaterialsSuppliers = () => {
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon profit">
+          <div className="summary-icon !bg-amber-100 !text-amber-600">
             <Banknote size={24} />
           </div>
           <div className="summary-info">
@@ -572,7 +567,7 @@ const ScrapMaterialsSuppliers = () => {
       </div>
 
       {/* Suppliers Table */}
-      <div className="suppliers-table-container">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <DataTable
           data={filteredSuppliers}
           columns={supplierColumns}

@@ -38,7 +38,7 @@ import {
 import FileUpload from '../components/ui/FileUpload'
 import FileViewer from '../components/ui/FileViewer'
 import uploadService from '../services/uploadService'
-import './Projects.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const Projects = () => {
   const { user } = useAuth()
@@ -64,6 +64,7 @@ const Projects = () => {
   const [actionLoading, setActionLoading] = useState(false)
   const [attachments, setAttachments] = useState([])
   const [loadingAttachments, setLoadingAttachments] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -131,6 +132,13 @@ const Projects = () => {
     loadProjects()
     loadUsers()
   }, [loadProjects, loadUsers])
+
+  // Handle refresh with loading state
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await loadProjects()
+    setIsRefreshing(false)
+  }, [loadProjects])
 
   // Load S3 attachments when editing a project
   useEffect(() => {
@@ -631,10 +639,14 @@ const Projects = () => {
         title={t('projectManagement') || 'Project Management'}
         subtitle={t('projectManagementDesc') || 'Manage projects and user assignments for access control'}
         headerActions={
-          <div className="header-actions-group">
-            <button className="btn btn-outline" onClick={loadProjects}>
-              <RefreshCw size={16} />
-              {t('refresh') || 'Refresh'}
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-outline"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title={t('refresh') || 'Refresh'}
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             {canManageProjects && (
               <button className="btn btn-primary" onClick={openCreateModal}>
@@ -928,9 +940,9 @@ const Projects = () => {
         title={`${t('projectUsers') || 'Project Users'} - ${selectedProject?.name || ''}`}
         size="md"
       >
-        <div className="project-users-modal">
+        <div className="space-y-4">
           {canManageProjects && selectedProject?.code !== 'GENERAL' && (
-            <div className="users-header">
+            <div className="flex justify-end pb-3 border-b border-slate-200">
               <button
                 className="btn btn-primary"
                 onClick={() => {
@@ -946,26 +958,26 @@ const Projects = () => {
           )}
 
           {projectUsers.length === 0 ? (
-            <div className="empty-users">
-              <Users size={32} />
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+              <Users size={32} className="mb-3" />
               <p>{t('noUsersAssigned') || 'No users assigned to this project'}</p>
             </div>
           ) : (
-            <div className="users-list">
+            <div className="space-y-2">
               {projectUsers.map((user) => (
-                <div key={user.id} className="user-item">
-                  <div className="user-info">
-                    <span className="user-name">{user.firstName} {user.lastName}</span>
-                    <span className="user-email">{user.email}</span>
+                <div key={user.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-medium text-slate-800 truncate">{user.firstName} {user.lastName}</span>
+                    <span className="text-sm text-slate-500 truncate">{user.email}</span>
                   </div>
-                  <span className={`status-badge ${getRoleBadgeClass(user.role_in_project)}`}>
+                  <span className={`status-badge ${getRoleBadgeClass(user.role_in_project)} mx-3`}>
                     {user.role_in_project === 'lead' ? t('lead') || 'Lead' :
                      user.role_in_project === 'contributor' ? t('contributor') || 'Contributor' :
                      t('viewer') || 'Viewer'}
                   </span>
                   {canManageProjects && selectedProject?.code !== 'GENERAL' && (
                     <button
-                      className="btn btn-danger btn-sm"
+                      className="btn btn-danger btn-sm flex-shrink-0"
                       onClick={() => handleRemoveUser(user.id)}
                       disabled={actionLoading}
                       title={t('removeUser') || 'Remove User'}

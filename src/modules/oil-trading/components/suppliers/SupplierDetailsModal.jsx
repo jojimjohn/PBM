@@ -39,14 +39,14 @@ const SupplierHeader = ({ supplier, supplierTypes, onEdit }) => {
   const typeName = supplierTypes.find(t => t.code === supplier.type)?.name || supplier.type
 
   return (
-    <div className="modal-header">
-      <div className="cell-row">
+    <div className="flex items-start justify-between pb-4 mb-4 border-b border-slate-200">
+      <div className="flex items-center gap-4">
         <div className="avatar avatar-xl primary">
           {initials}
         </div>
-        <div className="cell-info">
-          <h3 className="modal-title">{supplier.name}</h3>
-          <div className="flex-row">
+        <div>
+          <h3 className="text-xl font-semibold text-slate-800">{supplier.name}</h3>
+          <div className="flex items-center gap-2 mt-1">
             <code className="cell-code accent">{supplier.code}</code>
             <span className="type-badge">{typeName}</span>
             <span className={`status-badge ${supplier.isActive ? 'active' : 'inactive'}`}>
@@ -55,15 +55,13 @@ const SupplierHeader = ({ supplier, supplierTypes, onEdit }) => {
           </div>
         </div>
       </div>
-      <div className="cell-actions">
-        <button
-          className="btn-icon-action secondary"
-          onClick={onEdit}
-          title="Edit Supplier"
-        >
-          <Edit size={18} />
-        </button>
-      </div>
+      <button
+        className="btn-icon-action secondary"
+        onClick={onEdit}
+        title="Edit Supplier"
+      >
+        <Edit size={18} />
+      </button>
     </div>
   )
 }
@@ -181,45 +179,46 @@ const SupplierDetailsModal = ({
 }) => {
   if (!supplier) return null
 
+  const modalFooter = (
+    <>
+      <span className="text-sm text-slate-500">
+        Last updated: {formatDate(supplier.updated_at || supplier.created_at || supplier.createdAt)}
+      </span>
+      <div className="flex items-center gap-2">
+        <button className="btn btn-outline" onClick={onClose}>
+          Close
+        </button>
+        <button className="btn btn-primary" onClick={onEdit}>
+          <Edit size={16} />
+          Edit Supplier
+        </button>
+        <button className="btn btn-success" onClick={onCreatePurchaseOrder}>
+          <Plus size={16} />
+          New Purchase Order
+        </button>
+      </div>
+    </>
+  )
+
   return (
     <Modal
       isOpen={isOpen}
-      title=""
       onClose={onClose}
-      className="ds-form-modal ds-modal-lg"
+      title={t?.('supplierDetails', 'Supplier Details') || 'Supplier Details'}
+      footer={modalFooter}
+      size="lg"
+      showCloseButton
     >
-      {/* Header */}
+      {/* Custom Header with Avatar */}
       <SupplierHeader
         supplier={supplier}
         supplierTypes={supplierTypes}
         onEdit={onEdit}
       />
 
-      {/* Content */}
-      <div className="modal-body">
-        <ContactSection supplier={supplier} t={t} />
-        <BusinessSection supplier={supplier} supplierTypes={supplierTypes} />
-      </div>
-
-      {/* Footer */}
-      <div className="modal-footer">
-        <span className="cell-text-secondary">
-          Last updated: {formatDate(supplier.updated_at || supplier.created_at || supplier.createdAt)}
-        </span>
-        <div className="flex-row">
-          <button className="btn btn-outline" onClick={onClose}>
-            Close
-          </button>
-          <button className="btn btn-primary" onClick={onEdit}>
-            <Edit size={16} />
-            Edit Supplier
-          </button>
-          <button className="btn btn-success" onClick={onCreatePurchaseOrder}>
-            <Plus size={16} />
-            New Purchase Order
-          </button>
-        </div>
-      </div>
+      {/* Content Sections */}
+      <ContactSection supplier={supplier} t={t} />
+      <BusinessSection supplier={supplier} supplierTypes={supplierTypes} />
     </Modal>
   )
 }

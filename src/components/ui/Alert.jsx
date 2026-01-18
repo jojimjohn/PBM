@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 import { fadeUpVariants } from '../../config/animations';
-import './Alert.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Alert Component

@@ -46,9 +46,10 @@ import {
   History,
   ArrowUpCircle,
   ArrowDownCircle,
-  Loader2
+  Loader2,
+  Fuel
 } from 'lucide-react'
-import '../../../pages/PettyCash.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const PettyCash = () => {
   const { selectedCompany } = useAuth()
@@ -665,10 +666,14 @@ const PettyCash = () => {
       header: t('cardNumber', 'Card Number'),
       sortable: true,
       render: (value, row) => (
-        <div className="card-number-info">
-          <CreditCard size={16} />
-          <span className="card-number">{value}</span>
-          <span className={`card-status ${row.status}`}>{row.status}</span>
+        <div className="flex items-center gap-2">
+          <CreditCard size={16} className="text-slate-400" />
+          <span className="font-medium text-slate-800">{value}</span>
+          <span className={`px-2 py-0.5 text-xs font-medium ${
+            row.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+            row.status === 'suspended' ? 'bg-amber-100 text-amber-700' :
+            'bg-slate-100 text-slate-600'
+          }`}>{row.status}</span>
         </div>
       )
     },
@@ -676,11 +681,8 @@ const PettyCash = () => {
       key: 'cardName',
       header: t('cardName', 'Card Name'),
       sortable: true,
-      render: (value, row) => (
-        <div className="card-info">
-          <div className="card-name">{value}</div>
-          <div className="card-type">{t(row.cardType, row.cardType)}</div>
-        </div>
+      render: (value) => (
+        <span className="text-slate-800">{value}</span>
       )
     },
     {
@@ -688,11 +690,11 @@ const PettyCash = () => {
       header: t('assignedStaff', 'Assigned Staff'),
       sortable: true,
       render: (value, row) => (
-        <div className="staff-info">
-          <User size={16} />
+        <div className="flex items-center gap-2">
+          <User size={16} className="text-slate-400" />
           <div>
-            <div className="staff-name">{row.assignedStaff.name}</div>
-            <div className="staff-role">{row.assignedStaff.role}</div>
+            <div className="text-sm text-slate-800">{row.assignedStaff.name}</div>
+            <div className="text-xs text-slate-500">{row.assignedStaff.role}</div>
           </div>
         </div>
       )
@@ -704,9 +706,11 @@ const PettyCash = () => {
       sortable: true,
       align: 'right',
       render: (value) => (
-        <div className={`balance ${value < 100 ? 'low' : value < 500 ? 'medium' : 'high'}`}>
+        <span className={`font-medium ${
+          value < 100 ? 'text-red-600' : value < 500 ? 'text-amber-600' : 'text-emerald-600'
+        }`}>
           {formatCurrency(value)}
-        </div>
+        </span>
       )
     },
     {
@@ -715,14 +719,14 @@ const PettyCash = () => {
       type: 'currency',
       sortable: true,
       align: 'right',
-      render: (value) => formatCurrency(value)
+      render: (value) => <span className="text-slate-700">{formatCurrency(value)}</span>
     },
     {
       key: 'actions',
       header: t('actions', 'Actions'),
       sortable: false,
       render: (value, row) => (
-        <div className="flex-row-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -801,12 +805,12 @@ const PettyCash = () => {
   // Expense table columns
   const expenseColumns = [
     {
-      key: 'expenseDate', // Backend returns 'expenseDate', not 'transactionDate'
+      key: 'expenseDate',
       header: t('date', 'Date'),
       sortable: true,
       render: (value) => (
-        <div className="date-info">
-          <Calendar size={14} />
+        <div className="flex items-center gap-2 text-slate-700">
+          <Calendar size={14} className="text-slate-400" />
           <span>{value ? formatDate(value) : 'N/A'}</span>
         </div>
       )
@@ -816,35 +820,31 @@ const PettyCash = () => {
       header: t('staff', 'Staff'),
       sortable: true,
       render: (value, row) => {
-        // Backend returns staffName from card, or submittedByName/submittedByLastName from user
         const staffName = row.staffName ||
           `${row.submittedByName || ''} ${row.submittedByLastName || ''}`.trim() ||
           'Unknown';
         return (
-          <div className="staff-expense-info">
-            <User size={14} />
+          <div className="flex items-center gap-2">
+            <User size={14} className="text-slate-400" />
             <div>
-              <div>{staffName}</div>
-              <div className="card-ref">{row.cardNumber || cards.find(c => c.id === row.cardId)?.cardNumber}</div>
+              <div className="text-sm text-slate-800">{staffName}</div>
+              <div className="text-xs text-slate-500">{row.cardNumber || cards.find(c => c.id === row.cardId)?.cardNumber}</div>
             </div>
           </div>
         );
       }
     },
     {
-      key: 'category', // Backend returns 'category', not 'expenseType'
+      key: 'category',
       header: t('expenseType', 'Expense Type'),
       sortable: true,
       render: (value) => {
-        // Case-insensitive lookup for category name
         const normalizedValue = value?.toLowerCase() || ''
         const expenseType = expenseTypes.find(type => type.id?.toLowerCase() === normalizedValue)
         return (
-          <div className="expense-type">
-            <span className={`expense-category ${expenseType?.category || ''}`}>
-              {expenseType?.name || value || 'Unknown'}
-            </span>
-          </div>
+          <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700">
+            {expenseType?.name || value || 'Unknown'}
+          </span>
         )
       }
     },
@@ -854,24 +854,30 @@ const PettyCash = () => {
       type: 'currency',
       sortable: true,
       align: 'right',
-      render: (value) => formatCurrency(value)
+      render: (value) => <span className="font-medium text-slate-800">{formatCurrency(value)}</span>
     },
     {
       key: 'vendor',
       header: t('merchant', 'Merchant'),
-      sortable: true
+      sortable: true,
+      render: (value) => <span className="text-slate-700">{value || '-'}</span>
     },
     {
       key: 'status',
       header: t('status', 'Status'),
       sortable: true,
       render: (value) => (
-        <div className={`expense-status ${value}`}>
-          {value === 'approved' && <CheckCircle size={14} />}
-          {value === 'pending' && <Clock size={14} />}
-          {value === 'rejected' && <AlertCircle size={14} />}
-          <span>{t(value, value)}</span>
-        </div>
+        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium ${
+          value === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+          value === 'pending' ? 'bg-amber-100 text-amber-700' :
+          value === 'rejected' ? 'bg-red-100 text-red-700' :
+          'bg-slate-100 text-slate-600'
+        }`}>
+          {value === 'approved' && <CheckCircle size={12} />}
+          {value === 'pending' && <Clock size={12} />}
+          {value === 'rejected' && <AlertCircle size={12} />}
+          {t(value, value)}
+        </span>
       )
     },
     {
@@ -879,15 +885,17 @@ const PettyCash = () => {
       header: t('actions', 'Actions'),
       sortable: false,
       render: (value, row) => (
-        <div className="flex-row-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
-            className={`btn btn-outline btn-sm ${row.hasReceipt || row.receiptPhoto ? '' : 'opacity-50'}`}
+            className={`btn btn-outline btn-sm ${
+              !(row.hasReceipt || row.receiptPhoto) ? 'opacity-40 cursor-not-allowed' : ''
+            }`}
             title={t('viewReceipt', 'View Receipt')}
             onClick={() => handleViewReceipt(row)}
+            disabled={!(row.hasReceipt || row.receiptPhoto)}
           >
             <Receipt size={14} />
           </button>
-          {/* Edit button - available for admins/managers, shows view-only for rejected expenses */}
           {hasPermission('MANAGE_PETTY_CASH') && (
             <button
               className="btn btn-outline btn-sm"
@@ -927,13 +935,80 @@ const PettyCash = () => {
   // Remove early return - let DataTable handle loading state with skeleton
 
   return (
-    <div className="page-container">
+    <div className="p-6">
       {/* Error Display */}
       {error && (
-        <div className="alert-error mb-4">
+        <div className="flex items-center gap-2 px-4 py-3 mb-4 bg-red-50 border border-red-200 text-red-700 text-sm">
           <AlertCircle size={16} />
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="btn-icon-close">×</button>
+          <span className="flex-1">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="p-1 text-red-400 hover:text-red-600 transition-colors"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="flex items-center gap-4 p-4 bg-white border border-slate-200">
+          <div className="p-3 bg-slate-100 text-slate-600">
+            <CreditCard size={22} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-slate-800">{cardStats.activeCards}</div>
+            <div className="text-xs text-slate-500 uppercase tracking-wider">{t('activeCards', 'Active Cards')}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 p-4 bg-white border border-slate-200">
+          <div className="p-3 bg-emerald-100 text-emerald-600">
+            <Banknote size={22} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-slate-800">{formatCurrency(cardStats.totalBalance)}</div>
+            <div className="text-xs text-slate-500 uppercase tracking-wider">{t('totalBalance', 'Total Balance')}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 p-4 bg-white border border-slate-200">
+          <div className="p-3 bg-blue-100 text-blue-600">
+            <TrendingUp size={22} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-slate-800">{formatCurrency(cardStats.totalSpent)}</div>
+            <div className="text-xs text-slate-500 uppercase tracking-wider">{t('totalSpent', 'Total Spent')}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 p-4 bg-white border border-slate-200">
+          <div className="p-3 bg-amber-100 text-amber-600">
+            <Receipt size={22} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-slate-800">{cardStats.utilizationRate}%</div>
+            <div className="text-xs text-slate-500 uppercase tracking-wider">{t('utilization', 'Utilization')}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Spending Chart */}
+      {stats.monthlyTrend && (
+        <div className="bg-white border border-slate-200 mb-6">
+          <div className="px-5 py-4 border-b border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider m-0">{t('spendingTrend', 'Spending Trend')}</h3>
+          </div>
+          <div className="p-5">
+            <StockChart
+              data={stats.monthlyTrend}
+              xKey="month"
+              yKey="total"
+              type="line"
+              height={300}
+              title={t('monthlyExpenses', 'Monthly Expenses')}
+            />
+          </div>
         </div>
       )}
 
@@ -964,66 +1039,6 @@ const PettyCash = () => {
         )}
       </div>
 
-      {/* Statistics Cards */}
-      <div className="summary-cards">
-        <div className="summary-card">
-          <div className="summary-icon">
-            <CreditCard size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{cardStats.activeCards}</div>
-            <div className="summary-label">{t('activeCards', 'Active Cards')}</div>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon success">
-            <Banknote size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{formatCurrency(cardStats.totalBalance)}</div>
-            <div className="summary-label">{t('totalBalance', 'Total Balance')}</div>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon info">
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{formatCurrency(cardStats.totalSpent)}</div>
-            <div className="summary-label">{t('totalSpent', 'Total Spent')}</div>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon warning">
-            <Receipt size={22} />
-          </div>
-          <div>
-            <div className="summary-value">{cardStats.utilizationRate}%</div>
-            <div className="summary-label">{t('utilization', 'Utilization')}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Spending Chart */}
-      {stats.monthlyTrend && (
-        <div className="chart-section">
-          <div className="chart-header">
-            <h3>{t('spendingTrend', 'Spending Trend')}</h3>
-          </div>
-          <StockChart
-            data={stats.monthlyTrend}
-            xKey="month"
-            yKey="total"
-            type="line"
-            height={300}
-            title={t('monthlyExpenses', 'Monthly Expenses')}
-          />
-        </div>
-      )}
-
       {/* Cards Tab */}
       {activeTab === 'cards' && (
         <DataTable
@@ -1032,15 +1047,14 @@ const PettyCash = () => {
           title={t('pettyCashCards', 'Petty Cash Cards')}
           subtitle={`${cards.length} ${t('cards', 'cards')}`}
           headerActions={
-            <>
+            <div className="flex items-center gap-2">
               <button
                 className="btn btn-outline"
                 onClick={loadPettyCashData}
                 disabled={loading}
                 title={t('refresh', 'Refresh')}
-                style={{ marginRight: '8px' }}
               >
-                <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               </button>
               {hasPermission('MANAGE_PETTY_CASH') && (
                 <button className="btn btn-primary" onClick={handleAddCard}>
@@ -1048,13 +1062,13 @@ const PettyCash = () => {
                   {t('addCard', 'Add Card')}
                 </button>
               )}
-            </>
+            </div>
           }
           customFilters={
             <select
               value={cardFilter}
               onChange={(e) => setCardFilter(e.target.value)}
-              className="filter-select"
+              className="px-3 py-2 text-sm border border-slate-300 bg-white focus:outline-none focus:border-blue-500"
             >
               <option value="all">{t('allCards', 'All Cards')}</option>
               <option value="active">{t('active', 'Active')}</option>
@@ -1069,8 +1083,7 @@ const PettyCash = () => {
           exportable={true}
           loading={loading}
           emptyMessage={t('noCardsFound', 'No cards found')}
-          className="cards-table"
-          initialSearchTerm={urlSearchTerm}
+                    initialSearchTerm={urlSearchTerm}
         />
       )}
 
@@ -1082,15 +1095,14 @@ const PettyCash = () => {
           title={t('recentExpenses', 'Recent Expenses')}
           subtitle={`${t('trackAllExpenses', 'Track all expense submissions')} - ${expenses.length} ${t('expenses', 'expenses')}`}
           headerActions={
-            <>
+            <div className="flex items-center gap-2">
               <button
                 className="btn btn-outline"
                 onClick={loadPettyCashData}
                 disabled={loading}
                 title={t('refresh', 'Refresh')}
-                style={{ marginRight: '8px' }}
               >
-                <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               </button>
               {hasPermission('MANAGE_PETTY_CASH') && (
                 <button className="btn btn-primary" onClick={() => handleAddExpense()}>
@@ -1098,13 +1110,13 @@ const PettyCash = () => {
                   {t('addExpense', 'Add Expense')}
                 </button>
               )}
-            </>
+            </div>
           }
           customFilters={
             <select
               value={expenseFilter}
               onChange={(e) => setExpenseFilter(e.target.value)}
-              className="filter-select"
+              className="px-3 py-2 text-sm border border-slate-300 bg-white focus:outline-none focus:border-blue-500"
             >
               <option value="all">{t('allExpenses', 'All Expenses')}</option>
               <option value="approved">{t('approved', 'Approved')}</option>
@@ -1119,7 +1131,6 @@ const PettyCash = () => {
           exportable={true}
           loading={loading}
           emptyMessage={t('noExpensesFound', 'No expenses found')}
-          className="expenses-table"
           initialSearchTerm={urlSearchTerm}
         />
       )}
@@ -1255,7 +1266,7 @@ const PettyCash = () => {
               >
                 {loading ? (
                   <>
-                    <Loader2 size={16} className="spinning" />
+                    <Loader2 size={16} className="animate-spin" />
                     {t('deactivating', 'Deactivating...')}
                   </>
                 ) : (
@@ -1299,29 +1310,31 @@ const PettyCash = () => {
             setReceiptPreview(null)
           }}
           title={t('viewReceipt', 'View Receipt')}
-          className="receipt-preview-modal"
+          className="modal-lg"
         >
-          <div className="receipt-preview-content">
+          <div className="space-y-4">
             {receiptLoading ? (
-              <div className="receipt-loading">
-                <Loader2 size={32} className="spinning" />
-                <p>{t('loadingReceipt', 'Loading receipt...')}</p>
+              <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                <Loader2 size={32} className="animate-spin text-blue-500 mb-3" />
+                <p className="text-sm">{t('loadingReceipt', 'Loading receipt...')}</p>
               </div>
             ) : receiptPreview ? (
               <>
                 {/* Expense Info Header */}
-                <div className="receipt-expense-info">
-                  <div>
-                    <strong>{receiptPreview.expense?.expenseNumber}</strong>
-                    <div className="receipt-expense-details">
+                <div className="flex items-start justify-between p-4 bg-slate-50 border border-slate-200">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-2 px-2 py-0.5 bg-slate-200 text-slate-700 text-xs font-mono">
+                      {receiptPreview.expense?.expenseNumber}
+                    </div>
+                    <div className="text-sm text-slate-600">
                       {receiptPreview.expense?.description}
                     </div>
                   </div>
-                  <div className="receipt-expense-amount">
-                    <div className="amount">
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-slate-800">
                       {formatCurrency(receiptPreview.expense?.amount)}
                     </div>
-                    <div className="date">
+                    <div className="text-xs text-slate-500">
                       {formatDate(receiptPreview.expense?.expenseDate)}
                     </div>
                   </div>
@@ -1329,7 +1342,7 @@ const PettyCash = () => {
 
                 {/* Receipt Navigation (if multiple) */}
                 {receiptPreview.receipts.length > 1 && (
-                  <div className="flex-center mb-4">
+                  <div className="flex items-center justify-center gap-4 py-2">
                     <button
                       className="btn btn-outline btn-sm"
                       disabled={receiptPreview.currentIndex === 0}
@@ -1340,7 +1353,7 @@ const PettyCash = () => {
                     >
                       ← {t('previous', 'Previous')}
                     </button>
-                    <span>
+                    <span className="text-sm text-slate-600 font-medium">
                       {receiptPreview.currentIndex + 1} / {receiptPreview.receipts.length}
                     </span>
                     <button
@@ -1362,31 +1375,32 @@ const PettyCash = () => {
                   const isPdf = currentReceipt?.contentType?.includes('pdf')
 
                   return (
-                    <div className="receipt-gallery-item">
+                    <div className="space-y-3">
                       {isPdf ? (
-                        <div className="pdf-preview-container">
+                        <div className="border border-slate-200 bg-white">
                           <iframe
                             src={currentReceipt.downloadUrl}
                             title={currentReceipt.originalFilename || 'Receipt PDF'}
-                            className="pdf-iframe"
+                            className="w-full h-[400px] border-0"
                           />
                         </div>
                       ) : (
-                        <div className="receipt-image-container">
+                        <div className="flex items-center justify-center p-4 bg-slate-100 border border-slate-200 min-h-[300px]">
                           <img
                             src={currentReceipt.downloadUrl}
                             alt={currentReceipt.originalFilename || 'Receipt'}
+                            className="max-w-full max-h-[400px] object-contain shadow-md"
                           />
                         </div>
                       )}
 
                       {/* Receipt filename and actions */}
-                      <div className="receipt-caption">
-                        <span className="receipt-filename">
+                      <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200">
+                        <span className="text-sm text-slate-600 truncate">
                           {currentReceipt.originalFilename || 'Receipt'}
                         </span>
                         <button
-                          className="btn btn-outline btn-sm"
+                          className="btn btn-primary btn-sm inline-flex items-center gap-1.5"
                           onClick={() => window.open(currentReceipt.downloadUrl, '_blank')}
                           title={t('openInNewTab', 'Open in New Tab')}
                         >
@@ -1399,9 +1413,9 @@ const PettyCash = () => {
                 })()}
               </>
             ) : (
-              <div className="no-receipts">
-                <Receipt size={48} className="opacity-30" />
-                <p>{t('noReceiptFound', 'No receipt found')}</p>
+              <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                <Receipt size={48} className="mb-3 opacity-50" />
+                <p className="text-sm">{t('noReceiptFound', 'No receipt found')}</p>
               </div>
             )}
           </div>
@@ -1426,10 +1440,23 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
     >
       <form onSubmit={onSubmit} className="card-form">
         {/* Card Type Selection - Show for both new and edit, but disabled when editing */}
-        <div className="ds-form-section">
-          <h4>{t('cardType', 'Card Type')}</h4>
-          <div className="ds-checkbox-grid">
-            <label className={`ds-checkbox-card ${isEditing ? 'opacity-50' : ''}`}>
+        <div className="mb-6">
+          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            {t('cardType', 'Card Type')}
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Top-up Card Option */}
+            <label
+              className={`
+                relative flex items-start gap-3 p-4 cursor-pointer
+                border transition-all duration-150
+                ${formData.cardType === 'top_up'
+                  ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }
+                ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}
+              `}
+            >
               <input
                 type="radio"
                 name="cardType"
@@ -1437,13 +1464,33 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                 checked={formData.cardType === 'top_up'}
                 onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
                 disabled={isEditing}
+                className="mt-1 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
               />
-              <div className="ds-checkbox-content">
-                <span className="ds-checkbox-title">{t('topUpCard', 'Top-up Card')}</span>
-                <span className="ds-checkbox-description">{t('topUpCardDesc', 'Regular petty cash card assigned to specific users')}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <CreditCard size={18} className={formData.cardType === 'top_up' ? 'text-blue-600' : 'text-slate-400'} />
+                  <span className={`text-sm font-semibold ${formData.cardType === 'top_up' ? 'text-blue-900' : 'text-slate-800'}`}>
+                    {t('topUpCard', 'Top-up Card')}
+                  </span>
+                </div>
+                <span className={`block text-xs mt-1 leading-relaxed ${formData.cardType === 'top_up' ? 'text-blue-700' : 'text-slate-500'}`}>
+                  {t('topUpCardDesc', 'Assigned to individual user with balance')}
+                </span>
               </div>
             </label>
-            <label className={`ds-checkbox-card ${isEditing ? 'opacity-50' : ''}`}>
+
+            {/* Petrol Card Option */}
+            <label
+              className={`
+                relative flex items-start gap-3 p-4 cursor-pointer
+                border transition-all duration-150
+                ${formData.cardType === 'petrol'
+                  ? 'bg-amber-50 border-amber-500 ring-1 ring-amber-500'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }
+                ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}
+              `}
+            >
               <input
                 type="radio"
                 name="cardType"
@@ -1451,23 +1498,32 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                 checked={formData.cardType === 'petrol'}
                 onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
                 disabled={isEditing}
+                className="mt-1 w-4 h-4 text-amber-600 border-slate-300 focus:ring-amber-500"
               />
-              <div className="ds-checkbox-content">
-                <span className="ds-checkbox-title">{t('petrolCard', 'Petrol Card')}</span>
-                <span className="ds-checkbox-description">{t('petrolCardDesc', 'Shared fuel card for all users (one per company)')}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Fuel size={18} className={formData.cardType === 'petrol' ? 'text-amber-600' : 'text-slate-400'} />
+                  <span className={`text-sm font-semibold ${formData.cardType === 'petrol' ? 'text-amber-900' : 'text-slate-800'}`}>
+                    {t('petrolCard', 'Petrol Card')}
+                  </span>
+                </div>
+                <span className={`block text-xs mt-1 leading-relaxed ${formData.cardType === 'petrol' ? 'text-amber-700' : 'text-slate-500'}`}>
+                  {t('petrolCardDesc', 'Shared fuel card for all users (one per company)')}
+                </span>
               </div>
             </label>
           </div>
+
           {isPetrolCard && (
-            <div className="ds-form-info-box warning mt-3">
-              <span>⛽</span>
+            <div className="flex items-start gap-2 mt-3 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <Fuel size={16} className="flex-shrink-0 mt-0.5" />
               <p>{t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</p>
             </div>
           )}
           {isEditing && (
-            <div className="ds-form-hint mt-2">
+            <p className="text-xs text-slate-500 mt-2 italic">
               {t('cardTypeCannotChange', 'Card type cannot be changed after creation')}
-            </div>
+            </p>
           )}
         </div>
 
@@ -1653,7 +1709,7 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
       className="modal-lg"
       closeOnOverlayClick={false}
     >
-      <form onSubmit={handleSubmit} className="expense-form">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Expense Type Selection - FIRST to trigger payment method and card auto-selection */}
         <div className="form-group">
           <label>{t('expenseType', 'Expense Type')} *</label>
@@ -1720,14 +1776,14 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
             </select>
             {/* Petrol card auto-selected info */}
             {isFuelExpense && petrolCard && formData.cardId === petrolCard.id.toString() && (
-              <div className="ds-form-info-box success mt-2">
+              <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs">
                 <span>⛽</span>
                 <p>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</p>
               </div>
             )}
             {/* Warning when using non-petrol card for fuel */}
             {isFuelExpense && formData.cardId && petrolCard && formData.cardId !== petrolCard.id.toString() && (
-              <div className="ds-form-info-box warning mt-2">
+              <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
                 <span>⚠️</span>
                 <p>{t('usingNonPetrolCard', 'Using a non-petrol card for fuel expense')}</p>
               </div>
@@ -1740,25 +1796,25 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           const selectedCard = cards.find(c => c.id === parseInt(formData.cardId));
           if (!selectedCard) return null;
           return (
-            <div className="selected-info-panel">
-              <div className="flex-between">
+            <div className="p-4 bg-blue-50 border border-blue-200">
+              <div className="flex justify-between items-start">
                 <div>
-                  <div className="info-label font-semibold">
+                  <div className="text-sm font-semibold text-blue-800">
                     {selectedCard.card_type === 'petrol' ? '⛽ ' : ''}{selectedCard.cardNumber}
                   </div>
-                  <div className="info-value mt-1">
+                  <div className="text-sm text-blue-700 mt-1">
                     {selectedCard.cardName || selectedCard.assignedStaff?.name || t('unassigned', 'Unassigned')}
                   </div>
                   {selectedCard.pettyCashUser && (
-                    <div className="info-label mt-1">
+                    <div className="text-xs text-blue-600 mt-1">
                       {selectedCard.pettyCashUser.department || selectedCard.department || 'N/A'}
                       {selectedCard.pettyCashUser.phone && ` • ${selectedCard.pettyCashUser.phone}`}
                     </div>
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="info-label">{t('availableBalance', 'Available Balance')}</div>
-                  <div className="info-value large">
+                  <div className="text-xs text-blue-600">{t('availableBalance', 'Available Balance')}</div>
+                  <div className="text-lg font-bold text-blue-800">
                     OMR {parseFloat(selectedCard.currentBalance || 0).toFixed(3)}
                   </div>
                 </div>
@@ -1830,8 +1886,8 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
         </div>
 
         {error && (
-          <div className="alert-error">
-            <AlertCircle size={16} />
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 text-sm">
+            <AlertCircle size={16} className="shrink-0" />
             {error}
           </div>
         )}
@@ -1882,11 +1938,11 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
       className="modal-md"
       closeOnOverlayClick={false}
     >
-      <form onSubmit={handleSubmit} className="reload-form">
-        <div className="card-info-display">
-          <h3>{card.cardName}</h3>
-          <p>{t('assignedTo', 'Assigned to')}: {card.assignedStaff?.name || 'N/A'}</p>
-          <p>{t('currentBalance', 'Current Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 bg-slate-50 border border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">{card.cardName}</h3>
+          <p className="text-sm text-slate-600">{t('assignedTo', 'Assigned to')}: {card.assignedStaff?.name || 'N/A'}</p>
+          <p className="text-sm text-slate-600">{t('currentBalance', 'Current Balance')}: <span className="font-semibold text-emerald-600">OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</span></p>
         </div>
 
         <div className="form-group">
@@ -1921,24 +1977,24 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
           />
         </div>
 
-        <div className="balance-preview">
-          <div className="preview-item">
-            <span>{t('currentBalance', 'Current Balance')}:</span>
+        <div className="p-4 bg-emerald-50 border border-emerald-200 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-600">{t('currentBalance', 'Current Balance')}:</span>
             <span>OMR {parseFloat(card.currentBalance || 0).toFixed(3)}</span>
           </div>
-          <div className="preview-item">
-            <span>{t('reloadAmount', 'Reload Amount')}:</span>
-            <span>OMR {(parseFloat(formData.amount) || 0).toFixed(3)}</span>
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-600">{t('reloadAmount', 'Reload Amount')}:</span>
+            <span className="text-emerald-600">+OMR {(parseFloat(formData.amount) || 0).toFixed(3)}</span>
           </div>
-          <div className="preview-item total">
-            <span>{t('newBalance', 'New Balance')}:</span>
-            <span>OMR {(parseFloat(card.currentBalance || 0) + (parseFloat(formData.amount) || 0)).toFixed(3)}</span>
+          <div className="flex justify-between text-sm pt-2 border-t border-emerald-200">
+            <span className="font-medium text-slate-700">{t('newBalance', 'New Balance')}:</span>
+            <span className="font-bold text-emerald-700">OMR {(parseFloat(card.currentBalance || 0) + (parseFloat(formData.amount) || 0)).toFixed(3)}</span>
           </div>
         </div>
 
         {error && (
-          <div className="alert-error">
-            <AlertCircle size={16} />
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 text-sm">
+            <AlertCircle size={16} className="shrink-0" />
             {error}
           </div>
         )}
@@ -2254,70 +2310,70 @@ const EditExpenseFormModal = ({
         className="modal-md"
         closeOnOverlayClick={false}
       >
-        <div className="card-change-confirmation">
+        <div className="space-y-4">
           {/* Warning Header */}
-          <div className="ds-form-info-box warning mb-4">
-            <AlertCircle size={20} />
-            <p>{t('cardChangeWarning', 'This expense is already approved. This change will affect card balances:')}</p>
+          <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 text-amber-800">
+            <AlertCircle size={20} className="shrink-0 mt-0.5" />
+            <p className="text-sm">{t('cardChangeWarning', 'This expense is already approved. This change will affect card balances:')}</p>
           </div>
 
           {/* Change Summary */}
-          <div className="change-summary">
+          <div className="space-y-3">
             {/* Card Change Section */}
             {cardHasChanged && (
               <>
                 {/* Old Card - Refund */}
-                <div className="card-change-item refund">
-                  <div className="card-change-header">
-                    <RefreshCw size={16} className="refund-icon" />
-                    <span className="card-change-label">{t('cardChangeRefundOldCard', 'Refund the previous card')}</span>
+                <div className="p-4 bg-emerald-50 border border-emerald-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <RefreshCw size={16} className="text-emerald-600" />
+                    <span className="text-sm font-semibold text-emerald-800">{t('cardChangeRefundOldCard', 'Refund the previous card')}</span>
                   </div>
-                  <div className="card-change-details">
-                    <div className="card-info">
-                      <span className="card-info-label">{t('cardChangeOldCardInfo', 'Previous Card')}</span>
-                      <span className="card-info-value">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center pb-2 border-b border-emerald-200">
+                      <span className="text-emerald-600">{t('cardChangeOldCardInfo', 'Previous Card')}</span>
+                      <span className="font-medium text-emerald-800">
                         {oldCard?.card_type === 'petrol' ? '⛽ ' : ''}{oldCard?.cardNumber} - {oldCard?.cardName || t('unassigned', 'Unassigned')}
                       </span>
                     </div>
-                    <div className="balance-row">
-                      <span>{t('cardChangeRefundAmount', 'Refund Amount')}:</span>
-                      <span className="amount positive">+OMR {originalAmount?.toFixed(3)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">{t('cardChangeRefundAmount', 'Refund Amount')}:</span>
+                      <span className="font-semibold text-emerald-600">+OMR {originalAmount?.toFixed(3)}</span>
                     </div>
-                    <div className="balance-row">
-                      <span>{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
                       <span>OMR {oldCardBalance.toFixed(3)}</span>
                     </div>
-                    <div className="balance-row total">
-                      <span>{t('cardChangeNewBalance', 'New Balance')}:</span>
-                      <span className="amount positive">OMR {(oldCardBalance + originalAmount).toFixed(3)}</span>
+                    <div className="flex justify-between pt-2 border-t border-emerald-200">
+                      <span className="font-medium text-slate-700">{t('cardChangeNewBalance', 'New Balance')}:</span>
+                      <span className="font-bold text-emerald-700">OMR {(oldCardBalance + originalAmount).toFixed(3)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* New Card - Deduction */}
-                <div className="card-change-item deduction">
-                  <div className="card-change-header">
-                    <CreditCard size={16} className="deduction-icon" />
-                    <span className="card-change-label">{t('cardChangeDeductNewCard', 'Deduct from the new card')}</span>
+                <div className="p-4 bg-red-50 border border-red-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CreditCard size={16} className="text-red-600" />
+                    <span className="text-sm font-semibold text-red-800">{t('cardChangeDeductNewCard', 'Deduct from the new card')}</span>
                   </div>
-                  <div className="card-change-details">
-                    <div className="card-info">
-                      <span className="card-info-label">{t('cardChangeNewCardInfo', 'New Card')}</span>
-                      <span className="card-info-value">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center pb-2 border-b border-red-200">
+                      <span className="text-red-600">{t('cardChangeNewCardInfo', 'New Card')}</span>
+                      <span className="font-medium text-red-800">
                         {newCard?.card_type === 'petrol' ? '⛽ ' : ''}{newCard?.cardNumber} - {newCard?.cardName || t('unassigned', 'Unassigned')}
                       </span>
                     </div>
-                    <div className="balance-row">
-                      <span>{t('cardChangeDeductAmount', 'Deduct Amount')}:</span>
-                      <span className="amount negative">-OMR {currentAmount.toFixed(3)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">{t('cardChangeDeductAmount', 'Deduct Amount')}:</span>
+                      <span className="font-semibold text-red-600">-OMR {currentAmount.toFixed(3)}</span>
                     </div>
-                    <div className="balance-row">
-                      <span>{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
                       <span>OMR {newCardBalance.toFixed(3)}</span>
                     </div>
-                    <div className="balance-row total">
-                      <span>{t('cardChangeNewBalance', 'New Balance')}:</span>
-                      <span className="amount">OMR {(newCardBalance - currentAmount).toFixed(3)}</span>
+                    <div className="flex justify-between pt-2 border-t border-red-200">
+                      <span className="font-medium text-slate-700">{t('cardChangeNewBalance', 'New Balance')}:</span>
+                      <span className="font-bold text-red-700">OMR {(newCardBalance - currentAmount).toFixed(3)}</span>
                     </div>
                   </div>
                 </div>
@@ -2326,48 +2382,48 @@ const EditExpenseFormModal = ({
 
             {/* Amount-Only Change Section */}
             {!cardHasChanged && amountHasChanged && (
-              <div className={`card-change-item ${amountDiff > 0 ? 'deduction' : 'refund'}`}>
-                <div className="card-change-header">
+              <div className={`p-4 border ${amountDiff > 0 ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                <div className="flex items-center gap-2 mb-3">
                   {amountDiff > 0 ? (
                     <>
-                      <CreditCard size={16} className="deduction-icon" />
-                      <span className="card-change-label">{t('additionalDeduction', 'Additional Deduction')}</span>
+                      <CreditCard size={16} className="text-red-600" />
+                      <span className="text-sm font-semibold text-red-800">{t('additionalDeduction', 'Additional Deduction')}</span>
                     </>
                   ) : (
                     <>
-                      <RefreshCw size={16} className="refund-icon" />
-                      <span className="card-change-label">{t('partialRefund', 'Partial Refund')}</span>
+                      <RefreshCw size={16} className="text-emerald-600" />
+                      <span className="text-sm font-semibold text-emerald-800">{t('partialRefund', 'Partial Refund')}</span>
                     </>
                   )}
                 </div>
-                <div className="card-change-details">
-                  <div className="card-info">
-                    <span className="card-info-label">{t('selectCard', 'Card')}</span>
-                    <span className="card-info-value">
+                <div className="space-y-2 text-sm">
+                  <div className={`flex justify-between items-center pb-2 border-b ${amountDiff > 0 ? 'border-red-200' : 'border-emerald-200'}`}>
+                    <span className={amountDiff > 0 ? 'text-red-600' : 'text-emerald-600'}>{t('selectCard', 'Card')}</span>
+                    <span className={`font-medium ${amountDiff > 0 ? 'text-red-800' : 'text-emerald-800'}`}>
                       {oldCard?.card_type === 'petrol' ? '⛽ ' : ''}{oldCard?.cardNumber} - {oldCard?.cardName || t('unassigned', 'Unassigned')}
                     </span>
                   </div>
-                  <div className="balance-row">
-                    <span>{t('originalAmount', 'Original Amount')}:</span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">{t('originalAmount', 'Original Amount')}:</span>
                     <span>OMR {originalAmount?.toFixed(3)}</span>
                   </div>
-                  <div className="balance-row">
-                    <span>{t('newAmount', 'New Amount')}:</span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">{t('newAmount', 'New Amount')}:</span>
                     <span>OMR {currentAmount.toFixed(3)}</span>
                   </div>
-                  <div className="balance-row">
-                    <span>{t('amountDifference', 'Difference')}:</span>
-                    <span className={`amount ${amountDiff > 0 ? 'negative' : 'positive'}`}>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">{t('amountDifference', 'Difference')}:</span>
+                    <span className={`font-semibold ${amountDiff > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
                       {amountDiff > 0 ? '-' : '+'}OMR {Math.abs(amountDiff).toFixed(3)}
                     </span>
                   </div>
-                  <div className="balance-row">
-                    <span>{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">{t('cardChangeCurrentBalance', 'Current Balance')}:</span>
                     <span>OMR {oldCardBalance.toFixed(3)}</span>
                   </div>
-                  <div className="balance-row total">
-                    <span>{t('cardChangeNewBalance', 'New Balance')}:</span>
-                    <span className={`amount ${amountDiff > 0 ? '' : 'positive'}`}>
+                  <div className={`flex justify-between pt-2 border-t ${amountDiff > 0 ? 'border-red-200' : 'border-emerald-200'}`}>
+                    <span className="font-medium text-slate-700">{t('cardChangeNewBalance', 'New Balance')}:</span>
+                    <span className={`font-bold ${amountDiff > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
                       OMR {(oldCardBalance - amountDiff).toFixed(3)}
                     </span>
                   </div>
@@ -2377,27 +2433,26 @@ const EditExpenseFormModal = ({
           </div>
 
           {/* Notes Input */}
-          <div className="form-group mt-4">
+          <div className="form-group">
             <label>{t('cardChangeReason', 'Reason for change (optional)')}</label>
             <textarea
               value={cardChangeNotes}
               onChange={(e) => setCardChangeNotes(e.target.value)}
               rows="2"
               placeholder={t('changeReasonPlaceholder', 'Enter reason for this change...')}
-              className="form-control"
             />
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="alert-error mt-3">
-              <AlertCircle size={16} />
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 text-sm">
+              <AlertCircle size={16} className="shrink-0" />
               {error}
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="form-actions mt-4">
+          <div className="form-actions">
             <button
               type="button"
               className="btn btn-outline"
@@ -2414,7 +2469,7 @@ const EditExpenseFormModal = ({
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={16} className="spinning" />
+                  <Loader2 size={16} className="animate-spin" />
                   {t('processing', 'Processing...')}
                 </>
               ) : (
@@ -2436,16 +2491,20 @@ const EditExpenseFormModal = ({
       className="modal-lg"
       closeOnOverlayClick={false}
     >
-      <form onSubmit={handleSubmit} className="expense-form">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Expense ID Badge */}
-        <div className="expense-id-badge">
-          <FileText size={16} />
-          <span>{t('expenseNumber', 'Expense #')}: <strong>{expense.expenseNumber || expense.id}</strong></span>
+        <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-200">
+          <FileText size={16} className="text-slate-500" />
+          <span className="text-sm text-slate-600">{t('expenseNumber', 'Expense #')}: <strong className="text-slate-800">{expense.expenseNumber || expense.id}</strong></span>
           {expense.status && (
-            <span className={`expense-status ${expense.status}`}>
-              {expense.status === 'approved' && <CheckCircle size={14} />}
-              {expense.status === 'pending' && <Clock size={14} />}
-              {expense.status === 'rejected' && <AlertCircle size={14} />}
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium ml-auto ${
+              expense.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+              expense.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+              'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {expense.status === 'approved' && <CheckCircle size={12} />}
+              {expense.status === 'pending' && <Clock size={12} />}
+              {expense.status === 'rejected' && <AlertCircle size={12} />}
               <span>{t(expense.status, expense.status)}</span>
             </span>
           )}
@@ -2599,50 +2658,52 @@ const EditExpenseFormModal = ({
         </div>
 
         {/* Receipt Section */}
-        <div className="receipt-management">
-          <div className="receipt-management-header">
-            <h4>
-              <Receipt size={18} />
+        <div className="space-y-3 p-4 bg-slate-50 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <Receipt size={16} />
               {t('receiptAttachments', 'Receipt Attachments')}
             </h4>
-            <span className="receipt-count">
+            <span className="text-xs text-slate-500">
               {receipts.length}/{maxReceipts} {t('attached', 'attached')}
             </span>
           </div>
 
           {/* Loading state */}
           {loadingReceipts && (
-            <div className="receipt-loading-state">
-              <Loader2 size={20} className="spinning" />
+            <div className="flex items-center justify-center gap-2 py-4 text-slate-500 text-sm">
+              <Loader2 size={18} className="animate-spin" />
               {t('loadingReceipts', 'Loading receipts...')}
             </div>
           )}
 
           {/* Existing Receipts List */}
           {!loadingReceipts && receipts.length > 0 && (
-            <div className="file-list mb-3">
+            <div className="space-y-2">
               {receipts.map((receipt, index) => (
                 <div
                   key={receipt.id || `legacy-${index}`}
-                  className="receipt-item"
+                  className="flex items-center gap-3 p-3 bg-white border border-slate-200"
                 >
-                  <div className={`receipt-item-icon ${receipt.contentType?.includes('pdf') ? 'pdf' : 'image'}`}>
+                  <div className={`w-10 h-10 flex items-center justify-center shrink-0 ${
+                    receipt.contentType?.includes('pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'
+                  }`}>
                     {receipt.contentType?.includes('pdf') ? (
                       <FileText size={20} />
                     ) : (
                       <Camera size={20} />
                     )}
                   </div>
-                  <div className="receipt-item-details">
-                    <div className="receipt-item-name">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-700 truncate">
                       {receipt.originalFilename || t('receipt', 'Receipt')}
                     </div>
-                    <div className="receipt-item-meta">
+                    <div className="text-xs text-slate-400">
                       {receipt.uploadedAt ? new Date(receipt.uploadedAt).toLocaleDateString() : ''}
                       {receipt.fileSize && ` • ${(receipt.fileSize / 1024).toFixed(1)} KB`}
                     </div>
                   </div>
-                  <div className="receipt-item-actions">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => window.open(receipt.downloadUrl, '_blank')}
@@ -2660,7 +2721,7 @@ const EditExpenseFormModal = ({
                       title={t('deleteReceipt', 'Delete Receipt')}
                     >
                       {deletingReceiptId === receipt.id ? (
-                        <Loader2 size={14} className="spinning" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : (
                         <Ban size={14} />
                       )}
@@ -2673,9 +2734,9 @@ const EditExpenseFormModal = ({
 
           {/* No receipts message */}
           {!loadingReceipts && receipts.length === 0 && (
-            <div className="upload-placeholder mb-3">
-              <Receipt size={24} className="opacity-50" />
-              <p>{t('noReceiptsAttached', 'No receipts attached')}</p>
+            <div className="flex flex-col items-center justify-center py-6 text-slate-400">
+              <Receipt size={28} className="mb-2 opacity-50" />
+              <p className="text-sm">{t('noReceiptsAttached', 'No receipts attached')}</p>
             </div>
           )}
 
@@ -2691,7 +2752,7 @@ const EditExpenseFormModal = ({
 
           {/* Max reached message */}
           {!loadingReceipts && receipts.length >= maxReceipts && (
-            <div className="alert-warning">
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
               <AlertCircle size={14} />
               {t('maxReceiptsReached', 'Maximum number of receipts reached. Delete an existing receipt to upload a new one.')}
             </div>
@@ -2724,7 +2785,7 @@ const EditExpenseFormModal = ({
             <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 size={16} className="spinning" />
+                  <Loader2 size={16} className="animate-spin" />
                   {t('updating', 'Updating...')}
                 </>
               ) : (
@@ -2759,29 +2820,29 @@ const CardViewModal = ({
   const getStatusBadge = (status) => {
     const statusConfig = {
       active: {
-        className: 'badge-success',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         label: t('active', 'Active'),
         icon: <CheckCircle size={14} />
       },
       suspended: {
-        className: 'badge-warning',
+        className: 'bg-amber-50 text-amber-700 border-amber-200',
         label: t('suspended', 'Suspended'),
         icon: <AlertCircle size={14} />
       },
       expired: {
-        className: 'badge-danger',
+        className: 'bg-red-50 text-red-700 border-red-200',
         label: t('expired', 'Expired'),
         icon: <Clock size={14} />
       },
       closed: {
-        className: 'badge-secondary',
+        className: 'bg-slate-100 text-slate-600 border-slate-200',
         label: t('closed', 'Closed'),
         icon: <Lock size={14} />
       }
     }
     const config = statusConfig[status] || statusConfig.active
     return (
-      <span className={`status-badge ${config.className}`}>
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border ${config.className}`}>
         {config.icon}
         <span>{config.label}</span>
       </span>
@@ -2795,200 +2856,198 @@ const CardViewModal = ({
     ? ((totalSpent / monthlyLimit) * 100).toFixed(1)
     : 0
 
+  const modalFooter = (
+    <button type="button" className="btn btn-outline" onClick={onClose}>
+      {t('close', 'Close')}
+    </button>
+  )
+
   return (
     <Modal
       isOpen={isOpen}
       title={t('pettyCashCardDetails', 'Petty Cash Card Details')}
       onClose={onClose}
-      className="modal-xl petty-cash-view-modal"
+      size="xl"
       closeOnOverlayClick={false}
+      footer={modalFooter}
     >
-      <div className="card-view-content">
+      <div className="space-y-6">
         {/* Card Header - Prominent Display */}
-        <div className="card-view-header">
-          <div className="card-header-left">
-            <div className="card-icon">
-              <CreditCard size={32} />
+        <div className="flex items-start justify-between p-4 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 flex items-center justify-center bg-blue-100 text-blue-600">
+              <CreditCard size={28} />
             </div>
-            <div className="card-header-info">
-              <h2 className="card-number">{card.cardNumber}</h2>
-              <div className="card-staff">
-                <User size={16} />
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 font-mono">{card.cardNumber}</h2>
+              <div className="flex items-center gap-2 mt-1 text-sm text-slate-600">
+                <User size={14} />
                 <span>{card.staffName}</span>
                 {card.department && (
                   <>
-                    <span className="separator">•</span>
-                    <span className="department">{card.department}</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-500">{card.department}</span>
                   </>
                 )}
               </div>
             </div>
           </div>
-          <div className="card-header-right">
+          <div>
             {getStatusBadge(card.status)}
           </div>
         </div>
 
         {/* Balance Cards - Most Important Information */}
-        <div className="balance-cards-grid">
-          <div className="balance-card primary">
-            <div className="balance-card-icon">
-              <Banknote size={24} />
-            </div>
-            <div className="balance-card-content">
-              <label>{t('currentBalance', 'Current Balance')}</label>
-              <div className="balance-value">{formatCurrency(card.currentBalance)}</div>
-            </div>
-          </div>
-
-          <div className="balance-card">
-            <div className="balance-card-content">
-              <label>{t('initialBalance', 'Initial Balance')}</label>
-              <div className="balance-value">{formatCurrency(card.initialBalance)}</div>
-            </div>
-          </div>
-
-          <div className="balance-card">
-            <div className="balance-card-content">
-              <label>{t('totalSpent', 'Total Spent')}</label>
-              <div className="balance-value spent">{formatCurrency(totalSpent)}</div>
-            </div>
-          </div>
-
-          <div className="balance-card">
-            <div className="balance-card-content">
-              <label>{t('monthlyLimit', 'Monthly Limit')}</label>
-              <div className="balance-value">
-                {monthlyLimit > 0 ? formatCurrency(monthlyLimit) : t('noLimit', 'No Limit')}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-emerald-50 border border-emerald-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 flex items-center justify-center bg-emerald-100 text-emerald-600">
+                <Banknote size={20} />
               </div>
+              <div>
+                <label className="block text-xs text-emerald-600 uppercase tracking-wider font-medium">{t('currentBalance', 'Current Balance')}</label>
+                <div className="text-lg font-bold text-emerald-700">{formatCurrency(card.currentBalance)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50 border border-slate-200">
+            <label className="block text-xs text-slate-500 uppercase tracking-wider font-medium">{t('initialBalance', 'Initial Balance')}</label>
+            <div className="text-lg font-semibold text-slate-700 mt-1">{formatCurrency(card.initialBalance)}</div>
+          </div>
+
+          <div className="p-4 bg-slate-50 border border-slate-200">
+            <label className="block text-xs text-slate-500 uppercase tracking-wider font-medium">{t('totalSpent', 'Total Spent')}</label>
+            <div className="text-lg font-semibold text-red-600 mt-1">{formatCurrency(totalSpent)}</div>
+          </div>
+
+          <div className="p-4 bg-slate-50 border border-slate-200">
+            <label className="block text-xs text-slate-500 uppercase tracking-wider font-medium">{t('monthlyLimit', 'Monthly Limit')}</label>
+            <div className="text-lg font-semibold text-slate-700 mt-1">
+              {monthlyLimit > 0 ? formatCurrency(monthlyLimit) : t('noLimit', 'No Limit')}
             </div>
           </div>
         </div>
 
         {/* Utilization Bar - Only if monthly limit exists */}
         {monthlyLimit > 0 && (
-          <div className="utilization-section">
-            <div className="utilization-header">
-              <span className="utilization-label">
+          <div className="p-4 bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
                 <TrendingUp size={16} />
                 {t('monthlyUtilization', 'Monthly Utilization')}
               </span>
-              <span className="utilization-percent">{utilization}%</span>
+              <span className={`text-sm font-bold ${
+                utilization > 90 ? 'text-red-600' :
+                utilization > 70 ? 'text-amber-600' :
+                'text-emerald-600'
+              }`}>{utilization}%</span>
             </div>
-            <div className="utilization-bar-wrapper">
-              <div className="utilization-bar">
-                <div
-                  className={`utilization-fill ${
-                    utilization > 90 ? 'danger' :
-                    utilization > 70 ? 'warning' :
-                    'success'
-                  }`}
-                  style={{ width: `${Math.min(utilization, 100)}%` }}
-                >
-                  <span className="utilization-label-inside">
-                    {utilization > 10 && `${utilization}%`}
-                  </span>
-                </div>
-              </div>
+            <div className="h-3 bg-slate-200 overflow-hidden">
+              <div
+                className={`h-full transition-all ${
+                  utilization > 90 ? 'bg-red-500' :
+                  utilization > 70 ? 'bg-amber-500' :
+                  'bg-emerald-500'
+                }`}
+                style={{ width: `${Math.min(utilization, 100)}%` }}
+              />
             </div>
           </div>
         )}
 
-        <div className="card-details-sections">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Validity Period */}
-          <div className="detail-section">
-            <h3 className="section-title">
-              <Calendar size={18} />
+          <div className="p-4 bg-slate-50 border border-slate-200">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-4">
+              <Calendar size={16} />
               {t('validityPeriod', 'Validity Period')}
             </h3>
-            <div className="detail-grid">
-              <div className="detail-item">
-                <label>{t('issueDate', 'Issue Date')}</label>
-                <div className="detail-value">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-slate-500 uppercase tracking-wider">{t('issueDate', 'Issue Date')}</label>
+                <div className="text-sm font-medium text-slate-700 mt-1">
                   {card.issueDate ? formatDate(card.issueDate) : '-'}
                 </div>
               </div>
-              <div className="detail-item">
-                <label>{t('expiryDate', 'Expiry Date')}</label>
-                <div className="detail-value">
+              <div>
+                <label className="block text-xs text-slate-500 uppercase tracking-wider">{t('expiryDate', 'Expiry Date')}</label>
+                <div className="text-sm font-medium text-slate-700 mt-1">
                   {card.expiryDate ? formatDate(card.expiryDate) : t('noExpiry', 'No Expiry')}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Recent Expenses */}
-          {card.recentExpenses && card.recentExpenses.length > 0 && (
-            <div className="detail-section">
-              <h3 className="section-title">
-                <Receipt size={18} />
-                {t('recentExpenses', 'Recent Expenses')} ({card.recentExpenses.length})
-              </h3>
-              <div className="expenses-list-view">
-                {card.recentExpenses.map((expense, index) => (
-                  <div key={expense.id || index} className="expense-row">
-                    <div className="expense-left">
-                      <div className="expense-description">{expense.description}</div>
-                      <div className="expense-meta">
-                        <span className="expense-number">{expense.expenseNumber}</span>
-                        <span className="separator">•</span>
-                        <span className="expense-date">{formatDate(expense.created_at)}</span>
-                      </div>
-                    </div>
-                    <div className="expense-right">
-                      <div className="expense-amount-value">
-                        {formatCurrency(expense.amount)}
-                      </div>
-                      <span className={`expense-status-badge ${expense.status}`}>
-                        {expense.status === 'approved' && <CheckCircle size={12} />}
-                        {expense.status === 'pending' && <Clock size={12} />}
-                        {expense.status === 'rejected' && <AlertCircle size={12} />}
-                        {t(expense.status, expense.status)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Notes */}
           {card.notes && (
-            <div className="detail-section">
-              <h3 className="section-title">
-                <FileText size={18} />
+            <div className="p-4 bg-slate-50 border border-slate-200">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
+                <FileText size={16} />
                 {t('notes', 'Notes')}
               </h3>
-              <div className="notes-display">{card.notes}</div>
+              <p className="text-sm text-slate-600">{card.notes}</p>
             </div>
           )}
+        </div>
 
-          {/* Deactivation Info (if suspended) */}
-          {card.status === 'suspended' && card.deactivation_reason && (
-            <div className="alert-block warning mt-4">
-              <h4>
-                <Ban size={16} />
-                {t('deactivationInfo', 'Deactivation Information')}
-              </h4>
-              <p>
-                <strong>{t('reason', 'Reason')}:</strong> {card.deactivation_reason}
+        {/* Recent Expenses */}
+        {card.recentExpenses && card.recentExpenses.length > 0 && (
+          <div className="p-4 bg-slate-50 border border-slate-200">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-4">
+              <Receipt size={16} />
+              {t('recentExpenses', 'Recent Expenses')} ({card.recentExpenses.length})
+            </h3>
+            <div className="space-y-2">
+              {card.recentExpenses.map((expense, index) => (
+                <div key={expense.id || index} className="flex items-center justify-between p-3 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-slate-700 truncate">{expense.description}</div>
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                      <span className="font-mono">{expense.expenseNumber}</span>
+                      <span>•</span>
+                      <span>{formatDate(expense.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-sm font-semibold text-slate-700">
+                      {formatCurrency(expense.amount)}
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium ${
+                      expense.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                      expense.status === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                      'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
+                      {expense.status === 'approved' && <CheckCircle size={10} />}
+                      {expense.status === 'pending' && <Clock size={10} />}
+                      {expense.status === 'rejected' && <AlertCircle size={10} />}
+                      {t(expense.status, expense.status)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Deactivation Info (if suspended) */}
+        {card.status === 'suspended' && card.deactivation_reason && (
+          <div className="p-4 bg-amber-50 border border-amber-200">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-2">
+              <Ban size={16} />
+              {t('deactivationInfo', 'Deactivation Information')}
+            </h4>
+            <p className="text-sm text-amber-700">
+              <strong>{t('reason', 'Reason')}:</strong> {card.deactivation_reason}
+            </p>
+            {card.deactivated_at && (
+              <p className="text-sm text-amber-700 mt-1">
+                <strong>{t('deactivatedOn', 'Deactivated on')}:</strong>{' '}
+                {new Date(card.deactivated_at).toLocaleString('en-GB')}
               </p>
-              {card.deactivated_at && (
-                <p>
-                  <strong>{t('deactivatedOn', 'Deactivated on')}:</strong>{' '}
-                  {new Date(card.deactivated_at).toLocaleString('en-GB')}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="modal-footer">
-          <button type="button" className="btn btn-outline" onClick={onClose}>
-            {t('close', 'Close')}
-          </button>
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   )

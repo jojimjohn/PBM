@@ -105,6 +105,8 @@ const translations = {
     menu: 'Menu',
     navigation: 'Navigation',
     administration: 'Administration',
+    coreNavigation: 'Core Navigation',
+    legalFinance: 'Legal & Finance',
     management: 'Management',
     dashboard: 'Dashboard',
     workflowDashboard: 'Workflow Dashboard',
@@ -113,7 +115,7 @@ const translations = {
     customers: 'Customers',
     suppliers: 'Suppliers',
     inventory: 'Inventory',
-    sales: 'Sales',
+    sales: 'Sales & Analytics',
     purchase: 'Purchase',
     contracts: 'Contracts',
     reports: 'Reports',
@@ -156,6 +158,7 @@ const translations = {
     projectDetails: 'Project Details',
     myProjects: 'My Projects',
     allProjects: 'All Projects',
+    yourProjects: 'Your Projects',
     totalProjects: 'Total Projects',
     activeProjects: 'Active Projects',
     onHoldProjects: 'On Hold',
@@ -200,6 +203,8 @@ const translations = {
     systemConfiguration: 'System Configuration',
     profile: 'Profile',
     logout: 'Logout',
+    collapseSidebar: 'Collapse Sidebar',
+    expandSidebar: 'Expand Sidebar',
 
     // Dashboard
     totalCustomers: 'Total Customers',
@@ -488,6 +493,7 @@ const translations = {
     noCategoriesAvailable: 'No categories available',
 
     // Petty Cash Management
+    pettyCash: 'Petty Cash',
     pettyCashManagement: 'Petty Cash Management',
     pettyCashSubtitle: 'Manage staff expense cards and track spending',
     pettyCashCards: 'Petty Cash Cards',
@@ -1788,6 +1794,11 @@ const translations = {
     // Welcome and greeting messages
     welcomeBack: 'Welcome Back',
     welcomeTo: 'Welcome to',
+    signInToAccount: 'Sign in to your account',
+    chooseCompanyCredentials: 'Choose your company and enter your credentials below',
+    forgotPassword: 'Forgot?',
+    yourTasks: 'Your Tasks',
+    recentActivity: 'Recent Activity',
     goodMorning: 'Good Morning',
     goodAfternoon: 'Good Afternoon',
     goodEvening: 'Good Evening',
@@ -2224,6 +2235,7 @@ const translations = {
     projectDetails: 'تفاصيل المشروع',
     myProjects: 'مشاريعي',
     allProjects: 'جميع المشاريع',
+    yourProjects: 'مشاريعك',
     totalProjects: 'إجمالي المشاريع',
     activeProjects: 'المشاريع النشطة',
     onHoldProjects: 'المشاريع المعلقة',
@@ -2288,10 +2300,14 @@ const translations = {
     settings: 'الإعدادات',
     profile: 'الملف الشخصي',
     logout: 'تسجيل الخروج',
+    collapseSidebar: 'طي الشريط الجانبي',
+    expandSidebar: 'توسيع الشريط الجانبي',
     home: 'الرئيسية',
     menu: 'القائمة',
     navigation: 'التنقل',
     administration: 'الإدارة',
+    coreNavigation: 'التنقل الرئيسي',
+    legalFinance: 'القانونية والمالية',
     management: 'الإدارة',
     
     // Purchase Management - Missing Keys
@@ -2692,6 +2708,7 @@ const translations = {
     profit: 'ربح',
     
     // Petty Cash Management
+    pettyCash: 'النقدية الصغيرة',
     pettyCashManagement: 'إدارة النقدية الصغيرة',
     pettyCashSubtitle: 'إدارة بطاقات مصاريف الموظفين وتتبع الإنفاق',
     pettyCashCards: 'بطاقات النقدية الصغيرة',
@@ -3891,6 +3908,11 @@ const translations = {
     // Welcome and greeting messages
     welcomeBack: 'مرحباً بعودتك',
     welcomeTo: 'مرحباً بك في',
+    signInToAccount: 'تسجيل الدخول إلى حسابك',
+    chooseCompanyCredentials: 'اختر شركتك وأدخل بيانات الاعتماد الخاصة بك أدناه',
+    forgotPassword: 'نسيت؟',
+    yourTasks: 'مهامك',
+    recentActivity: 'النشاط الأخير',
     goodMorning: 'صباح الخير',
     goodAfternoon: 'مساء الخير',
     goodEvening: 'مساء الخير',

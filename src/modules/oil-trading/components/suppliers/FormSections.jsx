@@ -203,26 +203,50 @@ export const BusinessSection = ({ formData, updateField, toggleSpecialization, s
       Business Details
     </div>
 
-    <div className="form-grid">
-      <div className="form-group full-width">
-        <label>{t('specialization', 'Specialization')}</label>
-        <div className="ds-checkbox-grid">
-          {specializations.map(spec => (
-            <label key={spec.id} className="ds-checkbox-card">
+    {/* Specialization Grid - Clean Tailwind Layout */}
+    <div className="mb-6">
+      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-3">
+        {t('specialization', 'Specialization')}
+      </label>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {specializations.map(spec => {
+          const isChecked = (formData.specialization || []).includes(spec.id)
+          return (
+            <label
+              key={spec.id}
+              className={`
+                relative flex items-start gap-3 p-4 cursor-pointer
+                border transition-all duration-150
+                ${isChecked
+                  ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
+                  : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }
+              `}
+              style={{ borderRadius: 0 }}
+            >
               <input
                 type="checkbox"
-                checked={(formData.specialization || []).includes(spec.id)}
+                checked={isChecked}
                 onChange={() => toggleSpecialization(spec.id)}
+                className="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                style={{ borderRadius: 0 }}
               />
-              <div className="ds-checkbox-content">
-                <span className="ds-checkbox-title">{spec.name}</span>
-                <span className="ds-checkbox-description">{spec.description}</span>
+              <div className="flex-1 min-w-0">
+                <span className={`block text-sm font-medium ${isChecked ? 'text-blue-900' : 'text-slate-800'}`}>
+                  {spec.name}
+                </span>
+                <span className={`block text-xs mt-0.5 leading-relaxed ${isChecked ? 'text-blue-700' : 'text-slate-500'}`}>
+                  {spec.description}
+                </span>
               </div>
             </label>
-          ))}
-        </div>
+          )
+        })}
       </div>
+    </div>
 
+    {/* Other Fields */}
+    <div className="form-grid">
       <div className="form-group">
         <label>Payment Terms (Days)</label>
         <input

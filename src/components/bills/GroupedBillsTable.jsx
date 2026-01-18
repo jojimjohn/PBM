@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { ChevronRight, ChevronDown, Eye, Banknote, AlertTriangle, CheckCircle, Clock, FileText, Receipt, Download, FileSpreadsheet, Printer, Edit, Send } from 'lucide-react'
 import ReconciliationIndicator from './ReconciliationIndicator'
-import './GroupedBillsTable.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * GroupedBillsTable Component
@@ -222,9 +222,9 @@ const GroupedBillsTable = ({
           <ReconciliationIndicator reconciliation={bill.reconciliation} formatCurrency={formatCurrency} />
         </td>
         <td>
-          <div className="action-buttons">
+          <div className="table-actions">
             <button
-              className="btn btn-icon btn-sm"
+              className="table-action-btn view"
               onClick={() => onViewDetails(bill)}
               title="View Details"
             >
@@ -233,7 +233,7 @@ const GroupedBillsTable = ({
             {/* Edit button - only for unpaid vendor bills */}
             {onEditVendorBill && bill.payment_status !== 'paid' && (
               <button
-                className="btn btn-icon btn-sm btn-warning"
+                className="table-action-btn edit"
                 onClick={() => onEditVendorBill(bill)}
                 title="Edit Vendor Bill"
               >
@@ -242,7 +242,7 @@ const GroupedBillsTable = ({
             )}
             {bill.payment_status !== 'paid' && (
               <button
-                className="btn btn-icon btn-sm btn-success"
+                className="table-action-btn payment"
                 onClick={() => onRecordPayment(bill)}
                 title="Record Payment"
               >
@@ -294,9 +294,9 @@ const GroupedBillsTable = ({
         <td>{getBillStatusBadge(billStatus)}</td>
         <td>-</td>
         <td>
-          <div className="action-buttons">
+          <div className="table-actions">
             <button
-              className="btn btn-icon btn-sm"
+              className="table-action-btn view"
               onClick={() => onViewDetails(bill)}
               title="View Details"
             >
@@ -305,7 +305,7 @@ const GroupedBillsTable = ({
             {/* Mark as Sent button - only for draft company bills */}
             {billStatus === 'draft' && onMarkAsSent && (
               <button
-                className="btn btn-icon btn-sm btn-primary"
+                className="table-action-btn send"
                 onClick={() => onMarkAsSent(bill)}
                 title="Mark as Sent"
               >
@@ -340,16 +340,16 @@ const GroupedBillsTable = ({
       {/* Export Toolbar */}
       <div className="bills-export-toolbar">
         <span className="bills-count">{totalBills} bill(s)</span>
-        <div className="export-buttons">
+        <div className="header-actions">
           <button
-            className="btn btn-outline btn-sm btn-icon-only"
+            className="btn btn-icon"
             onClick={exportToCSV}
             title="Export to CSV"
           >
             <FileSpreadsheet size={16} />
           </button>
           <button
-            className="btn btn-outline btn-sm btn-icon-only"
+            className="btn btn-icon"
             onClick={handlePrint}
             title="Print / Save as PDF"
           >

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useLocalization } from '../context/LocalizationContext'
-import { X, Plus, Trash2, Layers, Package, AlertCircle, Recycle } from 'lucide-react'
-import './MaterialFormModal.css'
+import { Plus, Trash2, Layers, Package, AlertCircle, Recycle } from 'lucide-react'
+import Modal from './ui/Modal'
+// CSS moved to global index.css Tailwind
 
 // Valid waste types for disposable materials
 const WASTE_TYPES = [
@@ -316,27 +317,45 @@ const MaterialFormModal = ({
     (!editingMaterial || m.id !== editingMaterial.id) // Don't allow self-reference
   )
 
-  if (!isOpen) return null
+  const modalTitle = (
+    <span className="flex items-center gap-2">
+      <Package size={20} />
+      {editingMaterial ? t('editMaterial', 'Edit Material') : t('addMaterial', 'Add Material')}
+    </span>
+  )
+
+  const modalFooter = (
+    <>
+      <button
+        type="button"
+        className="btn btn-outline"
+        onClick={handleClose}
+        disabled={saving}
+      >
+        {t('cancel', 'Cancel')}
+      </button>
+      <button
+        type="submit"
+        form="material-form"
+        className="btn btn-primary"
+        disabled={saving}
+      >
+        {saving ? t('saving', 'Saving...') : t('save', 'Save')}
+      </button>
+    </>
+  )
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.stopPropagation()}>
-      <div className="modal-content ds-form-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>
-            <Package size={20} />
-            {editingMaterial ? t('editMaterial', 'Edit Material') : t('addMaterial', 'Add Material')}
-          </h3>
-          <button
-            className="modal-close"
-            onClick={handleClose}
-            disabled={saving}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={modalTitle}
+      footer={modalFooter}
+      size="lg"
+      className="material-form-modal"
+    >
+      <form id="material-form" onSubmit={handleSubmit}>
+        <div className="form-content">
             {errors.submit && (
               <div className="ds-form-error-box">
                 <AlertCircle size={16} />
@@ -560,242 +579,227 @@ const MaterialFormModal = ({
             </div>
 
             {/* Disposable Material Section */}
-            <div className="ds-form-section success disposable-section">
-              <div className="ds-form-section-header">
-                <h4>
-                  <Recycle size={16} />
-                  {t('disposableMaterial', 'Disposable Material')}
-                </h4>
-                <label className="ds-toggle-switch success">
+            <div className="border border-slate-200 bg-slate-50/50 p-4 mt-4">
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <div className="flex items-center gap-2">
+                  <Recycle size={16} className="text-emerald-600" />
+                  <span className="text-sm font-semibold text-slate-700">{t('disposableMaterial', 'Disposable Material')}</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.is_disposable}
                     onChange={(e) => handleInputChange('is_disposable', e.target.checked)}
                     disabled={saving || formData.is_composite}
+                    className="sr-only peer"
                   />
-                  <span className="ds-toggle-slider"></span>
-                  <span className="ds-toggle-label">
+                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-disabled:opacity-50"></div>
+                  <span className="ml-2 text-xs font-medium text-slate-600">
                     {formData.is_disposable ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
                   </span>
                 </label>
               </div>
 
               {formData.is_composite && (
-                <div className="ds-form-info-box warning">
-                  <AlertCircle size={16} />
-                  <p>
+                <div className="flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                  <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                  <p className="m-0">
                     {t('disposableCompositeConflict', 'Composite materials cannot be marked as disposable. The composite components are tracked individually.')}
                   </p>
                 </div>
               )}
 
               {formData.is_disposable && !formData.is_composite && (
-                <>
-                  <div className="ds-form-info-box success">
-                    <AlertCircle size={16} />
-                    <p>
-                      {t('disposableInfo', 'Disposable materials are automatically converted to 100% wastage during WCN finalization. They represent items collected but NOT stored in inventory (e.g., contaminated material, water/sludge, packaging waste).')}
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                    <p className="m-0">
+                      {t('disposableInfo', 'Disposable materials are automatically converted to 100% wastage during WCN finalization.')}
                     </p>
                   </div>
 
-                  <div className="ds-form-grid">
-                    <div className="ds-form-group full-width">
-                      <label htmlFor="default_waste_type">
-                        {t('defaultWasteType', 'Default Waste Type')} <span className="required">*</span>
-                      </label>
-                      <select
-                        id="default_waste_type"
-                        value={formData.default_waste_type}
-                        onChange={(e) => handleInputChange('default_waste_type', e.target.value)}
-                        disabled={saving}
-                      >
-                        <option value="">{t('selectWasteType', 'Select waste type...')}</option>
-                        {WASTE_TYPES.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {t(`wasteType_${type.value}`, type.label)}
-                          </option>
-                        ))}
-                      </select>
-                      <small className="ds-form-hint">
-                        {t('wasteTypeHint', 'The waste type applied when this material is finalized in a WCN. All collected quantity goes to wastage.')}
-                      </small>
-                    </div>
+                  <div className="max-w-xs">
+                    <label htmlFor="default_waste_type" className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                      {t('defaultWasteType', 'Default Waste Type')} <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="default_waste_type"
+                      value={formData.default_waste_type}
+                      onChange={(e) => handleInputChange('default_waste_type', e.target.value)}
+                      disabled={saving}
+                      className="w-full h-8 px-2 text-sm bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="">{t('selectWasteType', 'Select waste type...')}</option>
+                      {WASTE_TYPES.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {t(`wasteType_${type.value}`, type.label)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
             {/* Composite Material Section */}
-            <div className="ds-form-section info composite-section">
-              <div className="ds-form-section-header">
-                <h4>
-                  <Layers size={16} />
-                  {t('compositeMaterial', 'Composite Material')}
-                </h4>
-                <label className="ds-toggle-switch">
+            <div className="border border-slate-200 bg-slate-50/50 p-4 mt-4">
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <div className="flex items-center gap-2">
+                  <Layers size={16} className="text-blue-600" />
+                  <span className="text-sm font-semibold text-slate-700">{t('compositeMaterial', 'Composite Material')}</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.is_composite}
                     onChange={(e) => handleCompositeToggle(e.target.checked)}
                     disabled={saving}
+                    className="sr-only peer"
                   />
-                  <span className="ds-toggle-slider"></span>
-                  <span className="ds-toggle-label">
+                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500 peer-disabled:opacity-50"></div>
+                  <span className="ml-2 text-xs font-medium text-slate-600">
                     {formData.is_composite ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
                   </span>
                 </label>
               </div>
 
               {formData.is_composite && (
-                <>
-                  <div className="ds-form-info-box">
-                    <AlertCircle size={16} />
-                    <p>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 p-2.5 bg-blue-50 border border-blue-200 text-blue-800 text-xs">
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                    <p className="m-0">
                       {t('compositeInfo', 'Composite materials automatically split into components when received in purchase orders. Example: "Oil with Drum" splits into "Oil" and "Drum" in inventory.')}
                     </p>
                   </div>
 
-                  <div className="compositions-builder">
-                    <div className="ds-form-section-header">
-                      <h5>{t('components', 'Components')}</h5>
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-sm"
-                        onClick={addCompositionRow}
-                        disabled={saving}
-                      >
-                        <Plus size={14} />
-                        {t('addComponent', 'Add Component')}
-                      </button>
+                  {/* Components Header */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      {t('components', 'Components')}
+                    </span>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                      onClick={addCompositionRow}
+                      disabled={saving}
+                    >
+                      <Plus size={12} />
+                      {t('addComponent', 'Add Component')}
+                    </button>
+                  </div>
+
+                  {errors.compositions && (
+                    <div className="flex items-start gap-2 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs">
+                      <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                      {errors.compositions}
                     </div>
+                  )}
 
-                    {errors.compositions && (
-                      <div className="ds-form-error-box">
-                        <AlertCircle size={16} />
-                        {errors.compositions}
-                      </div>
-                    )}
-
-                    <div className="ds-form-table-wrapper">
-                      <table className="ds-form-table">
-                        <thead>
+                  {/* Components Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-600">
+                          <th className="px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider">{t('componentMaterial', 'Component Material')} *</th>
+                          <th className="px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider w-24">{t('type', 'Type')} *</th>
+                          <th className="px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider w-20">{t('capacity', 'Capacity')}</th>
+                          <th className="px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider w-20">{t('unit', 'Unit')}</th>
+                          <th className="px-2 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider w-16">{t('actions', 'Actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {compositions.length === 0 ? (
                           <tr>
-                            <th>{t('componentMaterial', 'Component Material')} *</th>
-                            <th>{t('type', 'Type')} *</th>
-                            <th>{t('capacity', 'Capacity')}</th>
-                            <th>{t('unit', 'Unit')}</th>
-                            <th>{t('actions', 'Actions')}</th>
+                            <td colSpan="5" className="px-2 py-4 text-center text-slate-400 text-xs">
+                              {t('noComponentsAdded', 'No components added yet. Click "Add Component" to start.')}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {compositions.length === 0 ? (
-                            <tr>
-                              <td colSpan="5" className="empty-row">
-                                {t('noComponentsAdded', 'No components added yet. Click "Add Component" to start.')}
+                        ) : (
+                          compositions.map((comp, index) => (
+                            <tr key={index} className="border-b border-slate-100">
+                              <td className="px-1 py-1.5">
+                                <select
+                                  value={comp.component_material_id}
+                                  onChange={(e) => updateComposition(index, 'component_material_id', e.target.value)}
+                                  disabled={saving}
+                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
+                                >
+                                  <option value="">{t('selectMaterial', 'Select material...')}</option>
+                                  {availableComponentMaterials.map(material => (
+                                    <option key={material.id} value={material.id}>
+                                      {material.name} ({material.code})
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-1 py-1.5">
+                                <select
+                                  value={comp.component_type}
+                                  onChange={(e) => updateComposition(index, 'component_type', e.target.value)}
+                                  disabled={saving}
+                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
+                                >
+                                  {componentTypes.map(type => (
+                                    <option key={type.value} value={type.value}>
+                                      {type.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-1 py-1.5">
+                                <input
+                                  type="number"
+                                  value={comp.capacity}
+                                  onChange={(e) => updateComposition(index, 'capacity', e.target.value)}
+                                  disabled={saving}
+                                  step="0.001"
+                                  min="0"
+                                  placeholder="200"
+                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
+                                />
+                              </td>
+                              <td className="px-1 py-1.5">
+                                <select
+                                  value={comp.capacity_unit}
+                                  onChange={(e) => updateComposition(index, 'capacity_unit', e.target.value)}
+                                  disabled={saving}
+                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
+                                >
+                                  <option value="">{t('selectUnit', 'Select...')}</option>
+                                  {capacityUnits.map(unit => (
+                                    <option key={unit.value} value={unit.value}>
+                                      {unit.value}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-1 py-1.5 text-center">
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  onClick={() => removeCompositionRow(index)}
+                                  disabled={saving || compositions.length <= 1}
+                                  title={t('removeComponent', 'Remove component')}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
                               </td>
                             </tr>
-                          ) : (
-                            compositions.map((comp, index) => (
-                              <tr key={index}>
-                                <td>
-                                  <select
-                                    value={comp.component_material_id}
-                                    onChange={(e) => updateComposition(index, 'component_material_id', e.target.value)}
-                                    disabled={saving}
-                                  >
-                                    <option value="">{t('selectMaterial', 'Select material...')}</option>
-                                    {availableComponentMaterials.map(material => (
-                                      <option key={material.id} value={material.id}>
-                                        {material.name} ({material.code})
-                                      </option>
-                                    ))}
-                                  </select>
-                                </td>
-                                <td>
-                                  <select
-                                    value={comp.component_type}
-                                    onChange={(e) => updateComposition(index, 'component_type', e.target.value)}
-                                    disabled={saving}
-                                  >
-                                    {componentTypes.map(type => (
-                                      <option key={type.value} value={type.value}>
-                                        {type.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </td>
-                                <td>
-                                  <input
-                                    type="number"
-                                    value={comp.capacity}
-                                    onChange={(e) => updateComposition(index, 'capacity', e.target.value)}
-                                    disabled={saving}
-                                    step="0.001"
-                                    min="0"
-                                    placeholder="200"
-                                  />
-                                </td>
-                                <td>
-                                  <select
-                                    value={comp.capacity_unit}
-                                    onChange={(e) => updateComposition(index, 'capacity_unit', e.target.value)}
-                                    disabled={saving}
-                                  >
-                                    <option value="">{t('selectUnit', 'Select...')}</option>
-                                    {capacityUnits.map(unit => (
-                                      <option key={unit.value} value={unit.value}>
-                                        {unit.value}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </td>
-                                <td>
-                                  <button
-                                    type="button"
-                                    className="ds-form-btn-icon danger"
-                                    onClick={() => removeCompositionRow(index)}
-                                    disabled={saving || compositions.length <= 1}
-                                    title={t('removeComponent', 'Remove component')}
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <small className="ds-form-hint">
-                      {t('capacityHint', 'Capacity is for reference only (e.g., 200L drum capacity). Actual quantities are determined at purchase order receipt.')}
-                    </small>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                </>
+
+                  <p className="text-[10px] text-slate-400 mt-2">
+                    {t('capacityHint', 'Capacity is for reference only (e.g., 200L drum capacity). Actual quantities are determined at purchase order receipt.')}
+                  </p>
+                </div>
               )}
             </div>
-          </div>
-
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={handleClose}
-              disabled={saving}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={saving}
-            >
-              {saving ? t('saving', 'Saving...') : t('save', 'Save')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </Modal>
   )
 }
 

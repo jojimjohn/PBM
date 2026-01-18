@@ -38,9 +38,9 @@ import {
   Plus, Search, Filter, Eye, Edit, Edit3, Truck, Package,
   CheckCircle, Clock, AlertTriangle, FileText, Download,
   Banknote, MapPin, Building, Calculator, Receipt,
-  Users, Settings, Paperclip, Image, Trash2
+  Users, Settings, Paperclip, Image, Trash2, RefreshCw
 } from 'lucide-react'
-import '../styles/Purchase.css'
+// CSS migrated to inline Tailwind - Purchase.css deleted
 
 const Purchase = () => {
   const { selectedCompany } = useAuth()
@@ -698,15 +698,12 @@ const Purchase = () => {
 
   const summary = calculateOrderSummary()
 
-  // Tabs ordered by workflow: Collections → PO → Bills → Expenses → Vendors → Locations → Analytics
+  // Tabs ordered by workflow: Collections → PO → Bills → Expenses
   const tabs = [
     { id: 'collections', name: t('collections'), icon: Package },
     { id: 'orders', name: t('purchaseOrders'), icon: FileText },
     { id: 'bills', name: t('bills'), icon: Receipt },
-    { id: 'expenses', name: t('purchaseExpenses'), icon: Banknote },
-    { id: 'vendors', name: t('vendorManagement'), icon: Users },
-    { id: 'locations', name: t('storageLocations'), icon: Building },
-    { id: 'analytics', name: t('analytics'), icon: Calculator }
+    { id: 'expenses', name: t('purchaseExpenses'), icon: Banknote }
   ]
 
   // billSummary is now provided by usePurchaseBills hook
@@ -716,12 +713,16 @@ const Purchase = () => {
       {/* Message Toast */}
       {message.text && (
         <div
-          className={`message-toast ${message.type}`}
+          className={`flex items-center gap-3 px-5 py-3.5 rounded-lg mb-6 cursor-pointer transition-all ${
+            message.type === 'success'
+              ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-300 text-emerald-800'
+              : 'bg-gradient-to-br from-red-50 to-red-100 border border-red-300 text-red-800'
+          }`}
           onClick={() => setMessage({ type: '', text: '' })}
         >
           {message.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-          <span>{message.text}</span>
-          <button className="toast-close">×</button>
+          <span className="flex-1 text-sm font-medium">{message.text}</span>
+          <button className="bg-transparent border-none text-xl leading-none opacity-60 cursor-pointer px-1 hover:opacity-100">×</button>
         </div>
       )}
 
@@ -820,16 +821,26 @@ const Purchase = () => {
             ) : (
             <DataTable
               headerActions={
-                <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
+                <div className="flex items-center gap-2">
                   <button
-                    className="btn btn-primary"
-                    onClick={handleCreateOrder}
-                    data-tour="new-po-button"
+                    className="btn btn-outline"
+                    onClick={() => loadPurchaseData()}
+                    disabled={loading}
+                    title="Refresh"
                   >
-                    <Plus size={20} />
-                    New Purchase Order
+                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                   </button>
-                </PermissionGate>
+                  <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE_ORDER}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleCreateOrder}
+                      data-tour="new-po-button"
+                    >
+                      <Plus size={20} />
+                      New Purchase Order
+                    </button>
+                  </PermissionGate>
+                </div>
               }
               data={purchaseOrders.map(order => ({
                 ...order,
@@ -919,20 +930,20 @@ const Purchase = () => {
                   header: 'Actions',
                   sortable: false,
                   render: (value, row) => (
-                    <div className="cell-actions">
+                    <div className="table-actions">
                       <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE_ORDER}>
-                        <button 
-                          className="btn btn-outline btn-sm"
+                        <button
+                          className="table-action-btn view"
                           onClick={() => handleViewOrder(row)}
                           title="View Details"
                         >
                           <Eye size={14} />
                         </button>
                       </PermissionGate>
-                      
+
                       <PermissionGate permission={PERMISSIONS.EDIT_PURCHASE_ORDER}>
                         <button
-                          className="btn btn-outline btn-sm"
+                          className="table-action-btn edit"
                           onClick={() => handleEditOrder(row)}
                           title={row.status === 'draft' ? 'Edit' : 'Only draft orders can be edited directly'}
                           disabled={row.status !== 'draft'}
@@ -943,8 +954,8 @@ const Purchase = () => {
 
                       <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
                         {row.status === 'approved' && (
-                          <button 
-                            className="btn btn-success btn-sm"
+                          <button
+                            className="table-action-btn activate"
                             onClick={() => handleReceiveOrder(row)}
                             title="Receive Order & Update Inventory"
                           >
@@ -956,7 +967,7 @@ const Purchase = () => {
                       <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
                         {(row.status === 'received' || row.status === 'completed') && (
                           <button
-                            className="btn btn-info btn-sm"
+                            className="table-action-btn payment"
                             onClick={() => handleAddExpense(row)}
                             title="Add Purchase Expenses"
                           >
@@ -969,7 +980,7 @@ const Purchase = () => {
                       <PermissionGate permission={PERMISSIONS.CREATE_PURCHASE}>
                         {(row.status === 'received' || row.status === 'completed') && (
                           <button
-                            className="btn btn-success btn-sm"
+                            className="table-action-btn view"
                             onClick={() => handleShowInvoices(row)}
                             title="Manage Invoices"
                           >
@@ -982,7 +993,7 @@ const Purchase = () => {
                       {row.source_type !== 'wcn_auto' && (
                         <PermissionGate permission={PERMISSIONS.VIEW_PURCHASE}>
                           <button
-                            className="btn btn-outline btn-sm"
+                            className="table-action-btn view"
                             onClick={() => handleShowAmendments(row)}
                             title="View Amendment History"
                           >
@@ -1022,89 +1033,63 @@ const Purchase = () => {
         {/* Phase 1.5: Bills Tab */}
         {activeTab === 'bills' && (
           <div className="bills-tab">
-            {/* Bills Summary Cards */}
-            <div className="summary-cards auto-fit">
-              <div className="summary-card">
-                <div className="summary-icon info">
-                  <FileText size={22} />
-                </div>
-                <div>
-                  <div className="summary-value">{billSummary.companyBills}</div>
-                  <div className="summary-label">{t('companyBills')}</div>
-                </div>
+            {/* Bills Header - Using global data-table-header style */}
+            <div className="data-table-header">
+              <div className="header-content">
+                <h2 className="data-table-title">{t('bills')}</h2>
+                <p className="data-table-subtitle">
+                  {billSummary.companyBills} {t('companyBills')} • {billSummary.vendorBills} {t('vendorBills')} • {billSummary.unpaid} {t('unpaid')} • {billSummary.overdue} {t('overdue')} • {formatCurrency(billSummary.balanceDue)} {t('balanceDue')}
+                </p>
               </div>
-              <div className="summary-card">
-                <div className="summary-icon">
-                  <Receipt size={22} />
-                </div>
-                <div>
-                  <div className="summary-value">{billSummary.vendorBills}</div>
-                  <div className="summary-label">{t('vendorBills')}</div>
-                </div>
-              </div>
-              <div className="summary-card">
-                <div className="summary-icon warning">
-                  <Clock size={22} />
-                </div>
-                <div>
-                  <div className="summary-value">{billSummary.unpaid}</div>
-                  <div className="summary-label">{t('unpaid')}</div>
-                </div>
-              </div>
-              <div className="summary-card">
-                <div className="summary-icon danger">
-                  <AlertTriangle size={22} />
-                </div>
-                <div>
-                  <div className="summary-value">{billSummary.overdue}</div>
-                  <div className="summary-label">{t('overdue')}</div>
-                </div>
-              </div>
-              <div className="summary-card">
-                <div className="summary-icon success">
-                  <Banknote size={22} />
-                </div>
-                <div>
-                  <div className="summary-value">{formatCurrency(billSummary.balanceDue)}</div>
-                  <div className="summary-label">{t('balanceDue')}</div>
-                </div>
+              <div className="header-actions">
+                <button
+                  className="btn btn-icon"
+                  onClick={() => loadBills()}
+                  title={t('refresh')}
+                >
+                  <RefreshCw size={16} />
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingVendorBill(null)
+                    setShowVendorBillModal(true)
+                  }}
+                >
+                  <Plus size={16} />
+                  {t('createVendorBill')}
+                </button>
               </div>
             </div>
 
-            {/* Bills Filters */}
-            <div className="filters-bar">
-              <div className="filter-controls">
-                <select
-                  className="filter-select"
-                  value={billTypeFilter}
-                  onChange={(e) => setBillTypeFilter(e.target.value)}
-                >
-                  <option value="all">{t('allBills')}</option>
-                  <option value="company">{t('companyBills')}</option>
-                  <option value="vendor">{t('vendorBills')}</option>
-                </select>
-                <select
-                  className="filter-select"
-                  value={billPaymentFilter}
-                  onChange={(e) => setBillPaymentFilter(e.target.value)}
-                >
-                  <option value="all">{t('allStatuses')}</option>
-                  <option value="unpaid">{t('unpaid')}</option>
-                  <option value="partial">{t('partiallyPaid')}</option>
-                  <option value="paid">{t('paid')}</option>
-                  <option value="overdue">{t('overdue')}</option>
-                </select>
+            {/* Bills Filters - Using global data-table-toolbar style */}
+            <div className="data-table-toolbar">
+              <div className="toolbar-left">
+                <div className="filter-group">
+                  <select
+                    className="filter-select"
+                    value={billTypeFilter}
+                    onChange={(e) => setBillTypeFilter(e.target.value)}
+                  >
+                    <option value="all">{t('allBills')}</option>
+                    <option value="company">{t('companyBills')}</option>
+                    <option value="vendor">{t('vendorBills')}</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <select
+                    className="filter-select"
+                    value={billPaymentFilter}
+                    onChange={(e) => setBillPaymentFilter(e.target.value)}
+                  >
+                    <option value="all">{t('allStatuses')}</option>
+                    <option value="unpaid">{t('unpaid')}</option>
+                    <option value="partial">{t('partiallyPaid')}</option>
+                    <option value="paid">{t('paid')}</option>
+                    <option value="overdue">{t('overdue')}</option>
+                  </select>
+                </div>
               </div>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setEditingVendorBill(null)
-                  setShowVendorBillModal(true)
-                }}
-              >
-                <Plus size={16} />
-                {t('createVendorBill')}
-              </button>
             </div>
 
             {/* Grouped Bills Table */}
@@ -1251,7 +1236,7 @@ const Purchase = () => {
                               window.open(value, '_blank')
                             }
                           }}
-                          className="btn btn-outline btn-sm view-receipt-btn"
+                          className="table-action-btn view"
                           title={isPDF ? 'View PDF Document' : 'View Receipt Image'}
                         >
                           {isPDF ? <FileText size={14} /> : <Receipt size={14} />}
@@ -1267,20 +1252,20 @@ const Purchase = () => {
                   sortable: false,
                   width: '140px',
                   render: (value, row) => (
-                    <div className="cell-actions">
+                    <div className="table-actions">
                       <button
                         onClick={() => {
                           setSelectedExpense(row)
                           setShowExpenseViewModal(true)
                         }}
-                        className="btn btn-outline btn-sm"
+                        className="table-action-btn view"
                         title="View Details"
                       >
                         <Eye size={14} />
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(row.id)}
-                        className="btn btn-danger btn-sm"
+                        className="table-action-btn delete"
                         title="Delete Expense"
                       >
                         <Trash2 size={14} />
@@ -1311,58 +1296,6 @@ const Purchase = () => {
           </div>
         )}
 
-        {activeTab === 'vendors' && (
-          <div className="vendors-tab">
-            <div className="tab-header">
-              <h3>Vendor Management</h3>
-              <p>Al Ramrami oil business uses the suppliers module for vendor management</p>
-              <div className="redirect-info">
-                <div className="redirect-message">
-                  <Users size={24} />
-                  <h4>Redirecting to Suppliers Module</h4>
-                  <p>Vendor management for Al Ramrami is handled through the Suppliers module to eliminate duplication.</p>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => window.location.href = '/suppliers'}
-                  >
-                    <Users size={16} />
-                    Go to Suppliers Module
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'locations' && (
-          <div className="locations-tab">
-            <div className="tab-header">
-              <h3>Storage Locations</h3>
-              <p>Manage tank farms, warehouses, and storage facilities</p>
-              <button 
-                className="btn btn-primary"
-                onClick={() => setShowLocationManager(true)}
-              >
-                <MapPin size={16} />
-                Open Location Manager
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'analytics' && (
-          <div className="analytics-tab">
-            <div className="tab-header">
-              <h3>Purchase Analytics</h3>
-              <p>View purchase performance and cost analysis</p>
-            </div>
-            <div className="analytics-placeholder">
-              <Calculator size={48} />
-              <h4>Analytics Dashboard</h4>
-              <p>Purchase analytics and cost breakdown will be displayed here.</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Modals */}
@@ -1605,19 +1538,20 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="payment-form">
-      <div className="payment-summary">
-        <div className="summary-row">
-          <span className="label">Invoice Amount:</span>
-          <span className="value">{formatCurrency(bill.invoice_amount)}</span>
+    <form onSubmit={handleSubmit} className="p-2">
+      {/* Payment Summary */}
+      <div className="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
+        <div className="flex justify-between py-2 border-b border-slate-200">
+          <span className="text-sm text-slate-600">Invoice Amount:</span>
+          <span className="text-sm font-semibold text-slate-900">{formatCurrency(bill.invoice_amount)}</span>
         </div>
-        <div className="summary-row">
-          <span className="label">Already Paid:</span>
-          <span className="value paid">{formatCurrency(bill.paid_amount)}</span>
+        <div className="flex justify-between py-2 border-b border-slate-200">
+          <span className="text-sm text-slate-600">Already Paid:</span>
+          <span className="text-sm font-semibold text-emerald-600">{formatCurrency(bill.paid_amount)}</span>
         </div>
-        <div className="summary-row highlight">
-          <span className="label">Balance Due:</span>
-          <span className="value due">{formatCurrency(balanceDue)}</span>
+        <div className="flex justify-between bg-white mx-[-1rem] mb-[-1rem] mt-2 p-4 rounded-b-lg border-t-2 border-slate-300">
+          <span className="text-sm text-slate-600">Balance Due:</span>
+          <span className="text-base font-semibold text-red-600">{formatCurrency(balanceDue)}</span>
         </div>
       </div>
 
@@ -1633,7 +1567,6 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
           min="0"
           max={balanceDue}
           required
-          className="form-input"
         />
       </div>
 
@@ -1655,7 +1588,6 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
           value={paymentMethod}
           onChange={(e) => setPaymentMethod(e.target.value)}
           required
-          className="form-select"
         >
           <option value="bank_transfer">Bank Transfer</option>
           <option value="cash">Cash</option>
@@ -1672,7 +1604,6 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
           value={paymentReference}
           onChange={(e) => setPaymentReference(e.target.value)}
           placeholder="e.g., Bank transaction reference"
-          className="form-input"
         />
       </div>
 
@@ -1684,11 +1615,11 @@ const PaymentForm = ({ bill, onSubmit, onCancel, formatCurrency }) => {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Optional payment notes..."
           rows={2}
-          className="form-textarea"
+          className="resize-y min-h-[60px]"
         />
       </div>
 
-      <div className="form-actions">
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
         <button
           type="button"
           onClick={onCancel}
@@ -1726,15 +1657,28 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
     ? bill.covers_company_bills.map(billId => getCompanyBillDetails(billId)).filter(Boolean)
     : []
 
+  // Status badge styles
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'unpaid': return 'bg-amber-100/50 text-amber-600'
+      case 'partial': return 'bg-blue-100/50 text-blue-600'
+      case 'paid': return 'bg-emerald-100/50 text-emerald-600'
+      case 'overdue': return 'bg-red-100/50 text-red-600'
+      default: return 'bg-slate-100 text-slate-600'
+    }
+  }
+
   return (
-    <div className="bill-details-view">
+    <div className="p-2">
       {/* Bill Header */}
-      <div className="bill-header-section">
-        <div className="bill-type-indicator">
-          <span className={`bill-type-badge ${bill.bill_type}`}>
+      <div className="mb-6 pb-4 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white capitalize ${
+            isVendorBill ? 'bg-violet-500' : 'bg-blue-500'
+          }`}>
             {isVendorBill ? 'Vendor Bill' : 'Company Bill'}
           </span>
-          <span className={`status-badge ${bill.payment_status}`}>
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(bill.payment_status)}`}>
             {bill.payment_status === 'unpaid' ? 'Unpaid' :
              bill.payment_status === 'partial' ? 'Partially Paid' :
              bill.payment_status === 'paid' ? 'Paid' : 'Overdue'}
@@ -1743,42 +1687,42 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
       </div>
 
       {/* Bill Information Grid */}
-      <div className="bill-info-grid">
-        <div className="info-section">
-          <h4>Bill Information</h4>
-          <div className="info-row">
-            <span className="info-label">Bill Number</span>
-            <span className="info-value">{bill.invoice_number}</span>
+      <div className="grid grid-cols-2 gap-6 mb-6 max-sm:grid-cols-1">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+          <h4 className="text-sm font-semibold text-slate-700 m-0 mb-3 uppercase tracking-wide">Bill Information</h4>
+          <div className="flex justify-between py-2 border-b border-slate-200">
+            <span className="text-sm text-slate-600">Bill Number</span>
+            <span className="text-sm font-semibold text-slate-900">{bill.invoice_number}</span>
           </div>
-          <div className="info-row">
-            <span className="info-label">Supplier</span>
-            <span className="info-value">{bill.supplierName || 'N/A'}</span>
+          <div className="flex justify-between py-2 border-b border-slate-200">
+            <span className="text-sm text-slate-600">Supplier</span>
+            <span className="text-sm font-semibold text-slate-900">{bill.supplierName || 'N/A'}</span>
           </div>
-          <div className="info-row">
-            <span className="info-label">Invoice Date</span>
-            <span className="info-value">{formatDate(bill.invoice_date)}</span>
+          <div className="flex justify-between py-2 border-b border-slate-200">
+            <span className="text-sm text-slate-600">Invoice Date</span>
+            <span className="text-sm font-semibold text-slate-900">{formatDate(bill.invoice_date)}</span>
           </div>
           {bill.due_date && (
-            <div className="info-row">
-              <span className="info-label">Due Date</span>
-              <span className="info-value">{formatDate(bill.due_date)}</span>
+            <div className="flex justify-between py-2">
+              <span className="text-sm text-slate-600">Due Date</span>
+              <span className="text-sm font-semibold text-slate-900">{formatDate(bill.due_date)}</span>
             </div>
           )}
         </div>
 
-        <div className="info-section">
-          <h4>Payment Details</h4>
-          <div className="info-row">
-            <span className="info-label">Invoice Amount</span>
-            <span className="info-value amount">{formatCurrency(bill.invoice_amount)}</span>
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+          <h4 className="text-sm font-semibold text-slate-700 m-0 mb-3 uppercase tracking-wide">Payment Details</h4>
+          <div className="flex justify-between py-2 border-b border-slate-200">
+            <span className="text-sm text-slate-600">Invoice Amount</span>
+            <span className="text-sm font-semibold text-slate-900">{formatCurrency(bill.invoice_amount)}</span>
           </div>
-          <div className="info-row">
-            <span className="info-label">Paid Amount</span>
-            <span className="info-value paid">{formatCurrency(bill.paid_amount)}</span>
+          <div className="flex justify-between py-2 border-b border-slate-200">
+            <span className="text-sm text-slate-600">Paid Amount</span>
+            <span className="text-sm font-semibold text-emerald-600">{formatCurrency(bill.paid_amount)}</span>
           </div>
-          <div className="info-row highlight">
-            <span className="info-label">Balance Due</span>
-            <span className={`info-value ${balanceDue > 0 ? 'due' : 'paid'}`}>
+          <div className="flex justify-between bg-white mx-[-1rem] mb-[-1rem] mt-2 px-4 py-3 rounded-b-lg border-t-2 border-slate-300">
+            <span className="text-sm text-slate-600">Balance Due</span>
+            <span className={`text-sm font-semibold ${balanceDue > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
               {formatCurrency(balanceDue)}
             </span>
           </div>
@@ -1786,30 +1730,30 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
       </div>
 
       {/* Purchase Order / Company Bills Information */}
-      <div className="po-section">
+      <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
         {isVendorBill ? (
           <>
-            <h4>Linked Company Bills</h4>
+            <h4 className="text-sm font-semibold text-slate-700 m-0 mb-3 uppercase tracking-wide">Linked Company Bills</h4>
             {linkedCompanyBills.length > 0 ? (
-              <div className="po-list">
-                <div className="po-count">
+              <div className="flex flex-col gap-2">
+                <div className="text-sm text-slate-600">
                   This vendor bill covers <strong>{linkedCompanyBills.length}</strong> company bill(s)
                 </div>
-                <div className="linked-bills-table">
-                  <table className="mini-table">
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full border-collapse text-sm bg-white rounded-md overflow-hidden border border-slate-200">
                     <thead>
                       <tr>
-                        <th>Bill #</th>
-                        <th>PO #</th>
-                        <th>Amount</th>
+                        <th className="bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200">Bill #</th>
+                        <th className="bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200">PO #</th>
+                        <th className="bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
                       {linkedCompanyBills.map((companyBill) => (
-                        <tr key={companyBill.id}>
-                          <td>{companyBill.invoice_number}</td>
-                          <td>{companyBill.orderNumber || `PO-${companyBill.purchase_order_id}`}</td>
-                          <td>{formatCurrency(companyBill.invoice_amount)}</td>
+                        <tr key={companyBill.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                          <td className="px-3 py-2 text-slate-700">{companyBill.invoice_number}</td>
+                          <td className="px-3 py-2 text-slate-700">{companyBill.orderNumber || `PO-${companyBill.purchase_order_id}`}</td>
+                          <td className="px-3 py-2 text-slate-700">{formatCurrency(companyBill.invoice_amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1817,33 +1761,33 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
                 </div>
               </div>
             ) : bill.covers_company_bills?.length > 0 ? (
-              <div className="po-list">
-                <div className="po-count">
+              <div className="flex flex-col gap-2">
+                <div className="text-sm text-slate-600">
                   This vendor bill covers <strong>{bill.covers_company_bills.length}</strong> company bill(s)
                 </div>
-                <div className="po-ids">
+                <div className="flex flex-wrap gap-2">
                   {bill.covers_company_bills.map((billId) => (
-                    <span key={billId} className="po-id-badge">
+                    <span key={billId} className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
                       Bill #{billId}
                     </span>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="no-po">No company bills linked to this vendor bill</p>
+              <p className="text-sm text-slate-500 italic m-0">No company bills linked to this vendor bill</p>
             )}
           </>
         ) : (
           <>
-            <h4>Related Purchase Order</h4>
+            <h4 className="text-sm font-semibold text-slate-700 m-0 mb-3 uppercase tracking-wide">Related Purchase Order</h4>
             {bill.purchase_order_id ? (
-              <div className="po-list">
-                <span className="po-id-badge">
+              <div className="flex flex-col gap-2">
+                <span className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-xs font-medium w-fit">
                   {bill.orderNumber || `PO-${bill.purchase_order_id}`}
                 </span>
               </div>
             ) : (
-              <p className="no-po">No purchase order linked to this bill</p>
+              <p className="text-sm text-slate-500 italic m-0">No purchase order linked to this bill</p>
             )}
           </>
         )}
@@ -1851,14 +1795,14 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
 
       {/* Notes */}
       {bill.notes && (
-        <div className="notes-section">
-          <h4>Notes</h4>
-          <p>{bill.notes}</p>
+        <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+          <h4 className="text-sm font-semibold text-slate-700 m-0 mb-2">Notes</h4>
+          <p className="text-sm text-slate-700 m-0 leading-relaxed">{bill.notes}</p>
         </div>
       )}
 
       {/* Actions */}
-      <div className="bill-actions">
+      <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
         <button className="btn btn-outline" onClick={onClose}>
           Close
         </button>
@@ -1869,8 +1813,8 @@ const BillDetailsView = ({ bill, bills, onRecordPayment, onClose, formatCurrency
           </button>
         )}
         {!isPaid && !isVendorBill && (
-          <div className="payment-info-message">
-            <AlertTriangle size={16} />
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-100 border border-amber-300 rounded-md text-amber-800 text-sm font-medium">
+            <AlertTriangle size={16} className="shrink-0 text-amber-600" />
             <span>Company bills are paid via their linked vendor bill</span>
           </div>
         )}

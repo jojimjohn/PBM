@@ -150,10 +150,10 @@
   
   /* Font Weights */
   --font-normal: 400;
-  --font-medium: 500;
-  --font-semibold: 600;
-  --font-bold: 700;
-  --font-extrabold: 800;
+  --font-medium: 450;
+  --font-semibold: 500;
+  --font-bold: 550;
+  --font-extrabold: 600;
   
   /* Line Heights */
   --leading-none: 1;
@@ -842,15 +842,12 @@ body {
 }
 
 /* Dialog/Modal Accessibility */
+/* NOTE: Positioning removed - Modal component handles its own layout
+   via .modal-overlay-tw (CSS Grid centering) and .modal-content-tw
+   Only z-index retained for stacking context */
 [role="dialog"],
 [role="alertdialog"] {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   z-index: var(--z-modal);
-  max-height: 90vh;
-  overflow-y: auto;
 }
 
 /* Alert Accessibility */

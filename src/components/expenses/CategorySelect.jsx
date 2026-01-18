@@ -21,7 +21,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocalization } from '../../context/LocalizationContext';
 import expenseCategoryService from '../../services/expenseCategoryService';
 import { Loader2, AlertCircle, Tag } from 'lucide-react';
-import './CategorySelect.css';
+// CSS moved to global index.css Tailwind
 
 // Category type icons
 const TYPE_ICONS = {

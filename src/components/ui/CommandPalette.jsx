@@ -6,7 +6,7 @@ import {
   FileText, Users, Package, Banknote, Settings,
   TrendingUp, Truck, Receipt, Calculator, Home
 } from 'lucide-react'
-import './CommandPalette.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * CommandPalette Component

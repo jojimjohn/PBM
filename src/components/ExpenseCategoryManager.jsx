@@ -22,7 +22,7 @@ import {
   Search,
   Filter,
 } from 'lucide-react'
-import './ExpenseCategoryManager.css'
+// CSS moved to global index.css Tailwind
 
 const CATEGORY_TYPES = [
   { value: 'purchase', label: 'Purchase Expenses', label_ar: 'مصاريف المشتريات' },
@@ -279,17 +279,17 @@ const ExpenseCategoryManager = () => {
   }
 
   return (
-    <div className="expense-category-manager">
+    <div>
       {/* Header */}
-      <div className="ecm-header">
-        <div className="ecm-title">
-          <Tag size={20} />
-          <h3>{t('expenseCategories', 'Expense Categories')}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Tag size={20} className="text-slate-600" />
+          <h3 className="text-lg font-semibold text-slate-800">{t('expenseCategories', 'Expense Categories')}</h3>
         </div>
 
         {canManage && (
-          <button className="btn-add" onClick={() => handleOpenForm()}>
-            <Plus size={18} />
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={16} />
             {t('addCategory', 'Add Category')}
           </button>
         )}
@@ -297,17 +297,25 @@ const ExpenseCategoryManager = () => {
 
       {/* Message */}
       {message && (
-        <div className={`ecm-message ${message.type}`}>
-          {message.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+        <div className={`flex items-center gap-2 p-3 mb-4 text-sm ${
+          message.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border border-red-200 text-red-800'
+        }`}>
+          {message.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
           {message.text}
         </div>
       )}
 
       {/* Filters */}
-      <div className="ecm-filters">
-        <div className="filter-group">
-          <Filter size={16} />
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+      <div className="flex flex-wrap items-center gap-4 mb-4 p-3 bg-slate-50 border border-slate-200">
+        <div className="flex items-center gap-2">
+          <Filter size={16} className="text-slate-400" />
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-3 py-2 text-sm border border-slate-300 bg-white focus:outline-none focus:border-blue-500"
+          >
             <option value="all">{t('allTypes', 'All Types')}</option>
             {CATEGORY_TYPES.map((type) => (
               <option key={type.value} value={type.value}>
@@ -317,53 +325,99 @@ const ExpenseCategoryManager = () => {
           </select>
         </div>
 
-        <div className="filter-group search">
-          <Search size={16} />
+        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+          <Search size={16} className="text-slate-400" />
           <input
             type="text"
             placeholder={t('searchCategories', 'Search categories...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm border border-slate-300 bg-white focus:outline-none focus:border-blue-500"
           />
         </div>
 
-        <label className="filter-checkbox">
+        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
           <input
             type="checkbox"
             checked={showInactive}
             onChange={(e) => setShowInactive(e.target.checked)}
+            className="w-4 h-4"
           />
           {t('showInactive', 'Show Inactive')}
         </label>
       </div>
 
       {/* Category List */}
-      <div className="ecm-content">
+      <div>
         {loading ? (
-          <div className="ecm-loading">
-            <div className="spinner"></div>
+          <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+            <div className="w-8 h-8 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin mb-3"></div>
             <span>{t('loading', 'Loading...')}</span>
           </div>
         ) : filteredCategories.length === 0 ? (
-          <div className="ecm-empty">
-            <Tag size={48} />
-            <p>{t('noCategories', 'No categories found')}</p>
+          <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+            <Tag size={48} className="mb-3 opacity-30" />
+            <p className="mb-4">{t('noCategories', 'No categories found')}</p>
             {canManage && (
-              <button className="btn-add" onClick={() => handleOpenForm()}>
-                <Plus size={18} />
+              <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+                <Plus size={16} />
                 {t('addFirstCategory', 'Add your first category')}
               </button>
             )}
           </div>
         ) : (
-          <div className="ecm-categories">
+          <div className="space-y-6">
             {filterType === 'all' ? (
               // Grouped by type
               Object.entries(groupedCategories).map(([type, cats]) => (
-                <div key={type} className="category-group">
-                  <h4 className="group-title">{getTypeLabel(type)}</h4>
-                  <div className="category-list">
-                    {cats.map((category) => (
+                <div key={type}>
+                  <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-3 pb-2 border-b border-slate-200">
+                    {getTypeLabel(type)}
+                  </h4>
+                  <div className="bg-white border border-slate-200">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                          <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('code', 'Code')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('name', 'Name')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('maxAmount', 'Max Amount')}</th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('status', 'Status')}</th>
+                          {canManage && <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('actions', 'Actions')}</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {cats.map((category) => (
+                          <CategoryRow
+                            key={category.id}
+                            category={category}
+                            canManage={canManage}
+                            currentLanguage={currentLanguage}
+                            onEdit={() => handleOpenForm(category)}
+                            onToggleActive={() => handleToggleActive(category)}
+                            onDelete={() => handleDelete(category)}
+                            t={t}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            ) : (
+              // Single list
+              <div className="bg-white border border-slate-200">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200">
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('code', 'Code')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('name', 'Name')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('maxAmount', 'Max Amount')}</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{t('status', 'Status')}</th>
+                      {canManage && <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">{t('actions', 'Actions')}</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {filteredCategories.map((category) => (
                       <CategoryRow
                         key={category.id}
                         category={category}
@@ -375,24 +429,8 @@ const ExpenseCategoryManager = () => {
                         t={t}
                       />
                     ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              // Single list
-              <div className="category-list">
-                {filteredCategories.map((category) => (
-                  <CategoryRow
-                    key={category.id}
-                    category={category}
-                    canManage={canManage}
-                    currentLanguage={currentLanguage}
-                    onEdit={() => handleOpenForm(category)}
-                    onToggleActive={() => handleToggleActive(category)}
-                    onDelete={() => handleDelete(category)}
-                    t={t}
-                  />
-                ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -401,24 +439,27 @@ const ExpenseCategoryManager = () => {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="ecm-modal-overlay">
-          <div className="ecm-modal">
-            <div className="modal-header">
-              <h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-xl mx-4 shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-800">
                 {editingCategory
                   ? t('editCategory', 'Edit Category')
                   : t('addCategory', 'Add Category')}
               </h3>
-              <button className="btn-close" onClick={handleCloseForm}>
+              <button
+                className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                onClick={handleCloseForm}
+              >
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSave}>
+            <form onSubmit={handleSave} className="p-5">
               <div className="form-grid">
                 <div className="form-group">
                   <label htmlFor="code">
-                    {t('categoryCode', 'Category Code')} <span className="required">*</span>
+                    {t('categoryCode', 'Category Code')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="code"
@@ -426,21 +467,21 @@ const ExpenseCategoryManager = () => {
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                     placeholder="e.g., FUEL, TRANSPORT"
-                    className={formErrors.code ? 'error' : ''}
+                    className={formErrors.code ? 'border-red-500' : ''}
                     disabled={editingCategory !== null}
                   />
-                  {formErrors.code && <span className="error-text">{formErrors.code}</span>}
+                  {formErrors.code && <span className="text-xs text-red-500 mt-1">{formErrors.code}</span>}
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="type">
-                    {t('categoryType', 'Category Type')} <span className="required">*</span>
+                    {t('categoryType', 'Category Type')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="type"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className={formErrors.type ? 'error' : ''}
+                    className={formErrors.type ? 'border-red-500' : ''}
                   >
                     {CATEGORY_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -448,12 +489,12 @@ const ExpenseCategoryManager = () => {
                       </option>
                     ))}
                   </select>
-                  {formErrors.type && <span className="error-text">{formErrors.type}</span>}
+                  {formErrors.type && <span className="text-xs text-red-500 mt-1">{formErrors.type}</span>}
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="name">
-                    {t('categoryName', 'Category Name (English)')} <span className="required">*</span>
+                    {t('categoryName', 'Category Name (English)')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     id="name"
@@ -461,9 +502,9 @@ const ExpenseCategoryManager = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Fuel & Transportation"
-                    className={formErrors.name ? 'error' : ''}
+                    className={formErrors.name ? 'border-red-500' : ''}
                   />
-                  {formErrors.name && <span className="error-text">{formErrors.name}</span>}
+                  {formErrors.name && <span className="text-xs text-red-500 mt-1">{formErrors.name}</span>}
                 </div>
 
                 <div className="form-group">
@@ -488,10 +529,10 @@ const ExpenseCategoryManager = () => {
                     value={formData.max_amount}
                     onChange={(e) => setFormData({ ...formData, max_amount: e.target.value })}
                     placeholder="Leave empty for no limit"
-                    className={formErrors.max_amount ? 'error' : ''}
+                    className={formErrors.max_amount ? 'border-red-500' : ''}
                   />
                   {formErrors.max_amount && (
-                    <span className="error-text">{formErrors.max_amount}</span>
+                    <span className="text-xs text-red-500 mt-1">{formErrors.max_amount}</span>
                   )}
                 </div>
 
@@ -518,25 +559,26 @@ const ExpenseCategoryManager = () => {
                   />
                 </div>
 
-                <div className="form-group checkbox">
-                  <label>
+                <div className="form-group">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                      className="w-4 h-4"
                     />
                     {t('active', 'Active')}
                   </label>
                 </div>
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="btn-cancel" onClick={handleCloseForm}>
-                  <X size={18} />
+              <div className="form-actions mt-6">
+                <button type="button" className="btn btn-outline" onClick={handleCloseForm}>
+                  <X size={16} />
                   {t('cancel', 'Cancel')}
                 </button>
-                <button type="submit" className="btn-save" disabled={saving}>
-                  <Save size={18} />
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  <Save size={16} />
                   {saving ? t('saving', 'Saving...') : t('save', 'Save')}
                 </button>
               </div>
@@ -548,54 +590,66 @@ const ExpenseCategoryManager = () => {
   )
 }
 
-// Category Row Component
+// Category Row Component - renders as table row
 const CategoryRow = ({ category, canManage, currentLanguage, onEdit, onToggleActive, onDelete, t }) => {
   const displayName = currentLanguage === 'ar' && category.name_ar ? category.name_ar : category.name
 
   return (
-    <div className={`category-row ${!category.is_active ? 'inactive' : ''}`}>
-      <div className="category-info">
-        <div className="category-code">{category.code}</div>
-        <div className="category-name">{displayName}</div>
-        <div className="category-limit">
+    <tr className={`hover:bg-slate-50 transition-colors ${!category.is_active ? 'opacity-60' : ''}`}>
+      <td className="px-4 py-3">
+        <span className="font-mono text-sm font-medium text-slate-700">{category.code}</span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-sm text-slate-800">{displayName}</span>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-sm text-slate-600">
           {category.max_amount
-            ? `${t('maxAmount', 'Max')}: ${parseFloat(category.max_amount).toFixed(2)}`
+            ? `OMR ${parseFloat(category.max_amount).toFixed(2)}`
             : t('noLimit', 'No limit')}
-        </div>
-      </div>
-
-      <div className="category-status">
+        </span>
+      </td>
+      <td className="px-4 py-3">
         {category.is_active ? (
-          <span className="status active">
-            <CheckCircle size={14} />
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle size={12} />
             {t('active', 'Active')}
           </span>
         ) : (
-          <span className="status inactive">
-            <AlertTriangle size={14} />
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+            <AlertTriangle size={12} />
             {t('inactive', 'Inactive')}
           </span>
         )}
-      </div>
-
+      </td>
       {canManage && (
-        <div className="category-actions">
-          <button className="btn-icon edit" onClick={onEdit} title={t('edit', 'Edit')}>
-            <Edit size={16} />
-          </button>
-          <button
-            className="btn-icon toggle"
-            onClick={onToggleActive}
-            title={category.is_active ? t('deactivate', 'Deactivate') : t('reactivate', 'Reactivate')}
-          >
-            <RotateCcw size={16} />
-          </button>
-          <button className="btn-icon delete" onClick={onDelete} title={t('delete', 'Delete')}>
-            <Trash2 size={16} />
-          </button>
-        </div>
+        <td className="px-4 py-3 text-right">
+          <div className="flex items-center justify-end gap-1">
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={onEdit}
+              title={t('edit', 'Edit')}
+            >
+              <Edit size={14} />
+            </button>
+            <button
+              className={`btn btn-sm ${category.is_active ? 'btn-warning' : 'btn-success'}`}
+              onClick={onToggleActive}
+              title={category.is_active ? t('deactivate', 'Deactivate') : t('reactivate', 'Reactivate')}
+            >
+              <RotateCcw size={14} />
+            </button>
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={onDelete}
+              title={t('delete', 'Delete')}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </td>
       )}
-    </div>
+    </tr>
   )
 }
 

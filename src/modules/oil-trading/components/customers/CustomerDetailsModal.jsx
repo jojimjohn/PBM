@@ -75,13 +75,21 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
     }
   }
 
+  const modalFooter = (
+    <button className="btn btn-outline" onClick={onClose}>
+      Close
+    </button>
+  )
+
   return (
     <Modal
       isOpen={true}
-      title=""
       onClose={onClose}
-      className="ds-form-modal ds-modal-lg"
+      title={t?.('customerDetails', 'Customer Details') || 'Customer Details'}
+      footer={modalFooter}
+      size="lg"
       closeOnOverlayClick={false}
+      showCloseButton
     >
       {/* Header with customer info and actions */}
       <CustomerHeader
@@ -105,16 +113,7 @@ const CustomerDetailsModal = ({ customer, onClose, onEdit, onCreateOrder, t }) =
       </div>
 
       {/* Tab Content */}
-      <div className="modal-body">
-        {renderTabContent()}
-      </div>
-
-      {/* Footer */}
-      <div className="modal-footer">
-        <button className="btn btn-outline" onClick={onClose}>
-          Close
-        </button>
-      </div>
+      {renderTabContent()}
     </Modal>
   )
 }
@@ -131,16 +130,17 @@ const CustomerHeader = ({ customer, onEdit, onCreateOrder }) => {
     .toUpperCase()
 
   return (
-    <div className="modal-header">
-      <div className="cell-row">
-        <div className="avatar avatar-xl primary">
+    <div className="flex items-start justify-between pb-4 mb-4 border-b border-slate-200">
+      <div className="flex items-center gap-4">
+        {/* Avatar using Tailwind */}
+        <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
           {initials}
         </div>
-        <div className="cell-info">
-          <h3 className="modal-title">{customer.name}</h3>
-          <div className="flex-row">
+        <div>
+          <h3 className="text-xl font-semibold text-slate-800">{customer.name}</h3>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
             <code className="cell-code accent">{customer.code}</code>
-            <span className="type-badge individual">
+            <span className="status-badge">
               {customer.type ? customer.type.replace(/[-_]/g, ' ').toUpperCase() : 'N/A'}
             </span>
             <span className={`status-badge ${customer.isActive ? 'active' : 'inactive'}`}>
@@ -149,20 +149,20 @@ const CustomerHeader = ({ customer, onEdit, onCreateOrder }) => {
           </div>
         </div>
       </div>
-      <div className="cell-actions">
+      <div className="flex items-center gap-2">
         <button
-          className="btn-icon-action secondary"
+          className="btn btn-outline btn-sm"
           onClick={onEdit}
           title="Edit Customer"
         >
-          <Edit size={18} />
+          <Edit size={16} />
         </button>
         <button
-          className="btn-icon-action primary"
+          className="btn btn-outline btn-sm"
           onClick={onCreateOrder}
           title="Create Order"
         >
-          <ShoppingCart size={18} />
+          <ShoppingCart size={16} />
         </button>
       </div>
     </div>

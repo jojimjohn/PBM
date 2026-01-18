@@ -16,7 +16,7 @@ import Input, { Textarea } from '../ui/Input';
 import FileUpload from '../ui/FileUpload';
 import FileViewer from '../ui/FileViewer';
 import WastageForm from '../../modules/oil-trading/components/WastageForm';
-import './collections-managers.css';
+// CSS moved to global index.css Tailwind
 
 const CollectionOrderManager = () => {
   const { t, isRTL } = useLocalization();
@@ -149,7 +149,7 @@ const CollectionOrderManager = () => {
       case 'collecting': return <Package className="w-4 h-4 text-purple-500" />;
       case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'cancelled': return <XCircle className="w-4 h-4 text-red-500" />;
-      default: return <Clock className="w-4 h-4 text-gray-500" />;
+      default: return <Clock className="w-4 h-4 text-slate-500" />;
     }
   };
 
@@ -160,7 +160,7 @@ const CollectionOrderManager = () => {
       case 'collecting': return 'text-purple-600 bg-purple-100';
       case 'completed': return 'text-green-600 bg-green-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-slate-600 bg-slate-100';
     }
   };
 
@@ -180,7 +180,7 @@ const CollectionOrderManager = () => {
       render: (value, row) => (
         <div className="text-sm">
           <div className="font-medium">{value || '-'}</div>
-          <div className="text-gray-500">{row.contractName}</div>
+          <div className="text-slate-500">{row.contractName}</div>
         </div>
       )
     },
@@ -189,7 +189,7 @@ const CollectionOrderManager = () => {
       title: t('location'),
       render: (value, row) => (
         <div className="flex items-center">
-          <MapPin className="w-4 h-4 text-gray-400 mr-1" />
+          <MapPin className="w-4 h-4 text-slate-400 mr-1" />
           <span>{value}</span>
         </div>
       )
@@ -205,7 +205,7 @@ const CollectionOrderManager = () => {
       render: (value, row) => (
         <div className="flex items-center">
           {getStatusIcon(value)}
-          <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
+          <span className={`ml-2 px-2 py-1 text-xs font-medium ${getStatusColor(value)}`}>
             {t(value)}
           </span>
         </div>
@@ -217,7 +217,7 @@ const CollectionOrderManager = () => {
       render: (value, row) => (
         <div className="text-sm">
           <div className="font-medium">{value || '-'}</div>
-          <div className="text-gray-500">{row.vehicleNumber || '-'}</div>
+          <div className="text-slate-500">{row.vehicleNumber || '-'}</div>
         </div>
       )
     },
@@ -227,7 +227,7 @@ const CollectionOrderManager = () => {
       render: (value, row) => (
         <div className="text-sm">
           <div className="font-medium">{value || row.estimatedQuantity || 0}</div>
-          <div className="text-gray-500">{value ? t('actual') : t('estimated')}</div>
+          <div className="text-slate-500">{value ? t('actual') : t('estimated')}</div>
         </div>
       )
     },
@@ -249,17 +249,17 @@ const CollectionOrderManager = () => {
       render: (value, row) => {
         const isFinalized = row.is_finalized === 1 || row.isFinalized;
         return (
-          <div className="flex space-x-1">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => handleViewOrder(row)}
-              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+              className="p-1.5 border border-slate-200 bg-white text-slate-600 cursor-pointer transition-all hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300"
               title={t('viewDetails')}
             >
               <Eye className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleViewExpenses(row)}
-              className="p-1 text-green-600 hover:bg-green-50 rounded"
+              className="p-1.5 border border-slate-200 bg-white text-slate-600 cursor-pointer transition-all hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300"
               title={t('viewExpenses')}
             >
               <Banknote className="w-4 h-4" />
@@ -268,7 +268,7 @@ const CollectionOrderManager = () => {
             {isFinalized && (
               <button
                 onClick={() => handleRecordWastage(row)}
-                className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                className="p-1.5 border border-slate-200 bg-white text-amber-600 cursor-pointer transition-all hover:bg-amber-50 hover:border-amber-300"
                 title={t('recordWastage') || 'Record Wastage'}
               >
                 <Droplet className="w-4 h-4" />
@@ -278,14 +278,14 @@ const CollectionOrderManager = () => {
               <>
                 <button
                   onClick={() => handleEditOrder(row)}
-                  className="p-1 text-purple-600 hover:bg-purple-50 rounded"
+                  className="p-1.5 border border-slate-200 bg-white text-slate-600 cursor-pointer transition-all hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300"
                   title={t('edit')}
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteOrder(row.id)}
-                  className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  className="p-1.5 border border-slate-200 bg-white text-slate-600 cursor-pointer transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-300"
                   title={t('delete')}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -299,29 +299,29 @@ const CollectionOrderManager = () => {
   ];
 
   return (
-    <div className={`collection-order-manager ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="manager-header">
-        <div className="header-title">
-          <Truck className="w-6 h-6" />
-          <h2>{t('collectionOrderManagement')}</h2>
+    <div className={`flex flex-col gap-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <Truck className="w-6 h-6 text-slate-700" />
+          <h2 className="text-xl font-semibold text-slate-900 m-0">{t('collectionOrderManagement')}</h2>
         </div>
-        <div className="header-actions">
-          <button 
-            className="filter-btn"
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            className="flex items-center gap-2 px-3 py-2 border border-slate-300 bg-white text-slate-700 text-sm font-medium cursor-pointer transition-all hover:bg-slate-50 hover:border-slate-400"
             onClick={() => {/* TODO: Implement filter modal */}}
           >
             <Filter className="w-4 h-4" />
             {t('filter')}
           </button>
-          <button 
-            className="filter-btn"
+          <button
+            className="flex items-center gap-2 px-3 py-2 border border-slate-300 bg-white text-slate-700 text-sm font-medium cursor-pointer transition-all hover:bg-slate-50 hover:border-slate-400"
             onClick={handleCreateFromCallout}
           >
             <ArrowRight className="w-4 h-4" />
             {t('createFromSupplierNotification')}
           </button>
-          <button 
-            className="add-btn"
+          <button
+            className="flex items-center gap-2 px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm font-medium cursor-pointer transition-all hover:bg-blue-700"
             onClick={handleCreateOrder}
           >
             <Plus className="w-4 h-4" />
@@ -331,42 +331,26 @@ const CollectionOrderManager = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="search-and-filters">
-        <div className="search-bar">
-          <div className="search-input">
-            <Search className="search-icon" />
+      <div className="flex flex-col gap-4 p-4 bg-slate-50 border border-slate-200">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t('searchOrders')}
-              className="search-field"
+              className="w-full pl-10 pr-4 py-2.5 border border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          
-          <div className="search-filters">
-            <div className="filter-group">
-              <label className="filter-label">{t('status')}</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">{t('allStatuses')}</option>
-                <option value="scheduled">{t('scheduled')}</option>
-                <option value="in_transit">{t('inTransit')}</option>
-                <option value="collecting">{t('collecting')}</option>
-                <option value="completed">{t('completed')}</option>
-                <option value="cancelled">{t('cancelled')}</option>
-              </select>
-            </div>
 
-            <div className="filter-group">
-              <label className="filter-label">{t('date')}</label>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">{t('date')}</label>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="filter-select"
+                className="px-3 py-2 border border-slate-300 bg-white text-sm focus:outline-none focus:border-blue-500"
               >
                 <option value="all">{t('allDates')}</option>
                 <option value="today">{t('today')}</option>
@@ -376,89 +360,71 @@ const CollectionOrderManager = () => {
                 <option value="this_month">{t('thisMonth')}</option>
               </select>
             </div>
-            
-            <div className="filter-actions">
-              <button 
-                className="filter-btn advanced-filters-btn"
-                onClick={() => {/* TODO: Implement advanced filters modal */}}
-                title={t('advancedFilters')}
-              >
-                <Filter className="w-4 h-4" />
-                {t('advancedFilters')}
-              </button>
-              
-              <button 
-                className="filter-btn columns-btn"
-                onClick={() => {/* TODO: Implement column toggle */}}
-                title={t('columns')}
-              >
-                <Eye className="w-4 h-4" />
-                {t('columns')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Collection Statistics Cards */}
-      <div className="collection-stats">
-        <div className="stats-grid">
-          <div 
-            className={`stat-card clickable ${statusFilter === 'scheduled' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('scheduled')}
-          >
-            <div className="stat-icon scheduled">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">{orders.filter(o => o.status === 'scheduled').length}</div>
-              <div className="stat-label">{t('scheduled')}</div>
-            </div>
-          </div>
-          
-          <div 
-            className={`stat-card clickable ${statusFilter === 'in_transit' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('in_transit')}
-          >
-            <div className="stat-icon in-transit">
-              <Truck className="w-5 h-5" />
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">{orders.filter(o => o.status === 'in_transit').length}</div>
-              <div className="stat-label">{t('inTransit')}</div>
-            </div>
-          </div>
-          
-          <div 
-            className={`stat-card clickable ${statusFilter === 'collecting' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('collecting')}
-          >
-            <div className="stat-icon collecting">
-              <Package className="w-5 h-5" />
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">{orders.filter(o => o.status === 'collecting').length}</div>
-              <div className="stat-label">{t('collecting')}</div>
-            </div>
-          </div>
-          
-          <div 
-            className={`stat-card clickable ${statusFilter === 'completed' ? 'active' : ''}`}
-            onClick={() => setStatusFilter('completed')}
-          >
-            <div className="stat-icon completed">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">{orders.filter(o => o.status === 'completed').length}</div>
-              <div className="stat-label">{t('completed')}</div>
+            {/* Status Filter Pills */}
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                className={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-medium cursor-pointer transition-all ${
+                  statusFilter === 'all'
+                    ? 'bg-slate-800 border-slate-800 text-white'
+                    : 'bg-white border-slate-300 text-slate-600 hover:border-slate-400'
+                }`}
+                onClick={() => setStatusFilter('all')}
+              >
+                {t('all')}
+                <span className="px-1.5 py-0.5 bg-white/20 text-[10px] font-semibold">{orders.length}</span>
+              </button>
+              <button
+                className={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-medium cursor-pointer transition-all ${
+                  statusFilter === 'scheduled'
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'bg-white border-slate-300 text-blue-600 hover:border-blue-400'
+                }`}
+                onClick={() => setStatusFilter('scheduled')}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span className="px-1.5 py-0.5 bg-white/20 text-[10px] font-semibold">{orders.filter(o => o.status === 'scheduled').length}</span>
+              </button>
+              <button
+                className={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-medium cursor-pointer transition-all ${
+                  statusFilter === 'in_transit'
+                    ? 'bg-orange-500 border-orange-500 text-white'
+                    : 'bg-white border-slate-300 text-orange-600 hover:border-orange-400'
+                }`}
+                onClick={() => setStatusFilter('in_transit')}
+              >
+                <Truck className="w-3.5 h-3.5" />
+                <span className="px-1.5 py-0.5 bg-white/20 text-[10px] font-semibold">{orders.filter(o => o.status === 'in_transit').length}</span>
+              </button>
+              <button
+                className={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-medium cursor-pointer transition-all ${
+                  statusFilter === 'collecting'
+                    ? 'bg-purple-600 border-purple-600 text-white'
+                    : 'bg-white border-slate-300 text-purple-600 hover:border-purple-400'
+                }`}
+                onClick={() => setStatusFilter('collecting')}
+              >
+                <Package className="w-3.5 h-3.5" />
+                <span className="px-1.5 py-0.5 bg-white/20 text-[10px] font-semibold">{orders.filter(o => o.status === 'collecting').length}</span>
+              </button>
+              <button
+                className={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-medium cursor-pointer transition-all ${
+                  statusFilter === 'completed'
+                    ? 'bg-green-600 border-green-600 text-white'
+                    : 'bg-white border-slate-300 text-green-600 hover:border-green-400'
+                }`}
+                onClick={() => setStatusFilter('completed')}
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                <span className="px-1.5 py-0.5 bg-white/20 text-[10px] font-semibold">{orders.filter(o => o.status === 'completed').length}</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Collection Orders Table */}
-      <div className="orders-table">
+      <div className="border border-slate-200 overflow-hidden">
         <DataTable
           data={orders}
           columns={columns}
@@ -848,43 +814,43 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
         {/* Step 1: Contract & Location Selection */}
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">{t('contractAndLocation')}</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{t('contractAndLocation')}</h3>
             
             {/* Supplier Notification Information (when creating from notification) */}
             {callout && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 border border-blue-200  p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Package className="w-5 h-5 text-blue-600" />
                   <h4 className="font-medium text-blue-900">{t('creatingFromSupplierNotification')}</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium text-gray-700">{t('calloutNumber')}:</span>
-                    <span className="ml-1 text-gray-900">{callout.calloutNumber}</span>
+                    <span className="font-medium text-slate-700">{t('calloutNumber')}:</span>
+                    <span className="ml-1 text-slate-900">{callout.calloutNumber}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">{t('status')}:</span>
-                    <span className={`ml-1 px-2 py-0.5 rounded text-xs font-medium ${
+                    <span className="font-medium text-slate-700">{t('status')}:</span>
+                    <span className={`ml-1 px-2 py-0.5text-xs font-medium ${
                       callout.status === 'approved' ? 'bg-green-100 text-green-800' : 
                       callout.status === 'pending' ? 'bg-orange-100 text-orange-800' : 
-                      'bg-gray-100 text-gray-800'
+                      'bg-slate-100 text-slate-800'
                     }`}>
                       {t(callout.status)}
                     </span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">{t('contract')}:</span>
-                    <span className="ml-1 text-gray-900">{callout.contractName}</span>
+                    <span className="font-medium text-slate-700">{t('contract')}:</span>
+                    <span className="ml-1 text-slate-900">{callout.contractName}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">{t('location')}:</span>
-                    <span className="ml-1 text-gray-900">{callout.locationName}</span>
+                    <span className="font-medium text-slate-700">{t('location')}:</span>
+                    <span className="ml-1 text-slate-900">{callout.locationName}</span>
                   </div>
                 </div>
                 {callout.instructions && (
                   <div className="mt-2 text-sm">
-                    <span className="font-medium text-gray-700">{t('instructions')}:</span>
-                    <p className="ml-1 text-gray-900">{callout.instructions}</p>
+                    <span className="font-medium text-slate-700">{t('instructions')}:</span>
+                    <p className="ml-1 text-slate-900">{callout.instructions}</p>
                   </div>
                 )}
               </div>
@@ -949,14 +915,14 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
             </div>
 
             <div className="flex justify-between">
-              <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={onClose} className="px-6 py-2 border border-slate-300  text-slate-700 hover:bg-slate-50">
                 {t('cancel')}
               </button>
               <button 
                 type="button" 
                 onClick={() => setStep(2)}
                 disabled={!formData.contractId || !formData.locationId}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('next')} →
               </button>
@@ -967,7 +933,7 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
         {/* Step 2: Collection Details */}
         {step === 2 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">{t('collectionDetails')}</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{t('collectionDetails')}</h3>
             
             {/* Collection Date & Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1020,14 +986,14 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
             />
 
             <div className="flex justify-between">
-              <button type="button" onClick={() => setStep(1)} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => setStep(1)} className="px-6 py-2 border border-slate-300  text-slate-700 hover:bg-slate-50">
                 ← {t('back')}
               </button>
               <button 
                 type="button" 
                 onClick={() => setStep(3)}
                 disabled={!formData.scheduledDate}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('next')} →
               </button>
@@ -1038,38 +1004,38 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
         {/* Step 3: Materials & Expenses */}
         {step === 3 && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">{t('materialsAndExpenses')}</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{t('materialsAndExpenses')}</h3>
             
             {/* Contract Materials Selection */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">{t('selectMaterials')}</h4>
+            <div className="bg-slate-50 p-4 ">
+              <h4 className="font-medium text-slate-900 mb-3">{t('selectMaterials')}</h4>
               {contractMaterials.length > 0 ? (
                 <div className="space-y-3">
                   {contractMaterials.map((material, index) => (
-                    <div key={material.id || index} className="bg-white p-4 rounded-lg border">
+                    <div key={material.id || index} className="bg-white p-4  border">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('material')}</label>
-                          <p className="text-sm text-gray-900">{material.name || material.materialName}</p>
+                          <label className="text-sm font-medium text-slate-700">{t('material')}</label>
+                          <p className="text-sm text-slate-900">{material.name || material.materialName}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('contractRate')}</label>
-                          <p className="text-sm text-gray-900">{material.contractRate} OMR/{material.unit}</p>
+                          <label className="text-sm font-medium text-slate-700">{t('contractRate')}</label>
+                          <p className="text-sm text-slate-900">{material.contractRate} OMR/{material.unit}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('quantity')}</label>
+                          <label className="text-sm font-medium text-slate-700">{t('quantity')}</label>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             value={material.selectedQuantity}
                             onChange={(e) => handleMaterialQuantityChange(index, e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="0.00"
                           />
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('estimatedValue')}</label>
+                          <label className="text-sm font-medium text-slate-700">{t('estimatedValue')}</label>
                           <p className="text-sm font-semibold text-green-600">
                             {material.estimatedValue.toFixed(2)} OMR
                           </p>
@@ -1079,18 +1045,18 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">{t('noMaterialsInContract')}</p>
+                <p className="text-slate-500 text-center py-4">{t('noMaterialsInContract')}</p>
               )}
             </div>
 
             {/* Collection Expenses */}
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-slate-50 p-4 ">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="font-medium text-gray-900">{t('collectionExpenses')}</h4>
+                <h4 className="font-medium text-slate-900">{t('collectionExpenses')}</h4>
                 <button
                   type="button"
                   onClick={addExpense}
-                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200"
+                  className="px-3 py-1 bg-blue-100 text-blue-700  text-sm hover:bg-blue-200"
                 >
                   <Plus className="w-4 h-4 inline mr-1" />
                   {t('addExpense')}
@@ -1100,14 +1066,14 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
               {formData.expenses.length > 0 ? (
                 <div className="space-y-3">
                   {formData.expenses.map((expense, index) => (
-                    <div key={expense.id} className="bg-white p-4 rounded-lg border">
+                    <div key={expense.id} className="bg-white p-4  border">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('category')}</label>
+                          <label className="text-sm font-medium text-slate-700">{t('category')}</label>
                           <select
                             value={expense.category}
                             onChange={(e) => updateExpense(expense.id, 'category', e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           >
                             <option value="">{t('selectCategory')}</option>
                             <option value="fuel">{t('fuel')}</option>
@@ -1120,24 +1086,24 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
                           </select>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('description')}</label>
+                          <label className="text-sm font-medium text-slate-700">{t('description')}</label>
                           <input
                             type="text"
                             value={expense.description}
                             onChange={(e) => updateExpense(expense.id, 'description', e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder={t('expenseDescription')}
                           />
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('amount')} (OMR)</label>
+                          <label className="text-sm font-medium text-slate-700">{t('amount')} (OMR)</label>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             value={expense.amount}
                             onChange={(e) => updateExpense(expense.id, 'amount', e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="0.00"
                           />
                         </div>
@@ -1145,7 +1111,7 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
                           <button
                             type="button"
                             onClick={() => removeExpense(expense.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            className="p-2 text-red-600 hover:bg-red-50"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1155,28 +1121,28 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">{t('noExpensesAdded')}</p>
+                <p className="text-slate-500 text-center py-4">{t('noExpensesAdded')}</p>
               )}
             </div>
 
             {/* Financial Summary */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">{t('financialSummary')}</h4>
+            <div className="bg-blue-50 p-4 ">
+              <h4 className="font-medium text-slate-900 mb-3">{t('financialSummary')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">{t('totalEstimatedValue')}</p>
+                  <p className="text-sm text-slate-600">{t('totalEstimatedValue')}</p>
                   <p className="text-lg font-semibold text-green-600">
                     {getTotalEstimatedValue().toFixed(2)} OMR
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">{t('totalExpenses')}</p>
+                  <p className="text-sm text-slate-600">{t('totalExpenses')}</p>
                   <p className="text-lg font-semibold text-red-600">
                     {getTotalExpenses().toFixed(2)} OMR
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">{t('netValue')}</p>
+                  <p className="text-sm text-slate-600">{t('netValue')}</p>
                   <p className="text-lg font-semibold text-blue-600">
                     {(getTotalEstimatedValue() - getTotalExpenses()).toFixed(2)} OMR
                   </p>
@@ -1185,13 +1151,13 @@ const OrderFormModal = ({ order, callout, isOpen, onClose, onSubmit }) => {
             </div>
 
             <div className="flex justify-between">
-              <button type="button" onClick={() => setStep(2)} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => setStep(2)} className="px-6 py-2 border border-slate-300  text-slate-700 hover:bg-slate-50">
                 ← {t('back')}
               </button>
               <button 
                 type="submit"
                 disabled={loading || contractMaterials.filter(m => m.selectedQuantity > 0).length === 0}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-green-600 text-white  hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? <LoadingSpinner size="small" /> : null}
                 {order ? t('updateCollectionOrder') : t('createCollectionOrder')}
@@ -1304,19 +1270,19 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="font-medium">{t('orderNumber')}</label>
-              <p className="text-gray-600">{order.orderNumber}</p>
+              <p className="text-slate-600">{order.orderNumber}</p>
             </div>
             <div>
               <label className="font-medium">{t('status')}</label>
-              <p className="text-gray-600">{t(order.status)}</p>
+              <p className="text-slate-600">{t(order.status)}</p>
             </div>
             <div>
               <label className="font-medium">{t('scheduledDate')}</label>
-              <p className="text-gray-600">{new Date(order.scheduledDate).toLocaleDateString()}</p>
+              <p className="text-slate-600">{new Date(order.scheduledDate).toLocaleDateString()}</p>
             </div>
             <div>
               <label className="font-medium">{t('completedDate')}</label>
-              <p className="text-gray-600">{order.completedDate ? new Date(order.completedDate).toLocaleDateString() : '-'}</p>
+              <p className="text-slate-600">{order.completedDate ? new Date(order.completedDate).toLocaleDateString() : '-'}</p>
             </div>
           </div>
 
@@ -1324,11 +1290,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="font-medium">{t('driver')}</label>
-              <p className="text-gray-600">{order.driverName || '-'}</p>
+              <p className="text-slate-600">{order.driverName || '-'}</p>
             </div>
             <div>
               <label className="font-medium">{t('vehicle')}</label>
-              <p className="text-gray-600">{order.vehicleNumber || '-'}</p>
+              <p className="text-slate-600">{order.vehicleNumber || '-'}</p>
             </div>
           </div>
 
@@ -1336,11 +1302,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="font-medium">{t('estimatedQuantity')}</label>
-              <p className="text-gray-600">{order.estimatedQuantity || 0}</p>
+              <p className="text-slate-600">{order.estimatedQuantity || 0}</p>
             </div>
             <div>
               <label className="font-medium">{t('actualQuantity')}</label>
-              <p className="text-gray-600">{order.actualQuantity || '-'}</p>
+              <p className="text-slate-600">{order.actualQuantity || '-'}</p>
             </div>
           </div>
 
@@ -1348,28 +1314,28 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="font-medium">{t('totalValue')}</label>
-              <p className="text-gray-600">{order.totalValue || 0} {order.currency}</p>
+              <p className="text-slate-600">{order.totalValue || 0} {order.currency}</p>
             </div>
             <div>
               <label className="font-medium">{t('totalExpenses')}</label>
-              <p className="text-gray-600">{order.totalExpenses || 0} {order.currency}</p>
+              <p className="text-slate-600">{order.totalExpenses || 0} {order.currency}</p>
             </div>
             <div>
               <label className="font-medium">{t('netValue')}</label>
-              <p className="text-gray-600">{order.netValue || 0} {order.currency}</p>
+              <p className="text-slate-600">{order.netValue || 0} {order.currency}</p>
             </div>
           </div>
 
           {order.notes && (
             <div>
               <label className="font-medium">{t('notes')}</label>
-              <p className="text-gray-600">{order.notes}</p>
+              <p className="text-slate-600">{order.notes}</p>
             </div>
           )}
 
           {/* Inventory Update Section (when completing) */}
           {showInventoryUpdate && (
-            <div className="pt-4 border-t bg-green-50 -m-4 p-4 rounded-b-lg">
+            <div className="pt-4 border-t bg-green-50 -m-4 p-4">
               <h4 className="font-medium text-green-900 mb-3 flex items-center gap-2">
                 <Package className="w-5 h-5" />
                 {t('updateInventoryQuantities')}
@@ -1381,30 +1347,30 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
               {order.materials && order.materials.length > 0 ? (
                 <div className="space-y-3">
                   {order.materials.map((material) => (
-                    <div key={material.materialId} className="bg-white p-3 rounded-lg border">
+                    <div key={material.materialId} className="bg-white p-3  border">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('material')}</label>
-                          <p className="text-sm text-gray-900">{material.materialName}</p>
+                          <label className="text-sm font-medium text-slate-700">{t('material')}</label>
+                          <p className="text-sm text-slate-900">{material.materialName}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('expected')}</label>
-                          <p className="text-sm text-gray-600">{material.expectedQuantity} {material.unit}</p>
+                          <label className="text-sm font-medium text-slate-700">{t('expected')}</label>
+                          <p className="text-sm text-slate-600">{material.expectedQuantity} {material.unit}</p>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('actualQuantity')} *</label>
+                          <label className="text-sm font-medium text-slate-700">{t('actualQuantity')} *</label>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             value={actualQuantities[material.materialId] || ''}
                             onChange={(e) => handleQuantityChange(material.materialId, e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             placeholder="0.00"
                           />
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-700">{t('value')}</label>
+                          <label className="text-sm font-medium text-slate-700">{t('value')}</label>
                           <p className="text-sm font-semibold text-green-600">
                             {((actualQuantities[material.materialId] || 0) * (material.contractRate || 0)).toFixed(2)} OMR
                           </p>
@@ -1414,11 +1380,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">{t('noMaterialsToUpdate')}</p>
+                <p className="text-slate-500 text-center py-4">{t('noMaterialsToUpdate')}</p>
               )}
 
               <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-slate-600">
                   <span className="font-medium">{t('totalCollectionValue')}:</span>
                   <span className="ml-1 text-lg font-semibold text-green-600">
                     {Object.entries(actualQuantities).reduce((total, [materialId, qty]) => {
@@ -1430,7 +1396,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowInventoryUpdate(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 border border-slate-300  text-slate-700 hover:bg-slate-50"
                     disabled={loading}
                   >
                     {t('cancel')}
@@ -1438,7 +1404,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
                   <button
                     onClick={handleCompleteWithInventoryUpdate}
                     disabled={loading || Object.values(actualQuantities).every(qty => qty === 0)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-green-600 text-white  hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {loading ? <LoadingSpinner size="small" /> : <CheckCircle className="w-4 h-4" />}
                     {t('completeAndUpdateInventory')}
@@ -1456,7 +1422,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
                 {order.status === 'scheduled' && (
                   <button
                     onClick={() => handleStatusUpdate('in_transit')}
-                    className="px-3 py-1 bg-orange-100 text-orange-700 rounded text-sm"
+                    className="px-3 py-1 bg-orange-100 text-orange-700text-sm"
                   >
                     {t('markInTransit')}
                   </button>
@@ -1464,7 +1430,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
                 {order.status === 'in_transit' && (
                   <button
                     onClick={() => handleStatusUpdate('collecting')}
-                    className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm"
+                    className="px-3 py-1 bg-purple-100 text-purple-700text-sm"
                   >
                     {t('markCollecting')}
                   </button>
@@ -1472,14 +1438,14 @@ const OrderDetailsModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
                 {order.status === 'collecting' && (
                   <button
                     onClick={() => handleStatusUpdate('completed')}
-                    className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm"
+                    className="px-3 py-1 bg-green-100 text-green-700text-sm"
                   >
                     {t('markCompleted')}
                   </button>
                 )}
                 <button
                   onClick={() => handleStatusUpdate('cancelled')}
-                  className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm"
+                  className="px-3 py-1 bg-red-100 text-red-700text-sm"
                 >
                   {t('cancel')}
                 </button>
@@ -1635,7 +1601,7 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
       case 'pending_approval': return 'text-orange-600 bg-orange-100';
       case 'approved': return 'text-green-600 bg-green-100';
       case 'rejected': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-slate-600 bg-slate-100';
     }
   };
 
@@ -1645,22 +1611,22 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
     <Modal isOpen={isOpen} onClose={onClose} title={t('collectionExpenses')} size="large">
       <div className="p-6 space-y-4">
         {/* Order Summary */}
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-slate-50 p-4 ">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700">{t('orderNumber')}:</span>
-              <span className="ml-1 text-gray-900">{order.orderNumber}</span>
+              <span className="font-medium text-slate-700">{t('orderNumber')}:</span>
+              <span className="ml-1 text-slate-900">{order.orderNumber}</span>
             </div>
             <div>
-              <span className="font-medium text-gray-700">{t('status')}:</span>
-              <span className="ml-1 text-gray-900">{t(order.status)}</span>
+              <span className="font-medium text-slate-700">{t('status')}:</span>
+              <span className="ml-1 text-slate-900">{t(order.status)}</span>
             </div>
             <div>
-              <span className="font-medium text-gray-700">{t('totalValue')}:</span>
-              <span className="ml-1 text-gray-900">{order.totalValue || 0} OMR</span>
+              <span className="font-medium text-slate-700">{t('totalValue')}:</span>
+              <span className="ml-1 text-slate-900">{order.totalValue || 0} OMR</span>
             </div>
             <div>
-              <span className="font-medium text-gray-700">{t('totalExpenses')}:</span>
+              <span className="font-medium text-slate-700">{t('totalExpenses')}:</span>
               <span className="ml-1 font-semibold text-red-600">{totalExpenses.toFixed(2)} OMR</span>
             </div>
           </div>
@@ -1671,7 +1637,7 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
           <h3 className="text-lg font-semibold">{t('expenses')}</h3>
           <button
             onClick={() => setShowAddExpense(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 text-white  hover:bg-blue-700 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             {t('addExpense')}
@@ -1680,15 +1646,15 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
 
         {/* Add Expense Form */}
         {showAddExpense && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-200  p-4">
             <h4 className="font-medium mb-3">{t('newExpense')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('category')}</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('category')}</label>
                 <select
                   value={newExpense.category}
                   onChange={(e) => setNewExpense(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">{t('selectCategory')}</option>
                   <option value="fuel">{t('fuel')}</option>
@@ -1702,40 +1668,40 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('amount')} (OMR)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('amount')} (OMR)</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={newExpense.amount}
                   onChange={(e) => setNewExpense(prev => ({ ...prev, amount: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="0.00"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('description')}</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('description')}</label>
                 <input
                   type="text"
                   value={newExpense.description}
                   onChange={(e) => setNewExpense(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={t('expenseDescription')}
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('notes')}</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{t('notes')}</label>
                 <textarea
                   value={newExpense.notes}
                   onChange={(e) => setNewExpense(prev => ({ ...prev, notes: e.target.value }))}
                   rows={2}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border border-slate-300focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={t('additionalNotes')}
                 />
               </div>
               {/* Receipt Attachments Upload */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   <FileText className="inline w-4 h-4 mr-1" />
                   {t('receiptAttachments') || 'Receipt Attachments'}
                 </label>
@@ -1748,7 +1714,7 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                 {newExpenseFiles.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {newExpenseFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                      <div key={index} className="flex items-center justify-between p-2 bg-slate-50text-sm">
                         <span className="truncate flex-1">{file.name}</span>
                         <button
                           type="button"
@@ -1766,14 +1732,14 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowAddExpense(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-slate-300  text-slate-700 hover:bg-slate-50"
               >
                 {t('cancel')}
               </button>
               <button
                 onClick={handleAddExpense}
                 disabled={!newExpense.category || !newExpense.amount || loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? <LoadingSpinner size="small" /> : <Plus className="w-4 h-4" />}
                 {t('addExpense')}
@@ -1790,17 +1756,17 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
             </div>
           ) : expenses.length > 0 ? (
             expenses.map((expense) => (
-              <div key={expense.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={expense.id} className="border border-slate-200  p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{getExpenseCategoryIcon(expense.category)}</span>
-                      <h4 className="font-medium text-gray-900">{expense.description}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(expense.status)}`}>
+                      <h4 className="font-medium text-slate-900">{expense.description}</h4>
+                      <span className={`px-2 py-1  text-xs font-medium ${getStatusColor(expense.status)}`}>
                         {t(expense.status)}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                       <div>
                         <span className="font-medium">{t('category')}:</span> {t(expense.category)}
                       </div>
@@ -1815,7 +1781,7 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-semibold text-gray-900">
+                    <div className="text-lg font-semibold text-slate-900">
                       {expense.amount.toFixed(2)} OMR
                     </div>
                     <button
@@ -1829,9 +1795,9 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                 </div>
                 {/* S3 Attachments Viewer */}
                 {viewingExpenseId === expense.id && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-4 pt-4 border-t border-slate-200">
                     <div className="flex items-center justify-between mb-2">
-                      <h5 className="text-sm font-medium text-gray-700">
+                      <h5 className="text-sm font-medium text-slate-700">
                         <FileText className="inline w-4 h-4 mr-1" />
                         {t('receiptAttachments') || 'Receipt Attachments'}
                       </h5>
@@ -1857,7 +1823,7 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
                         showDelete={true}
                       />
                     ) : (
-                      <div className="text-center py-4 text-gray-400 text-sm">
+                      <div className="text-center py-4 text-slate-400 text-sm">
                         {t('noReceiptsAttached') || 'No receipts attached'}
                       </div>
                     )}
@@ -1866,8 +1832,8 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Banknote className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-8 text-slate-500">
+              <Banknote className="w-12 h-12 mx-auto mb-4 text-slate-300" />
               <h3 className="text-lg font-medium mb-2">{t('noExpensesRecorded')}</h3>
               <p>{t('addExpenseToTrackCosts')}</p>
             </div>
@@ -1876,18 +1842,18 @@ const OrderExpensesModal = ({ order, isOpen, onClose }) => {
 
         {/* Financial Summary */}
         {expenses.length > 0 && (
-          <div className="bg-gray-50 p-4 rounded-lg border-t">
+          <div className="bg-slate-50 p-4  border-t">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-sm text-gray-600">{t('collectionValue')}</div>
+                <div className="text-sm text-slate-600">{t('collectionValue')}</div>
                 <div className="text-lg font-semibold text-green-600">{(order.totalValue || 0).toFixed(2)} OMR</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">{t('totalExpenses')}</div>
+                <div className="text-sm text-slate-600">{t('totalExpenses')}</div>
                 <div className="text-lg font-semibold text-red-600">{totalExpenses.toFixed(2)} OMR</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">{t('netValue')}</div>
+                <div className="text-sm text-slate-600">{t('netValue')}</div>
                 <div className={`text-lg font-semibold ${(order.totalValue || 0) - totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {((order.totalValue || 0) - totalExpenses).toFixed(2)} OMR
                 </div>
@@ -1944,7 +1910,7 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
       case 'approved': return 'text-green-600 bg-green-100';
       case 'scheduled': return 'text-blue-600 bg-blue-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-slate-600 bg-slate-100';
     }
   };
 
@@ -1955,13 +1921,13 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
         <div className="flex gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={t('searchSupplierNotifications')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-slate-300  focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
@@ -1969,7 +1935,7 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-slate-300  focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="pending">{t('pendingNotifications')}</option>
               <option value="scheduled">{t('scheduledForCollection')}</option>
@@ -1989,19 +1955,19 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
               {filteredCallouts.map((callout) => (
                 <div
                   key={callout.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border border-slate-200  p-4 hover:bg-slate-50 cursor-pointer transition-colors"
                   onClick={() => onSelectNotification(callout)}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-medium text-gray-900">{callout.calloutNumber}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(callout.status)}`}>
+                        <h4 className="font-medium text-slate-900">{callout.calloutNumber}</h4>
+                        <span className={`px-2 py-1  text-xs font-medium ${getStatusColor(callout.status)}`}>
                           {t(callout.status)}
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
                         <div>
                           <span className="font-medium">{t('contract')}:</span> {callout.contractName}
                         </div>
@@ -2017,7 +1983,7 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
                       </div>
 
                       {callout.instructions && (
-                        <div className="mt-2 text-sm text-gray-600">
+                        <div className="mt-2 text-sm text-slate-600">
                           <span className="font-medium">{t('instructions')}:</span> {callout.instructions}
                         </div>
                       )}
@@ -2031,8 +1997,8 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-8 text-slate-500">
+              <Package className="w-12 h-12 mx-auto mb-4 text-slate-300" />
               <h3 className="text-lg font-medium mb-2">{t('noSupplierNotificationsFound')}</h3>
               <p>{t('noNotificationsMatchFilter')}</p>
             </div>
@@ -2043,7 +2009,7 @@ const SupplierNotificationModal = ({ isOpen, onClose, onSelectNotification }) =>
         <div className="flex justify-end pt-4 border-t">
           <button
             onClick={onClose}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 border border-slate-300  text-slate-700 hover:bg-slate-50"
           >
             {t('cancel')}
           </button>

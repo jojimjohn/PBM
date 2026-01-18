@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
 import storageService from '../../services/storageService'
-import './ReceiptUpload.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * ReceiptUpload Component
@@ -155,17 +155,36 @@ const ReceiptUpload = forwardRef(({
   const showExistingReceipt = hasExistingReceipt && !hasSelectedFile
   const showSelectedFile = hasSelectedFile
 
+  // Dropzone styling based on state (matching FileUpload pattern)
+  const getDropzoneClasses = () => {
+    let base = 'relative flex flex-col items-center justify-center p-6 border-2 border-dashed transition-all cursor-pointer'
+
+    if (disabled) {
+      return `${base} border-slate-200 bg-slate-50 cursor-not-allowed opacity-60`
+    }
+    if (isDragReject || hasError) {
+      return `${base} border-red-400 bg-red-50`
+    }
+    if (isDragAccept) {
+      return `${base} border-emerald-400 bg-emerald-50`
+    }
+    if (isDragActive) {
+      return `${base} border-blue-400 bg-blue-50`
+    }
+    return `${base} border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/50`
+  }
+
   return (
     <div
       ref={ref}
-      className={`receipt-upload ${className} ${isRTL ? 'rtl' : ''}`}
+      className={`space-y-3 ${className} ${isRTL ? 'rtl' : ''}`}
       {...props}
     >
       {/* Label */}
       {label && (
-        <label className="receipt-upload-label">
+        <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
           {label}
-          {required && <span className="required-indicator">*</span>}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
 
@@ -173,40 +192,40 @@ const ReceiptUpload = forwardRef(({
       <AnimatePresence mode="wait">
         {showExistingReceipt && (
           <motion.div
-            className="existing-receipt"
+            className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             key="existing"
           >
-            <div className="receipt-preview-icon">
-              <Check size={24} className="check-icon" />
-              <FileText size={32} />
+            <div className="w-10 h-10 flex items-center justify-center bg-emerald-100 text-emerald-600 relative">
+              <FileText size={24} />
+              <Check size={14} className="absolute -bottom-1 -right-1 text-emerald-500" />
             </div>
 
-            <div className="receipt-info">
-              <span className="receipt-status">{t('receiptUploaded')}</span>
-              <span className="receipt-hint">{allowReplace ? t('replaceReceipt') : t('viewReceiptFile')}</span>
+            <div className="flex-1 min-w-0">
+              <span className="block text-sm font-medium text-emerald-700">{t('receiptUploaded')}</span>
+              <span className="block text-xs text-emerald-600">{allowReplace ? t('replaceReceipt') : t('viewReceiptFile')}</span>
             </div>
 
-            <div className="receipt-actions">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="receipt-action-btn view"
+                className="btn btn-primary btn-sm"
                 onClick={handleViewReceipt}
                 title={t('viewReceiptFile')}
               >
-                <Eye size={18} />
+                <Eye size={14} />
               </button>
 
               {allowReplace && !disabled && (
-                <label className="receipt-action-btn replace" title={t('replaceReceipt')}>
-                  <RefreshCw size={18} />
+                <label className="btn btn-outline btn-sm cursor-pointer" title={t('replaceReceipt')}>
+                  <RefreshCw size={14} />
                   <input
                     type="file"
                     accept=".jpg,.jpeg,.png,.pdf"
                     onChange={(e) => e.target.files?.[0] && onDrop([e.target.files[0]], [])}
-                    style={{ display: 'none' }}
+                    className="hidden"
                   />
                 </label>
               )}
@@ -214,12 +233,12 @@ const ReceiptUpload = forwardRef(({
               {canDelete && !disabled && (
                 <button
                   type="button"
-                  className="receipt-action-btn delete"
+                  className="btn btn-danger btn-sm"
                   onClick={handleDeleteReceipt}
                   disabled={isDeletingReceipt}
                   title={t('removeReceipt')}
                 >
-                  {isDeletingReceipt ? <Loader size={18} className="spinner" /> : <Trash2 size={18} />}
+                  {isDeletingReceipt ? <Loader size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 </button>
               )}
             </div>
@@ -229,44 +248,44 @@ const ReceiptUpload = forwardRef(({
         {/* Selected File Preview */}
         {showSelectedFile && (
           <motion.div
-            className="selected-file"
+            className="flex items-center gap-3 p-3 bg-white border border-slate-200"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             key="selected"
           >
             {/* Preview */}
-            <div className="file-preview">
+            <div className="w-10 h-10 flex items-center justify-center bg-slate-100 shrink-0 overflow-hidden">
               {previewUrl ? (
-                <img src={previewUrl} alt={value.name} className="preview-image" />
+                <img src={previewUrl} alt={value.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="preview-icon">
-                  {storageService.isPDF(value) ? <FileText size={28} /> : <ImageIcon size={28} />}
+                <div className={storageService.isPDF(value) ? 'text-red-500' : 'text-blue-500'}>
+                  {storageService.isPDF(value) ? <FileText size={22} /> : <ImageIcon size={22} />}
                 </div>
               )}
             </div>
 
             {/* Info */}
-            <div className="file-info">
-              <span className="file-name">{value.name}</span>
-              <span className="file-size">{storageService.formatFileSize(value.size)}</span>
+            <div className="flex-1 min-w-0">
+              <span className="block text-sm font-medium text-slate-700 truncate">{value.name}</span>
+              <span className="block text-xs text-slate-400">{storageService.formatFileSize(value.size)}</span>
             </div>
 
             {/* Progress or Actions */}
             {isUploading ? (
-              <div className="upload-progress">
-                <Loader size={20} className="spinner" />
-                <span>{uploadProgress}%</span>
+              <div className="flex items-center gap-2 text-blue-600">
+                <Loader size={18} className="animate-spin" />
+                <span className="text-xs font-medium">{uploadProgress}%</span>
               </div>
             ) : (
               <button
                 type="button"
-                className="remove-file-btn"
+                className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                 onClick={handleRemoveFile}
                 disabled={disabled}
                 title={t('removeReceipt')}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             )}
           </motion.div>
@@ -280,32 +299,22 @@ const ReceiptUpload = forwardRef(({
             exit={{ opacity: 0 }}
             key="dropzone"
           >
-            <div
-              {...getRootProps()}
-              className={`
-                receipt-dropzone
-                ${isDragActive ? 'drag-active' : ''}
-                ${isDragAccept ? 'drag-accept' : ''}
-                ${isDragReject ? 'drag-reject' : ''}
-                ${hasError ? 'has-error' : ''}
-                ${disabled ? 'disabled' : ''}
-              `}
-            >
+            <div {...getRootProps()} className={getDropzoneClasses()}>
               <input {...getInputProps()} />
 
               <motion.div
-                className="dropzone-icon"
-                animate={{ y: isDragActive ? -5 : 0 }}
+                className={`w-12 h-12 flex items-center justify-center mb-3 ${isDragActive ? 'text-blue-500' : 'text-slate-400'}`}
+                animate={{ y: isDragActive ? -3 : 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Upload size={36} />
+                <Upload size={32} />
               </motion.div>
 
-              <p className="dropzone-text">
+              <p className="text-sm font-medium text-slate-700 mb-1">
                 {isDragActive ? t('dragDropReceipt').split(',')[0] : t('dragDropReceipt')}
               </p>
 
-              <p className="dropzone-formats">{t('supportedFormats')}</p>
+              <p className="text-xs text-slate-400">{t('supportedFormats')}</p>
             </div>
           </motion.div>
         )}
@@ -315,13 +324,13 @@ const ReceiptUpload = forwardRef(({
       <AnimatePresence>
         {hasError && (
           <motion.div
-            className="receipt-upload-error"
+            className="flex items-start gap-2 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs"
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: 0.15 }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={14} className="mt-0.5 shrink-0" />
             <span>{error || internalError}</span>
           </motion.div>
         )}

@@ -6,6 +6,9 @@ export default defineConfig({
   server: {
     port: 3001
   },
+  css: {
+    postcss: './postcss.config.js'
+  },
   build: {
     // Enable source maps for debugging in production (optional)
     sourcemap: false,

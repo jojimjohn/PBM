@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, Calendar, Truck, CheckCircle, FileCheck, Package, ChevronRight } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
-import './WorkflowProgressBar.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * WorkflowProgressBar - Interactive workflow stage selector for Collections

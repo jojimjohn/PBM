@@ -15,8 +15,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocalization } from '../../context/LocalizationContext';
 import useProjects from '../../hooks/useProjects';
-import { ChevronDown, FolderKanban, Check, Search, X } from 'lucide-react';
-import './ProjectSelector.css';
+import { ChevronsUpDown, FolderKanban, Check, Search, X } from 'lucide-react';
+// CSS moved to global index.css Tailwind
 
 const ProjectSelector = () => {
   const { t } = useLocalization();
@@ -95,6 +95,7 @@ const ProjectSelector = () => {
 
   return (
     <div className="project-selector" ref={dropdownRef}>
+      <label className="project-selector-label">{t('yourProjects', 'Your Projects')}</label>
       <button
         className={`project-selector-trigger ${isFiltered ? 'filtered' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
@@ -116,7 +117,7 @@ const ProjectSelector = () => {
             <X size={14} />
           </span>
         )}
-        <ChevronDown size={16} className={`chevron ${isOpen ? 'open' : ''}`} />
+        <ChevronsUpDown size={16} className="chevron" />
       </button>
 
       {isOpen && (

@@ -3,7 +3,7 @@ import Modal from '../ui/Modal'
 import DateInput from '../ui/DateInput'
 import { useSystemSettings } from '../../context/SystemSettingsContext'
 import { FileText, CheckSquare, Square, AlertTriangle, Receipt, Calculator, Link2 } from 'lucide-react'
-import './VendorBillModal.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * VendorBillModal Component
@@ -295,9 +295,9 @@ const VendorBillModal = ({
       title={isEditMode ? `Edit Vendor Bill - ${editingBill?.invoice_number}` : 'Create Vendor Bill'}
       size="lg"
     >
-      <form onSubmit={handleSubmit} className="vendor-bill-form">
+      <form onSubmit={handleSubmit} className="p-5">
         {error && (
-          <div className="form-error">
+          <div className="flex items-center gap-2 px-4 py-3 mb-5 bg-red-50 border border-red-200 text-red-700 text-sm">
             <AlertTriangle size={16} />
             <span>{error}</span>
           </div>
@@ -305,22 +305,22 @@ const VendorBillModal = ({
 
         {/* Bill Details Section */}
         <div className="form-section">
-          <h4 className="section-title">
+          <div className="form-section-title">
             <Receipt size={16} />
             Bill Details
-          </h4>
+          </div>
 
-          <div className="form-grid">
+          <div className="form-grid p-5">
             <div className="form-group">
               <label>Invoice Number</label>
               {isEditMode ? (
-                <div className="readonly-field">
-                  <span className="invoice-number-display">{editingBill?.invoice_number}</span>
+                <div className="px-3 py-2 bg-slate-100 border border-slate-200 text-sm">
+                  <span className="font-semibold text-slate-800">{editingBill?.invoice_number}</span>
                 </div>
               ) : (
-                <div className="auto-generated-field">
-                  <span className="auto-badge">Auto-generated</span>
-                  <span className="auto-hint">Format: VB-{new Date().getFullYear()}-XXXXX</span>
+                <div className="flex flex-col gap-1 px-3 py-2 bg-slate-50 border border-slate-200 text-sm">
+                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold w-fit">Auto-generated</span>
+                  <span className="text-slate-500 text-xs">Format: VB-{new Date().getFullYear()}-XXXXX</span>
                 </div>
               )}
             </div>
@@ -331,7 +331,6 @@ const VendorBillModal = ({
                 id="supplierId"
                 value={formData.supplierId}
                 onChange={(e) => handleSupplierChange(e.target.value)}
-                className="form-select"
                 required
                 disabled={isEditMode}
               >
@@ -343,7 +342,7 @@ const VendorBillModal = ({
                 ))}
               </select>
               {isEditMode && (
-                <span className="field-hint">Supplier cannot be changed when editing</span>
+                <span className="text-xs text-slate-400 italic">Supplier cannot be changed when editing</span>
               )}
             </div>
 
@@ -381,20 +380,19 @@ const VendorBillModal = ({
                 placeholder="0.000"
                 step="0.001"
                 min="0"
-                className="form-input"
                 required
               />
             </div>
 
             <div className="form-group">
               <label>Company Bills Total (Selected)</label>
-              <div className="calculated-total">
+              <div className="px-3 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold text-sm">
                 {formatCurrency(selectedTotal)}
               </div>
             </div>
           </div>
 
-          <div className="form-group full-width">
+          <div className="form-group px-5 pb-5">
             <label htmlFor="notes">Notes</label>
             <textarea
               id="notes"
@@ -402,54 +400,54 @@ const VendorBillModal = ({
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               placeholder="Optional notes about this vendor bill..."
               rows={2}
-              className="form-textarea"
             />
           </div>
         </div>
 
         {/* Company Bills Section */}
-        <div className="form-section">
-          <h4 className="section-title">
+        <div className="form-section mt-5">
+          <div className="form-section-title">
             <Link2 size={16} />
             Link Company Bills
             {formData.supplierId && (
-              <span className="po-count">
+              <span className="ml-auto text-xs font-normal text-slate-500 normal-case tracking-normal">
                 {selectedBills.size} of {filteredBills.length} selected
               </span>
             )}
-          </h4>
+          </div>
 
-          {!formData.supplierId ? (
-            <div className="po-placeholder">
-              <FileText size={32} />
-              <p>Select a supplier to see available company bills</p>
-            </div>
-          ) : filteredBills.length === 0 ? (
-            <div className="po-placeholder warning">
-              <AlertTriangle size={32} />
-              <p>No eligible company bills for {selectedSupplier?.name}</p>
-              <span className="hint">Only "sent" company bills not linked to other vendor bills are shown</span>
-            </div>
-          ) : (
-            <>
-              <div className="po-actions">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={selectAllBills}
-                >
-                  Select All
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={clearSelections}
-                >
-                  Clear
-                </button>
+          <div className="p-5">
+            {!formData.supplierId ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-8 bg-slate-50 border border-slate-200 text-slate-400">
+                <FileText size={32} />
+                <p className="m-0 text-sm">Select a supplier to see available company bills</p>
               </div>
+            ) : filteredBills.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-8 bg-amber-50 border border-amber-200 text-amber-600">
+                <AlertTriangle size={32} />
+                <p className="m-0 text-sm font-medium">No eligible company bills for {selectedSupplier?.name}</p>
+                <span className="text-xs text-amber-500">Only "sent" company bills not linked to other vendor bills are shown</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={selectAllBills}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={clearSelections}
+                  >
+                    Clear
+                  </button>
+                </div>
 
-              <div className="po-list">
+                <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
                 {filteredBills.map(cb => {
                   const isSelected = selectedBills.has(cb.id)
                   const isCurrentlyLinked = isEditMode && (
@@ -460,32 +458,42 @@ const VendorBillModal = ({
                   return (
                     <div
                       key={cb.id}
-                      className={`po-item ${isSelected ? 'selected' : ''} ${isCurrentlyLinked ? 'currently-linked' : ''}`}
+                      className={`flex items-center gap-3 p-3 border cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400'
+                          : isCurrentlyLinked
+                            ? 'bg-emerald-50 border-emerald-300'
+                            : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                      }`}
                       onClick={() => toggleBill(cb.id)}
                     >
-                      <div className="po-checkbox">
+                      <div className={`flex-shrink-0 ${isSelected ? 'text-blue-600' : 'text-slate-400'}`}>
                         {isSelected ? (
-                          <CheckSquare size={20} className="checked" />
+                          <CheckSquare size={20} />
                         ) : (
                           <Square size={20} />
                         )}
                       </div>
-                      <div className="po-details">
-                        <div className="po-header">
-                          <span className="po-number">{cb.invoice_number}</span>
-                          <span className={`bill-status-badge ${billStatus}`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-slate-800 text-sm">{cb.invoice_number}</span>
+                          <span className={`px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                            billStatus === 'sent'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
                             {billStatus}
                           </span>
                           {isCurrentlyLinked && (
-                            <span className="linked-badge">Linked</span>
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-semibold uppercase">Linked</span>
                           )}
                         </div>
-                        <div className="po-info">
-                          <span className="po-ref">PO: {getPOReference(cb)}</span>
-                          <span className="po-date">{new Date(cb.invoice_date).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                          <span>PO: {getPOReference(cb)}</span>
+                          <span>{new Date(cb.invoice_date).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <div className="po-amount">
+                      <div className="flex-shrink-0 font-semibold text-slate-800 text-sm">
                         {formatCurrency(cb.invoice_amount)}
                       </div>
                     </div>
@@ -493,27 +501,28 @@ const VendorBillModal = ({
                 })}
               </div>
 
-              {/* Amount Comparison */}
-              {selectedBills.size > 0 && formData.invoiceAmount && (
-                <div className="amount-comparison">
-                  <Calculator size={16} />
-                  <div className="comparison-details">
-                    <span>Vendor Bill: {formatCurrency(parseFloat(formData.invoiceAmount))}</span>
-                    <span>Company Bills Total: {formatCurrency(selectedTotal)}</span>
-                    {Math.abs(parseFloat(formData.invoiceAmount) - selectedTotal) >= 0.01 && (
-                      <span className={parseFloat(formData.invoiceAmount) > selectedTotal ? 'diff-positive' : 'diff-negative'}>
-                        Difference: {formatCurrency(Math.abs(parseFloat(formData.invoiceAmount) - selectedTotal))}
-                      </span>
-                    )}
+                {/* Amount Comparison */}
+                {selectedBills.size > 0 && formData.invoiceAmount && (
+                  <div className="flex items-center gap-3 p-3 mt-3 bg-slate-100 border border-slate-200">
+                    <Calculator size={16} className="text-slate-400" />
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <span className="text-slate-600">Vendor Bill: <strong>{formatCurrency(parseFloat(formData.invoiceAmount))}</strong></span>
+                      <span className="text-slate-600">Company Bills Total: <strong>{formatCurrency(selectedTotal)}</strong></span>
+                      {Math.abs(parseFloat(formData.invoiceAmount) - selectedTotal) >= 0.01 && (
+                        <span className={`font-semibold ${parseFloat(formData.invoiceAmount) > selectedTotal ? 'text-amber-600' : 'text-red-600'}`}>
+                          Difference: {formatCurrency(Math.abs(parseFloat(formData.invoiceAmount) - selectedTotal))}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Form Actions */}
-        <div className="form-actions">
+        <div className="form-actions mt-5">
           <button
             type="button"
             className="btn btn-outline"

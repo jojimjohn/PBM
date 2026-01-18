@@ -9,6 +9,7 @@ import branchService from '../../../services/branchService'
 import dataCacheService from '../../../services/dataCacheService'
 import MFASetup from '../../../components/MFASetup'
 import ExpenseCategoryManager from '../../../components/ExpenseCategoryManager'
+import Modal from '../../../components/ui/Modal'
 import {
   Settings as SettingsIcon,
   Globe,
@@ -29,12 +30,11 @@ import {
   Plus,
   Edit,
   Trash2,
-  X,
   MapPin,
   Lock,
   Tag
 } from 'lucide-react'
-import '../../../pages/Settings.css'
+// CSS moved to global index.css - using Tailwind classes
 
 const Settings = () => {
   const { user } = useAuth()
@@ -324,17 +324,18 @@ const Settings = () => {
 
   if (!canManageSettings) {
     return (
-      <div className="settings-page">
-        <div className="settings-header">
-          <div className="page-title-section">
-            <h1><Shield size={24} /> {t('settings')}</h1>
-            <p>{t('systemConfiguration')}</p>
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Shield size={24} className="text-slate-700" />
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 m-0">{t('settings')}</h1>
+            <p className="text-sm text-slate-500 m-0">{t('systemConfiguration')}</p>
           </div>
         </div>
-        <div className="access-denied">
-          <AlertTriangle size={48} />
-          <h2>Access Denied</h2>
-          <p>You don't have permission to access system settings.</p>
+        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+          <AlertTriangle size={48} className="mb-4" />
+          <h2 className="text-lg font-semibold text-slate-700 m-0 mb-2">Access Denied</h2>
+          <p className="text-sm m-0">You don't have permission to access system settings.</p>
         </div>
       </div>
     )
@@ -351,51 +352,56 @@ const Settings = () => {
   ]
 
   return (
-    <div className="settings-page">
-      <div className="settings-header">
-        <div className="page-title-section">
-          <h1><SettingsIcon size={24} /> {t('settings')}</h1>
-          <p>{t('configureGlobalSettings')}</p>
+    <div className="p-6">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <SettingsIcon size={24} className="text-slate-700" />
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 m-0">{t('settings')}</h1>
+          <p className="text-sm text-slate-500 m-0">{t('configureGlobalSettings')}</p>
         </div>
-        
-        {message && (
-          <div className={`message ${message.type}`}>
-            {message.text}
-          </div>
-        )}
       </div>
 
-      <div className="settings-container">
-        {/* Settings Navigation */}
-        <div className="settings-nav">
-          {tabs.map(tab => {
-            const IconComponent = tab.icon
-            return (
-              <button
-                key={tab.id}
-                className={`nav-tab ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <IconComponent size={20} />
-                {tab.label}
-              </button>
-            )
-          })}
+      {message && (
+        <div className={`flex items-center gap-2 px-4 py-3 mb-4 text-sm ${
+          message.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+            : 'bg-red-50 border border-red-200 text-red-700'
+        }`}>
+          {message.text}
         </div>
+      )}
 
-        {/* Settings Content */}
-        <div className="settings-content">
+      {/* Tabs Navigation */}
+      <div className="tab-navigation">
+        {tabs.map(tab => {
+          const IconComponent = tab.icon
+          return (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <IconComponent size={16} />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Settings Content */}
+      <div className="tab-content">
           {/* Localization Settings */}
           {activeTab === 'localization' && (
-            <div className="settings-section">
-              <div className="section-header">
-                <Globe size={20} />
-                <h2>{t('localizationSettings')}</h2>
-                <p>{t('configureLanguageAndRegion')}</p>
+            <div className="form-section">
+              <div className="form-section-title">
+                <Globe size={18} />
+                {t('localizationSettings')}
               </div>
+              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('configureLanguageAndRegion')}</p>
 
-              <div className="settings-grid">
-                <div className="setting-group">
+              <div className="form-grid p-5">
+                <div className="form-group">
                   <label htmlFor="language">{t('language')}</label>
                   <select
                     id="language"
@@ -408,10 +414,10 @@ const Settings = () => {
                       </option>
                     ))}
                   </select>
-                  <span className="setting-note">{t('languagePreferenceSavedPerUser')}</span>
+                  <span className="text-xs text-slate-400 italic mt-1">{t('languagePreferenceSavedPerUser')}</span>
                 </div>
 
-                <div className="setting-group">
+                <div className="form-group">
                   <label htmlFor="dateFormat">{t('dateFormat')}</label>
                   <select
                     id="dateFormat"
@@ -425,7 +431,7 @@ const Settings = () => {
                   </select>
                 </div>
 
-                <div className="setting-group">
+                <div className="form-group">
                   <label htmlFor="timeFormat">{t('timeFormat')}</label>
                   <select
                     id="timeFormat"
@@ -437,7 +443,7 @@ const Settings = () => {
                   </select>
                 </div>
 
-                <div className="setting-group">
+                <div className="form-group">
                   <label htmlFor="currency">{t('currency')}</label>
                   <select
                     id="currency"
@@ -448,7 +454,7 @@ const Settings = () => {
                   </select>
                 </div>
 
-                <div className="setting-group">
+                <div className="form-group">
                   <label htmlFor="timezone">{t('timezone')}</label>
                   <select
                     id="timezone"
@@ -464,7 +470,7 @@ const Settings = () => {
                   </select>
                 </div>
 
-                <div className="setting-group">
+                <div className="form-group">
                   <label htmlFor="firstDayOfWeek">{t('firstDayOfWeek')}</label>
                   <select
                     id="firstDayOfWeek"
@@ -482,16 +488,16 @@ const Settings = () => {
 
           {/* System Settings */}
           {activeTab === 'system' && (
-            <div className="settings-section">
-              <div className="section-header">
-                <SettingsIcon size={20} />
-                <h2>{t('generalSettings')}</h2>
-                <p>{t('configureGlobalSettings')}</p>
+            <div className="form-section">
+              <div className="form-section-title">
+                <SettingsIcon size={18} />
+                {t('generalSettings')}
               </div>
+              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('configureGlobalSettings')}</p>
 
-              <div className="settings-grid">
-                <div className="setting-group">
-                  <label htmlFor="fiscalYearStart">Fiscal Year Start</label>
+              <div className="form-grid p-5">
+                <div className="form-group">
+                  <label htmlFor="fiscalYearStart">{t('fiscalYearStart', 'Fiscal Year Start')}</label>
                   <select
                     id="fiscalYearStart"
                     value={formData.fiscalYearStart}
@@ -504,13 +510,13 @@ const Settings = () => {
                   </select>
                 </div>
 
-                <div className="setting-group">
-                  <label htmlFor="vatRate">
-                    <Percent size={16} style={{ display: 'inline', marginRight: '4px' }} />
-                    VAT Rate (%)
+                <div className="form-group">
+                  <label htmlFor="vatRate" className="flex items-center gap-1">
+                    <Percent size={14} />
+                    {t('vatRate', 'VAT Rate')} (%)
                   </label>
                   {editingVat ? (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="flex gap-2 items-center">
                       <input
                         type="number"
                         id="vatRate"
@@ -519,15 +525,15 @@ const Settings = () => {
                         step="0.01"
                         value={vatRate}
                         onChange={(e) => setVatRate(parseFloat(e.target.value) || 0)}
-                        style={{ flex: 1 }}
+                        className="flex-1"
                         disabled={savingVat}
                       />
                       <button
                         onClick={handleSaveVatRate}
                         disabled={savingVat}
-                        className="btn btn-primary btn-small"
+                        className="btn btn-primary btn-sm"
                       >
-                        {savingVat ? 'Saving...' : 'Save'}
+                        {savingVat ? t('saving') : t('save')}
                       </button>
                       <button
                         onClick={() => {
@@ -535,50 +541,51 @@ const Settings = () => {
                           loadVatRate()
                         }}
                         disabled={savingVat}
-                        className="btn btn-outline btn-small"
+                        className="btn btn-outline btn-sm"
                       >
-                        Cancel
+                        {t('cancel')}
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ padding: '8px 12px', background: '#f0f0f0', borderRadius: '4px', flex: 1 }}>
+                    <div className="flex gap-2 items-center">
+                      <span className="flex-1 px-3 py-2.5 bg-slate-100 border border-slate-200 text-sm">
                         {vatRate}%
                       </span>
                       <button
                         onClick={() => setEditingVat(true)}
-                        className="btn btn-outline btn-small"
+                        className="btn btn-outline btn-sm"
                       >
-                        Edit
+                        {t('edit')}
                       </button>
                     </div>
                   )}
-                  <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
-                    This rate will be applied to all taxable customers' sales orders
-                  </small>
+                  <span className="text-xs text-slate-400 mt-1">
+                    {t('vatRateDescription', 'This rate will be applied to all taxable customers\' sales orders')}
+                  </span>
                 </div>
+              </div>
 
-                <div className="setting-info">
-                  <h3>{t('currentSettingsInformation')}</h3>
-                  <div className="info-grid">
-                    <div className="info-item">
-                      <strong>{t('settingsSource')}:</strong>
-                      <span className={`source-badge ${getSettingsInfo().source}`}>
-                        {getSettingsInfo().source.replace('_', ' ')}
-                      </span>
-                    </div>
-                    <div className="info-item">
-                      <strong>{t('isCustomized')}:</strong>
-                      <span>{getSettingsInfo().isCustomized ? 'Yes' : 'No'}</span>
-                    </div>
-                    <div className="info-item">
-                      <strong>Company:</strong>
-                      <span>{getSettingsInfo().companyName}</span>
-                    </div>
-                    <div className="info-item">
-                      <strong>User:</strong>
-                      <span>{getSettingsInfo().userName}</span>
-                    </div>
+              {/* Settings Info */}
+              <div className="mx-5 mb-5 p-4 bg-slate-100 border border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700 m-0 mb-3">{t('currentSettingsInformation')}</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">{t('settingsSource')}:</span>
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium">
+                      {getSettingsInfo().source.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">{t('isCustomized')}:</span>
+                    <span className="text-slate-800">{getSettingsInfo().isCustomized ? t('yes') : t('no')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">{t('company')}:</span>
+                    <span className="text-slate-800">{getSettingsInfo().companyName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">{t('user')}:</span>
+                    <span className="text-slate-800">{getSettingsInfo().userName}</span>
                   </div>
                 </div>
               </div>
@@ -587,33 +594,25 @@ const Settings = () => {
 
           {/* Security Settings */}
           {activeTab === 'security' && (
-            <div className="settings-section">
-              <div className="section-header">
-                <Lock size={20} />
-                <h2>{t('securitySettings', 'Security Settings')}</h2>
-                <p>{t('manageAccountSecurity', 'Manage your account security and two-factor authentication')}</p>
+            <div className="form-section">
+              <div className="form-section-title">
+                <Lock size={18} />
+                {t('securitySettings', 'Security Settings')}
               </div>
+              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('manageAccountSecurity', 'Manage your account security and two-factor authentication')}</p>
 
-              <div className="settings-grid">
+              <div className="form-grid p-5">
                 {/* Session Timeout Setting */}
-                <div className="setting-group">
-                  <label htmlFor="sessionTimeout">
-                    <Clock size={16} style={{ display: 'inline', marginRight: '4px' }} />
+                <div className="form-group">
+                  <label htmlFor="sessionTimeout" className="flex items-center gap-2">
+                    <Clock size={14} />
                     {t('sessionTimeout', 'Session Timeout')} ({t('minutes', 'minutes')})
-                    <span style={{
-                      marginLeft: '8px',
-                      padding: '2px 8px',
-                      background: '#e3f2fd',
-                      color: '#1565c0',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: 'normal'
-                    }}>
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium ml-2">
                       {t('globalSetting', 'Global Setting')}
                     </span>
                   </label>
                   {editingSessionTimeout ? (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div className="flex gap-2 items-center">
                       <input
                         type="number"
                         id="sessionTimeout"
@@ -622,15 +621,15 @@ const Settings = () => {
                         step="5"
                         value={sessionTimeout}
                         onChange={(e) => setSessionTimeout(parseInt(e.target.value) || 30)}
-                        style={{ flex: 1 }}
+                        className="flex-1"
                         disabled={savingSessionTimeout}
                       />
                       <button
                         onClick={handleSaveSessionTimeout}
                         disabled={savingSessionTimeout}
-                        className="btn btn-primary btn-small"
+                        className="btn btn-primary btn-sm"
                       >
-                        {savingSessionTimeout ? t('saving', 'Saving...') : t('save', 'Save')}
+                        {savingSessionTimeout ? t('saving') : t('save')}
                       </button>
                       <button
                         onClick={() => {
@@ -638,52 +637,45 @@ const Settings = () => {
                           loadSessionTimeout()
                         }}
                         disabled={savingSessionTimeout}
-                        className="btn btn-outline btn-small"
+                        className="btn btn-outline btn-sm"
                       >
-                        {t('cancel', 'Cancel')}
+                        {t('cancel')}
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ padding: '8px 12px', background: '#f0f0f0', borderRadius: '4px', flex: 1 }}>
+                    <div className="flex gap-2 items-center">
+                      <span className="flex-1 px-3 py-2.5 bg-slate-100 border border-slate-200 text-sm">
                         {sessionTimeout} {t('minutes', 'minutes')}
                       </span>
                       <button
                         onClick={() => setEditingSessionTimeout(true)}
-                        className="btn btn-outline btn-small"
+                        className="btn btn-outline btn-sm"
                       >
-                        {t('edit', 'Edit')}
+                        {t('edit')}
                       </button>
                     </div>
                   )}
-                  <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+                  <span className="text-xs text-slate-400 mt-1 block">
                     {t('sessionTimeoutDescription', 'Automatically log out users after this period of inactivity. Valid range: 10-120 minutes.')}
-                  </small>
-                  <small style={{ color: '#1565c0', display: 'block', marginTop: '4px' }}>
-                    <Users size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                  </span>
+                  <span className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                    <Users size={12} />
                     {t('sessionTimeoutAffectsAll', 'This setting affects all users in the company.')}
-                  </small>
+                  </span>
                 </div>
               </div>
 
-              <div className="security-content" style={{ marginTop: '2rem' }}>
-                <h3 style={{ marginBottom: '1rem', fontSize: '1rem', fontWeight: '600' }}>
+              {/* Two-Factor Authentication */}
+              <div className="mx-5 mb-5 p-5 bg-slate-50 border border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-700 m-0 mb-1 flex items-center gap-2">
                   {t('twoFactorAuth', 'Two-Factor Authentication')}
-                  <span style={{
-                    marginLeft: '8px',
-                    padding: '2px 8px',
-                    background: '#e8f5e9',
-                    color: '#2e7d32',
-                    borderRadius: '12px',
-                    fontSize: '0.75rem',
-                    fontWeight: 'normal'
-                  }}>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium">
                     {t('personalSetting', 'Personal Setting')}
                   </span>
-                </h3>
-                <small style={{ color: '#666', display: 'block', marginBottom: '1rem' }}>
+                </h4>
+                <p className="text-xs text-slate-500 m-0 mb-4">
                   {t('mfaPersonalDescription', 'MFA is configured individually for each user account.')}
-                </small>
+                </p>
                 <MFASetup />
               </div>
             </div>
@@ -691,286 +683,284 @@ const Settings = () => {
 
           {/* Branch Management */}
           {activeTab === 'branches' && (
-            <div className="settings-section">
-              <div className="section-header">
-                <Building size={20} />
-                <h2>{t('branchManagement', 'Branch Management')}</h2>
-                <p>{t('manageBranchesDesc', 'Manage company branches and locations')}</p>
+            <div className="form-section">
+              <div className="form-section-title">
+                <Building size={18} />
+                {t('branchManagement', 'Branch Management')}
               </div>
+              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('manageBranchesDesc', 'Manage company branches and locations')}</p>
 
-              <div className="section-actions" style={{ marginBottom: '1.5rem' }}>
-                <button className="btn btn-primary" onClick={handleAddBranch}>
-                  <Plus size={16} />
-                  {t('addBranch', 'Add Branch')}
-                </button>
-              </div>
+              <div className="p-5">
+                <div className="mb-4">
+                  <button className="btn btn-primary" onClick={handleAddBranch}>
+                    <Plus size={16} />
+                    {t('addBranch', 'Add Branch')}
+                  </button>
+                </div>
 
-              <div className="branches-table-container">
                 {branches.length === 0 ? (
-                  <div className="empty-state">
-                    <Building size={48} />
-                    <p>{t('noBranches', 'No branches configured yet')}</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <Building size={48} className="mb-3" />
+                    <p className="text-sm m-0 mb-3">{t('noBranches', 'No branches configured yet')}</p>
                     <button className="btn btn-primary" onClick={handleAddBranch}>
                       <Plus size={16} />
                       {t('addFirstBranch', 'Add First Branch')}
                     </button>
                   </div>
                 ) : (
-                  <table className="branches-table">
-                    <thead>
-                      <tr>
-                        <th>{t('code', 'Code')}</th>
-                        <th>{t('name', 'Name')}</th>
-                        <th>{t('city', 'City')}</th>
-                        <th>{t('phone', 'Phone')}</th>
-                        <th>{t('manager', 'Manager')}</th>
-                        <th>{t('status', 'Status')}</th>
-                        <th>{t('actions', 'Actions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {branches.map(branch => (
-                        <tr key={branch.id}>
-                          <td><strong>{branch.code}</strong></td>
-                          <td>{branch.name}</td>
-                          <td>{branch.city || '-'}</td>
-                          <td>{branch.phone || '-'}</td>
-                          <td>{branch.manager_name || '-'}</td>
-                          <td>
-                            <span className={`status-badge ${branch.is_active ? 'active' : 'inactive'}`}>
-                              {branch.is_active ? t('active', 'Active') : t('inactive', 'Inactive')}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="table-actions">
-                              <button
-                                className="btn-icon"
-                                onClick={() => handleEditBranch(branch)}
-                                title={t('edit', 'Edit')}
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                className="btn-icon delete"
-                                onClick={() => handleDeleteBranch(branch)}
-                                title={t('delete', 'Delete')}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="data-table w-full">
+                      <thead>
+                        <tr>
+                          <th>{t('code', 'Code')}</th>
+                          <th>{t('name', 'Name')}</th>
+                          <th>{t('city', 'City')}</th>
+                          <th>{t('phone', 'Phone')}</th>
+                          <th>{t('manager', 'Manager')}</th>
+                          <th>{t('status', 'Status')}</th>
+                          <th className="text-right">{t('actions', 'Actions')}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {branches.map(branch => (
+                          <tr key={branch.id}>
+                            <td><strong className="text-slate-800">{branch.code}</strong></td>
+                            <td>{branch.name}</td>
+                            <td>{branch.city || '-'}</td>
+                            <td>{branch.phone || '-'}</td>
+                            <td>{branch.manager_name || '-'}</td>
+                            <td>
+                              <span className={`px-2 py-1 text-xs font-medium ${
+                                branch.is_active
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-100 text-slate-600'
+                              }`}>
+                                {branch.is_active ? t('active', 'Active') : t('inactive', 'Inactive')}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                  onClick={() => handleEditBranch(branch)}
+                                  title={t('edit', 'Edit')}
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button
+                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                  onClick={() => handleDeleteBranch(branch)}
+                                  title={t('delete', 'Delete')}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
 
               {/* Branch Modal */}
-              {showBranchModal && (
-                <div className="modal-overlay" onClick={() => !savingBranch && setShowBranchModal(false)}>
-                  <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <div className="modal-header">
-                      <h3>
-                        <Building size={20} />
-                        {editingBranch ? t('editBranch', 'Edit Branch') : t('addBranch', 'Add Branch')}
-                      </h3>
-                      <button
-                        className="modal-close"
-                        onClick={() => setShowBranchModal(false)}
+              <Modal
+                isOpen={showBranchModal}
+                onClose={() => !savingBranch && setShowBranchModal(false)}
+                title={
+                  <span className="flex items-center gap-2">
+                    <Building size={20} />
+                    {editingBranch ? t('editBranch', 'Edit Branch') : t('addBranch', 'Add Branch')}
+                  </span>
+                }
+                size="md"
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => setShowBranchModal(false)}
+                      disabled={savingBranch}
+                    >
+                      {t('cancel', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      form="branch-form"
+                      className="btn btn-primary"
+                      disabled={savingBranch}
+                    >
+                      {savingBranch ? t('saving', 'Saving...') : t('save', 'Save')}
+                    </button>
+                  </>
+                }
+              >
+                <form id="branch-form" onSubmit={handleSaveBranch}>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label htmlFor="branchCode">
+                        {t('branchCode', 'Branch Code')} <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="branchCode"
+                        value={branchForm.code}
+                        onChange={(e) => setBranchForm({...branchForm, code: e.target.value})}
+                        required
                         disabled={savingBranch}
-                      >
-                        <X size={20} />
-                      </button>
+                        placeholder="HQ, BR1, BR2"
+                      />
+                      <small>{t('branchCodeHint', 'Unique identifier (e.g., HQ, BR1)')}</small>
                     </div>
 
-                    <form onSubmit={handleSaveBranch}>
-                      <div className="modal-body">
-                        <div className="form-grid">
-                          <div className="form-group">
-                            <label htmlFor="branchCode">
-                              {t('branchCode', 'Branch Code')} <span className="required">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="branchCode"
-                              value={branchForm.code}
-                              onChange={(e) => setBranchForm({...branchForm, code: e.target.value})}
-                              required
-                              disabled={savingBranch}
-                              placeholder="HQ, BR1, BR2"
-                            />
-                            <small>{t('branchCodeHint', 'Unique identifier (e.g., HQ, BR1)')}</small>
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchName">
+                        {t('branchName', 'Branch Name')} <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="branchName"
+                        value={branchForm.name}
+                        onChange={(e) => setBranchForm({...branchForm, name: e.target.value})}
+                        required
+                        disabled={savingBranch}
+                        placeholder="Head Office, Muscat Branch"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchName">
-                              {t('branchName', 'Branch Name')} <span className="required">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              id="branchName"
-                              value={branchForm.name}
-                              onChange={(e) => setBranchForm({...branchForm, name: e.target.value})}
-                              required
-                              disabled={savingBranch}
-                              placeholder="Head Office, Muscat Branch"
-                            />
-                          </div>
+                    <div className="form-group full-width">
+                      <label htmlFor="branchAddress">{t('address', 'Address')}</label>
+                      <input
+                        type="text"
+                        id="branchAddress"
+                        value={branchForm.address}
+                        onChange={(e) => setBranchForm({...branchForm, address: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="Street address"
+                      />
+                    </div>
 
-                          <div className="form-group full-width">
-                            <label htmlFor="branchAddress">{t('address', 'Address')}</label>
-                            <input
-                              type="text"
-                              id="branchAddress"
-                              value={branchForm.address}
-                              onChange={(e) => setBranchForm({...branchForm, address: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="Street address"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchCity">{t('city', 'City')}</label>
+                      <input
+                        type="text"
+                        id="branchCity"
+                        value={branchForm.city}
+                        onChange={(e) => setBranchForm({...branchForm, city: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="Muscat"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchCity">{t('city', 'City')}</label>
-                            <input
-                              type="text"
-                              id="branchCity"
-                              value={branchForm.city}
-                              onChange={(e) => setBranchForm({...branchForm, city: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="Muscat"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchPhone">{t('phone', 'Phone')}</label>
+                      <input
+                        type="tel"
+                        id="branchPhone"
+                        value={branchForm.phone}
+                        onChange={(e) => setBranchForm({...branchForm, phone: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="+968 1234 5678"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchPhone">{t('phone', 'Phone')}</label>
-                            <input
-                              type="tel"
-                              id="branchPhone"
-                              value={branchForm.phone}
-                              onChange={(e) => setBranchForm({...branchForm, phone: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="+968 1234 5678"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="branchEmail">{t('email', 'Email')}</label>
+                      <input
+                        type="email"
+                        id="branchEmail"
+                        value={branchForm.email}
+                        onChange={(e) => setBranchForm({...branchForm, email: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="branch@company.com"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="branchEmail">{t('email', 'Email')}</label>
-                            <input
-                              type="email"
-                              id="branchEmail"
-                              value={branchForm.email}
-                              onChange={(e) => setBranchForm({...branchForm, email: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="branch@company.com"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="managerName">{t('managerName', 'Manager Name')}</label>
+                      <input
+                        type="text"
+                        id="managerName"
+                        value={branchForm.manager_name}
+                        onChange={(e) => setBranchForm({...branchForm, manager_name: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="John Doe"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="managerName">{t('managerName', 'Manager Name')}</label>
-                            <input
-                              type="text"
-                              id="managerName"
-                              value={branchForm.manager_name}
-                              onChange={(e) => setBranchForm({...branchForm, manager_name: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="John Doe"
-                            />
-                          </div>
+                    <div className="form-group">
+                      <label htmlFor="managerPhone">{t('managerPhone', 'Manager Phone')}</label>
+                      <input
+                        type="tel"
+                        id="managerPhone"
+                        value={branchForm.manager_phone}
+                        onChange={(e) => setBranchForm({...branchForm, manager_phone: e.target.value})}
+                        disabled={savingBranch}
+                        placeholder="+968 9876 5432"
+                      />
+                    </div>
 
-                          <div className="form-group">
-                            <label htmlFor="managerPhone">{t('managerPhone', 'Manager Phone')}</label>
-                            <input
-                              type="tel"
-                              id="managerPhone"
-                              value={branchForm.manager_phone}
-                              onChange={(e) => setBranchForm({...branchForm, manager_phone: e.target.value})}
-                              disabled={savingBranch}
-                              placeholder="+968 9876 5432"
-                            />
-                          </div>
+                    <div className="form-group full-width">
+                      <label htmlFor="branchNotes">{t('notes', 'Notes')}</label>
+                      <textarea
+                        id="branchNotes"
+                        value={branchForm.notes}
+                        onChange={(e) => setBranchForm({...branchForm, notes: e.target.value})}
+                        disabled={savingBranch}
+                        rows="3"
+                        placeholder="Additional information..."
+                      />
+                    </div>
 
-                          <div className="form-group full-width">
-                            <label htmlFor="branchNotes">{t('notes', 'Notes')}</label>
-                            <textarea
-                              id="branchNotes"
-                              value={branchForm.notes}
-                              onChange={(e) => setBranchForm({...branchForm, notes: e.target.value})}
-                              disabled={savingBranch}
-                              rows="3"
-                              placeholder="Additional information..."
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={branchForm.is_active}
-                                onChange={(e) => setBranchForm({...branchForm, is_active: e.target.checked})}
-                                disabled={savingBranch}
-                              />
-                              {t('active', 'Active')}
-                            </label>
-                            <small>{t('activeHint', 'Active branches can be selected in orders')}</small>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="modal-footer">
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          onClick={() => setShowBranchModal(false)}
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={branchForm.is_active}
+                          onChange={(e) => setBranchForm({...branchForm, is_active: e.target.checked})}
                           disabled={savingBranch}
-                        >
-                          {t('cancel', 'Cancel')}
-                        </button>
-                        <button
-                          type="submit"
-                          className="btn btn-primary"
-                          disabled={savingBranch}
-                        >
-                          {savingBranch ? t('saving', 'Saving...') : t('save', 'Save')}
-                        </button>
-                      </div>
-                    </form>
+                        />
+                        {t('active', 'Active')}
+                      </label>
+                      <small>{t('activeHint', 'Active branches can be selected in orders')}</small>
+                    </div>
                   </div>
-                </div>
-              )}
+                </form>
+              </Modal>
             </div>
           )}
 
           {/* Expense Categories Settings */}
           {activeTab === 'expense-categories' && (
-            <div className="settings-section">
+            <div className="form-section">
               <ExpenseCategoryManager />
             </div>
           )}
 
           {/* Appearance Settings */}
           {activeTab === 'appearance' && (
-            <div className="settings-section">
-              <div className="section-header">
-                <Palette size={20} />
-                <h2>{t('appearanceSettings')}</h2>
-                <p>{t('customizeVisualAppearance')}</p>
+            <div className="form-section">
+              <div className="form-section-title">
+                <Palette size={18} />
+                {t('appearanceSettings')}
               </div>
+              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('customizeVisualAppearance')}</p>
 
-              <div className="settings-grid">
-                <div className="setting-group">
+              <div className="p-5">
+                <div className="form-group">
                   <label>{t('theme')}</label>
-                  <div className="theme-options">
-                    <button className="theme-option light active">
-                      <Monitor size={20} />
+                  <div className="flex gap-3">
+                    <button className="flex items-center gap-2 px-4 py-3 bg-blue-50 border-2 border-blue-500 text-blue-700 text-sm font-medium cursor-pointer">
+                      <Monitor size={18} />
                       {t('lightTheme')}
                     </button>
-                    <button className="theme-option dark">
-                      <Monitor size={20} />
+                    <button className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-medium cursor-pointer hover:bg-slate-50">
+                      <Monitor size={18} />
                       {t('darkTheme')}
                     </button>
                   </div>
-                  <span className="setting-note">{t('availableInFutureUpdate')}</span>
+                  <span className="text-xs text-slate-400 italic mt-2">{t('availableInFutureUpdate')}</span>
                 </div>
               </div>
             </div>
@@ -978,57 +968,52 @@ const Settings = () => {
 
           {/* Notifications Settings */}
           {activeTab === 'notifications' && (
-            <div className="settings-section">
-              <div className="section-header">
-                <Bell size={20} />
-                <h2>{t('notificationSettings')}</h2>
-                <p>{t('configureNotificationsAndAlerts')}</p>
+            <div className="form-section">
+              <div className="form-section-title">
+                <Bell size={18} />
+                {t('notificationSettings')}
               </div>
+              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('configureNotificationsAndAlerts')}</p>
 
-              <div className="settings-grid">
-                <div className="setting-group">
-                  <label>{t('notifications')}</label>
-                  <div className="setting-info">
-                    <h3>{t('comingSoon')}</h3>
-                    <p>{t('availableInFutureUpdate')}</p>
-                  </div>
-                </div>
+              <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                <Bell size={48} className="mb-3 opacity-50" />
+                <h3 className="text-sm font-semibold text-slate-600 m-0 mb-1">{t('comingSoon')}</h3>
+                <p className="text-xs m-0">{t('availableInFutureUpdate')}</p>
               </div>
             </div>
           )}
+        </div>
 
-          {/* Settings Actions */}
-          <div className="settings-actions">
-            <button 
-              className="btn btn-outline"
-              onClick={handleReset}
-              disabled={loading}
-            >
-              <RotateCcw size={16} />
-              {t('resetToDefaults')}
-            </button>
-            
-            <button 
-              className="btn btn-primary"
-              onClick={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <div className="loading-spinner" />
-                  {t('saving')}
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  {t('saveSettings')}
-                </>
-              )}
-            </button>
-          </div>
+        {/* Settings Actions - Fixed at bottom */}
+        <div className="form-actions mt-6">
+          <button
+            className="btn btn-outline"
+            onClick={handleReset}
+            disabled={loading}
+          >
+            <RotateCcw size={16} />
+            {t('resetToDefaults')}
+          </button>
+
+          <button
+            className="btn btn-primary"
+            onClick={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white animate-spin mr-2" style={{ borderRadius: '50%' }} />
+                {t('saving')}
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                {t('saveSettings')}
+              </>
+            )}
+          </button>
         </div>
       </div>
-    </div>
   )
 }
 

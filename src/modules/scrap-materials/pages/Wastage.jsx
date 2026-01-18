@@ -8,12 +8,12 @@ import Modal from '../../../components/ui/Modal'
 import StockChart from '../../../components/StockChart'
 import wastageService from '../../../services/wastageService'
 import materialService from '../../../services/materialService'
-import { 
-  Plus, 
-  AlertTriangle, 
-  Eye, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  AlertTriangle,
+  Eye,
+  Edit,
+  Trash2,
   Calendar,
   Banknote,
   Package,
@@ -24,9 +24,9 @@ import {
   XCircle,
   Filter,
   BarChart3,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react'
-import '../styles/Wastage.css'
 
 // Placeholder components for forms
 const WastageForm = ({ materials, wasteTypes, initialData, onSave, onCancel, isEditing }) => {
@@ -126,6 +126,7 @@ const Wastage = () => {
     wasteType: 'all',
     dateRange: 'all'
   })
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     loadWastageData()
@@ -224,6 +225,12 @@ const Wastage = () => {
       reorderLevel: data.count,     // Use count as reorderLevel
       count: data.count
     }))
+  }
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await loadWastageData()
+    setIsRefreshing(false)
   }
 
   const handleAddWastage = () => {
@@ -380,7 +387,7 @@ const Wastage = () => {
   }
 
   return (
-    <div className="wastage-page">
+    <div className="p-5 max-w-[1200px] mx-auto">
       {/* Error Display */}
       {error && (
         <div className="error-banner">
@@ -395,15 +402,23 @@ const Wastage = () => {
           <h1>{t('wastageManagement', 'Wastage Management')}</h1>
           <p>{t('trackWastageAndLosses', 'Track material wastage and losses')}</p>
         </div>
-        <div className="header-actions">
-          <button 
+        <div className="header-actions flex items-center gap-2">
+          <button
+            className="btn btn-outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title={t('refresh', 'Refresh')}
+          >
+            <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+          </button>
+          <button
             className="btn btn-outline"
             onClick={() => setShowChartsModal(true)}
           >
             <BarChart3 size={16} />
             {t('viewAnalytics', 'View Analytics')}
           </button>
-          <button 
+          <button
             className="btn btn-primary"
             onClick={handleAddWastage}
           >
@@ -416,46 +431,46 @@ const Wastage = () => {
       {/* Summary Cards */}
       <div className="summary-cards">
         <div className="summary-card">
-          <div className="card-icon warning">
+          <div className="summary-icon warning">
             <AlertTriangle size={24} />
           </div>
-          <div className="card-content">
-            <div className="card-value">{wastages.length}</div>
-            <div className="card-label">{t('totalWastages', 'Total Wastages')}</div>
+          <div className="summary-info">
+            <div className="summary-value">{wastages.length}</div>
+            <div className="summary-label">{t('totalWastages', 'Total Wastages')}</div>
           </div>
         </div>
         
         <div className="summary-card">
-          <div className="card-icon danger">
+          <div className="summary-icon danger">
             <Banknote size={24} />
           </div>
-          <div className="card-content">
-            <div className="card-value">{formatCurrency(calculateTotalWasteCost())}</div>
-            <div className="card-label">{t('totalWasteCost', 'Total Waste Cost')}</div>
+          <div className="summary-info">
+            <div className="summary-value">{formatCurrency(calculateTotalWasteCost())}</div>
+            <div className="summary-label">{t('totalWasteCost', 'Total Waste Cost')}</div>
           </div>
         </div>
         
         <div className="summary-card">
-          <div className="card-icon info">
+          <div className="summary-icon info">
             <Clock size={24} />
           </div>
-          <div className="card-content">
-            <div className="card-value">
+          <div className="summary-info">
+            <div className="summary-value">
               {wastages.filter(w => w.status === 'pending_approval').length}
             </div>
-            <div className="card-label">{t('pendingApproval', 'Pending Approval')}</div>
+            <div className="summary-label">{t('pendingApproval', 'Pending Approval')}</div>
           </div>
         </div>
         
         <div className="summary-card">
-          <div className="card-icon success">
+          <div className="summary-icon success">
             <CheckCircle size={24} />
           </div>
-          <div className="card-content">
-            <div className="card-value">
+          <div className="summary-info">
+            <div className="summary-value">
               {wastages.filter(w => w.status === 'approved').length}
             </div>
-            <div className="card-label">{t('approved', 'Approved')}</div>
+            <div className="summary-label">{t('approved', 'Approved')}</div>
           </div>
         </div>
       </div>
@@ -490,7 +505,7 @@ const Wastage = () => {
       </div>
 
       {/* Wastage Data Table */}
-      <div className="wastage-table">
+      <div>
         <DataTable
           data={filteredWastages.map(wastage => ({
             ...wastage,
@@ -561,7 +576,7 @@ const Wastage = () => {
               header: t('actions'),
               sortable: false,
               render: (value, row) => (
-                <div className="action-buttons">
+                <div className="cell-actions">
                   <button
                     className="btn btn-outline btn-sm"
                     onClick={() => handleViewWastage(row)}
@@ -610,7 +625,7 @@ const Wastage = () => {
         className="modal-xl"
         closeOnOverlayClick={false}
       >
-          <div className="charts-container">
+          <div className="flex flex-col gap-8">
             <StockChart
               inventoryData={wasteChartData}
               title={t('wastageByType', 'Wastage by Type')}
@@ -623,7 +638,7 @@ const Wastage = () => {
               }}
             />
             
-            <div className="monthly-chart">
+            <div className="mt-5">
               <StockChart
                 inventoryData={getWastagesByMonth()}
                 title={t('monthlyWastageTrends', 'Monthly Wastage Trends')}

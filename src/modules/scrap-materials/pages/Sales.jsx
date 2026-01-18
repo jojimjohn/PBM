@@ -10,7 +10,6 @@ import SalesOrderViewModal from '../../../components/SalesOrderViewModal'
 import salesOrderService from '../../../services/salesOrderService'
 import customerService from '../../../services/customerService'
 import { Eye, Edit, FileText, Banknote, Calendar, User, AlertTriangle, CheckCircle } from 'lucide-react'
-import '../styles/Sales.css'
 
 const Sales = () => {
   const { selectedCompany } = useAuth()
@@ -285,15 +284,15 @@ const Sales = () => {
       render: (value, row) => {
         if (value || row.invoiceNumber) {
           return (
-            <div className="invoice-info">
-              <FileText size={14} style={{ color: '#10b981' }} />
-              <span style={{ color: '#10b981', fontWeight: '500' }}>
+            <div className="flex items-center gap-1.5">
+              <FileText size={14} className="text-green-600 shrink-0" />
+              <span className="text-green-600 font-medium">
                 {value || row.invoiceNumber}
               </span>
             </div>
           )
         }
-        return <span style={{ color: '#6b7280' }}>-</span>
+        return <span className="text-gray-500">-</span>
       }
     },
     {
@@ -361,7 +360,7 @@ const Sales = () => {
   }
 
   return (
-    <div className="sales-page">
+    <div className="p-0">
       {/* Error Display */}
       {error && (
         <div className="error-banner">
@@ -395,7 +394,7 @@ const Sales = () => {
         </div>
       </div>
 
-      <div className="sales-content">
+      <div className="flex flex-col gap-6">
         <div className="tab-navigation">
           <button 
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
@@ -467,7 +466,7 @@ const Sales = () => {
         </div>
 
         {activeTab === 'orders' && (
-          <div className="sales-orders">
+          <div className="space-y-4">
             <DataTable
               data={salesOrders}
               columns={salesOrderColumns}
@@ -488,7 +487,7 @@ const Sales = () => {
         )}
 
         {activeTab === 'invoices' && (
-          <div className="sales-invoices">
+          <div className="space-y-4">
             <DataTable
               data={salesOrders.filter(order => order.invoiceNumber)}
               columns={[
@@ -497,9 +496,9 @@ const Sales = () => {
                   header: t('invoiceNumber'),
                   sortable: true,
                   render: (value) => (
-                    <div className="invoice-number">
-                      <FileText size={14} style={{ color: '#10b981' }} />
-                      <strong>{value}</strong>
+                    <div className="flex items-center gap-1.5">
+                      <FileText size={14} className="text-green-600 shrink-0" />
+                      <strong className="text-green-600">{value}</strong>
                     </div>
                   )
                 },
@@ -507,7 +506,7 @@ const Sales = () => {
                   key: 'orderNumber',
                   header: t('orderNumber'),
                   sortable: true,
-                  render: (value) => <span style={{ color: '#6b7280' }}>{value}</span>
+                  render: (value) => <span className="text-gray-500">{value}</span>
                 },
                 {
                   key: 'customer',

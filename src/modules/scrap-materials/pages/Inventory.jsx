@@ -25,8 +25,6 @@ import {
   User,
   MapPin
 } from 'lucide-react'
-import '../styles/Inventory.css'
-
 const ScrapMaterialsInventory = () => {
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
@@ -176,23 +174,26 @@ const ScrapMaterialsInventory = () => {
         render: (value, row) => {
           const material = getMaterialInfo(row.materialId)
           const isTyre = row.materialCategory === 'tyres'
-          
+          const badge = getConditionBadge(row.condition, isTyre)
+
           return (
-            <div className="material-info-cell">
-              <div className="material-primary">
-                <strong>{material.name || row.materialCode}</strong>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <strong className="text-gray-900 font-semibold">{material.name || row.materialCode}</strong>
                 {isTyre && (
-                  <div className="tyre-indicator">
-                    <Camera size={12} />
-                    <span>{t('tyre', 'Tyre')}</span>
-                  </div>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-[11px] font-medium">
+                    <Camera size={10} />
+                    {t('tyre', 'Tyre')}
+                  </span>
                 )}
               </div>
-              <div className="material-secondary">
-                <span className="material-code">{row.materialCode}</span>
-                {row.condition && (
-                  <span className={`condition-badge ${getConditionBadge(row.condition, isTyre)?.class}`}>
-                    {getConditionBadge(row.condition, isTyre)?.label}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 font-mono">{row.materialCode}</span>
+                {row.condition && badge && (
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                    badge.class === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {badge.label}
                   </span>
                 )}
               </div>
@@ -207,11 +208,11 @@ const ScrapMaterialsInventory = () => {
         render: (value, row) => {
           const typeInfo = getTransactionTypeInfo(value)
           const TypeIcon = typeInfo.icon
-          
+
           return (
-            <div className="transaction-type-cell">
+            <div className="flex items-center gap-2">
               <TypeIcon size={14} style={{ color: typeInfo.color }} />
-              <span>{typeInfo.label}</span>
+              <span className="text-sm text-gray-700">{typeInfo.label}</span>
             </div>
           )
         }
@@ -220,9 +221,9 @@ const ScrapMaterialsInventory = () => {
         key: 'sourceDetails',
         header: t('source', 'Source'),
         render: (value, row) => (
-          <div className="source-info">
-            <div className="source-name">{value?.name || 'N/A'}</div>
-            <div className="source-type">{value?.type || ''}</div>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-900">{value?.name || 'N/A'}</span>
+            {value?.type && <span className="text-xs text-gray-500">{value.type}</span>}
           </div>
         )
       },
@@ -232,9 +233,9 @@ const ScrapMaterialsInventory = () => {
         sortable: true,
         type: 'number',
         render: (value, row) => (
-          <div className="quantity-cell">
-            <span className="quantity">{value?.toLocaleString()}</span>
-            <span className="unit">{row.unit}</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-semibold text-gray-900 tabular-nums">{value?.toLocaleString()}</span>
+            <span className="text-xs text-gray-500">{row.unit}</span>
           </div>
         )
       },
@@ -266,12 +267,12 @@ const ScrapMaterialsInventory = () => {
         key: 'photos',
         header: t('photos', 'Photos'),
         render: (value, row) => {
-          if (!value || value.length === 0) return <span className="no-photos">—</span>
-          
+          if (!value || value.length === 0) return <span className="text-gray-400">—</span>
+
           return (
-            <div className="photos-preview">
-              <Camera size={16} />
-              <span>{value.length} {t('photos', 'photos')}</span>
+            <div className="flex items-center gap-1.5 text-blue-600">
+              <Camera size={14} />
+              <span className="text-sm">{value.length} {t('photos', 'photos')}</span>
             </div>
           )
         }
@@ -284,17 +285,17 @@ const ScrapMaterialsInventory = () => {
         key: 'actions',
         header: t('actions', 'Actions'),
         render: (value, row) => (
-          <div className="action-buttons">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => console.log('View details:', row)}
-              className="action-btn view"
+              onClick={(e) => { e.stopPropagation(); console.log('View details:', row) }}
+              className="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md bg-white text-blue-500 hover:bg-blue-50 hover:border-blue-500 transition-colors"
               title={t('viewDetails', 'View Details')}
             >
               <Eye size={14} />
             </button>
             <button
-              onClick={() => handleEditEntry(row)}
-              className="action-btn edit"
+              onClick={(e) => { e.stopPropagation(); handleEditEntry(row) }}
+              className="inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md bg-white text-amber-500 hover:bg-amber-50 hover:border-amber-500 transition-colors"
               title={t('edit', 'Edit')}
             >
               <Edit size={14} />
@@ -330,28 +331,28 @@ const ScrapMaterialsInventory = () => {
 
   if (loading) {
     return (
-      <div className="inventory-loading">
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <LoadingSpinner size="large" />
-        <p>{t('loadingInventory', 'Loading inventory...')}</p>
+        <p className="text-gray-600">{t('loadingInventory', 'Loading inventory...')}</p>
       </div>
     )
   }
 
   return (
-    <div className="scrap-inventory-page">
+    <div className="p-0">
       {/* Page Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1>{t('materialInventory', 'Material Inventory')}</h1>
-          <p className="page-subtitle">
+      <div className="flex justify-between items-start mb-8 gap-8 max-md:flex-col max-md:gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('materialInventory', 'Material Inventory')}</h1>
+          <p className="text-gray-600">
             {t('trackMaterialsAndTyres', 'Track materials, tyres, and collection sources')}
           </p>
         </div>
-        
-        <div className="header-actions">
+
+        <div className="flex items-center gap-4">
           {hasPermission('MANAGE_INVENTORY') && (
             <button
-              className="btn btn-primary add-material-btn"
+              className="btn btn-primary"
               onClick={() => {
                 setEditingEntry(null)
                 setShowMaterialForm(true)
@@ -365,39 +366,39 @@ const ScrapMaterialsInventory = () => {
       </div>
 
       {/* Summary Stats Cards */}
-      <div className="summary-stats">
-        <div className="stat-card">
-          <div className="stat-icon">
-            <Package />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 mb-8">
+        <div className="summary-card">
+          <div className="summary-icon !bg-blue-500/10 !text-blue-500">
+            <Package size={24} />
           </div>
-          <div className="stat-content">
-            <div className="stat-value">{stats.totalEntries}</div>
-            <div className="stat-label">{t('totalMaterials', 'Total Materials')}</div>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon">
-            <Banknote />
-          </div>
-          <div className="stat-content">
-            <div className="stat-value">{formatCurrency(stats.totalValue)}</div>
-            <div className="stat-label">{t('totalValue', 'Total Value')}</div>
+          <div className="summary-info">
+            <p className="summary-value">{stats.totalEntries}</p>
+            <p className="summary-label">{t('totalMaterials', 'Total Materials')}</p>
           </div>
         </div>
-        
-        <div className="stat-card tyre-card">
-          <div className="stat-icon">
-            <Camera />
+
+        <div className="summary-card">
+          <div className="summary-icon !bg-emerald-500/10 !text-emerald-500">
+            <Banknote size={24} />
           </div>
-          <div className="stat-content">
-            <div className="stat-value">{stats.tyreEntries}</div>
-            <div className="stat-label">{t('tyres', 'Tyres')}</div>
+          <div className="summary-info">
+            <p className="summary-value">{formatCurrency(stats.totalValue)}</p>
+            <p className="summary-label">{t('totalValue', 'Total Value')}</p>
+          </div>
+        </div>
+
+        <div className="summary-card">
+          <div className="summary-icon !bg-violet-500/10 !text-violet-500">
+            <Camera size={24} />
+          </div>
+          <div className="summary-info">
+            <p className="summary-value">{stats.tyreEntries}</p>
+            <p className="summary-label">{t('tyres', 'Tyres')}</p>
             {stats.tyreEntries > 0 && (
-              <div className="tyre-breakdown">
-                <span className="good-tyres">{stats.goodTyres} {t('good', 'Good')}</span>
-                <span className="separator">•</span>
-                <span className="bad-tyres">{stats.badTyres} {t('bad', 'Bad')}</span>
+              <div className="flex items-center gap-2 mt-1 text-xs">
+                <span className="text-emerald-500 font-medium">{stats.goodTyres} {t('good', 'Good')}</span>
+                <span className="text-gray-400">•</span>
+                <span className="text-red-500 font-medium">{stats.badTyres} {t('bad', 'Bad')}</span>
               </div>
             )}
           </div>
@@ -405,20 +406,22 @@ const ScrapMaterialsInventory = () => {
       </div>
 
       {/* Filters */}
-      <div className="inventory-filters">
-        <div className="filter-group">
-          <label>{t('search', 'Search')}</label>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">{t('search', 'Search')}</label>
           <input
             type="text"
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             placeholder={t('searchMaterials', 'Search materials, sources...')}
             value={filters.search}
             onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
           />
         </div>
-        
-        <div className="filter-group">
-          <label>{t('category', 'Category')}</label>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">{t('category', 'Category')}</label>
           <select
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
             value={filters.materialCategory}
             onChange={(e) => setFilters(prev => ({ ...prev, materialCategory: e.target.value }))}
           >
@@ -429,10 +432,11 @@ const ScrapMaterialsInventory = () => {
             <option value="electronic_waste">{t('electronicWaste', 'Electronic Waste')}</option>
           </select>
         </div>
-        
-        <div className="filter-group">
-          <label>{t('transactionType', 'Transaction Type')}</label>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">{t('transactionType', 'Transaction Type')}</label>
           <select
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
             value={filters.transactionType}
             onChange={(e) => setFilters(prev => ({ ...prev, transactionType: e.target.value }))}
           >
@@ -443,10 +447,11 @@ const ScrapMaterialsInventory = () => {
             <option value="walk_in">{t('walkIn', 'Walk-in')}</option>
           </select>
         </div>
-        
-        <div className="filter-group">
-          <label>{t('condition', 'Condition')}</label>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">{t('condition', 'Condition')}</label>
           <select
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
             value={filters.condition}
             onChange={(e) => setFilters(prev => ({ ...prev, condition: e.target.value }))}
           >
@@ -459,17 +464,17 @@ const ScrapMaterialsInventory = () => {
       </div>
 
       {/* View Mode Toggle */}
-      <div className="view-controls">
-        <div className="view-toggle">
+      <div className="flex justify-end mb-4">
+        <div className="flex border border-gray-300 rounded-lg overflow-hidden">
           <button
-            className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+            className={`flex items-center gap-2 px-3 py-2 text-sm ${viewMode === 'table' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
             onClick={() => setViewMode('table')}
           >
             <List size={16} />
             {t('table', 'Table')}
           </button>
           <button
-            className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            className={`flex items-center gap-2 px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
             onClick={() => setViewMode('grid')}
           >
             <Grid3X3 size={16} />
@@ -479,7 +484,7 @@ const ScrapMaterialsInventory = () => {
       </div>
 
       {/* Inventory Data Display */}
-      <div className="inventory-content">
+      <div>
         {viewMode === 'table' ? (
           <DataTable
             data={getFilteredInventory()}
@@ -490,68 +495,70 @@ const ScrapMaterialsInventory = () => {
             emptyMessage={t('noMaterialsFound', 'No materials found')}
           />
         ) : (
-          <div className="inventory-grid">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
             {getFilteredInventory().map(item => {
               const material = getMaterialInfo(item.materialId)
               const typeInfo = getTransactionTypeInfo(item.transactionType)
               const TypeIcon = typeInfo.icon
               const isTyre = item.materialCategory === 'tyres'
-              
+
               return (
-                <div key={item.materialId} className="material-card">
-                  <div className="card-header">
-                    <div className="material-name">
+                <div key={item.materialId} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                  <div className="flex justify-between items-start p-4 border-b border-gray-100">
+                    <div className="font-semibold text-gray-900">
                       {material.name || item.materialCode}
                     </div>
-                    <div className="transaction-type">
+                    <div className="flex items-center gap-1 text-xs">
                       <TypeIcon size={14} style={{ color: typeInfo.color }} />
                       {typeInfo.label}
                     </div>
                   </div>
-                  
-                  <div className="card-content">
-                    <div className="material-details">
-                      <div className="detail-row">
-                        <span className="label">{t('quantity', 'Quantity')}:</span>
-                        <span className="value">{item.currentStock} {item.unit}</span>
+
+                  <div className="p-4">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{t('quantity', 'Quantity')}:</span>
+                        <span className="font-medium text-gray-900">{item.currentStock} {item.unit}</span>
                       </div>
-                      <div className="detail-row">
-                        <span className="label">{t('totalValue', 'Value')}:</span>
-                        <span className="value">{formatCurrency(item.totalValue)}</span>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{t('totalValue', 'Value')}:</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(item.totalValue)}</span>
                       </div>
                       {item.condition && (
-                        <div className="detail-row">
-                          <span className="label">{t('condition', 'Condition')}:</span>
-                          <span className={`condition-badge ${getConditionBadge(item.condition, isTyre)?.class}`}>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">{t('condition', 'Condition')}:</span>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            item.condition === 'good' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                          }`}>
                             {getConditionBadge(item.condition, isTyre)?.label}
                           </span>
                         </div>
                       )}
-                      <div className="detail-row">
-                        <span className="label">{t('source', 'Source')}:</span>
-                        <span className="value">{item.sourceDetails?.name || 'N/A'}</span>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{t('source', 'Source')}:</span>
+                        <span className="font-medium text-gray-900">{item.sourceDetails?.name || 'N/A'}</span>
                       </div>
                     </div>
-                    
+
                     {item.photos && item.photos.length > 0 && (
-                      <div className="card-photos">
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">
                         <Camera size={16} />
                         <span>{item.photos.length} {t('photos', 'photos')}</span>
                       </div>
                     )}
                   </div>
-                  
+
                   {hasPermission('MANAGE_INVENTORY') && (
-                    <div className="card-actions">
+                    <div className="flex items-center justify-end gap-2 px-4 py-3 bg-gray-50 border-t border-gray-100">
                       <button
                         onClick={() => console.log('View details:', item)}
-                        className="action-btn view"
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                       >
                         <Eye size={14} />
                       </button>
                       <button
                         onClick={() => handleEditEntry(item)}
-                        className="action-btn edit"
+                        className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
                       >
                         <Edit size={14} />
                       </button>

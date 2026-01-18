@@ -11,7 +11,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Modal from './Modal'
 import { Trash2, AlertTriangle, Info, HelpCircle, Loader2 } from 'lucide-react'
-import './ConfirmDialog.css'
+// CSS moved to global index.css Tailwind
 
 /**
  * Icon mapping for each variant
@@ -24,13 +24,23 @@ const VARIANT_ICONS = {
 }
 
 /**
- * Button class mapping for each variant
+ * Button Tailwind class mapping for each variant
  */
 const VARIANT_BUTTON_CLASSES = {
-  danger: 'btn-danger',
-  warning: 'btn-warning',
-  info: 'btn-primary',
-  default: 'btn-primary'
+  danger: 'btn-tw-danger',
+  warning: 'bg-amber-600 text-white hover:bg-amber-700 border-amber-600',
+  info: 'btn-tw-primary',
+  default: 'btn-tw-primary'
+}
+
+/**
+ * Icon background Tailwind classes for each variant
+ */
+const VARIANT_ICON_CLASSES = {
+  danger: 'bg-status-error-bg text-status-error-text',
+  warning: 'bg-status-warning-bg text-status-warning-text',
+  info: 'bg-status-info-bg text-status-info-text',
+  default: 'bg-slate-100 text-slate-600'
 }
 
 /**
@@ -76,6 +86,7 @@ const ConfirmDialog = ({
 }) => {
   const Icon = CustomIcon || VARIANT_ICONS[variant] || VARIANT_ICONS.default
   const buttonClass = VARIANT_BUTTON_CLASSES[variant] || VARIANT_BUTTON_CLASSES.default
+  const iconClass = VARIANT_ICON_CLASSES[variant] || VARIANT_ICON_CLASSES.default
   const defaultConfirmText = VARIANT_CONFIRM_TEXT[variant] || 'Confirm'
 
   const handleConfirm = async () => {
@@ -91,10 +102,10 @@ const ConfirmDialog = ({
   }
 
   const footer = (
-    <div className="confirm-dialog-actions">
+    <div className="confirm-dialog-actions flex gap-3 justify-end w-full">
       <button
         type="button"
-        className="btn btn-secondary"
+        className="btn-tw-secondary min-w-[100px]"
         onClick={handleCancel}
         disabled={loading}
       >
@@ -102,14 +113,14 @@ const ConfirmDialog = ({
       </button>
       <button
         type="button"
-        className={`btn ${buttonClass}`}
+        className={`btn-tw ${buttonClass} min-w-[100px]`}
         onClick={handleConfirm}
         disabled={loading}
         autoFocus
       >
         {loading ? (
           <>
-            <Loader2 className="btn-spinner" size={16} />
+            <Loader2 className="animate-spin" size={16} />
             {t('processing', 'Processing...')}
           </>
         ) : (
@@ -133,10 +144,10 @@ const ConfirmDialog = ({
       footer={footer}
       className={`confirm-dialog confirm-dialog-${variant}`}
     >
-      <div className="confirm-dialog-content">
+      <div className="flex flex-col items-center text-center gap-4 py-2">
         {showIcon && (
           <motion.div
-            className={`confirm-dialog-icon confirm-dialog-icon-${variant}`}
+            className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${iconClass}`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
@@ -144,10 +155,10 @@ const ConfirmDialog = ({
             <Icon size={28} />
           </motion.div>
         )}
-        <div className="confirm-dialog-text">
-          {title && <h3 className="confirm-dialog-title">{title}</h3>}
+        <div className="flex flex-col gap-2">
+          {title && <h3 className="text-lg font-semibold text-slate-800 leading-tight">{title}</h3>}
           {message && (
-            <div className="confirm-dialog-message">
+            <div className="text-sm text-slate-600 leading-relaxed">
               {typeof message === 'string' ? <p>{message}</p> : message}
             </div>
           )}

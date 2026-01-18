@@ -1,7 +1,7 @@
 import React from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
-import './Toast.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Custom Toast Component

@@ -9,7 +9,7 @@ import { useTour } from '../../context/TourContext';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useAuth } from '../../context/AuthContext';
 import { getWorkflowGuidesByCategory } from '../../config/tours';
-import './HelpMenu.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * HelpMenu Component
@@ -184,14 +184,14 @@ const HelpMenu = () => {
 
   return (
     <div className="help-menu" ref={menuRef} data-tour="help-menu">
-      {/* Help Button */}
+      {/* Help Button - Premium action button style */}
       <button
-        className={`help-menu-trigger ${isOpen ? 'active' : ''} ${isRunning ? 'tour-active' : ''}`}
+        className={`action-btn ${isOpen ? 'active' : ''} ${isRunning ? 'tour-active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-label={t('helpAndTraining', 'Help & Training')}
         title={t('helpAndTraining', 'Help & Training')}
       >
-        <HelpCircle size={20} />
+        <HelpCircle size={20} className="text-slate-500" />
       </button>
 
       {/* Dropdown Menu */}

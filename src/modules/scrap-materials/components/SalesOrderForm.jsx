@@ -14,7 +14,7 @@ import branchService from '../../../services/branchService'
 import uploadService from '../../../services/uploadService'
 import salesOrderService from '../../../services/salesOrderService'
 import { Plus, Trash2, AlertTriangle, Check, User, FileText, Lock, Unlock, Shield, ChevronDown, ChevronUp, Package, Building } from 'lucide-react'
-import './SalesOrderForm.css'
+// CSS migrated to Tailwind - design-system.css provides form-section, form-grid, form-group, btn classes
 
 const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, editingOrder = null }) => {
   const { getInputDate } = useSystemSettings()
@@ -628,7 +628,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       closeOnOverlayClick={false}
       tourId="SalesOrderForm"
     >
-      <form className="sales-order-form" onSubmit={handleSubmit}>
+      <form className="max-h-[calc(90vh-160px)] overflow-y-auto p-0" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}
         {formData.status === 'draft' && (
           <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -695,7 +695,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             <User size={20} />
             Customer Details
             {formData.customer && formData.customer.contractDetails && (
-              <span className="contract-indicator">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 rounded-full text-xs font-medium ml-auto">
                 <Check size={16} />
                 Contract Customer
               </span>
@@ -759,15 +759,15 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Contract Terms Display - Collapsible */}
         {formData.customer && formData.customer.contractDetails && (
-          <div className="form-section contract-terms-display">
+          <div className="form-section bg-gradient-to-br from-blue-50 to-green-50 border-2 border-blue-200">
             <div
-              className="form-section-title clickable"
+              className="form-section-title cursor-pointer transition-colors p-3 -m-3 mb-6 rounded-t-lg hover:bg-blue-500/5 text-blue-800"
               onClick={() => setContractTermsExpanded(!contractTermsExpanded)}
             >
               <Check size={20} />
               Active Contract Terms
-              <div className="contract-header-right">
-                <span className="contract-status-badge active">
+              <div className="flex items-center gap-3 ml-auto">
+                <span className="px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-gradient-to-br from-green-100 to-green-200 text-green-800 border border-green-300">
                   Valid until {formData.customer.contractDetails.endDate}
                 </span>
                 {contractTermsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -775,14 +775,14 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             </div>
 
             {contractTermsExpanded && (
-              <div className="contract-summary">
-                <div className="contract-info-grid">
-                  <div className="contract-detail">
-                    <label>Contract ID:</label>
-                    <span>{formData.customer.contractDetails.contractId}</span>
+              <div className="bg-white rounded-lg p-6 border border-blue-200">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide">Contract ID:</label>
+                    <span className="text-sm font-medium text-gray-800">{formData.customer.contractDetails.contractId}</span>
                   </div>
-                  <div className="contract-detail">
-                    <label>Status:</label>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide">Status:</label>
                     <span className={`status-badge ${formData.customer.contractDetails.status}`}>
                       {formData.customer.contractDetails.status.replace('_', ' ').toUpperCase()}
                     </span>
@@ -790,42 +790,48 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 </div>
 
                 {formData.customer.contractDetails.specialTerms && (
-                  <div className="special-terms">
-                    <label>Special Terms:</label>
-                    <p>{formData.customer.contractDetails.specialTerms}</p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                    <label className="text-sm font-semibold text-amber-800 block mb-2">Special Terms:</label>
+                    <p className="text-sm text-amber-700 m-0 leading-relaxed">{formData.customer.contractDetails.specialTerms}</p>
                   </div>
                 )}
 
-                <div className="material-rates-summary">
-                  <h4>Contract Rates:</h4>
-                  <div className="rates-compact">
+                <div>
+                  <h4 className="text-base font-semibold text-gray-800 m-0 mb-3">Contract Rates:</h4>
+                  <div className="flex flex-wrap gap-2">
                     {Object.entries(formData.customer.contractDetails.rates || {}).map(([materialId, rateInfo]) => {
                       const material = materials.find(m => m.id === materialId)
                       if (!material) return null
 
                       const detailedInfo = getDetailedRateInfo(materialId, rateInfo)
-
                       const isActive = isContractActive(materialId)
-                      const statusClass = isActive ? 'active' : 'expired'
 
                       return (
                         <div
                           key={materialId}
-                          className={`rate-compact-item ${statusClass}`}
+                          className={`flex items-center gap-2 bg-white py-2 px-3 rounded-lg text-sm cursor-help transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                            isActive ? 'border border-blue-200 hover:border-blue-300' : 'border border-red-200 bg-gradient-to-br from-red-50 to-white hover:border-red-300'
+                          }`}
                           title={detailedInfo}
                         >
-                          <span className="material-name">{material.name}</span>
-                          <div className="rate-info">
+                          <span className="font-medium text-gray-700">{material.name}</span>
+                          <div className="flex items-center gap-2">
                             {typeof rateInfo === 'object' ? (
-                              <span className={`rate-badge ${rateInfo.type}`}>
+                              <span className={`text-xs font-bold py-1 px-2 rounded-md whitespace-nowrap ${
+                                rateInfo.type === 'fixed_rate' ? 'bg-green-100 text-green-800 border border-green-300' :
+                                rateInfo.type === 'discount_percentage' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                                'bg-amber-100 text-amber-800 border border-amber-300'
+                              }`}>
                                 {rateInfo.type === 'fixed_rate' && `OMR ${rateInfo.contractRate.toFixed(3)}`}
                                 {rateInfo.type === 'discount_percentage' && `${rateInfo.discountPercentage}% OFF`}
                                 {rateInfo.type === 'minimum_price_guarantee' && `MAX OMR ${rateInfo.contractRate.toFixed(3)}`}
                               </span>
                             ) : (
-                              <span className="rate-badge fixed_rate">OMR {rateInfo.toFixed(3)}</span>
+                              <span className="text-xs font-bold py-1 px-2 rounded-md bg-green-100 text-green-800 border border-green-300">OMR {rateInfo.toFixed(3)}</span>
                             )}
-                            <span className={`status-indicator ${statusClass}`}>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${
+                              isActive ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'
+                            }`}>
                               {isActive ? 'ACTIVE' : 'EXPIRED'}
                             </span>
                           </div>
@@ -841,9 +847,14 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Warnings */}
         {warnings.length > 0 && (
-          <div className="warnings-section">
+          <div className="mb-6">
             {warnings.map((warning, index) => (
-              <div key={index} className={`warning-item ${warning.type}`}>
+              <div key={index} className={`flex items-center gap-3 p-4 rounded-lg mb-3 text-sm font-medium ${
+                warning.type === 'contract_expired' ? 'bg-gradient-to-br from-red-50 to-red-100 text-red-700 border border-red-200' :
+                warning.type === 'contract_rate_applied' ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200' :
+                warning.type === 'contract_rate_above_market' ? 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border border-amber-200' :
+                'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-700 border border-orange-200'
+              }`}>
                 <AlertTriangle size={16} />
                 <span>{warning.message}</span>
               </div>
@@ -854,7 +865,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         {/* Order Items */}
         <div className="form-section">
           <div className="form-section-title">
-            <div className="title-with-action">
+            <div className="flex items-center justify-between w-full">
               <span>Order Items</span>
               <button
                 type="button"
@@ -867,9 +878,9 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             </div>
           </div>
 
-          <div className="items-table">
-            <div className="items-header">
-              <span>Material</span>
+          <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+            <div className="grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1.2fr_0.8fr] gap-4 p-4 bg-gradient-to-br from-gray-800 to-gray-900 text-white font-semibold text-sm text-center max-md:hidden">
+              <span className="text-left">Material</span>
               <span>Quantity</span>
               <span>Unit</span>
               <span>Rate (OMR)</span>
@@ -886,8 +897,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               const isDraft = formData.status === 'draft'
 
               return (
-                <div key={index} className="item-row">
-                  <div className="item-field material-autocomplete-field">
+                <div key={index} className="grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1.2fr_0.8fr] gap-4 p-4 border-b border-gray-200 bg-white items-center last:border-b-0 max-md:grid-cols-1 max-md:gap-2">
+                  <div className="flex flex-col gap-1">
                     <Autocomplete
                       options={materials}
                       value={item.materialId}
@@ -906,7 +917,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     />
                   </div>
 
-                  <div className="item-field">
+                  <div className="flex flex-col gap-1">
                     <input
                       type="number"
                       value={item.quantity}
@@ -915,23 +926,24 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       min="0"
                       step="0.001"
                       required={!isDraft}
+                      className="p-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
                     />
                     {/* Stock validation display */}
                     {item.materialId && stockInfo[item.materialId] && (
-                      <div className="stock-info">
+                      <div className="mt-2 text-sm">
                         {parseFloat(item.quantity) > stockInfo[item.materialId].currentStock ? (
-                          <div className="stock-warning">
-                            <AlertTriangle size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-[13px] font-medium bg-red-50 text-red-600 border border-red-200">
+                            <AlertTriangle size={14} className="shrink-0" />
                             <span>Insufficient stock! Available: {stockInfo[item.materialId].currentStock} {stockInfo[item.materialId].unit}</span>
                           </div>
                         ) : stockInfo[item.materialId].isLowStock ? (
-                          <div className="stock-low">
-                            <Package size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-[13px] font-medium bg-amber-50 text-amber-600 border border-amber-200">
+                            <Package size={14} className="shrink-0" />
                             <span>Low stock: {stockInfo[item.materialId].currentStock} {stockInfo[item.materialId].unit}</span>
                           </div>
                         ) : (
-                          <div className="stock-ok">
-                            <Check size={14} />
+                          <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-[13px] font-medium bg-green-50 text-green-600 border border-green-200">
+                            <Check size={14} className="shrink-0" />
                             <span>Available: {stockInfo[item.materialId].currentStock} {stockInfo[item.materialId].unit}</span>
                           </div>
                         )}
@@ -939,13 +951,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     )}
                   </div>
 
-                  <div className="item-field">
-                    <span className="unit-display">
+                  <div className="flex flex-col gap-1">
+                    <span className="p-2 bg-gray-100 rounded-lg text-sm text-center text-gray-600">
                       {selectedMaterial ? selectedMaterial.unit : '-'}
                     </span>
                   </div>
 
-                  <div className="item-field rate-field">
+                  <div className="flex flex-col gap-1 relative">
                     <input
                       type="number"
                       value={item.rate}
@@ -955,17 +967,17 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       step="0.001"
                       required={!isDraft}
                       readOnly={rateLocked}
-                      className={rateLocked ? 'locked-rate' : ''}
+                      className={`p-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 ${rateLocked ? '!bg-gray-50 !text-gray-600 !cursor-not-allowed !border-gray-300' : ''}`}
                       title={rateLocked ? 'Contract rate is locked. Attempt to change will require manager approval.' : ''}
                     />
                     {hasContractRate && (
-                      <div className="contract-indicators">
-                        <span className={`contract-rate-indicator ${isOverridden ? 'overridden' : ''}`}>
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        <span className={`text-xs font-medium text-center flex items-center gap-1 ${isOverridden ? 'text-orange-600' : 'text-emerald-600'}`}>
                           {isOverridden ? 'Rate Overridden' : 'Contract Rate'}
-                          {rateLocked && <span className="lock-icon">🔒</span>}
+                          {rateLocked && <span className="text-[11px] ml-0.5">🔒</span>}
                         </span>
                         {discountInfo.hasDiscount && (
-                          <span className="discount-indicator">
+                          <span className="text-xs font-medium bg-gradient-to-br from-blue-50 to-blue-100 py-0.5 px-1.5 rounded-full border border-blue-200 text-center text-blue-600 whitespace-nowrap">
                             {discountInfo.percentage}% Discount Applied
                           </span>
                         )}
@@ -973,13 +985,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     )}
                   </div>
 
-                  <div className="item-field">
-                    <span className="amount-display">
+                  <div className="flex flex-col gap-1">
+                    <span className="p-2 bg-gray-100 rounded-lg text-sm text-right font-medium text-gray-800">
                       {item.amount.toFixed(3)}
                     </span>
                   </div>
 
-                  <div className="item-field">
+                  <div className="flex flex-col gap-1">
                     <button
                       type="button"
                       className="btn btn-outline btn-small"
@@ -997,13 +1009,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Order Totals */}
         <div className="form-section">
-          <div className="totals-section">
-            <div className="totals-row">
-              <label>Subtotal:</label>
-              <span>OMR {formData.totalAmount.toFixed(3)}</span>
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-lg border border-gray-200 max-w-[400px] ml-auto">
+            <div className="flex justify-between items-center py-2 text-sm">
+              <label className="flex items-center gap-2 font-medium text-gray-700">Subtotal:</label>
+              <span className="font-semibold text-gray-800">OMR {formData.totalAmount.toFixed(3)}</span>
             </div>
-            <div className="totals-row">
-              <label>
+            <div className="flex justify-between items-center py-2 text-sm">
+              <label className="flex items-center gap-2 font-medium text-gray-700">
                 Discount:
                 <input
                   type="number"
@@ -1013,21 +1025,21 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                   min="0"
                   max="100"
                   step="0.1"
-                  className="discount-input"
+                  className="!w-20 !py-1 !px-2 !mx-1 border border-gray-300 rounded-lg text-sm text-center"
                 />
                 %
               </label>
-              <span>OMR {formData.discountAmount.toFixed(3)}</span>
+              <span className="font-semibold text-gray-800">OMR {formData.discountAmount.toFixed(3)}</span>
             </div>
             {formData.vatAmount > 0 && (
-              <div className="totals-row">
-                <label>VAT ({formData.vatRate}%):</label>
-                <span>OMR {formData.vatAmount.toFixed(3)}</span>
+              <div className="flex justify-between items-center py-2 text-sm">
+                <label className="flex items-center gap-2 font-medium text-gray-700">VAT ({formData.vatRate}%):</label>
+                <span className="font-semibold text-gray-800">OMR {formData.vatAmount.toFixed(3)}</span>
               </div>
             )}
-            <div className="totals-row total-row">
-              <label>Total Amount:</label>
-              <span>OMR {formData.netAmount.toFixed(3)}</span>
+            <div className="flex justify-between items-center py-4 text-lg border-t-2 border-gray-300 mt-2">
+              <label className="font-bold text-gray-900">Total Amount:</label>
+              <span className="font-bold text-blue-600 text-xl">OMR {formData.netAmount.toFixed(3)}</span>
             </div>
           </div>
         </div>
@@ -1104,7 +1116,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
         )}
 
         {/* Form Actions */}
-        <div className="form-actions">
+        <div className="flex justify-end gap-4 p-6 border-t border-gray-200 bg-gray-50 -mx-6 -mb-6 mt-8 rounded-b-lg max-md:flex-col-reverse max-md:[&_.btn]:w-full max-md:[&_.btn]:justify-center">
           <button type="button" className="btn btn-outline" onClick={onClose}>
             Cancel
           </button>
@@ -1120,32 +1132,32 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
       {/* Rate Override Modal */}
       {showOverrideModal && currentOverride && (
-        <div className="override-modal-backdrop">
-          <div className="override-modal">
-            <div className="override-modal-header">
-              <div className="override-icon">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-white rounded-xl max-w-[500px] w-[90%] max-h-[90vh] overflow-y-auto shadow-2xl animate-[slideIn_0.3s_ease-out]">
+            <div className="p-8 text-center border-b-2 border-gray-200">
+              <div className="w-14 h-14 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
                 <Shield size={24} />
               </div>
-              <h3>Rate Override Required</h3>
-              <p>Manager approval needed to change contracted rate</p>
+              <h3 className="text-xl font-bold text-gray-900 m-0 mb-2">Rate Override Required</h3>
+              <p className="text-gray-600 m-0">Manager approval needed to change contracted rate</p>
             </div>
 
-            <div className="override-details">
-              <div className="override-item">
-                <label>Material:</label>
-                <span>{currentOverride.material?.name}</span>
+            <div className="p-6 space-y-3 border-b border-gray-200">
+              <div className="flex justify-between items-center py-2">
+                <label className="font-medium text-gray-600">Material:</label>
+                <span className="font-semibold text-gray-900">{currentOverride.material?.name}</span>
               </div>
-              <div className="override-item">
-                <label>Contract Rate:</label>
-                <span className="contract-rate">OMR {currentOverride.contractRate.toFixed(3)}</span>
+              <div className="flex justify-between items-center py-2">
+                <label className="font-medium text-gray-600">Contract Rate:</label>
+                <span className="font-semibold text-emerald-600">OMR {currentOverride.contractRate.toFixed(3)}</span>
               </div>
-              <div className="override-item">
-                <label>Requested Rate:</label>
-                <span className="requested-rate">OMR {currentOverride.requestedRate.toFixed(3)}</span>
+              <div className="flex justify-between items-center py-2">
+                <label className="font-medium text-gray-600">Requested Rate:</label>
+                <span className="font-semibold text-blue-600">OMR {currentOverride.requestedRate.toFixed(3)}</span>
               </div>
-              <div className="override-item">
-                <label>Difference:</label>
-                <span className={currentOverride.requestedRate > currentOverride.contractRate ? 'increase' : 'decrease'}>
+              <div className="flex justify-between items-center py-2">
+                <label className="font-medium text-gray-600">Difference:</label>
+                <span className={`font-bold ${currentOverride.requestedRate > currentOverride.contractRate ? 'text-red-600' : 'text-emerald-600'}`}>
                   {currentOverride.requestedRate > currentOverride.contractRate ? '+' : ''}
                   OMR {(currentOverride.requestedRate - currentOverride.contractRate).toFixed(3)}
                 </span>
@@ -1157,7 +1169,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               const formData = new FormData(e.target)
               handleOverrideRequest(formData.get('reason'), formData.get('password'))
             }}>
-              <div className="override-form">
+              <div className="p-6 space-y-4">
                 <div className="form-group">
                   <Textarea
                     label="Reason for Override"
@@ -1176,14 +1188,14 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     placeholder="Enter manager password"
                     required
                   />
-                  <small>Demo password: manager123</small>
+                  <small className="text-gray-500 text-xs">Demo password: manager123</small>
                 </div>
               </div>
 
-              <div className="override-actions">
+              <div className="flex gap-3 p-6 pt-0">
                 <button
                   type="button"
-                  className="btn btn-outline"
+                  className="btn btn-outline flex-1"
                   onClick={() => {
                     setShowOverrideModal(false)
                     setCurrentOverride(null)
@@ -1191,7 +1203,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-warning">
+                <button type="submit" className="btn btn-warning flex-1">
                   <Shield size={16} />
                   Approve Override
                 </button>

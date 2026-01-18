@@ -19,9 +19,6 @@ import supplierLocationService from '../../../services/supplierLocationService'
 import uploadService from '../../../services/uploadService'
 import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, Banknote, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../../../components/LoadingSpinner'
-import '../styles/Contracts.css'
-import '../styles/ContractForm.css'
-
 const Contracts = () => {
   const { selectedCompany, user } = useAuth()
   const { t } = useLocalization()
@@ -707,9 +704,9 @@ const Contracts = () => {
   ]
 
   return (
-    <div className="contracts-page">
+    <div className="p-0">
       {/* Contract Summary Cards */}
-      <div className="contracts-summary">
+      <div className="summary-cards">
         <div className="summary-card">
           <div className="summary-icon">
             <FileText size={24} />
@@ -721,7 +718,7 @@ const Contracts = () => {
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon success">
+          <div className="summary-icon !bg-emerald-500/10 !text-emerald-500">
             <Check size={24} />
           </div>
           <div className="summary-info">
@@ -731,7 +728,7 @@ const Contracts = () => {
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon warning">
+          <div className="summary-icon !bg-amber-500/10 !text-amber-500">
             <Clock size={24} />
           </div>
           <div className="summary-info">
@@ -747,7 +744,7 @@ const Contracts = () => {
         </div>
 
         <div className="summary-card">
-          <div className="summary-icon profit">
+          <div className="summary-icon !bg-violet-500/10 !text-violet-500">
             <Banknote size={24} />
           </div>
           <div className="summary-info">
@@ -1414,6 +1411,18 @@ const ContractFormModal = ({
   const [attachments, setAttachments] = useState([])
   const [loadingAttachments, setLoadingAttachments] = useState(false)
 
+  // Custom select styles to override browser defaults
+  const selectStyles = {
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    appearance: 'none',
+    backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+    backgroundPosition: 'right 12px center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '16px',
+    paddingRight: '40px'
+  }
+
   // Load attachments when editing existing contract
   useEffect(() => {
     const loadAttachments = async () => {
@@ -1590,10 +1599,10 @@ const ContractFormModal = ({
       isOpen={isOpen}
       title={title}
       onClose={onClose}
-      className="modal-xl"
+      className="modal-xxl"
       closeOnOverlayClick={false}
     >
-      <form className="contract-form" onSubmit={handleSubmit}>
+      <form className="max-h-[calc(90vh-160px)] overflow-y-auto" onSubmit={handleSubmit}>
         {/* Basic Information */}
         <div className="form-section">
           <div className="form-section-title">
@@ -1610,7 +1619,7 @@ const ContractFormModal = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, contractNumber: e.target.value }))}
                 placeholder="Auto-generated (e.g., CT-202512-001)"
               />
-              <small style={{ color: '#6b7280', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+              <small className="text-slate-500 text-xs mt-1 block">
                 {formData.contractNumber ? 'Auto-generated • Edit if needed' : 'Will be auto-generated on save'}
               </small>
             </div>
@@ -1709,47 +1718,25 @@ const ContractFormModal = ({
 
         {/* Contract Locations with Materials */}
         <div className="form-section">
-          <div className="form-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="form-section-title flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
                 <MapPin size={20} />
                 Contract Locations & Materials
-                <span style={{ color: '#ef4444', fontWeight: 'bold' }}>*</span>
+                <span className="text-red-500 font-bold">*</span>
               </div>
-              <span className="section-subtitle">Select supplier locations and define material rates</span>
+              <span className="text-xs text-slate-500 font-normal">Select supplier locations and define material rates</span>
             </div>
             {/* Validation Status Indicator */}
-            {formData.locations && formData.locations.length > 0 && 
-             formData.locations.some(loc => loc.materials && loc.materials.length > 0 && 
+            {formData.locations && formData.locations.length > 0 &&
+             formData.locations.some(loc => loc.materials && loc.materials.length > 0 &&
                                            loc.materials.some(mat => mat.materialId && mat.unit)) ? (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px', 
-                color: '#10b981', 
-                fontSize: '14px',
-                fontWeight: '500',
-                padding: '4px 8px',
-                backgroundColor: '#f0fdf4',
-                borderRadius: '6px',
-                border: '1px solid #bbf7d0'
-              }}>
+              <div className="flex items-center gap-1.5 text-emerald-500 text-sm font-medium px-2 py-1 bg-emerald-50 rounded-md border border-emerald-200">
                 <Check size={16} />
                 Valid
               </div>
             ) : (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px', 
-                color: '#ef4444', 
-                fontSize: '14px',
-                fontWeight: '500',
-                padding: '4px 8px',
-                backgroundColor: '#fef2f2',
-                borderRadius: '6px',
-                border: '1px solid #fecaca'
-              }}>
+              <div className="flex items-center gap-1.5 text-red-500 text-sm font-medium px-2 py-1 bg-red-50 rounded-md border border-red-200">
                 <AlertTriangle size={16} />
                 Required
               </div>
@@ -1758,7 +1745,7 @@ const ContractFormModal = ({
 
           {/* Add Location Button */}
           {formData.supplierId && supplierLocations.length > 0 && (
-            <div className="add-location-section">
+            <div className="mb-8">
               <select
                 onChange={(e) => {
                   if (e.target.value) {
@@ -1766,7 +1753,8 @@ const ContractFormModal = ({
                     e.target.value = ''
                   }
                 }}
-                className="location-selector-dropdown"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-md text-sm bg-white cursor-pointer transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                style={selectStyles}
               >
                 <option value="">+ Add Location to Contract</option>
                 {supplierLocations
@@ -1783,36 +1771,36 @@ const ContractFormModal = ({
 
           {/* No Supplier Selected */}
           {!formData.supplierId && (
-            <div className="empty-state">
-              <p>Please select a supplier first to see available locations.</p>
+            <div className="text-center py-12 px-8 text-gray-500">
+              <p className="m-0 text-sm">Please select a supplier first to see available locations.</p>
             </div>
           )}
 
           {/* No Locations Available */}
           {formData.supplierId && supplierLocations.length === 0 && (
-            <div className="empty-state">
-              <p>No locations found for this supplier. Please add locations in the Supplier Locations module first.</p>
+            <div className="text-center py-12 px-8 text-gray-500">
+              <p className="m-0 text-sm">No locations found for this supplier. Please add locations in the Supplier Locations module first.</p>
             </div>
           )}
 
           {/* Selected Locations */}
-          <div className="selected-locations">
+          <div className="flex flex-col gap-6">
             {(formData.locations || []).map((location, locationIndex) => (
-              <div key={location.id || locationIndex} className="location-card">
-                <div className="location-card-header">
-                  <div className="location-info">
-                    <h4 className="location-name">
-                      <MapPin size={16} />
+              <div key={location.id || locationIndex} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md hover:border-blue-500">
+                <div className="flex justify-between items-start p-4 pb-3 bg-gradient-to-br from-slate-50 to-slate-100 border-b border-slate-200">
+                  <div className="flex-1">
+                    <h4 className="flex items-center gap-2 text-lg font-semibold text-slate-800 m-0 mb-2">
+                      <MapPin size={16} className="text-blue-500" />
                       {location.locationName} ({location.locationCode})
                     </h4>
-                    <p className="location-details">
+                    <p className="text-sm text-slate-500 m-0 leading-snug">
                       {location.address} • {location.contactPerson} - {location.contactPhone}
                     </p>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => removeLocation(locationIndex)}
-                    className="remove-location-btn"
+                    className="flex items-center justify-center w-8 h-8 bg-red-100 border-2 border-red-300 rounded-lg text-red-600 cursor-pointer transition-all hover:bg-red-200 hover:border-red-400 hover:scale-105"
                     title="Remove Location"
                   >
                     <X size={16} />
@@ -1820,44 +1808,44 @@ const ContractFormModal = ({
                 </div>
 
                 {/* Materials Table */}
-                <div className="materials-table-section">
-                  <div className="materials-table-header">
-                    <h5>Materials & Rates</h5>
-                    <button 
+                <div className="p-6 max-md:p-4">
+                  <div className="flex justify-between items-center mb-4 max-md:flex-col max-md:items-stretch max-md:gap-4">
+                    <h5 className="text-base font-semibold text-gray-700 m-0">Materials & Rates</h5>
+                    <button
                       type="button"
                       onClick={() => addMaterialToLocation(locationIndex)}
-                      className="add-material-btn-table"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white border-none rounded-md text-sm font-medium cursor-pointer transition-all hover:bg-blue-700 hover:-translate-y-0.5 max-md:justify-center"
                     >
                       <Plus size={14} />
                       Add Row
                     </button>
                   </div>
 
-                  <div className="materials-table-container">
-                    <table className="materials-table">
-                      <thead>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-white max-lg:overflow-x-auto">
+                    <table className="w-full border-collapse text-sm max-md:min-w-[800px]">
+                      <thead className="bg-slate-50 border-b border-gray-200">
                         <tr>
-                          <th>Material</th>
-                          <th>Unit</th>
-                          <th>Rate Type</th>
-                          <th>Rate</th>
-                          <th>Currency</th>
-                          <th>Min Qty</th>
-                          <th>Max Qty</th>
-                          <th>Actions</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[180px]">Material</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[90px]">Unit</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[120px]">Rate Type</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[90px]">Rate</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[70px]">Currency</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[80px]">Min Qty</th>
+                          <th className="px-2 py-3 text-left font-semibold text-gray-700 text-xs uppercase tracking-wider border-r border-gray-200 min-w-[80px]">Max Qty</th>
+                          <th className="px-2 py-3 text-center font-semibold text-gray-700 text-xs uppercase tracking-wider w-[60px]">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {(location.materials || []).length === 0 ? (
-                          <tr className="empty-row">
-                            <td colSpan="8" className="empty-message">
+                          <tr className="bg-slate-50">
+                            <td colSpan="8" className="text-center text-gray-500 italic py-8 px-4">
                               No materials added. Click "Add Row" to define rates for this location.
                             </td>
                           </tr>
                         ) : (
                           (location.materials || []).map((material, materialIndex) => (
-                            <tr key={material.id || materialIndex} className="material-row">
-                              <td className="material-cell">
+                            <tr key={material.id || materialIndex} className="border-b border-slate-100 transition-colors hover:bg-slate-50">
+                              <td className="p-2 border-r border-slate-100 align-middle">
                                 <select
                                   value={material.materialId || ''}
                                   onChange={(e) => {
@@ -1869,7 +1857,8 @@ const ContractFormModal = ({
                                       updateLocationMaterial(locationIndex, materialIndex, 'unit', selectedMaterial.unit)
                                     }
                                   }}
-                                  className="table-select"
+                                  className="w-full min-w-[150px] px-3 py-2.5 border border-slate-300 rounded-md text-sm bg-white cursor-pointer transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                  style={selectStyles}
                                   required
                                 >
                                   <option value="">Select Material</option>
@@ -1880,12 +1869,13 @@ const ContractFormModal = ({
                                   ))}
                                 </select>
                               </td>
-                              
-                              <td className="unit-cell">
+
+                              <td className="p-2 border-r border-slate-100 align-middle">
                                 <select
                                   value={material.unit || ''}
                                   onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'unit', e.target.value)}
-                                  className="table-select-small"
+                                  className="w-full min-w-[90px] px-3 py-2.5 border border-slate-300 rounded-md text-sm bg-white cursor-pointer transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                  style={selectStyles}
                                 >
                                   <option value="">Unit</option>
                                   <option value="liters">Liters</option>
@@ -1896,18 +1886,18 @@ const ContractFormModal = ({
                                   <option value="cubic_meters">m³</option>
                                 </select>
                               </td>
-                              
-                              <td className="rate-type-cell">
+
+                              <td className="p-2 border-r border-slate-100 align-middle">
                                 <select
                                   value={material.rateType || 'fixed_rate'}
                                   onChange={(e) => {
                                     updateLocationMaterial(locationIndex, materialIndex, 'rateType', e.target.value)
-                                    // Auto-set rate to 0 for free type
                                     if (e.target.value === 'free') {
                                       updateLocationMaterial(locationIndex, materialIndex, 'contractRate', 0)
                                     }
                                   }}
-                                  className="table-select-small"
+                                  className="w-full min-w-[100px] px-3 py-2.5 border border-slate-300 rounded-md text-sm bg-white cursor-pointer transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                  style={selectStyles}
                                 >
                                   <option value="fixed_rate">Fixed Rate</option>
                                   <option value="discount_percentage">Discount %</option>
@@ -1916,8 +1906,8 @@ const ContractFormModal = ({
                                   <option value="we_pay">We Pay</option>
                                 </select>
                               </td>
-                              
-                              <td className="rate-cell">
+
+                              <td className="p-2 border-r border-slate-100 align-middle">
                                 <input
                                   type="number"
                                   step="0.001"
@@ -1925,21 +1915,17 @@ const ContractFormModal = ({
                                   value={material.rateType === 'free' ? '0.000' : (material.contractRate || '')}
                                   onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'contractRate', parseFloat(e.target.value) || 0)}
                                   placeholder="0.000"
-                                  className="table-input-number"
+                                  className={`w-full min-w-[80px] px-3 py-2.5 border border-slate-300 rounded-md text-sm transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${material.rateType === 'free' ? 'bg-slate-100 cursor-not-allowed opacity-70' : 'bg-white'}`}
                                   disabled={material.rateType === 'free'}
-                                  style={{
-                                    backgroundColor: material.rateType === 'free' ? '#f3f4f6' : 'white',
-                                    cursor: material.rateType === 'free' ? 'not-allowed' : 'text'
-                                  }}
                                 />
                               </td>
-                              
-                              <td className="currency-cell">
-                                <span className="currency-display">OMR</span>
+
+                              <td className="p-2 border-r border-slate-100 align-middle">
+                                <span className="inline-block w-full px-3 py-2.5 bg-slate-100 text-slate-600 font-medium border border-slate-300 rounded-md text-sm text-center">OMR</span>
                                 <input type="hidden" value="OMR" />
                               </td>
-                              
-                              <td className="min-qty-cell">
+
+                              <td className="p-2 border-r border-slate-100 align-middle">
                                 <input
                                   type="number"
                                   min="0"
@@ -1947,11 +1933,11 @@ const ContractFormModal = ({
                                   value={material.minimumQuantity || ''}
                                   onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'minimumQuantity', parseFloat(e.target.value) || 0)}
                                   placeholder="0"
-                                  className="table-input-small"
+                                  className="w-full min-w-[70px] px-3 py-2.5 border border-slate-300 rounded-md text-sm bg-white transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 />
                               </td>
-                              
-                              <td className="max-qty-cell">
+
+                              <td className="p-2 border-r border-slate-100 align-middle">
                                 <input
                                   type="number"
                                   min="0"
@@ -1959,15 +1945,15 @@ const ContractFormModal = ({
                                   value={material.maximumQuantity || ''}
                                   onChange={(e) => updateLocationMaterial(locationIndex, materialIndex, 'maximumQuantity', parseFloat(e.target.value) || 0)}
                                   placeholder="0"
-                                  className="table-input-small"
+                                  className="w-full min-w-[70px] px-3 py-2.5 border border-slate-300 rounded-md text-sm bg-white transition-all hover:border-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                 />
                               </td>
-                              
-                              <td className="actions-cell">
-                                <button 
+
+                              <td className="p-2 text-center align-middle">
+                                <button
                                   type="button"
                                   onClick={() => removeMaterialFromLocation(locationIndex, materialIndex)}
-                                  className="table-remove-btn"
+                                  className="flex items-center justify-center w-8 h-8 mx-auto bg-red-100 border-2 border-red-300 rounded-lg text-red-600 cursor-pointer transition-all hover:bg-red-200 hover:border-red-400 hover:scale-110"
                                   title="Remove"
                                 >
                                   <X size={14} />
@@ -1984,24 +1970,17 @@ const ContractFormModal = ({
             ))}
 
             {formData.locations.length === 0 && formData.supplierId && supplierLocations.length > 0 && (
-              <div className="empty-locations" style={{
-                border: '2px dashed #ef4444',
-                borderRadius: '8px',
-                padding: '24px',
-                textAlign: 'center',
-                backgroundColor: '#fef2f2',
-                margin: '16px 0'
-              }}>
-                <div className="empty-state-icon">
-                  <AlertTriangle size={48} style={{ color: '#ef4444' }} />
+              <div className="border-2 border-dashed border-red-500 rounded-lg p-6 text-center bg-red-50 my-4">
+                <div className="mb-3">
+                  <AlertTriangle size={48} className="text-red-500 mx-auto" />
                 </div>
-                <h3 style={{ color: '#ef4444', marginBottom: '8px' }}>⚠️ Contract Locations Required</h3>
-                <p style={{ color: '#dc2626', fontWeight: '500' }}>
+                <h3 className="text-red-500 mb-2 text-lg font-semibold">⚠️ Contract Locations Required</h3>
+                <p className="text-red-600 font-medium">
                   You must select locations and define material rates to create this contract.
                   <br />
                   Use the dropdown above to add locations, then define rates for each material.
                 </p>
-                <p style={{ color: '#991b1b', fontSize: '14px', marginTop: '8px' }}>
+                <p className="text-red-800 text-sm mt-2">
                   💡 Tip: Scroll up to find the "Add Location" dropdown
                 </p>
               </div>
@@ -2113,14 +2092,10 @@ const ContractFormModal = ({
           >
             Cancel
           </button>
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className={`btn btn-primary ${(isFormValid && !isFormValid(formData) && !loading) ? 'opacity-60 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
             disabled={loading || (isFormValid ? !isFormValid(formData) : false)}
-            style={{
-              opacity: (isFormValid && !isFormValid(formData) && !loading) ? 0.6 : 1,
-              cursor: (isFormValid && !isFormValid(formData) && !loading) ? 'not-allowed' : 'pointer'
-            }}
           >
             {loading ? (
               <>

@@ -1,5 +1,5 @@
 import React from 'react'
-import './Label.css'
+// CSS moved to global index.css Tailwind
 
 const Label = React.forwardRef(({ className = '', ...props }, ref) => (
   <label

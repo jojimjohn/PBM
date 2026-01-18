@@ -11,6 +11,7 @@
  */
 
 import { API_BASE_URL } from '../config/api.js';
+import { signalApiActivity } from '../hooks/useSessionTimeout.js';
 
 class AuthService {
   constructor() {
@@ -446,7 +447,14 @@ class AuthService {
             headers: { ...options.headers, ...freshHeaders }
           });
 
-          return await retryResponse.json();
+          const retryData = await retryResponse.json();
+
+          // Signal API activity on successful retry (meaningful user action)
+          if (retryResponse.ok) {
+            signalApiActivity();
+          }
+
+          return retryData;
         } catch (refreshError) {
           // Refresh failed, redirect to login
           this.user = null;
@@ -455,7 +463,15 @@ class AuthService {
         }
       }
 
-      return await response.json();
+      const responseData = await response.json();
+
+      // Signal API activity on successful response (meaningful user action)
+      // This extends the session when users are actively using the app
+      if (response.ok) {
+        signalApiActivity();
+      }
+
+      return responseData;
     } catch (error) {
       console.error('API request error:', error);
       throw error;

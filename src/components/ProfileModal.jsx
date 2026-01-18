@@ -28,7 +28,7 @@ import {
   ChevronRight,
   AtSign
 } from 'lucide-react'
-import './ProfileModal.css'
+// CSS moved to global index.css Tailwind
 
 const ProfileModal = ({ isOpen, onClose }) => {
   const { t } = useLocalization()

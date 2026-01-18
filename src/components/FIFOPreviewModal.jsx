@@ -14,7 +14,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import salesOrderService from '../services/salesOrderService';
-import './FIFOPreviewModal.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * FIFO Preview Modal Component

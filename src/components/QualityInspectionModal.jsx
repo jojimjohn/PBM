@@ -6,7 +6,7 @@ import {
   Shield, CheckCircle, AlertTriangle, X, Eye, Package, FileText, 
   Droplets, Palette, Activity, Camera, Upload, Star, ClipboardCheck
 } from 'lucide-react';
-import './QualityInspectionModal.css';
+// CSS moved to global index.css Tailwind
 
 const QualityInspectionModal = ({ 
   itemId, 

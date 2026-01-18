@@ -2,7 +2,7 @@ import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLocalization } from '../context/LocalizationContext'
 import LoginForm from './LoginForm'
-import './ProtectedRoute.css'
+// CSS moved to global index.css Tailwind
 
 const ProtectedRoute = ({ children, requiredPermission }) => {
   const { isAuthenticated, hasPermission, isLoading } = useAuth()

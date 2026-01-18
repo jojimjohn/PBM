@@ -5,7 +5,7 @@ import { BarChart3, TrendingUp, PieChart as PieChartIcon, Activity, Layers } fro
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/Card'
 import { useLocalization } from '../context/LocalizationContext'
 import { fadeUpVariants } from '../config/animations'
-import './StockChart.css'
+// CSS moved to global index.css Tailwind
 
 const StockChart = ({ inventoryData, title = "Inventory Overview", height = 400, fieldLabels }) => {
   const { t } = useLocalization()

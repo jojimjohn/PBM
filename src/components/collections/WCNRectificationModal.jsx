@@ -5,7 +5,7 @@ import { useSystemSettings } from '../../context/SystemSettingsContext';
 import { collectionOrderService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
-import './WCNRectificationModal.css';
+// CSS moved to global index.css Tailwind
 
 const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) => {
   const { t } = useLocalization();

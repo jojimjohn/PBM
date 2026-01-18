@@ -6,7 +6,7 @@ import {
   Plus, Edit, Trash2, Save, Building, Phone, Mail, 
   MapPin, FileText, CheckCircle, AlertTriangle, User
 } from 'lucide-react'
-import './VendorManager.css'
+// CSS moved to global index.css Tailwind
 
 const VENDOR_TYPES = [
   { id: 'oil_supplier', name: 'Oil Supplier' },

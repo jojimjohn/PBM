@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, Phone, Truck, ShoppingCart, Receipt, Banknote } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
-import '../../styles/WorkflowStepper.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * WorkflowStepper Component
@@ -106,11 +106,6 @@ const WorkflowStepper = ({ activeTab = 'orders', onStepClick }) => {
 
   return (
     <div className="workflow-stepper">
-      <div className="workflow-header">
-        <h3 className="workflow-title">{t('purchaseWorkflow')}</h3>
-        <p className="workflow-subtitle">{t('workflowSubtitle')}</p>
-      </div>
-
       <div className="workflow-steps">
         {workflowSteps.map((step, index) => {
           const status = getStepStatus(step);

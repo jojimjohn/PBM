@@ -5,7 +5,7 @@ import { contractLocationService } from '../../services/collectionService';
 import LoadingSpinner from '../LoadingSpinner';
 import Modal from '../ui/Modal';
 import DataTable from '../ui/DataTable';
-import './collections-managers.css';
+// CSS moved to global index.css Tailwind
 
 const ContractLocationManager = () => {
   const { t, isRTL } = useLocalization();

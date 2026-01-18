@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
 import { useSystemSettings } from '../../context/SystemSettingsContext'
-import './DataTable.css'
+// CSS moved to global index.css Tailwind
 
 // Helper function to access nested properties
 const getNestedProperty = (obj, path) => {
@@ -610,7 +610,7 @@ const DataTable = ({
           {enableColumnToggle && (
             <div className="column-toggle">
               <button
-                className="btn btn-outline btn-sm btn-icon-only"
+                className="btn btn-icon"
                 onClick={() => setShowColumnToggle(!showColumnToggle)}
                 title={t('columns')}
               >
@@ -639,7 +639,7 @@ const DataTable = ({
           {/* Advanced Filters */}
           {filterable && (
             <button
-              className="btn btn-outline btn-sm btn-icon-only"
+              className="btn btn-icon"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               title={t('advancedFilters')}
             >
@@ -656,7 +656,7 @@ const DataTable = ({
           {exportable && (
             <div className="export-buttons">
               <button
-                className="btn btn-outline btn-sm btn-icon-only"
+                className="btn btn-icon"
                 onClick={() => {
                   const filename = `${title || 'data'}_${new Date().toISOString().split('T')[0]}.csv`
                   exportToCSV(sortedData, activeColumns, filename)
@@ -666,7 +666,7 @@ const DataTable = ({
                 <FileSpreadsheet size={16} />
               </button>
               <button
-                className="btn btn-outline btn-sm btn-icon-only"
+                className="btn btn-icon"
                 onClick={() => {
                   // Add print class to container for targeted print styles
                   if (tableRef.current) {

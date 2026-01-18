@@ -1,7 +1,7 @@
 import React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { Check, ChevronRight } from 'lucide-react';
-import './Dropdown.css';
+// CSS moved to global index.css Tailwind
 
 /**
  * Dropdown Menu Root Component

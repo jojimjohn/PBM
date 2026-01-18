@@ -6,7 +6,7 @@ import CollectionDashboard from '../../../components/collections/CollectionDashb
 import CalloutManager from '../../../components/collections/CalloutManager';
 // Custom hook for collections dashboard data
 import { useCollections } from '../hooks';
-import '../styles/Collections.css';
+// CSS moved to global index.css Tailwind
 
 const Collections = () => {
   const { t, isRTL } = useLocalization();
