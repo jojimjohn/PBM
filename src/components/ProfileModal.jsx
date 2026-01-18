@@ -3,6 +3,7 @@
  *
  * Self-service profile management for all authenticated users.
  * Allows editing personal information and changing password.
+ * Uses Tailwind CSS for consistent styling.
  */
 
 import React, { useState, useEffect } from 'react'
@@ -28,7 +29,6 @@ import {
   ChevronRight,
   AtSign
 } from 'lucide-react'
-// CSS moved to global index.css Tailwind
 
 const ProfileModal = ({ isOpen, onClose }) => {
   const { t } = useLocalization()
@@ -248,18 +248,18 @@ const ProfileModal = ({ isOpen, onClose }) => {
       title={t('profile', 'Profile')}
       size="md"
     >
-      <div className="profile-modal">
-        {/* Tab Navigation */}
-        <div className="profile-tabs">
+      <div className="space-y-6">
+        {/* Tab Navigation - Using global tab styles */}
+        <div className="tab-navigation">
           <button
-            className={`profile-tab ${activeTab === 'info' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
             onClick={() => setActiveTab('info')}
           >
             <User size={16} />
             {t('personalInfo', 'Personal Info')}
           </button>
           <button
-            className={`profile-tab ${activeTab === 'security' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'security' ? 'active' : ''}`}
             onClick={() => setActiveTab('security')}
           >
             <Lock size={16} />
@@ -269,18 +269,22 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
         {/* Personal Info Tab */}
         {activeTab === 'info' && (
-          <form onSubmit={handleInfoSubmit} className="profile-form">
+          <form onSubmit={handleInfoSubmit} className="space-y-5">
             {infoMessage && (
-              <div className={`message-banner ${infoMessage.type}`}>
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm ${
+                infoMessage.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
                 {infoMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
                 {infoMessage.text}
               </div>
             )}
 
             {/* Username (Read-only) */}
-            <div className="form-group">
-              <label htmlFor="username">
-                <AtSign size={16} />
+            <div className="space-y-2">
+              <label htmlFor="username" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <AtSign size={14} className="text-slate-400" />
                 {t('username', 'Username')}
               </label>
               <input
@@ -288,14 +292,14 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 id="username"
                 value={user?.username ? `@${user.username}` : ''}
                 disabled
-                className="readonly-input"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed"
               />
             </div>
 
             {/* Email (Read-only) */}
-            <div className="form-group">
-              <label htmlFor="email">
-                <Mail size={16} />
+            <div className="space-y-2">
+              <label htmlFor="email" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <Mail size={14} className="text-slate-400" />
                 {t('email', 'Email')}
               </label>
               <input
@@ -303,15 +307,15 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 id="email"
                 value={user?.email || ''}
                 disabled
-                className="readonly-input"
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed"
               />
-              <span className="help-text">{t('emailCannotBeChanged', 'Email cannot be changed')}</span>
+              <p className="text-xs text-slate-400">{t('emailCannotBeChanged', 'Email cannot be changed')}</p>
             </div>
 
             {/* First Name */}
-            <div className="form-group">
-              <label htmlFor="firstName">
-                <User size={16} />
+            <div className="space-y-2">
+              <label htmlFor="firstName" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <User size={14} className="text-slate-400" />
                 {t('firstName', 'First Name')}
               </label>
               <input
@@ -320,15 +324,19 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 value={infoData.firstName}
                 onChange={(e) => setInfoData({ ...infoData, firstName: e.target.value })}
                 disabled={infoLoading}
-                className={infoErrors.firstName ? 'error' : ''}
+                className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                  infoErrors.firstName
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
               />
-              {infoErrors.firstName && <span className="error-text">{infoErrors.firstName}</span>}
+              {infoErrors.firstName && <p className="text-xs text-red-500">{infoErrors.firstName}</p>}
             </div>
 
             {/* Last Name */}
-            <div className="form-group">
-              <label htmlFor="lastName">
-                <User size={16} />
+            <div className="space-y-2">
+              <label htmlFor="lastName" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <User size={14} className="text-slate-400" />
                 {t('lastName', 'Last Name')}
               </label>
               <input
@@ -337,12 +345,16 @@ const ProfileModal = ({ isOpen, onClose }) => {
                 value={infoData.lastName}
                 onChange={(e) => setInfoData({ ...infoData, lastName: e.target.value })}
                 disabled={infoLoading}
-                className={infoErrors.lastName ? 'error' : ''}
+                className={`w-full px-4 py-2.5 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                  infoErrors.lastName
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
               />
-              {infoErrors.lastName && <span className="error-text">{infoErrors.lastName}</span>}
+              {infoErrors.lastName && <p className="text-xs text-red-500">{infoErrors.lastName}</p>}
             </div>
 
-            <div className="modal-actions">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
               <button
                 type="button"
                 className="btn btn-outline"
@@ -358,7 +370,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
               >
                 {infoLoading ? (
                   <>
-                    <RefreshCw size={16} className="spinning" />
+                    <RefreshCw size={16} className="animate-spin" />
                     {t('saving', 'Saving...')}
                   </>
                 ) : (
@@ -374,7 +386,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
         {/* Security Tab */}
         {activeTab === 'security' && (
-          <div className="security-tab-content">
+          <div className="space-y-6">
             {showMfaSetup ? (
               /* MFA Setup Modal View */
               <div className="mfa-setup-container">
@@ -392,29 +404,33 @@ const ProfileModal = ({ isOpen, onClose }) => {
               /* Security Settings Overview */
               <>
                 {/* Two-Factor Authentication Section */}
-                <div className="security-section">
-                  <h4 className="security-section-title">
-                    <Shield size={18} />
+                <div className="space-y-3">
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <Shield size={16} className="text-slate-500" />
                     {t('twoFactorAuthentication', 'Two-Factor Authentication')}
                   </h4>
-                  <div
-                    className={`mfa-status-card ${mfaStatus?.enabled ? 'enabled' : 'disabled'}`}
+                  <button
+                    type="button"
+                    className={`w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all hover:shadow-md cursor-pointer ${
+                      mfaStatus?.enabled
+                        ? 'border-emerald-200 bg-emerald-50 hover:border-emerald-300'
+                        : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                    }`}
                     onClick={() => setShowMfaSetup(true)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && setShowMfaSetup(true)}
                   >
-                    <div className="mfa-status-icon">
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-full ${
+                      mfaStatus?.enabled ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'
+                    }`}>
                       {mfaLoading ? (
-                        <RefreshCw size={24} className="spinning" />
+                        <RefreshCw size={24} className="animate-spin" />
                       ) : mfaStatus?.enabled ? (
                         <ShieldCheck size={24} />
                       ) : (
                         <ShieldOff size={24} />
                       )}
                     </div>
-                    <div className="mfa-status-info">
-                      <span className="mfa-status-label">
+                    <div className="flex-1 text-left">
+                      <span className={`block font-semibold ${mfaStatus?.enabled ? 'text-emerald-700' : 'text-slate-700'}`}>
                         {mfaLoading
                           ? t('loading', 'Loading...')
                           : mfaStatus?.enabled
@@ -422,138 +438,169 @@ const ProfileModal = ({ isOpen, onClose }) => {
                             : t('mfaDisabled', 'MFA Disabled')
                         }
                       </span>
-                      <span className="mfa-status-description">
+                      <span className="block text-sm text-slate-500">
                         {mfaStatus?.enabled
                           ? t('mfaEnabledDescription', 'Your account is protected with two-factor authentication')
                           : t('mfaDisabledDescription', 'Add an extra layer of security to your account')
                         }
                       </span>
                     </div>
-                    <ChevronRight size={20} className="mfa-chevron" />
-                  </div>
+                    <ChevronRight size={20} className="text-slate-400" />
+                  </button>
                 </div>
 
                 {/* Change Password Section */}
-                <div className="security-section">
-                  <h4 className="security-section-title">
-                    <Key size={18} />
+                <div className="space-y-4">
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <Key size={16} className="text-slate-500" />
                     {t('changePassword', 'Change Password')}
                   </h4>
-                  <form onSubmit={handlePasswordSubmit} className="profile-form">
+
+                  <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     {passwordMessage && (
-                      <div className={`message-banner ${passwordMessage.type}`}>
+                      <div className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm ${
+                        passwordMessage.type === 'success'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
+                      }`}>
                         {passwordMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
                         {passwordMessage.text}
                       </div>
                     )}
 
                     {/* Current Password */}
-                    <div className="form-group">
-                      <label htmlFor="currentPassword">
-                        <Lock size={16} />
+                    <div className="space-y-2">
+                      <label htmlFor="currentPassword" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        <Lock size={14} className="text-slate-400" />
                         {t('currentPassword', 'Current Password')}
                       </label>
-                      <div className="password-input">
+                      <div className="relative">
                         <input
                           type={showPasswords.current ? 'text' : 'password'}
                           id="currentPassword"
                           value={passwordData.currentPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                           disabled={passwordLoading}
-                          className={passwordErrors.currentPassword ? 'error' : ''}
+                          className={`w-full px-4 py-2.5 pr-12 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                            passwordErrors.currentPassword
+                              ? 'border-red-300 bg-red-50'
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
                           autoComplete="current-password"
                         />
                         <button
                           type="button"
-                          className="toggle-visibility"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                           onClick={() => togglePasswordVisibility('current')}
                           tabIndex={-1}
                         >
-                          {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
-                      {passwordErrors.currentPassword && <span className="error-text">{passwordErrors.currentPassword}</span>}
+                      {passwordErrors.currentPassword && <p className="text-xs text-red-500">{passwordErrors.currentPassword}</p>}
                     </div>
 
                     {/* New Password */}
-                    <div className="form-group">
-                      <label htmlFor="newPassword">
-                        <Key size={16} />
+                    <div className="space-y-2">
+                      <label htmlFor="newPassword" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        <Key size={14} className="text-slate-400" />
                         {t('newPassword', 'New Password')}
                       </label>
-                      <div className="password-input">
+                      <div className="relative">
                         <input
                           type={showPasswords.new ? 'text' : 'password'}
                           id="newPassword"
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                           disabled={passwordLoading}
-                          className={passwordErrors.newPassword ? 'error' : ''}
+                          className={`w-full px-4 py-2.5 pr-12 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                            passwordErrors.newPassword
+                              ? 'border-red-300 bg-red-50'
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
                           autoComplete="new-password"
                         />
                         <button
                           type="button"
-                          className="toggle-visibility"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                           onClick={() => togglePasswordVisibility('new')}
                           tabIndex={-1}
                         >
-                          {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
-                      {passwordErrors.newPassword && <span className="error-text">{passwordErrors.newPassword}</span>}
+                      {passwordErrors.newPassword && <p className="text-xs text-red-500">{passwordErrors.newPassword}</p>}
 
                       {/* Password Strength Indicator */}
                       {passwordData.newPassword && (
-                        <div className="password-strength">
-                          <div className="strength-bar">
+                        <div className="space-y-2 pt-2">
+                          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                             <div
-                              className="strength-fill"
+                              className="h-full transition-all duration-300 rounded-full"
                               style={{
                                 width: `${passwordStrength}%`,
                                 backgroundColor: passwordStrength < 40 ? '#ef4444' : passwordStrength < 80 ? '#f59e0b' : '#22c55e'
                               }}
                             />
                           </div>
-                          <div className="strength-checks">
-                            <span className={checks.minLength ? 'valid' : 'invalid'}>8+ chars</span>
-                            <span className={checks.hasUppercase ? 'valid' : 'invalid'}>A-Z</span>
-                            <span className={checks.hasLowercase ? 'valid' : 'invalid'}>a-z</span>
-                            <span className={checks.hasNumber ? 'valid' : 'invalid'}>0-9</span>
-                            <span className={checks.hasSpecial ? 'valid' : 'invalid'}>@$!%*?&</span>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { key: 'minLength', label: '8+ chars' },
+                              { key: 'hasUppercase', label: 'A-Z' },
+                              { key: 'hasLowercase', label: 'a-z' },
+                              { key: 'hasNumber', label: '0-9' },
+                              { key: 'hasSpecial', label: '@$!%*?&' }
+                            ].map(({ key, label }) => (
+                              <span
+                                key={key}
+                                className={`text-xs px-2 py-0.5 rounded ${
+                                  checks[key]
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-slate-100 text-slate-400'
+                                }`}
+                              >
+                                {checks[key] && <span className="mr-1">✓</span>}
+                                {label}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       )}
                     </div>
 
                     {/* Confirm Password */}
-                    <div className="form-group">
-                      <label htmlFor="confirmPassword">
-                        <Key size={16} />
+                    <div className="space-y-2">
+                      <label htmlFor="confirmPassword" className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        <Key size={14} className="text-slate-400" />
                         {t('confirmPassword', 'Confirm Password')}
                       </label>
-                      <div className="password-input">
+                      <div className="relative">
                         <input
                           type={showPasswords.confirm ? 'text' : 'password'}
                           id="confirmPassword"
                           value={passwordData.confirmPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                           disabled={passwordLoading}
-                          className={passwordErrors.confirmPassword ? 'error' : ''}
+                          className={`w-full px-4 py-2.5 pr-12 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                            passwordErrors.confirmPassword
+                              ? 'border-red-300 bg-red-50'
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
                           autoComplete="new-password"
                         />
                         <button
                           type="button"
-                          className="toggle-visibility"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                           onClick={() => togglePasswordVisibility('confirm')}
                           tabIndex={-1}
                         >
-                          {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                       </div>
-                      {passwordErrors.confirmPassword && <span className="error-text">{passwordErrors.confirmPassword}</span>}
+                      {passwordErrors.confirmPassword && <p className="text-xs text-red-500">{passwordErrors.confirmPassword}</p>}
                     </div>
 
-                    <div className="modal-actions">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                       <button
                         type="button"
                         className="btn btn-outline"
@@ -569,7 +616,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
                       >
                         {passwordLoading ? (
                           <>
-                            <RefreshCw size={16} className="spinning" />
+                            <RefreshCw size={16} className="animate-spin" />
                             {t('changing', 'Changing...')}
                           </>
                         ) : (
