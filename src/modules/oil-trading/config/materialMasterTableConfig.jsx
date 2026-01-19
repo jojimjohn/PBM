@@ -63,7 +63,7 @@ export const getMaterialMasterColumns = ({
             <span className="cell-text">{value}</span>
             <span className="cell-code">{row.code}</span>
           </div>
-          {row.is_disposable && (
+          {!!row.is_disposable && (
             <span className="status-badge disposable" title="Disposable material - auto-converted to wastage">
               <Recycle size={12} />
               Disposable
