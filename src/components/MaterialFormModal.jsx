@@ -169,7 +169,9 @@ const MaterialFormModal = ({
   const handleCompositeToggle = (checked) => {
     setFormData(prev => ({
       ...prev,
-      is_composite: checked
+      is_composite: checked,
+      // When composite is enabled, disable disposable
+      is_disposable: checked ? false : prev.is_disposable
     }))
 
     if (checked && compositions.length === 0) {
@@ -355,37 +357,40 @@ const MaterialFormModal = ({
       className="material-form-modal"
     >
       <form id="material-form" onSubmit={handleSubmit}>
-        <div className="form-content">
+        <div className="flex flex-col gap-0">
             {errors.submit && (
-              <div className="ds-form-error-box">
+              <div className="flex items-center gap-2 px-4 py-3 mb-4 bg-red-50 border border-red-200 text-red-700 text-sm">
                 <AlertCircle size={16} />
                 {errors.submit}
               </div>
             )}
 
             {/* Basic Material Information */}
-            <div className="ds-form-section">
-              <h4>{t('basicInformation', 'Basic Information')}</h4>
-              <div className="ds-form-grid">
-                <div className="ds-form-group">
+            <div className="form-section">
+              <div className="form-section-title">
+                <Package size={18} />
+                {t('basicInformation', 'Basic Information')}
+              </div>
+              <div className="form-grid">
+                <div className="form-group">
                   <label htmlFor="code">
-                    {t('materialCode', 'Material Code')} <span className="required">*</span>
+                    {t('materialCode', 'Material Code')} *
                   </label>
                   <input
                     type="text"
                     id="code"
                     value={formData.code}
                     onChange={(e) => handleInputChange('code', e.target.value)}
-                    disabled={saving || editingMaterial} // Code cannot be changed when editing
+                    disabled={saving || editingMaterial}
                     placeholder="ENG-001"
-                    className={errors.code ? 'error' : ''}
+                    className={errors.code ? 'border-red-500' : ''}
                   />
-                  {errors.code && <small className="error-text">{errors.code}</small>}
+                  {errors.code && <span className="text-xs text-red-600">{errors.code}</span>}
                 </div>
 
-                <div className="ds-form-group">
+                <div className="form-group">
                   <label htmlFor="name">
-                    {t('materialName', 'Material Name')} <span className="required">*</span>
+                    {t('materialName', 'Material Name')} *
                   </label>
                   <input
                     type="text"
@@ -394,12 +399,53 @@ const MaterialFormModal = ({
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     disabled={saving}
                     placeholder="Engine Oil 20W-50"
-                    className={errors.name ? 'error' : ''}
+                    className={errors.name ? 'border-red-500' : ''}
                   />
-                  {errors.name && <small className="error-text">{errors.name}</small>}
+                  {errors.name && <span className="text-xs text-red-600">{errors.name}</span>}
                 </div>
 
-                <div className="ds-form-group full-width">
+                <div className="form-group">
+                  <label htmlFor="category_id">
+                    {t('category', 'Category')} *
+                  </label>
+                  <select
+                    id="category_id"
+                    value={formData.category_id}
+                    onChange={(e) => handleInputChange('category_id', e.target.value)}
+                    disabled={saving}
+                    className={errors.category_id ? 'border-red-500' : ''}
+                  >
+                    <option value="">{t('selectCategory', 'Select category...')}</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category_id && <span className="text-xs text-red-600">{errors.category_id}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="unit">
+                    {t('unit', 'Unit')} *
+                  </label>
+                  <select
+                    id="unit"
+                    value={formData.unit}
+                    onChange={(e) => handleInputChange('unit', e.target.value)}
+                    disabled={saving}
+                    className={errors.unit ? 'border-red-500' : ''}
+                  >
+                    {units.map(unit => (
+                      <option key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.unit && <span className="text-xs text-red-600">{errors.unit}</span>}
+                </div>
+
+                <div className="form-group full-width">
                   <label htmlFor="description">{t('description', 'Description')}</label>
                   <textarea
                     id="description"
@@ -411,69 +457,31 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="ds-form-group">
-                  <label htmlFor="category_id">
-                    {t('category', 'Category')} <span className="required">*</span>
-                  </label>
-                  <select
-                    id="category_id"
-                    value={formData.category_id}
-                    onChange={(e) => handleInputChange('category_id', e.target.value)}
-                    disabled={saving}
-                    className={errors.category_id ? 'error' : ''}
-                  >
-                    <option value="">{t('selectCategory', 'Select category...')}</option>
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category_id && <small className="error-text">{errors.category_id}</small>}
-                </div>
-
-                <div className="ds-form-group">
-                  <label htmlFor="unit">
-                    {t('unit', 'Unit')} <span className="required">*</span>
-                  </label>
-                  <select
-                    id="unit"
-                    value={formData.unit}
-                    onChange={(e) => handleInputChange('unit', e.target.value)}
-                    disabled={saving}
-                    className={errors.unit ? 'error' : ''}
-                  >
-                    {units.map(unit => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.unit && <small className="error-text">{errors.unit}</small>}
-                </div>
-
-                <div className="ds-form-group">
-                  <label className="ds-form-checkbox">
+                <div className="form-group">
+                  <label>{t('status', 'Status')}</label>
+                  <label className="checkbox-label">
                     <input
                       type="checkbox"
                       checked={formData.isActive}
                       onChange={(e) => handleInputChange('isActive', e.target.checked)}
                       disabled={saving}
                     />
-                    {t('active', 'Active')}
+                    <span>{t('active', 'Active')}</span>
                   </label>
-                  <small>{t('activeMaterialHint', 'Only active materials can be used in orders')}</small>
+                  <span className="text-xs text-slate-500">{t('activeMaterialHint', 'Only active materials can be used in orders')}</span>
                 </div>
               </div>
             </div>
 
             {/* Pricing Information */}
-            <div className="ds-form-section">
-              <h4>{t('pricingInformation', 'Pricing Information')}</h4>
-              <div className="ds-form-grid">
-                <div className="ds-form-group">
+            <div className="form-section">
+              <div className="form-section-title">
+                {t('pricingInformation', 'Pricing Information')}
+              </div>
+              <div className="form-grid">
+                <div className="form-group">
                   <label htmlFor="standardPrice">
-                    {t('standardPrice', 'Standard Price')} <small>(OMR{formData.unit ? `/${formData.unit}` : ''})</small>
+                    {t('standardPrice', 'Standard Price')} (OMR{formData.unit ? `/${formData.unit}` : ''})
                   </label>
                   <input
                     type="number"
@@ -484,14 +492,14 @@ const MaterialFormModal = ({
                     step="0.001"
                     min="0"
                     placeholder="0.000"
-                    className={errors.standardPrice ? 'error' : ''}
+                    className={errors.standardPrice ? 'border-red-500' : ''}
                   />
-                  {errors.standardPrice && <small className="error-text">{errors.standardPrice}</small>}
+                  {errors.standardPrice && <span className="text-xs text-red-600">{errors.standardPrice}</span>}
                 </div>
 
-                <div className="ds-form-group">
+                <div className="form-group">
                   <label htmlFor="minimumPrice">
-                    {t('minimumPrice', 'Minimum Price')} <small>(OMR{formData.unit ? `/${formData.unit}` : ''})</small>
+                    {t('minimumPrice', 'Minimum Price')} (OMR{formData.unit ? `/${formData.unit}` : ''})
                   </label>
                   <input
                     type="number"
@@ -502,19 +510,21 @@ const MaterialFormModal = ({
                     step="0.001"
                     min="0"
                     placeholder="0.000"
-                    className={errors.minimumPrice ? 'error' : ''}
+                    className={errors.minimumPrice ? 'border-red-500' : ''}
                   />
-                  {errors.minimumPrice && <small className="error-text">{errors.minimumPrice}</small>}
+                  {errors.minimumPrice && <span className="text-xs text-red-600">{errors.minimumPrice}</span>}
                 </div>
               </div>
             </div>
 
             {/* Additional Properties */}
-            <div className="ds-form-section">
-              <h4>{t('additionalProperties', 'Additional Properties')}</h4>
-              <div className="ds-form-grid three-col">
-                <div className="ds-form-group">
-                  <label htmlFor="density">{t('density', 'Density')} <small>(kg/L)</small></label>
+            <div className="form-section">
+              <div className="form-section-title">
+                {t('additionalProperties', 'Additional Properties')}
+              </div>
+              <div className="form-grid-3">
+                <div className="form-group">
+                  <label htmlFor="density">{t('density', 'Density')} (kg/L)</label>
                   <input
                     type="number"
                     id="density"
@@ -527,8 +537,8 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="ds-form-group">
-                  <label htmlFor="shelfLifeDays">{t('shelfLife', 'Shelf Life')} <small>(days)</small></label>
+                <div className="form-group">
+                  <label htmlFor="shelfLifeDays">{t('shelfLife', 'Shelf Life')} (days)</label>
                   <input
                     type="number"
                     id="shelfLifeDays"
@@ -540,7 +550,7 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="ds-form-group">
+                <div className="form-group">
                   <label htmlFor="barcode">{t('barcode', 'Barcode')}</label>
                   <input
                     type="text"
@@ -552,7 +562,7 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="ds-form-group span-2">
+                <div className="form-group col-span-2">
                   <label htmlFor="specifications">{t('specifications', 'Specifications')}</label>
                   <textarea
                     id="specifications"
@@ -564,26 +574,27 @@ const MaterialFormModal = ({
                   />
                 </div>
 
-                <div className="ds-form-group">
-                  <label className="ds-form-checkbox">
+                <div className="form-group">
+                  <label>{t('batchTracking', 'Batch Tracking')}</label>
+                  <label className="checkbox-label">
                     <input
                       type="checkbox"
                       checked={formData.trackBatches}
                       onChange={(e) => handleInputChange('trackBatches', e.target.checked)}
                       disabled={saving}
                     />
-                    {t('trackBatches', 'Track Batches')}
+                    <span>{t('trackBatches', 'Track Batches')}</span>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* Disposable Material Section */}
-            <div className="border border-slate-200 bg-slate-50/50 p-4 mt-4">
-              <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="form-section">
+              <div className="form-section-title justify-between">
                 <div className="flex items-center gap-2">
-                  <Recycle size={16} className="text-emerald-600" />
-                  <span className="text-sm font-semibold text-slate-700">{t('disposableMaterial', 'Disposable Material')}</span>
+                  <Recycle size={18} className="text-emerald-600" />
+                  {t('disposableMaterial', 'Disposable Material')}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -600,53 +611,54 @@ const MaterialFormModal = ({
                 </label>
               </div>
 
-              {formData.is_composite && (
-                <div className="flex items-start gap-2 p-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs">
-                  <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                  <p className="m-0">
-                    {t('disposableCompositeConflict', 'Composite materials cannot be marked as disposable. The composite components are tracked individually.')}
-                  </p>
-                </div>
-              )}
-
-              {formData.is_disposable && !formData.is_composite && (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2 p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
-                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <div className="p-5">
+                {formData.is_composite && (
+                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
                     <p className="m-0">
-                      {t('disposableInfo', 'Disposable materials are automatically converted to 100% wastage during WCN finalization.')}
+                      {t('disposableCompositeConflict', 'Composite materials cannot be marked as disposable. The composite components are tracked individually.')}
                     </p>
                   </div>
+                )}
 
-                  <div className="max-w-xs">
-                    <label htmlFor="default_waste_type" className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                      {t('defaultWasteType', 'Default Waste Type')} <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="default_waste_type"
-                      value={formData.default_waste_type}
-                      onChange={(e) => handleInputChange('default_waste_type', e.target.value)}
-                      disabled={saving}
-                      className="w-full h-8 px-2 text-sm bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="">{t('selectWasteType', 'Select waste type...')}</option>
-                      {WASTE_TYPES.map(type => (
-                        <option key={type.value} value={type.value}>
-                          {t(`wasteType_${type.value}`, type.label)}
-                        </option>
-                      ))}
-                    </select>
+                {formData.is_disposable && !formData.is_composite && (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+                      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <p className="m-0">
+                        {t('disposableInfo', 'Disposable materials are automatically converted to 100% wastage during WCN finalization.')}
+                      </p>
+                    </div>
+
+                    <div className="form-group max-w-xs">
+                      <label htmlFor="default_waste_type">
+                        {t('defaultWasteType', 'Default Waste Type')} *
+                      </label>
+                      <select
+                        id="default_waste_type"
+                        value={formData.default_waste_type}
+                        onChange={(e) => handleInputChange('default_waste_type', e.target.value)}
+                        disabled={saving}
+                      >
+                        <option value="">{t('selectWasteType', 'Select waste type...')}</option>
+                        {WASTE_TYPES.map(type => (
+                          <option key={type.value} value={type.value}>
+                            {t(`wasteType_${type.value}`, type.label)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Composite Material Section */}
-            <div className="border border-slate-200 bg-slate-50/50 p-4 mt-4">
-              <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="form-section">
+              <div className="form-section-title justify-between">
                 <div className="flex items-center gap-2">
-                  <Layers size={16} className="text-blue-600" />
-                  <span className="text-sm font-semibold text-slate-700">{t('compositeMaterial', 'Composite Material')}</span>
+                  <Layers size={18} className="text-blue-600" />
+                  {t('compositeMaterial', 'Composite Material')}
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -663,30 +675,31 @@ const MaterialFormModal = ({
                 </label>
               </div>
 
-              {formData.is_composite && (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2 p-2.5 bg-blue-50 border border-blue-200 text-blue-800 text-xs">
-                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                    <p className="m-0">
-                      {t('compositeInfo', 'Composite materials automatically split into components when received in purchase orders. Example: "Oil with Drum" splits into "Oil" and "Drum" in inventory.')}
-                    </p>
-                  </div>
+              <div className="p-5">
+                {formData.is_composite ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 text-blue-800 text-sm">
+                      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <p className="m-0">
+                        {t('compositeInfo', 'Composite materials automatically split into components when received in purchase orders. Example: "Oil with Drum" splits into "Oil" and "Drum" in inventory.')}
+                      </p>
+                    </div>
 
-                  {/* Components Header */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-                      {t('components', 'Components')}
-                    </span>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-                      onClick={addCompositionRow}
-                      disabled={saving}
-                    >
-                      <Plus size={12} />
-                      {t('addComponent', 'Add Component')}
-                    </button>
-                  </div>
+                    {/* Components Header */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        {t('components', 'Components')}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={addCompositionRow}
+                        disabled={saving}
+                      >
+                        <Plus size={14} />
+                        {t('addComponent', 'Add Component')}
+                      </button>
+                    </div>
 
                   {errors.compositions && (
                     <div className="flex items-start gap-2 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs">
@@ -717,66 +730,70 @@ const MaterialFormModal = ({
                         ) : (
                           compositions.map((comp, index) => (
                             <tr key={index} className="border-b border-slate-100">
-                              <td className="px-1 py-1.5">
-                                <select
-                                  value={comp.component_material_id}
-                                  onChange={(e) => updateComposition(index, 'component_material_id', e.target.value)}
-                                  disabled={saving}
-                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
-                                >
-                                  <option value="">{t('selectMaterial', 'Select material...')}</option>
-                                  {availableComponentMaterials.map(material => (
-                                    <option key={material.id} value={material.id}>
-                                      {material.name} ({material.code})
-                                    </option>
-                                  ))}
-                                </select>
+                              <td className="p-1.5">
+                                <div className="form-group !mb-0">
+                                  <select
+                                    value={comp.component_material_id}
+                                    onChange={(e) => updateComposition(index, 'component_material_id', e.target.value)}
+                                    disabled={saving}
+                                  >
+                                    <option value="">{t('selectMaterial', 'Select material...')}</option>
+                                    {availableComponentMaterials.map(material => (
+                                      <option key={material.id} value={material.id}>
+                                        {material.name} ({material.code})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
                               </td>
-                              <td className="px-1 py-1.5">
-                                <select
-                                  value={comp.component_type}
-                                  onChange={(e) => updateComposition(index, 'component_type', e.target.value)}
-                                  disabled={saving}
-                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
-                                >
-                                  {componentTypes.map(type => (
-                                    <option key={type.value} value={type.value}>
-                                      {type.label}
-                                    </option>
-                                  ))}
-                                </select>
+                              <td className="p-1.5">
+                                <div className="form-group !mb-0">
+                                  <select
+                                    value={comp.component_type}
+                                    onChange={(e) => updateComposition(index, 'component_type', e.target.value)}
+                                    disabled={saving}
+                                  >
+                                    {componentTypes.map(type => (
+                                      <option key={type.value} value={type.value}>
+                                        {type.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
                               </td>
-                              <td className="px-1 py-1.5">
-                                <input
-                                  type="number"
-                                  value={comp.capacity}
-                                  onChange={(e) => updateComposition(index, 'capacity', e.target.value)}
-                                  disabled={saving}
-                                  step="0.001"
-                                  min="0"
-                                  placeholder="200"
-                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
-                                />
+                              <td className="p-1.5">
+                                <div className="form-group !mb-0">
+                                  <input
+                                    type="number"
+                                    value={comp.capacity}
+                                    onChange={(e) => updateComposition(index, 'capacity', e.target.value)}
+                                    disabled={saving}
+                                    step="0.001"
+                                    min="0"
+                                    placeholder="200"
+                                  />
+                                </div>
                               </td>
-                              <td className="px-1 py-1.5">
-                                <select
-                                  value={comp.capacity_unit}
-                                  onChange={(e) => updateComposition(index, 'capacity_unit', e.target.value)}
-                                  disabled={saving}
-                                  className="w-full h-7 px-1.5 text-xs bg-white border border-slate-300 text-slate-700 focus:outline-none focus:border-blue-500"
-                                >
-                                  <option value="">{t('selectUnit', 'Select...')}</option>
-                                  {capacityUnits.map(unit => (
-                                    <option key={unit.value} value={unit.value}>
-                                      {unit.value}
-                                    </option>
-                                  ))}
-                                </select>
+                              <td className="p-1.5">
+                                <div className="form-group !mb-0">
+                                  <select
+                                    value={comp.capacity_unit}
+                                    onChange={(e) => updateComposition(index, 'capacity_unit', e.target.value)}
+                                    disabled={saving}
+                                  >
+                                    <option value="">{t('selectUnit', 'Select...')}</option>
+                                    {capacityUnits.map(unit => (
+                                      <option key={unit.value} value={unit.value}>
+                                        {unit.value}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
                               </td>
-                              <td className="px-1 py-1.5 text-center">
+                              <td className="p-1.5 text-center">
                                 <button
                                   type="button"
-                                  className="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  className="inline-flex items-center justify-center w-8 h-8 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
                                   onClick={() => removeCompositionRow(index)}
                                   disabled={saving || compositions.length <= 1}
                                   title={t('removeComponent', 'Remove component')}
@@ -791,11 +808,12 @@ const MaterialFormModal = ({
                     </table>
                   </div>
 
-                  <p className="text-[10px] text-slate-400 mt-2">
+                  <p className="text-xs text-slate-400 mt-2">
                     {t('capacityHint', 'Capacity is for reference only (e.g., 200L drum capacity). Actual quantities are determined at purchase order receipt.')}
                   </p>
                 </div>
-              )}
+              ) : null}
+              </div>
             </div>
         </div>
       </form>

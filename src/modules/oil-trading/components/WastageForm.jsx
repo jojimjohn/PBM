@@ -554,12 +554,12 @@ const WastageForm = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={isEditing ? t('editWastage', 'Edit Wastage') : t('wastageForm', 'Wastage Form')}
-        className="max-w-[1100px] w-[95vw] min-w-[800px] h-auto max-h-[calc(100vh-2rem)] max-md:min-w-0 max-md:w-[98vw]"
+        title={isEditing ? t('editWastage', 'Edit Wastage') : t('reportWastage', 'Report Wastage')}
+        size="lg"
       >
-        <div className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-0">
           {submitError && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm">
+            <div className="flex items-center gap-2 px-4 py-3 mb-4 bg-red-50 border border-red-200 text-red-600 text-sm">
               <AlertTriangle size={16} />
               <span>{submitError}</span>
               <button onClick={() => setSubmitError(null)} className="ml-auto bg-transparent border-none cursor-pointer p-1 text-red-600 hover:text-red-800">
@@ -570,14 +570,14 @@ const WastageForm = ({
 
           {/* Collection Context Banner */}
           {isCollectionContext && (
-            <div className="flex flex-col gap-2 p-4 bg-amber-50 border border-amber-300 relative">
-              <Info size={18} className="absolute top-4 left-4 text-amber-600" />
-              <div className="flex items-center gap-2 ml-8 text-[0.9rem] text-amber-800">
+            <div className="flex flex-col gap-2 p-4 mb-4 bg-amber-50 border border-amber-200">
+              <div className="flex items-center gap-2 text-sm text-amber-800">
+                <Info size={16} className="text-amber-600 shrink-0" />
                 <strong>{t('recordingWastageFor', 'Recording wastage for collection')}:</strong>
                 <span className="font-semibold text-amber-900 bg-white/50 px-2 py-0.5">{collectionOrderNumber || `#${preSelectedCollectionId}`}</span>
               </div>
-              <div className="flex items-center gap-1.5 ml-8 text-[0.8rem] text-amber-700 bg-white/40 px-3 py-2 mt-1">
-                <AlertTriangle size={14} className="flex-shrink-0 text-amber-600" />
+              <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-white/40 px-3 py-2 ml-6">
+                <AlertTriangle size={14} className="shrink-0 text-amber-600" />
                 <span>{t('wastageInventoryNote', 'Note: Inventory will only be reduced when this wastage is approved.')}</span>
               </div>
             </div>
@@ -590,7 +590,7 @@ const WastageForm = ({
               {t('materialInfo', 'Material Information')}
             </div>
 
-            <div className="form-grid items-end p-5">
+            <div className="form-grid">
               <div className="form-group">
                 <label>{t('material', 'Material')} *</label>
                 <Select
@@ -605,50 +605,49 @@ const WastageForm = ({
                 {errors.materialId && <span className="text-xs text-red-600 mt-1">{errors.materialId}</span>}
               </div>
 
+              <div className="form-group">
+                <label>{t('wasteType', 'Waste Type')} *</label>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={formData.wasteType}
+                    onChange={(e) => handleChange('wasteType', e.target.value)}
+                    className="flex-1"
+                  >
+                    <option value="">{t('wasteTypePlaceholder', 'Select wastage type...')}</option>
+                    {wasteTypeOptions.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </Select>
+                  {formData.wasteType && (
+                    <span
+                      className="inline-block w-4 h-4 shrink-0"
+                      style={{ backgroundColor: WASTAGE_TYPE_COLORS[formData.wasteType] || WASTAGE_TYPE_COLORS.other }}
+                    />
+                  )}
+                </div>
+                {errors.wasteType && <span className="text-xs text-red-600 mt-1">{errors.wasteType}</span>}
+              </div>
+
               {formData.materialId && (
-                <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-100 border border-blue-200 text-sm whitespace-nowrap">
-                  {loadingStock ? (
-                    <Loader2 className="animate-spin" size={16} />
-                  ) : (
-                    <>
-                      <span className="text-blue-800">{t('currentStockLabel', 'Current Stock')}:</span>
+                <div className="form-group">
+                  <label>{t('currentStockLabel', 'Current Stock')}</label>
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 border border-blue-200 text-sm">
+                    {loadingStock ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
                       <span className="font-semibold text-blue-800">
                         {currentStock !== null ? currentStock : '-'} {selectedMaterial?.unit || ''}
                       </span>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
-
-            <div className="form-group px-5 pb-5">
-              <label>{t('wasteType', 'Waste Type')} *</label>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={formData.wasteType}
-                  onChange={(e) => handleChange('wasteType', e.target.value)}
-                  className="flex-1"
-                >
-                  <option value="">{t('wasteTypePlaceholder', 'Select wastage type...')}</option>
-                  {wasteTypeOptions.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </Select>
-                {formData.wasteType && (
-                  <span
-                    className="inline-block w-3 h-3 ml-2"
-                    style={{ backgroundColor: WASTAGE_TYPE_COLORS[formData.wasteType] || WASTAGE_TYPE_COLORS.other }}
-                  />
-                )}
-              </div>
-              {errors.wasteType && <span className="text-xs text-red-600 mt-1">{errors.wasteType}</span>}
             </div>
           </div>
 
           {/* Collection Link Section - Hidden when in collection context mode */}
-          {/* Placed before Quantities so cost can auto-fill from selected collection */}
           {!isCollectionContext && (
             <div className="form-section">
               <div className="form-section-title">
@@ -656,61 +655,56 @@ const WastageForm = ({
                 {t('linkToCollection', 'Link to Collection')}
               </div>
 
-              <div className="form-group p-5">
-                <Select
-                  value={formData.collectionOrderId}
-                  onChange={(e) => handleChange('collectionOrderId', e.target.value)}
-                  disabled={loadingCollections || !formData.materialId}
-                >
-                  {loadingCollections ? (
-                    <option value="">{t('loading', 'Loading...')}</option>
-                  ) : filteredCollections.length === 0 && formData.materialId ? (
-                    <option value="">{t('noCollectionsForMaterial', 'No collections found with this material')}</option>
-                  ) : (
-                    collectionOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))
-                  )}
-                </Select>
-                <span className="text-xs text-slate-400 italic">
-                  {!formData.materialId
-                    ? t('selectMaterialToFilterCollections', 'Select a material to see relevant collections')
-                    : t('optionalCollectionLink', 'Optional: Link this wastage to a collection order')
-                  }
-                </span>
-              </div>
-
-              {/* Selected Collection Info */}
-              {selectedCollection && (
-                <div className="p-3.5 bg-blue-50 border border-blue-200">
-                  <div className="flex items-center gap-2 mb-3 text-blue-800 text-sm">
-                    <span className="text-base">ℹ️</span>
-                    <strong>{t('selectedCollectionInfo', 'Selected Collection')}</strong>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-baseline text-[0.8125rem]">
-                      <span className="text-slate-500 whitespace-nowrap min-w-[80px] flex-shrink-0">{t('wcnNumber', 'WCN')}:</span>
-                      <span className="text-slate-900 font-medium ml-2">{selectedCollection.wcn_number || selectedCollection.wcnNumber || selectedCollection.order_number || selectedCollection.orderNumber || `#${selectedCollection.id}`}</span>
-                    </div>
-                    {(selectedCollection.supplier_name || selectedCollection.supplierName) && (
-                      <div className="flex items-baseline text-[0.8125rem]">
-                        <span className="text-slate-500 whitespace-nowrap min-w-[80px] flex-shrink-0">{t('supplier', 'Supplier')}:</span>
-                        <span className="text-slate-900 font-medium ml-2">{selectedCollection.supplier_name || selectedCollection.supplierName}</span>
-                      </div>
+              <div className="p-5 space-y-4">
+                <div className="form-group">
+                  <label>{t('selectCollection', 'Select Collection')}</label>
+                  <Select
+                    value={formData.collectionOrderId}
+                    onChange={(e) => handleChange('collectionOrderId', e.target.value)}
+                    disabled={loadingCollections || !formData.materialId}
+                  >
+                    {loadingCollections ? (
+                      <option value="">{t('loading', 'Loading...')}</option>
+                    ) : filteredCollections.length === 0 && formData.materialId ? (
+                      <option value="">{t('noCollectionsForMaterial', 'No collections found with this material')}</option>
+                    ) : (
+                      collectionOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))
                     )}
-                    <div className="flex items-baseline text-[0.8125rem]">
-                      <span className="text-slate-500 whitespace-nowrap min-w-[80px] flex-shrink-0">{t('date', 'Date')}:</span>
-                      <span className="text-slate-900 font-medium ml-2">{new Date(selectedCollection.finalized_at || selectedCollection.finalizedAt || selectedCollection.scheduled_date || selectedCollection.scheduledDate || selectedCollection.created_at).toLocaleDateString()}</span>
-                    </div>
-                    {selectedCollection.items && selectedCollection.items.length > 0 && (
-                      <div className="flex items-baseline text-[0.8125rem]">
-                        <span className="text-slate-500 whitespace-nowrap min-w-[80px] flex-shrink-0">{t('materials', 'Materials')}:</span>
-                        <span className="text-slate-900 font-medium ml-2">{selectedCollection.items.map(i => i.materialName || i.material_name || `ID:${i.materialId || i.material_id}`).join(', ')}</span>
-                      </div>
-                    )}
-                  </div>
+                  </Select>
+                  <span className="text-xs text-slate-500">
+                    {!formData.materialId
+                      ? t('selectMaterialToFilterCollections', 'Select a material to see relevant collections')
+                      : t('optionalCollectionLink', 'Optional: Link this wastage to a collection order')
+                    }
+                  </span>
                 </div>
-              )}
+
+                {/* Selected Collection Info */}
+                {selectedCollection && (
+                  <div className="p-4 bg-blue-50 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-3 text-blue-800 text-sm font-semibold">
+                      <Info size={16} />
+                      {t('selectedCollectionInfo', 'Selected Collection')}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-slate-500">{t('wcnNumber', 'WCN')}:</div>
+                      <div className="text-slate-900 font-medium">{selectedCollection.wcn_number || selectedCollection.wcnNumber || selectedCollection.order_number || selectedCollection.orderNumber || `#${selectedCollection.id}`}</div>
+
+                      {(selectedCollection.supplier_name || selectedCollection.supplierName) && (
+                        <>
+                          <div className="text-slate-500">{t('supplier', 'Supplier')}:</div>
+                          <div className="text-slate-900 font-medium">{selectedCollection.supplier_name || selectedCollection.supplierName}</div>
+                        </>
+                      )}
+
+                      <div className="text-slate-500">{t('date', 'Date')}:</div>
+                      <div className="text-slate-900 font-medium">{new Date(selectedCollection.finalized_at || selectedCollection.finalizedAt || selectedCollection.scheduled_date || selectedCollection.scheduledDate || selectedCollection.created_at).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -718,10 +712,10 @@ const WastageForm = ({
           <div className="form-section">
             <div className="form-section-title">{t('quantitiesAndCosts', 'Quantities & Costs')}</div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
+            <div className="form-grid-3">
               <div className="form-group">
                 <label>{t('quantity', 'Quantity')} *</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-stretch">
                   <Input
                     type="number"
                     value={formData.quantity}
@@ -730,9 +724,9 @@ const WastageForm = ({
                     min="0"
                     step="0.001"
                     error={errors.quantity}
-                    className="flex-1"
+                    className="flex-1 !rounded-r-none !border-r-0"
                   />
-                  <span className="text-sm text-slate-500 whitespace-nowrap">{selectedMaterial?.unit || ''}</span>
+                  <span className="flex items-center px-3 bg-slate-100 border border-slate-300 text-sm text-slate-600">{selectedMaterial?.unit || 'unit'}</span>
                 </div>
                 {errors.quantity && <span className="text-xs text-red-600 mt-1">{errors.quantity}</span>}
               </div>
@@ -753,16 +747,17 @@ const WastageForm = ({
 
               <div className="form-group">
                 <label>{t('totalCost', 'Total Cost')}</label>
-                <div className="px-3 py-2.5 bg-emerald-50 border border-emerald-200 text-sm font-semibold text-emerald-700">
+                <div className="flex items-center justify-center px-3 py-2.5 bg-emerald-50 border border-emerald-200 text-base font-semibold text-emerald-700">
                   OMR {totalCost.toFixed(3)}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Date and Location Section */}
+          {/* Date, Location, and Details Section */}
           <div className="form-section">
-            <div className="form-grid p-5">
+            <div className="form-section-title">{t('additionalDetails', 'Additional Details')}</div>
+            <div className="form-grid">
               <div className="form-group">
                 <label>{t('wastageDate', 'Wastage Date')} *</label>
                 <DateInput
@@ -783,12 +778,7 @@ const WastageForm = ({
                   placeholder={t('warehouseOrLocation', 'Warehouse or location')}
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Reason and Description Section */}
-          <div className="form-section">
-            <div className="p-5 space-y-4">
               <div className="form-group">
                 <label>{t('wastageReason', 'Reason')}</label>
                 <Input
@@ -799,13 +789,13 @@ const WastageForm = ({
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group full-width">
                 <label>{t('wastageDescription', 'Description')}</label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   placeholder={t('detailedDescription', 'Detailed description of the wastage incident')}
-                  rows={3}
+                  rows={2}
                 />
               </div>
             </div>
@@ -818,108 +808,109 @@ const WastageForm = ({
               {t('attachments', 'Attachments')}
             </div>
             <div className="p-5 space-y-4">
-
-            <div
-              {...getRootProps()}
-              className={`flex flex-col items-center justify-center gap-1.5 p-5 border-2 border-dashed bg-white cursor-pointer transition-all ${
-                isDragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-slate-300 hover:border-blue-500 hover:bg-blue-50/50'
-              }`}
-            >
-              <input {...getInputProps()} />
-              <Upload size={24} className="text-slate-400" />
-              <p className="m-0 text-sm text-slate-700">{t('dragDropFiles', 'Drag and drop files here or click to browse')}</p>
-              <span className="text-xs text-slate-500">
-                {t('supportedFormats', 'Supported formats: JPEG, PNG, PDF')} | {t('maxFileSize', 'Max 5MB per file')}
-              </span>
-            </div>
-
-            {errors.attachments && (
-              <span className="text-xs text-red-600">{errors.attachments}</span>
-            )}
-
-            {formData.attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {formData.attachments.map((file, index) => (
-                  <div key={index} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-xs">
-                    {file.type?.startsWith('image/') || (file instanceof File && file.type.startsWith('image/')) ? (
-                      <ImageIcon size={20} className="text-slate-400" />
-                    ) : (
-                      <FileText size={20} className="text-slate-400" />
-                    )}
-                    <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap text-slate-700">
-                      {file.name || (file instanceof File ? file.name : `File ${index + 1}`)}
-                    </span>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center bg-transparent border-none cursor-pointer p-1 text-slate-400 transition-colors hover:text-red-600"
-                      onClick={() => removeAttachment(index)}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
+              <div
+                {...getRootProps()}
+                className={`flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed bg-white cursor-pointer transition-all ${
+                  isDragActive
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-300 hover:border-blue-500 hover:bg-blue-50/50'
+                }`}
+              >
+                <input {...getInputProps()} />
+                <Upload size={28} className="text-slate-400" />
+                <p className="m-0 text-sm text-slate-700">{t('dragDropFiles', 'Drag and drop files here or click to browse')}</p>
+                <span className="text-xs text-slate-500">
+                  {t('supportedFormats', 'Supported formats: JPEG, PNG, PDF')} | {t('maxFileSize', 'Max 5MB per file')}
+                </span>
               </div>
-            )}
 
-            {/* S3 Attachments - Show existing files when editing */}
-            {isEditing && initialData?.id && (
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-                  {t('existingAttachments', 'Existing Attachments')}
-                </h5>
-                {loadingS3Attachments ? (
-                  <div className="text-sm text-slate-400 italic">{t('loadingAttachments', 'Loading attachments...')}</div>
-                ) : s3Attachments.length > 0 ? (
-                  <FileViewer
-                    files={s3Attachments}
-                    onDelete={async (fileId) => {
-                      if (!window.confirm(t('confirmDeleteFile', 'Are you sure you want to delete this file?'))) return
-                      try {
-                        const result = await uploadService.deleteS3File('wastages', initialData.id, fileId)
-                        if (result.success) {
-                          setS3Attachments(prev => prev.filter(f => f.id !== fileId))
-                          alert(t('fileDeleted', 'File deleted successfully'))
-                        } else {
-                          alert(t('fileDeleteFailed', 'Failed to delete file') + ': ' + result.error)
+              {errors.attachments && (
+                <span className="text-xs text-red-600">{errors.attachments}</span>
+              )}
+
+              {formData.attachments.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.attachments.map((file, index) => (
+                    <div key={index} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-xs">
+                      {file.type?.startsWith('image/') || (file instanceof File && file.type.startsWith('image/')) ? (
+                        <ImageIcon size={18} className="text-slate-400" />
+                      ) : (
+                        <FileText size={18} className="text-slate-400" />
+                      )}
+                      <span className="max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap text-slate-700">
+                        {file.name || (file instanceof File ? file.name : `File ${index + 1}`)}
+                      </span>
+                      <button
+                        type="button"
+                        className="flex items-center justify-center bg-transparent border-none cursor-pointer p-1 text-slate-400 transition-colors hover:text-red-600"
+                        onClick={() => removeAttachment(index)}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* S3 Attachments - Show existing files when editing */}
+              {isEditing && initialData?.id && (
+                <div className="pt-4 border-t border-slate-200">
+                  <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                    {t('existingAttachments', 'Existing Attachments')}
+                  </h5>
+                  {loadingS3Attachments ? (
+                    <div className="text-sm text-slate-400 italic">{t('loadingAttachments', 'Loading attachments...')}</div>
+                  ) : s3Attachments.length > 0 ? (
+                    <FileViewer
+                      files={s3Attachments}
+                      onDelete={async (fileId) => {
+                        if (!window.confirm(t('confirmDeleteFile', 'Are you sure you want to delete this file?'))) return
+                        try {
+                          const result = await uploadService.deleteS3File('wastages', initialData.id, fileId)
+                          if (result.success) {
+                            setS3Attachments(prev => prev.filter(f => f.id !== fileId))
+                            alert(t('fileDeleted', 'File deleted successfully'))
+                          } else {
+                            alert(t('fileDeleteFailed', 'Failed to delete file') + ': ' + result.error)
+                          }
+                        } catch (error) {
+                          console.error('Delete error:', error)
+                          alert(t('fileDeleteFailed', 'Failed to delete file') + ': ' + error.message)
                         }
-                      } catch (error) {
-                        console.error('Delete error:', error)
-                        alert(t('fileDeleteFailed', 'Failed to delete file') + ': ' + error.message)
-                      }
-                    }}
-                    onRefreshUrl={async (fileId) => {
-                      const result = await uploadService.getS3Files('wastages', initialData.id)
-                      if (result.success) {
-                        const file = result.data.find(f => f.id === fileId)
-                        if (file) return file.download_url || file.downloadUrl
-                      }
-                      return null
-                    }}
-                    canDelete={true}
-                  />
-                ) : (
-                  <div className="text-sm text-slate-400 italic">
-                    {t('noExistingAttachments', 'No existing attachments')}
-                  </div>
-                )}
-              </div>
-            )}
+                      }}
+                      onRefreshUrl={async (fileId) => {
+                        const result = await uploadService.getS3Files('wastages', initialData.id)
+                        if (result.success) {
+                          const file = result.data.find(f => f.id === fileId)
+                          if (file) return file.download_url || file.downloadUrl
+                        }
+                        return null
+                      }}
+                      canDelete={true}
+                    />
+                  ) : (
+                    <div className="text-sm text-slate-400 italic">
+                      {t('noExistingAttachments', 'No existing attachments')}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Form Actions */}
-          <div className="form-actions mt-2 max-sm:flex-col-reverse">
+          <div className="form-actions">
             <button
-              className="btn btn-outline max-sm:w-full"
+              type="button"
+              className="btn btn-outline"
               onClick={onClose}
               disabled={submitting}
             >
               {t('cancel', 'Cancel')}
             </button>
             <button
-              className="btn btn-primary flex items-center justify-center gap-2 max-sm:w-full"
+              type="button"
+              className="btn btn-primary"
               onClick={() => handleSubmit(false)}
               disabled={submitting || !isFormValid}
             >

@@ -118,44 +118,49 @@ const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
   }
 
   return (
-    <div className="role-info-panel">
+    <div className="mt-3 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800">
       <button
         type="button"
-        className="role-info-header"
+        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
         onClick={handleToggle}
         aria-expanded={isExpanded}
       >
-        <div className="role-info-summary">
-          <Shield size={16} className="role-icon" />
-          <span className="role-info-title">
-            {role.label} - <strong>{permissions.length}</strong> {t('permissions', 'permissions')}
-            {role.is_system && <span className="status-badge info">{t('system', 'System')}</span>}
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-blue-500" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            {role.label} - <strong className="text-blue-600 dark:text-blue-400">{permissions.length}</strong> {t('permissions', 'permissions')}
           </span>
+          {role.is_system && <span className="status-badge info text-xs">{t('system', 'System')}</span>}
         </div>
-        <span className={`chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
+        <span className={`text-slate-400 text-xs transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
       </button>
 
       {isExpanded && (
-        <div className="role-info-content">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
           {role.description && (
-            <p className="role-description">{role.description}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 italic">{role.description}</p>
           )}
 
-          <div className="role-hierarchy-badge">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
             {t('accessLevel', 'Access Level')}: <strong>{role.level}</strong> / 10
           </div>
 
-          <div className="permission-categories">
+          <div className="space-y-4">
             {Object.entries(groupedPermissions).map(([category, perms]) => (
-              <div key={category} className="permission-category">
-                <h5 className="category-title">
+              <div key={category} className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3">
+                <h5 className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">
                   {category}
-                  <span className="category-count">{perms.length}</span>
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-200 rounded-full text-[10px] font-bold">
+                    {perms.length}
+                  </span>
                 </h5>
-                <div className="permission-tags">
+                <div className="flex flex-wrap gap-1.5">
                   {perms.map(perm => (
-                    <span key={perm} className="permission-tag">
-                      <CheckCircle size={12} />
+                    <span
+                      key={perm}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded text-xs font-medium"
+                    >
+                      <CheckCircle size={10} />
                       {formatPermission(perm)}
                     </span>
                   ))}
@@ -165,7 +170,9 @@ const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
           </div>
 
           {permissions.length === 0 && (
-            <p className="no-permissions">{t('noPermissions', 'No permissions assigned to this role.')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4 italic">
+              {t('noPermissions', 'No permissions assigned to this role.')}
+            </p>
           )}
         </div>
       )}
@@ -685,7 +692,7 @@ const UserManagement = () => {
           initialPageSize={10}
           emptyMessage={t('noUsersFound', 'No users found')}
           headerActions={
-            <div className="header-actions-group">
+            <div className="flex items-center gap-3">
               <button
                 className="btn btn-outline"
                 onClick={loadUsers}
@@ -870,146 +877,173 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
       title={t('createUser', 'Create User')}
       size="md"
     >
-      <form onSubmit={handleSubmit} className="user-form">
-        <div className="form-group">
-          <label htmlFor="email">
-            {t('email', 'Email')} <span className="required">*</span>
-          </label>
-          <div className="input-with-icon">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Account Information Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
             <Mail size={16} />
-            <input
-              type="email"
-              id="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="user@company.com"
-              disabled={loading}
-              className={errors.email ? 'error' : ''}
-            />
+            {t('accountInformation', 'Account Information')}
+          </h4>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="email">
+                {t('email', 'Email')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="user@company.com"
+                disabled={loading}
+                className={errors.email ? 'border-red-500' : ''}
+              />
+              {errors.email && <span className="text-xs text-red-500 mt-1">{errors.email}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="username">
+                {t('username', 'Username')} <span className="text-slate-400 text-xs font-normal">({t('optional', 'Optional')})</span>
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                placeholder="john_doe"
+                disabled={loading}
+                className={errors.username ? 'border-red-500' : ''}
+                maxLength={30}
+              />
+              <span className="text-xs text-slate-500 mt-1">{t('usernameHint', 'Letters, numbers, and underscores only. Can be used for login.')}</span>
+              {errors.username && <span className="text-xs text-red-500 mt-1">{errors.username}</span>}
+            </div>
           </div>
-          {errors.email && <span className="error-text">{errors.email}</span>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="username">
-            {t('username', 'Username')} <span className="optional-label">({t('optional', 'Optional')})</span>
-          </label>
-          <div className="input-with-icon">
+        {/* Personal Information Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
             <User size={16} />
-            <input
-              type="text"
-              id="username"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
-              placeholder="john_doe"
-              disabled={loading}
-              className={errors.username ? 'error' : ''}
-              maxLength={30}
-            />
+            {t('personalInformation', 'Personal Information')}
+          </h4>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="firstName">
+                {t('firstName', 'First Name')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                placeholder="John"
+                disabled={loading}
+                className={errors.firstName ? 'border-red-500' : ''}
+              />
+              {errors.firstName && <span className="text-xs text-red-500 mt-1">{errors.firstName}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="lastName">
+                {t('lastName', 'Last Name')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                placeholder="Doe"
+                disabled={loading}
+                className={errors.lastName ? 'border-red-500' : ''}
+              />
+              {errors.lastName && <span className="text-xs text-red-500 mt-1">{errors.lastName}</span>}
+            </div>
           </div>
-          <span className="hint-text">{t('usernameHint', 'Letters, numbers, and underscores only. Can be used for login.')}</span>
-          {errors.username && <span className="error-text">{errors.username}</span>}
         </div>
 
-        <div className="form-row">
+        {/* Role & Permissions Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
+            <Shield size={16} />
+            {t('rolePermissions', 'Role & Permissions')}
+          </h4>
           <div className="form-group">
-            <label htmlFor="firstName">
-              {t('firstName', 'First Name')} <span className="required">*</span>
+            <label htmlFor="roleId">
+              {t('role', 'Role')} <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              placeholder="John"
+            <select
+              id="roleId"
+              value={formData.roleId}
+              onChange={(e) => setFormData({ ...formData, roleId: parseInt(e.target.value, 10) })}
               disabled={loading}
-              className={errors.firstName ? 'error' : ''}
-            />
-            {errors.firstName && <span className="error-text">{errors.firstName}</span>}
-          </div>
+              className={errors.roleId ? 'border-red-500' : ''}
+            >
+              <option value="">{t('selectRole', 'Select a role...')}</option>
+              {assignableRoles.map(role => (
+                <option key={role.value} value={role.value}>
+                  {role.label} ({role.permissions?.length || 0} {t('permissions', 'permissions')})
+                </option>
+              ))}
+            </select>
+            {errors.roleId && <span className="text-xs text-red-500 mt-1">{errors.roleId}</span>}
 
-          <div className="form-group">
-            <label htmlFor="lastName">
-              {t('lastName', 'Last Name')} <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              placeholder="Doe"
-              disabled={loading}
-              className={errors.lastName ? 'error' : ''}
-            />
-            {errors.lastName && <span className="error-text">{errors.lastName}</span>}
+            {/* Role Info Panel - shows permissions when a role is selected */}
+            {formData.roleId && (
+              <RoleInfoPanel
+                role={assignableRoles.find(r => r.value === formData.roleId)}
+                expanded={false}
+                t={t}
+              />
+            )}
           </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="roleId">
-            {t('role', 'Role')} <span className="required">*</span>
-          </label>
-          <select
-            id="roleId"
-            value={formData.roleId}
-            onChange={(e) => setFormData({ ...formData, roleId: parseInt(e.target.value, 10) })}
-            disabled={loading}
-            className={errors.roleId ? 'error' : ''}
-          >
-            <option value="">{t('selectRole', 'Select a role...')}</option>
-            {assignableRoles.map(role => (
-              <option key={role.value} value={role.value}>
-                {role.label} ({role.permissions?.length || 0} permissions)
-              </option>
-            ))}
-          </select>
-          {errors.roleId && <span className="error-text">{errors.roleId}</span>}
+        {/* Options Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
+            {t('options', 'Options')}
+          </h4>
+          <div className="space-y-3">
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.sendWelcomeEmail}
+                  onChange={(e) => setFormData({ ...formData, sendWelcomeEmail: e.target.checked })}
+                  disabled={loading}
+                />
+                <span>{t('sendWelcomeEmail', 'Send welcome email with temporary password')}</span>
+              </label>
+            </div>
 
-          {/* Role Info Panel - shows permissions when a role is selected */}
-          {formData.roleId && (
-            <RoleInfoPanel
-              role={assignableRoles.find(r => r.value === formData.roleId)}
-              expanded={false}
-              t={t}
-            />
-          )}
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.createPettyCashAccount}
+                  onChange={(e) => setFormData({ ...formData, createPettyCashAccount: e.target.checked })}
+                  disabled={loading}
+                />
+                <span>{t('createPettyCashAccount', 'Create petty cash account')}</span>
+              </label>
+              <span className="text-xs text-slate-500 mt-1 ml-7">
+                {t('pettyCashAccountHint', 'Account will be activated when a petty cash card is assigned')}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="form-group checkbox-group">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={formData.sendWelcomeEmail}
-              onChange={(e) => setFormData({ ...formData, sendWelcomeEmail: e.target.checked })}
-              disabled={loading}
-            />
-            <span>{t('sendWelcomeEmail', 'Send welcome email with temporary password')}</span>
-          </label>
-        </div>
-
-        <div className="form-group checkbox-group">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={formData.createPettyCashAccount}
-              onChange={(e) => setFormData({ ...formData, createPettyCashAccount: e.target.checked })}
-              disabled={loading}
-            />
-            <span>{t('createPettyCashAccount', 'Create petty cash account')}</span>
-          </label>
-          <span className="checkbox-hint">
-            {t('pettyCashAccountHint', 'Account will be activated when a petty cash card is assigned')}
-          </span>
-        </div>
-
-        <div className="form-info">
-          <AlertTriangle size={16} />
+        {/* Info Alert */}
+        <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+          <AlertTriangle size={18} className="flex-shrink-0" />
           <span>
             {t('tempPasswordInfo', 'A temporary password will be generated. The user will be required to change it on first login.')}
           </span>
         </div>
 
-        <div className="modal-actions">
+        {/* Modal Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
           <button
             type="button"
             className="btn btn-outline"
@@ -1139,114 +1173,142 @@ const EditUserModal = ({ isOpen, onClose, onSubmit, user, loading, currentUserRo
       description={user?.email}
       size="md"
     >
-      <form onSubmit={handleSubmit} className="user-form">
-        <div className="user-summary">
-          <div className="user-avatar large">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* User Summary Header */}
+        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-lg font-semibold">
             {user.firstName?.[0]}{user.lastName?.[0]}
           </div>
-          <div className="user-summary-info">
-            <strong>{user.firstName} {user.lastName}</strong>
-            <span>{user.email}</span>
+          <div className="flex flex-col gap-1">
+            <strong className="text-slate-900 dark:text-slate-100">{user.firstName} {user.lastName}</strong>
+            <span className="text-sm text-slate-600 dark:text-slate-400">{user.email}</span>
             {user.username && (
-              <span className="status-badge info">@{user.username}</span>
+              <span className="status-badge info w-fit">@{user.username}</span>
             )}
-            <span className="user-meta">
+            <span className="text-xs text-slate-500 dark:text-slate-500">
               {t('created', 'Created')}: {formatDate(user.createdAt)}
               {user.lastLoginAt && ` • ${t('lastLogin', 'Last login')}: ${formatDateTime(user.lastLoginAt)}`}
             </span>
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="editFirstName">
-              {t('firstName', 'First Name')} <span className="required">*</span>
-            </label>
-            <input
-              type="text"
-              id="editFirstName"
-              value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              disabled={loading}
-              className={errors.firstName ? 'error' : ''}
-            />
-            {errors.firstName && <span className="error-text">{errors.firstName}</span>}
+        {/* Personal Information Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
+            <User size={16} />
+            {t('personalInformation', 'Personal Information')}
+          </h4>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="editFirstName">
+                {t('firstName', 'First Name')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="editFirstName"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                disabled={loading}
+                className={errors.firstName ? 'border-red-500' : ''}
+              />
+              {errors.firstName && <span className="text-xs text-red-500 mt-1">{errors.firstName}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="editLastName">
+                {t('lastName', 'Last Name')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="editLastName"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                disabled={loading}
+                className={errors.lastName ? 'border-red-500' : ''}
+              />
+              {errors.lastName && <span className="text-xs text-red-500 mt-1">{errors.lastName}</span>}
+            </div>
           </div>
+        </div>
 
+        {/* Role & Permissions Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
+            <Shield size={16} />
+            {t('rolePermissions', 'Role & Permissions')}
+          </h4>
           <div className="form-group">
-            <label htmlFor="editLastName">
-              {t('lastName', 'Last Name')} <span className="required">*</span>
+            <label htmlFor="editRoleId">
+              {t('role', 'Role')} <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              id="editLastName"
-              value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+            <select
+              id="editRoleId"
+              value={formData.roleId}
+              onChange={(e) => setFormData({ ...formData, roleId: parseInt(e.target.value, 10) })}
               disabled={loading}
-              className={errors.lastName ? 'error' : ''}
-            />
-            {errors.lastName && <span className="error-text">{errors.lastName}</span>}
+              className={errors.roleId ? 'border-red-500' : ''}
+            >
+              <option value="">{t('selectRole', 'Select a role...')}</option>
+              {assignableRoles.map(role => (
+                <option key={role.value} value={role.value}>
+                  {role.label} ({role.permissions?.length || 0} {t('permissions', 'permissions')})
+                </option>
+              ))}
+            </select>
+            {errors.roleId && <span className="text-xs text-red-500 mt-1">{errors.roleId}</span>}
+
+            {/* Role Info Panel - shows permissions when a role is selected */}
+            {formData.roleId && (
+              <RoleInfoPanel
+                role={assignableRoles.find(r => r.value === formData.roleId)}
+                expanded={false}
+                t={t}
+              />
+            )}
           </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="editRoleId">
-            {t('role', 'Role')} <span className="required">*</span>
-          </label>
-          <select
-            id="editRoleId"
-            value={formData.roleId}
-            onChange={(e) => setFormData({ ...formData, roleId: parseInt(e.target.value, 10) })}
-            disabled={loading}
-            className={errors.roleId ? 'error' : ''}
-          >
-            <option value="">{t('selectRole', 'Select a role...')}</option>
-            {assignableRoles.map(role => (
-              <option key={role.value} value={role.value}>
-                {role.label} ({role.permissions?.length || 0} permissions)
-              </option>
-            ))}
-          </select>
-          {errors.roleId && <span className="error-text">{errors.roleId}</span>}
+        {/* Account Status Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
+            {t('accountStatus', 'Account Status')}
+          </h4>
+          <div className="space-y-3">
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  disabled={loading}
+                />
+                <span>{t('accountActive', 'Account is active')}</span>
+              </label>
+            </div>
 
-          {/* Role Info Panel - shows permissions when a role is selected */}
-          {formData.roleId && (
-            <RoleInfoPanel
-              role={assignableRoles.find(r => r.value === formData.roleId)}
-              expanded={false}
-              t={t}
-            />
-          )}
+            {/* MFA Status (read-only) */}
+            <div className={`flex items-center gap-3 p-3 rounded-lg text-sm ${
+              user.mfaEnabled
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+            }`}>
+              {user.mfaEnabled ? (
+                <>
+                  <ShieldCheck size={18} />
+                  <span>{t('mfaEnabled', 'Two-factor authentication is enabled')}</span>
+                </>
+              ) : (
+                <>
+                  <ShieldOff size={18} />
+                  <span>{t('mfaDisabled', 'Two-factor authentication is not enabled')}</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="form-group checkbox-group">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              disabled={loading}
-            />
-            <span>{t('accountActive', 'Account is active')}</span>
-          </label>
-        </div>
-
-        {/* MFA Status (read-only) */}
-        <div className="form-info mfa-info">
-          {user.mfaEnabled ? (
-            <>
-              <ShieldCheck size={16} className="text-success" />
-              <span>{t('mfaEnabled', 'Two-factor authentication is enabled')}</span>
-            </>
-          ) : (
-            <>
-              <ShieldOff size={16} className="text-muted" />
-              <span>{t('mfaDisabled', 'Two-factor authentication is not enabled')}</span>
-            </>
-          )}
-        </div>
-
-        <div className="modal-actions">
+        {/* Modal Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
           <button
             type="button"
             className="btn btn-outline"
@@ -1312,33 +1374,42 @@ const TempPasswordModal = ({ isOpen, onClose, data, t }) => {
       title={t('tempPasswordGenerated', 'Temporary Password Generated')}
       size="sm"
     >
-      <div className="temp-password-modal">
-        <div className="temp-password-user">
-          <strong>{data.userName}</strong>
-          <span>{data.email}</span>
+      <div className="space-y-5">
+        {/* User Info */}
+        <div className="flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-lg font-semibold mb-3">
+            <Key size={24} />
+          </div>
+          <strong className="text-slate-900 dark:text-slate-100">{data.userName}</strong>
+          <span className="text-sm text-slate-500 dark:text-slate-400">{data.email}</span>
         </div>
 
-        <div className="temp-password-box">
-          <code className="temp-password-value">{data.password}</code>
+        {/* Password Box */}
+        <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+          <code className="flex-1 font-mono text-lg font-semibold text-blue-600 dark:text-blue-400 tracking-wider select-all">
+            {data.password}
+          </code>
           <button
-            className={`btn-copy ${copied ? 'copied' : ''}`}
+            className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline'}`}
             onClick={handleCopy}
             title={t('copyPassword', 'Copy Password')}
           >
             {copied ? (
-              <><CheckCircle size={16} /> {t('tempPasswordCopied', 'Copied!')}</>
+              <><CheckCircle size={14} /> {t('tempPasswordCopied', 'Copied!')}</>
             ) : (
-              <><Copy size={16} /> {t('copyPassword', 'Copy')}</>
+              <><Copy size={14} /> {t('copyPassword', 'Copy')}</>
             )}
           </button>
         </div>
 
-        <p className="temp-password-instructions">
-          <AlertTriangle size={16} />
-          {t('passwordCopyInstructions', 'Copy this password and share it securely with the user. They will be required to change it on first login.')}
-        </p>
+        {/* Instructions */}
+        <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+          <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+          <span>{t('passwordCopyInstructions', 'Copy this password and share it securely with the user. They will be required to change it on first login.')}</span>
+        </div>
 
-        <div className="modal-actions">
+        {/* Modal Actions */}
+        <div className="flex items-center justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
           <button
             className="btn btn-primary"
             onClick={onClose}

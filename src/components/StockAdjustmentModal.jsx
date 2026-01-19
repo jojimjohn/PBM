@@ -165,20 +165,15 @@ const StockAdjustmentModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        <div className="flex items-center gap-2 text-gray-900">
-          <Package size={24} />
-          <span>{t('stockAdjustment', 'Stock Adjustment')}</span>
-        </div>
-      }
-      className="max-w-[600px] w-[95vw]"
+      title={t('stockAdjustment', 'Stock Adjustment')}
+      size="md"
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-0">
         {/* Message Display */}
         {message && (
-          <div className={`flex items-center gap-2 px-4 py-3 rounded-md text-sm font-medium ${
+          <div className={`flex items-center gap-2 px-4 py-3 mb-4 text-sm font-medium ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-700 border border-green-200'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               : 'bg-red-50 text-red-700 border border-red-200'
           }`}>
             {message.type === 'success' && <Check size={16} />}
@@ -187,182 +182,200 @@ const StockAdjustmentModal = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-0">
           {/* Material Selection */}
           <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="material">{t('material', 'Material')} *</label>
-              <select
-                id="material"
-                value={selectedMaterialId}
-                onChange={(e) => setSelectedMaterialId(e.target.value)}
-                required
-                disabled={submitting}
-              >
-                <option value="">{t('selectMaterial', 'Select a material...')}</option>
-                {materials.map(material => (
-                  <option key={material.id} value={material.id}>
-                    {material.code} - {material.name}
-                  </option>
-                ))}
-              </select>
+            <div className="form-section-title">
+              <Package size={18} />
+              {t('material', 'Material')}
             </div>
-
-            {/* Current Stock Display */}
-            {selectedMaterialId && (
-              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-md">
-                <span className="text-[0.8125rem] text-gray-600">{t('currentStock', 'Current Stock')}:</span>
-                <span className="text-base font-semibold text-gray-900">{currentStock.toFixed(2)} {unit}</span>
+            <div className="p-5 space-y-4">
+              <div className="form-group">
+                <label htmlFor="material">{t('selectMaterial', 'Select Material')} *</label>
+                <select
+                  id="material"
+                  value={selectedMaterialId}
+                  onChange={(e) => setSelectedMaterialId(e.target.value)}
+                  required
+                  disabled={submitting}
+                >
+                  <option value="">{t('selectMaterial', 'Select a material...')}</option>
+                  {materials.map(material => (
+                    <option key={material.id} value={material.id}>
+                      {material.code} - {material.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
+
+              {/* Current Stock Display */}
+              {selectedMaterialId && (
+                <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border border-blue-200">
+                  <span className="text-sm text-blue-700">{t('currentStock', 'Current Stock')}:</span>
+                  <span className="text-base font-semibold text-blue-800">{currentStock.toFixed(2)} {unit}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Adjustment Type */}
           <div className="form-section">
-            <label className="text-sm font-semibold text-gray-700">{t('adjustmentType', 'Adjustment Type')}</label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              <button
-                type="button"
-                className={`flex flex-col items-center gap-1 py-3 px-4 border-2 rounded-md text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'increase' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
-                onClick={() => setAdjustmentType('increase')}
-                disabled={submitting}
-              >
-                <Plus size={18} />
-                <span>{t('increase', 'Increase')}</span>
-              </button>
-              <button
-                type="button"
-                className={`flex flex-col items-center gap-1 py-3 px-4 border-2 rounded-md text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'decrease' ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
-                onClick={() => setAdjustmentType('decrease')}
-                disabled={submitting}
-              >
-                <Minus size={18} />
-                <span>{t('decrease', 'Decrease')}</span>
-              </button>
-              <button
-                type="button"
-                className={`flex flex-col items-center gap-1 py-3 px-4 border-2 rounded-md text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'set' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}
-                onClick={() => setAdjustmentType('set')}
-                disabled={submitting}
-              >
-                <RefreshCw size={18} />
-                <span>{t('setTo', 'Set To')}</span>
-              </button>
+            <div className="form-section-title">
+              {t('adjustmentType', 'Adjustment Type')}
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  className={`flex flex-col items-center gap-2 py-4 px-4 border-2 text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'increase' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}`}
+                  onClick={() => setAdjustmentType('increase')}
+                  disabled={submitting}
+                >
+                  <Plus size={20} />
+                  <span>{t('increase', 'Increase')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`flex flex-col items-center gap-2 py-4 px-4 border-2 text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'decrease' ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}`}
+                  onClick={() => setAdjustmentType('decrease')}
+                  disabled={submitting}
+                >
+                  <Minus size={20} />
+                  <span>{t('decrease', 'Decrease')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`flex flex-col items-center gap-2 py-4 px-4 border-2 text-sm font-medium cursor-pointer transition-all disabled:opacity-60 ${adjustmentType === 'set' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'}`}
+                  onClick={() => setAdjustmentType('set')}
+                  disabled={submitting}
+                >
+                  <RefreshCw size={20} />
+                  <span>{t('setTo', 'Set To')}</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Quantity Input */}
+          {/* Quantity & Result Section */}
           <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="quantity">
-                {adjustmentType === 'set'
-                  ? t('newQuantity', 'New Quantity')
-                  : adjustmentType === 'increase'
-                    ? t('quantityToAdd', 'Quantity to Add')
-                    : t('quantityToRemove', 'Quantity to Remove')
-                } *
-              </label>
-              <div className="flex items-stretch">
-                <input
-                  type="number"
-                  id="quantity"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  required
-                  disabled={submitting}
-                  className="flex-1 rounded-r-none"
-                />
-                <span className="flex items-center px-3 bg-gray-100 border border-gray-300 border-l-0 rounded-r-md text-[0.8125rem] text-gray-600">{unit}</span>
-              </div>
-              {adjustmentType === 'decrease' && parseFloat(quantity) > currentStock && (
-                <span className="flex items-center gap-1.5 text-xs text-red-600 mt-1">
-                  <AlertTriangle size={14} />
-                  {t('cannotRemoveMoreThanStock', 'Cannot remove more than current stock')}
-                </span>
-              )}
+            <div className="form-section-title">
+              {t('quantityDetails', 'Quantity Details')}
             </div>
-
-            {/* New Stock Preview */}
-            {selectedMaterialId && quantity && (
-              <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-200 rounded-md">
-                <span className="text-[0.8125rem] text-blue-700">{t('newStock', 'New Stock Level')}:</span>
-                <span className={`font-semibold ${getNewStock() === 0 ? 'text-amber-600' : 'text-blue-700'}`}>
-                  {getNewStock().toFixed(2)} {unit}
-                </span>
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="quantity">
+                  {adjustmentType === 'set'
+                    ? t('newQuantity', 'New Quantity')
+                    : adjustmentType === 'increase'
+                      ? t('quantityToAdd', 'Quantity to Add')
+                      : t('quantityToRemove', 'Quantity to Remove')
+                  } *
+                </label>
+                <div className="flex items-stretch">
+                  <input
+                    type="number"
+                    id="quantity"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    required
+                    disabled={submitting}
+                    className="flex-1 !rounded-r-none !border-r-0"
+                  />
+                  <span className="flex items-center px-3 bg-slate-100 border border-slate-300 text-sm text-slate-600">{unit}</span>
+                </div>
+                {adjustmentType === 'decrease' && parseFloat(quantity) > currentStock && (
+                  <span className="flex items-center gap-1.5 text-xs text-red-600 mt-1">
+                    <AlertTriangle size={14} />
+                    {t('cannotRemoveMoreThanStock', 'Cannot remove more than current stock')}
+                  </span>
+                )}
               </div>
-            )}
+
+              {/* New Stock Preview */}
+              <div className="form-group">
+                <label>{t('newStock', 'New Stock Level')}</label>
+                <div className={`flex items-center justify-center px-4 py-2.5 text-base font-semibold border ${
+                  selectedMaterialId && quantity
+                    ? getNewStock() === 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : 'bg-slate-50 border-slate-200 text-slate-400'
+                }`}>
+                  {selectedMaterialId && quantity ? `${getNewStock().toFixed(2)} ${unit}` : '-'}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Reason Selection */}
           <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="reason">{t('adjustmentReason', 'Adjustment Reason')} *</label>
-              <select
-                id="reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                required
-                disabled={submitting}
-              >
-                <option value="">{t('selectReason', 'Select a reason...')}</option>
-                {adjustmentReasons.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
+            <div className="form-section-title">
+              {t('adjustmentReason', 'Adjustment Reason')}
             </div>
-
-            {reason === 'other' && (
+            <div className="form-grid">
               <div className="form-group">
-                <label htmlFor="customReason">{t('specifyReason', 'Specify Reason')} *</label>
-                <input
-                  type="text"
-                  id="customReason"
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  placeholder={t('enterReason', 'Enter adjustment reason...')}
+                <label htmlFor="reason">{t('reason', 'Reason')} *</label>
+                <select
+                  id="reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
                   required
+                  disabled={submitting}
+                >
+                  <option value="">{t('selectReason', 'Select a reason...')}</option>
+                  {adjustmentReasons.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {reason === 'other' && (
+                <div className="form-group">
+                  <label htmlFor="customReason">{t('specifyReason', 'Specify Reason')} *</label>
+                  <input
+                    type="text"
+                    id="customReason"
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    placeholder={t('enterReason', 'Enter adjustment reason...')}
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+              )}
+
+              <div className="form-group full-width">
+                <label htmlFor="notes">{t('notes', 'Notes')}</label>
+                <textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={t('notesPlaceholder', 'Add any additional details about this adjustment...')}
+                  rows={2}
                   disabled={submitting}
                 />
               </div>
-            )}
-          </div>
-
-          {/* Notes */}
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="notes">{t('notes', 'Notes')} ({t('optional', 'optional')})</label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder={t('notesPlaceholder', 'Add any additional details about this adjustment...')}
-                rows={2}
-                disabled={submitting}
-              />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-2">
+          <div className="form-actions">
             <button
               type="button"
-              className="btn btn-outline flex items-center gap-1.5"
+              className="btn btn-outline"
               onClick={onClose}
               disabled={submitting}
             >
-              <X size={16} />
               {t('cancel', 'Cancel')}
             </button>
             <button
               type="submit"
-              className="btn btn-primary flex items-center gap-1.5"
+              className="btn btn-primary"
               disabled={!isValid() || submitting}
             >
               {submitting ? (
-                <>{t('saving', 'Saving...')}</>
+                t('saving', 'Saving...')
               ) : (
                 <>
                   <FileText size={16} />

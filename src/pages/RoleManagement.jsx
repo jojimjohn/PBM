@@ -23,6 +23,7 @@ import PermissionMatrix from '../components/ui/PermissionMatrix'
 import {
   Shield,
   ShieldPlus,
+  ShieldCheck,
   Edit,
   Trash2,
   Copy,
@@ -328,12 +329,12 @@ const RoleManagement = ({ embedded = false }) => {
       render: (value, row) => {
         if (!row) return null
         return (
-          <div className="role-name-cell">
-            <Shield className="role-icon" size={18} />
-            <div>
-              <span className="role-name">{row.name}</span>
+          <div className="flex items-center gap-3">
+            <Shield className="text-blue-500 flex-shrink-0" size={18} />
+            <div className="flex flex-col">
+              <span className="font-medium text-slate-900 dark:text-slate-100">{row.name}</span>
               {row.description && (
-                <span className="role-description">{row.description}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{row.description}</span>
               )}
             </div>
           </div>
@@ -356,7 +357,11 @@ const RoleManagement = ({ embedded = false }) => {
       sortable: true,
       render: (value, row) => {
         if (!row) return null
-        return <span className="hierarchy-badge">Level {row.hierarchy_level}</span>
+        return (
+          <span className="inline-flex items-center px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-medium">
+            {t('level') || 'Level'} {row.hierarchy_level}
+          </span>
+        )
       }
     },
     {
@@ -366,8 +371,8 @@ const RoleManagement = ({ embedded = false }) => {
         if (!row) return null
         const count = row.permissions?.length || 0
         return (
-          <span className="permissions-count">
-            {count} {count === 1 ? 'permission' : 'permissions'}
+          <span className="text-sm text-slate-600 dark:text-slate-400">
+            {count} {count === 1 ? (t('permission') || 'permission') : (t('permissions') || 'permissions')}
           </span>
         )
       }
@@ -379,14 +384,15 @@ const RoleManagement = ({ embedded = false }) => {
         if (!row) return null
         return (
           <button
-            className="users-count-btn"
+            className="btn btn-outline btn-sm user-count-btn"
             onClick={(e) => {
               e.stopPropagation()
               openUsersModal(row)
             }}
+            title={t('viewRoleUsers') || 'View Role Users'}
           >
             <Users size={14} />
-            {row.user_count || 0}
+            <span className="user-count-badge">{row.user_count || 0}</span>
           </button>
         )
       }
@@ -519,7 +525,7 @@ const RoleManagement = ({ embedded = false }) => {
         emptyMessage={t('noRolesFound') || 'No roles found'}
         onRowClick={(row) => !row.is_system && canManageRoles && openEditModal(row)}
         headerActions={
-          <div className="header-actions-group">
+          <div className="flex items-center gap-3">
             <button
               className="btn btn-outline"
               onClick={loadRoles}
@@ -548,41 +554,33 @@ const RoleManagement = ({ embedded = false }) => {
           setShowCreateModal(false)
           setShowEditModal(false)
         }}
-        title={
-          <div className="role-modal-title">
-            <Shield size={20} />
-            <span>{showCreateModal ? (t('createRole') || 'Create Role') : (t('editRole') || 'Edit Role')}</span>
-            {selectedRole?.is_system && (
-              <span className="status-badge info">{t('systemRole') || 'System Role'}</span>
-            )}
-          </div>
-        }
+        title={showCreateModal ? (t('createRole') || 'Create Role') : (t('editRole') || 'Edit Role')}
         size="large"
       >
-        <div className="role-form">
+        <div className="space-y-5">
           {/* System Role Info Banner */}
           {selectedRole?.is_system && (
-            <div className="system-role-banner">
-              <Lock size={16} />
+            <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+              <Lock size={18} className="flex-shrink-0" />
               <span>{t('cannotEditSystemRole') || 'System roles cannot be edited'} - {t('viewOnly') || 'View Only'}</span>
             </div>
           )}
 
           {/* Role Details Section */}
           <div className="form-section">
-            <div className="section-header">
-              <h3>{t('roleDetails') || 'Role Details'}</h3>
-            </div>
+            <h4 className="form-section-title">
+              <Shield size={16} />
+              {t('roleDetails') || 'Role Details'}
+            </h4>
 
             <div className="form-grid">
               <div className="form-group">
-                <label className="form-label">
+                <label>
                   {t('roleName') || 'Role Name'}
-                  {!selectedRole?.is_system && <span className="required">*</span>}
+                  {!selectedRole?.is_system && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="text"
-                  className="form-input"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('enterRoleName') || 'Enter role name'}
@@ -591,9 +589,8 @@ const RoleManagement = ({ embedded = false }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">{t('hierarchyLevel') || 'Hierarchy Level'}</label>
+                <label>{t('hierarchyLevel') || 'Hierarchy Level'}</label>
                 <select
-                  className="form-select"
                   value={formData.hierarchyLevel}
                   onChange={(e) => setFormData({ ...formData, hierarchyLevel: parseInt(e.target.value) })}
                   disabled={selectedRole?.is_system}
@@ -604,16 +601,15 @@ const RoleManagement = ({ embedded = false }) => {
                     </option>
                   ))}
                 </select>
-                <span className="form-hint">
+                <span className="text-xs text-slate-500 mt-1">
                   {t('hierarchyLevelHint') || 'Users can only manage roles with lower hierarchy levels'}
                 </span>
               </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label">{t('description') || 'Description'}</label>
+              <label>{t('description') || 'Description'}</label>
               <textarea
-                className="form-textarea"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder={t('enterDescription') || 'Enter description'}
@@ -624,16 +620,19 @@ const RoleManagement = ({ embedded = false }) => {
           </div>
 
           {/* Permissions Section */}
-          <div className="form-section permissions-section">
-            <div className="section-header">
-              <h3>{t('permissions') || 'Permissions'}</h3>
+          <div className="form-section">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="form-section-title !mb-0">
+                <ShieldCheck size={16} />
+                {t('permissions') || 'Permissions'}
+              </h4>
               {formData.permissions.length > 0 && (
-                <span className="permissions-counter">
-                  {formData.permissions.length} {t('permissionsSelected') || 'permissions selected'}
+                <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold">
+                  {formData.permissions.length} {t('permissionsSelected') || 'selected'}
                 </span>
               )}
             </div>
-            <p className="form-hint section-hint">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               {t('selectPermissionsHint') || 'Select the permissions this role should have'}
             </p>
 
@@ -647,7 +646,7 @@ const RoleManagement = ({ embedded = false }) => {
           </div>
 
           {/* Modal Actions */}
-          <div className="modal-actions">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
               className="btn btn-outline"
               onClick={() => {
@@ -684,17 +683,21 @@ const RoleManagement = ({ embedded = false }) => {
         title={cloneSuccess ? (t('roleCloned') || 'Role Cloned') : (t('cloneRole') || 'Clone Role')}
         size="small"
       >
-        <div className="clone-form">
+        <div className="space-y-5">
           {cloneSuccess ? (
             <>
-              <div className="success-message">
-                <CheckCircle size={48} className="success-icon" />
-                <p>{t('roleClonedSuccess') || 'Role cloned successfully!'}</p>
-                <p className="text-muted">
-                  {t('newRoleCreated') || 'New role'} <strong>{cloneName}</strong> {t('hasBeenCreated') || 'has been created.'}
+              <div className="flex flex-col items-center text-center py-6">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mb-4">
+                  <CheckCircle size={32} className="text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  {t('roleClonedSuccess') || 'Role cloned successfully!'}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t('newRoleCreated') || 'New role'} <strong className="text-slate-700 dark:text-slate-200">{cloneName}</strong> {t('hasBeenCreated') || 'has been created.'}
                 </p>
               </div>
-              <div className="modal-actions">
+              <div className="flex items-center justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button className="btn btn-primary" onClick={handleCloseCloneModal}>
                   {t('close') || 'Close'}
                 </button>
@@ -702,22 +705,21 @@ const RoleManagement = ({ embedded = false }) => {
             </>
           ) : (
             <>
-              <p className="text-muted">
-                {t('cloneRoleDescription') || 'Create a copy of'} <strong>{selectedRole?.name}</strong>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {t('cloneRoleDescription') || 'Create a copy of'} <strong className="text-slate-900 dark:text-slate-100">{selectedRole?.name}</strong>
               </p>
 
               <div className="form-group">
-                <label>{t('newRoleName') || 'New Role Name'} *</label>
+                <label>{t('newRoleName') || 'New Role Name'} <span className="text-red-500">*</span></label>
                 <input
                   type="text"
-                  className="form-input"
                   value={cloneName}
                   onChange={(e) => setCloneName(e.target.value)}
                   placeholder={t('enterNewName') || 'Enter new name'}
                 />
               </div>
 
-              <div className="modal-actions">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button className="btn btn-outline" onClick={handleCloseCloneModal}>
                   {t('cancel') || 'Cancel'}
                 </button>
@@ -726,7 +728,17 @@ const RoleManagement = ({ embedded = false }) => {
                   onClick={handleCloneRole}
                   disabled={actionLoading || !cloneName.trim() || cloneSuccess}
                 >
-                  {actionLoading ? (t('cloning') || 'Cloning...') : (t('clone') || 'Clone')}
+                  {actionLoading ? (
+                    <>
+                      <RefreshCw size={14} className="spinning" />
+                      {t('cloning') || 'Cloning...'}
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} />
+                      {t('clone') || 'Clone'}
+                    </>
+                  )}
                 </button>
               </div>
             </>
@@ -741,19 +753,24 @@ const RoleManagement = ({ embedded = false }) => {
         title={t('deleteRole') || 'Delete Role'}
         size="small"
       >
-        <div className="delete-confirmation">
-          <AlertTriangle size={48} className="warning-icon" />
-          <p>
-            {t('deleteRoleConfirmation') || 'Are you sure you want to delete'} <strong>{selectedRole?.name}</strong>?
-          </p>
+        <div className="space-y-5">
+          <div className="flex flex-col items-center text-center py-4">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-4">
+              <AlertTriangle size={32} className="text-red-600 dark:text-red-400" />
+            </div>
+            <p className="text-slate-700 dark:text-slate-300">
+              {t('deleteRoleConfirmation') || 'Are you sure you want to delete'} <strong className="text-slate-900 dark:text-slate-100">{selectedRole?.name}</strong>?
+            </p>
+          </div>
+
           {selectedRole?.user_count > 0 && (
-            <div className="warning-message">
-              <AlertTriangle size={16} />
-              {t('roleHasUsers') || 'This role has'} {selectedRole?.user_count} {t('usersAssigned') || 'users assigned'}
+            <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+              <AlertTriangle size={18} className="flex-shrink-0" />
+              <span>{t('roleHasUsers') || 'This role has'} <strong>{selectedRole?.user_count}</strong> {t('usersAssigned') || 'users assigned'}</span>
             </div>
           )}
 
-          <div className="modal-actions">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button className="btn btn-outline" onClick={() => setShowDeleteModal(false)}>
               {t('cancel') || 'Cancel'}
             </button>
@@ -762,7 +779,17 @@ const RoleManagement = ({ embedded = false }) => {
               onClick={handleDeleteRole}
               disabled={actionLoading}
             >
-              {actionLoading ? (t('deleting') || 'Deleting...') : (t('delete') || 'Delete')}
+              {actionLoading ? (
+                <>
+                  <RefreshCw size={14} className="spinning" />
+                  {t('deleting') || 'Deleting...'}
+                </>
+              ) : (
+                <>
+                  <Trash2 size={14} />
+                  {t('delete') || 'Delete'}
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -778,29 +805,35 @@ const RoleManagement = ({ embedded = false }) => {
         title={`${t('usersWithRole') || 'Users with role'}: ${selectedRole?.name}`}
         size="medium"
       >
-        <div className="role-users-modal">
+        <div className="space-y-5">
           {roleUsers.length === 0 ? (
-            <div className="empty-users">
-              <Users size={32} />
-              <p>{t('noUsersWithRole') || 'No users have this role'}</p>
+            <div className="flex flex-col items-center text-center py-8">
+              <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-4">
+                <Users size={32} className="text-slate-400 dark:text-slate-500" />
+              </div>
+              <p className="text-slate-500 dark:text-slate-400">{t('noUsersWithRole') || 'No users have this role'}</p>
             </div>
           ) : (
-            <div className="users-list">
-              {roleUsers.map(user => (
-                <div key={user.id} className="user-item">
-                  <div className="user-info">
-                    <span className="user-name">{user.firstName} {user.lastName}</span>
-                    <span className="user-email">{user.email}</span>
+            <div className="divide-y divide-slate-200 dark:divide-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+              {roleUsers.map(user => {
+                // Handle both snake_case and camelCase property names
+                const isActive = user.is_active ?? user.isActive ?? true
+                return (
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{user.firstName} {user.lastName}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{user.email}</span>
+                    </div>
+                    <span className={`status-badge ${isActive ? 'success' : 'neutral'}`}>
+                      {isActive ? t('active') || 'Active' : t('inactive') || 'Inactive'}
+                    </span>
                   </div>
-                  <span className={`status-badge ${user.is_active ? 'success' : 'neutral'}`}>
-                    {user.is_active ? t('active') || 'Active' : t('inactive') || 'Inactive'}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
-          <div className="modal-actions">
+          <div className="flex items-center justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
             <button className="btn btn-outline" onClick={() => setShowUsersModal(false)}>
               {t('close') || 'Close'}
             </button>

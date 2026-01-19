@@ -13,9 +13,6 @@ import Modal from '../../../components/ui/Modal'
 import FIFOPreviewModal from '../../../components/FIFOPreviewModal'
 import FileUpload from '../../../components/ui/FileUpload'
 import FileViewer from '../../../components/ui/FileViewer'
-import DateInput from '../../../components/ui/DateInput'
-import Autocomplete from '../../../components/ui/Autocomplete'
-import Input, { Textarea } from '../../../components/ui/Input'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import AlertDialog from '../../../components/ui/AlertDialog'
 import showToast from '../../../components/ui/Toast'
@@ -456,9 +453,9 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
       <form className="max-h-[calc(90vh-160px)] overflow-y-auto p-0" onSubmit={handleSubmit}>
         {/* Draft Mode Info */}
         {formData.status === 'draft' && (
-          <div className="info-banner" style={{ background: '#e3f2fd', padding: '12px', borderRadius: '4px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertTriangle size={18} style={{ color: '#1976d2' }} />
-            <span style={{ color: '#1565c0' }}>
+          <div className="flex items-center gap-3 px-4 py-3 mb-5 mx-5 mt-5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+            <AlertTriangle size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className="text-blue-700 dark:text-blue-300 text-sm">
               <strong>{t('draftMode', 'Draft Mode')}:</strong> {t('draftModeInfo', 'You can save with minimal information (Customer only). Additional details can be added later.')}
             </span>
           </div>
@@ -472,44 +469,44 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           </div>
           <div className="form-grid">
             <div className="form-group">
-              <Input
-                label={t('orderNumber', 'Order Number')}
+              <label>{t('orderNumber', 'Order Number')} *</label>
+              <input
                 type="text"
                 value={formData.orderNumber}
                 onChange={(e) => formHook.setField('orderNumber', e.target.value)}
-                required
                 readOnly
+                disabled
               />
             </div>
             <div className="form-group">
-              <DateInput
-                label={t('orderDate', 'Order Date')}
+              <label>{t('orderDate', 'Order Date')} *</label>
+              <input
+                type="date"
                 value={formData.orderDate || ''}
-                onChange={(value) => formHook.setField('orderDate', value || '')}
+                onChange={(e) => formHook.setField('orderDate', e.target.value)}
                 required
               />
             </div>
             <div className="form-group">
-              <DateInput
-                label={t('expectedDeliveryDate', 'Expected Delivery Date')}
+              <label>{t('expectedDeliveryDate', 'Expected Delivery Date')}</label>
+              <input
+                type="date"
                 value={formData.deliveryDate || ''}
-                onChange={(value) => formHook.setField('deliveryDate', value || '')}
-                minDate={formData.orderDate || ''}
+                onChange={(e) => formHook.setField('deliveryDate', e.target.value)}
+                min={formData.orderDate || ''}
               />
             </div>
             <div className="form-group">
-              <Autocomplete
-                label={t('orderStatus', 'Order Status')}
-                options={[
-                  { value: 'draft', label: t('draft', 'Draft') },
-                  { value: 'confirmed', label: t('confirmed', 'Confirmed') },
-                  { value: 'delivered', label: t('delivered', 'Delivered') },
-                  { value: 'cancelled', label: t('cancelled', 'Cancelled') }
-                ]}
+              <label>{t('orderStatus', 'Order Status')}</label>
+              <select
                 value={formData.status}
-                onChange={(value) => formHook.setField('status', value)}
-                searchable={false}
-              />
+                onChange={(e) => formHook.setField('status', e.target.value)}
+              >
+                <option value="draft">{t('draft', 'Draft')}</option>
+                <option value="confirmed">{t('confirmed', 'Confirmed')}</option>
+                <option value="delivered">{t('delivered', 'Delivered')}</option>
+                <option value="cancelled">{t('cancelled', 'Cancelled')}</option>
+              </select>
             </div>
           </div>
         </div>
@@ -520,7 +517,7 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
             <User size={20} />
             {t('customerDetails', 'Customer Details')}
             {formData.customer?.contractDetails && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 ml-auto bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1 px-3 py-1 ml-auto bg-emerald-100 text-emerald-700 text-xs font-medium">
                 <Check size={16} />
                 {t('contractCustomer', 'Contract Customer')}
               </span>
@@ -528,54 +525,55 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           </div>
           <div className="form-grid">
             <div className="form-group">
-              <Autocomplete
-                label={t('selectCustomer', 'Select Customer')}
-                options={customers}
-                value={formData.customer?.id || null}
-                onChange={(customerId) => handleCustomerChange(customerId)}
-                getOptionLabel={(customer) => customer ? `${customer.name} (${customer.type.replace('_', ' ').toUpperCase()})` : ''}
-                getOptionValue={(customer) => customer?.id || ''}
-                placeholder={t('chooseCustomer', 'Choose a customer...')}
-                searchable
+              <label>{t('selectCustomer', 'Select Customer')} *</label>
+              <select
+                value={formData.customer?.id || ''}
+                onChange={(e) => handleCustomerChange(e.target.value)}
                 required
-                loading={loading && customers.length === 0}
                 data-tour="so-customer-select"
-              />
+              >
+                <option value="">{t('selectCustomer', 'Choose a customer...')}</option>
+                {customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} ({customer.type?.replace('_', ' ').toUpperCase()})
+                  </option>
+                ))}
+              </select>
             </div>
-
             <div className="form-group">
-              <Autocomplete
-                label={`${t('branch', 'Branch')} ${formData.status !== 'draft' ? '*' : ''}`}
-                options={branches}
-                value={formData.branch_id || null}
-                onChange={(branchId) => formHook.setField('branch_id', branchId)}
-                getOptionLabel={(branch) => branch ? `${branch.name} (${branch.code})` : ''}
-                getOptionValue={(branch) => branch?.id || ''}
-                placeholder={t('selectBranch', 'Select Branch...')}
-                searchable
+              <label>{t('branch', 'Branch')} {formData.status !== 'draft' ? '*' : ''}</label>
+              <select
+                value={formData.branch_id || ''}
+                onChange={(e) => formHook.setField('branch_id', e.target.value)}
                 required={formData.status !== 'draft'}
                 disabled={loadingBranches}
-                loading={loadingBranches}
-                helperText={loadingBranches ? t('loadingBranches', 'Loading branches...') : null}
-              />
+              >
+                <option value="">{t('selectBranch', 'Select Branch...')}</option>
+                {branches.map(branch => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name} ({branch.code})
+                  </option>
+                ))}
+              </select>
             </div>
-
             {formData.customer && (
               <>
                 <div className="form-group">
-                  <Input
-                    label={t('contactPerson', 'Contact Person')}
+                  <label>{t('contactPerson', 'Contact Person')}</label>
+                  <input
                     type="text"
                     value={formData.customer.contactPerson || 'N/A'}
                     readOnly
+                    disabled
                   />
                 </div>
                 <div className="form-group">
-                  <Input
-                    label={t('phone', 'Phone')}
+                  <label>{t('phone', 'Phone')}</label>
+                  <input
                     type="text"
                     value={formData.customer.contact?.phone || 'N/A'}
                     readOnly
+                    disabled
                   />
                 </div>
               </>
@@ -729,26 +727,26 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
               return (
                 <div key={item.tempId || index} className="grid grid-cols-[2fr_1fr_0.8fr_1.2fr_1.2fr_0.8fr] gap-4 p-4 border-b border-slate-200 bg-white items-center last:border-b-0 max-md:grid-cols-1 max-md:gap-2">
-                  <div className="flex flex-col gap-1">
-                    <Autocomplete
-                      options={materials}
-                      value={item.materialId}
-                      onChange={(materialId) => handleItemChange(index, 'materialId', materialId)}
-                      getOptionLabel={(material) => {
-                        if (!material) return ''
-                        const matStock = stockValidation.getStockForMaterial(material.id)
-                        const stockDisplay = matStock ? `(Stock: ${matStock.currentStock} ${matStock.unit})` : '(Stock: N/A)'
-                        return `${material.name} ${stockDisplay}`
-                      }}
-                      getOptionValue={(material) => material?.id || ''}
-                      placeholder={t('selectMaterial', 'Select material...')}
-                      searchable
+                  <div className="form-group !mb-0">
+                    <select
+                      value={item.materialId || ''}
+                      onChange={(e) => handleItemChange(index, 'materialId', e.target.value)}
                       required={!isDraft}
-                      size="small"
-                    />
+                    >
+                      <option value="">{t('selectMaterial', 'Select material...')}</option>
+                      {materials.map(material => {
+                        const matStock = stockValidation.getStockForMaterial(material.id)
+                        const stockDisplay = matStock ? `(Stock: ${matStock.currentStock.toFixed(0)})` : ''
+                        return (
+                          <option key={material.id} value={material.id}>
+                            {material.name} {stockDisplay}
+                          </option>
+                        )
+                      })}
+                    </select>
                   </div>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="form-group !mb-0">
                     <input
                       type="number"
                       value={item.quantity}
@@ -757,7 +755,6 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       min="0"
                       step="0.001"
                       required={!isDraft}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     />
                     {/* Stock validation display */}
                     {item.materialId && stock && (
@@ -790,13 +787,17 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <span className="px-3 py-2 bg-slate-100 rounded-lg text-sm text-center text-slate-600">
-                      {selectedMaterial ? selectedMaterial.unit : '-'}
-                    </span>
+                  <div className="form-group !mb-0">
+                    <input
+                      type="text"
+                      value={selectedMaterial ? selectedMaterial.unit : '-'}
+                      readOnly
+                      disabled
+                      className="text-center"
+                    />
                   </div>
 
-                  <div className="flex flex-col gap-1 relative">
+                  <div className="form-group !mb-0">
                     <input
                       type="number"
                       value={item.rate}
@@ -806,7 +807,6 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                       step="0.001"
                       required={!isDraft}
                       readOnly={rateLocked}
-                      className={`w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${rateLocked ? 'bg-slate-50 text-slate-600 cursor-not-allowed border-slate-300' : ''}`}
                       title={rateLocked ? t('contractRateLocked', 'Contract rate is locked. Attempt to change will require manager approval.') : ''}
                     />
                     {hasContractRate && (
@@ -824,13 +824,17 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <span className="px-3 py-2 bg-slate-100 rounded-lg text-sm text-right font-medium text-slate-800">
-                      {(parseFloat(item.amount) || 0).toFixed(3)}
-                    </span>
+                  <div className="form-group !mb-0">
+                    <input
+                      type="text"
+                      value={(parseFloat(item.amount) || 0).toFixed(3)}
+                      readOnly
+                      disabled
+                      className="text-right"
+                    />
                   </div>
 
-                  <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-center">
                     <button
                       type="button"
                       className="btn btn-outline btn-sm"
@@ -848,13 +852,13 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
 
         {/* Order Totals */}
         <div className="form-section">
-          <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-6 rounded-lg border border-slate-200 max-w-md ml-auto">
+          <div className="bg-slate-50 dark:bg-slate-800 p-6 border border-slate-200 dark:border-slate-700 max-w-md ml-auto">
             <div className="flex justify-between items-center py-2 text-sm">
-              <label className="font-medium text-slate-700">{t('subtotal', 'Subtotal')}:</label>
-              <span className="font-semibold text-slate-800">OMR {formData.totalAmount.toFixed(3)}</span>
+              <label className="font-medium text-slate-700 dark:text-slate-300">{t('subtotal', 'Subtotal')}:</label>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">OMR {formData.totalAmount.toFixed(3)}</span>
             </div>
             <div className="flex justify-between items-center py-2 text-sm">
-              <label className="flex items-center gap-2 font-medium text-slate-700">
+              <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                 {t('discount', 'Discount')}:
                 <input
                   type="number"
@@ -864,21 +868,21 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
                   min="0"
                   max="100"
                   step="0.1"
-                  className="w-20 px-2 py-1 mx-1 border border-slate-300 rounded text-sm text-center"
+                  className="w-20 text-center"
                 />
                 %
               </label>
-              <span className="font-semibold text-slate-800">OMR {formData.discountAmount.toFixed(3)}</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">OMR {formData.discountAmount.toFixed(3)}</span>
             </div>
             {formData.vatAmount > 0 && (
               <div className="flex justify-between items-center py-2 text-sm">
-                <label className="font-medium text-slate-700">{t('vat', 'VAT')} ({formData.vatRate}%):</label>
-                <span className="font-semibold text-slate-800">OMR {formData.vatAmount.toFixed(3)}</span>
+                <label className="font-medium text-slate-700 dark:text-slate-300">{t('vat', 'VAT')} ({formData.vatRate}%):</label>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">OMR {formData.vatAmount.toFixed(3)}</span>
               </div>
             )}
-            <div className="flex justify-between items-center pt-4 mt-2 border-t-2 border-slate-300 text-lg">
-              <label className="font-bold text-slate-900">{t('totalAmount', 'Total Amount')}:</label>
-              <span className="font-bold text-xl text-blue-600">OMR {formData.netAmount.toFixed(3)}</span>
+            <div className="flex justify-between items-center pt-4 mt-2 border-t-2 border-slate-300 dark:border-slate-600 text-lg">
+              <label className="font-bold text-slate-900 dark:text-white">{t('totalAmount', 'Total Amount')}:</label>
+              <span className="font-bold text-xl text-blue-600 dark:text-blue-400">OMR {formData.netAmount.toFixed(3)}</span>
             </div>
           </div>
         </div>
@@ -888,8 +892,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
           <div className="form-section-title">{t('additionalInformation', 'Additional Information')}</div>
           <div className="form-grid">
             <div className="form-group full-width">
-              <Textarea
-                label={t('orderNotes', 'Order Notes')}
+              <label>{t('orderNotes', 'Order Notes')}</label>
+              <textarea
                 value={formData.notes}
                 onChange={(e) => formHook.setField('notes', e.target.value)}
                 placeholder={t('orderNotesPlaceholder', 'Any notes or comments about this order...')}
@@ -897,8 +901,8 @@ const SalesOrderForm = ({ isOpen, onClose, onSave, selectedCustomer = null, edit
               />
             </div>
             <div className="form-group full-width">
-              <Textarea
-                label={t('specialInstructions', 'Special Instructions')}
+              <label>{t('specialInstructions', 'Special Instructions')}</label>
+              <textarea
                 value={formData.specialInstructions}
                 onChange={(e) => formHook.setField('specialInstructions', e.target.value)}
                 placeholder={t('specialInstructionsPlaceholder', 'Special delivery or handling instructions...')}

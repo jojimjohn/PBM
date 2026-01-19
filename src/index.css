@@ -694,9 +694,10 @@
      ========================================== */
   .form-input-tw {
     @apply w-full px-4 py-3 text-sm font-semibold text-slate-800;
-    @apply bg-slate-50 border border-slate-200;
+    @apply bg-white border border-slate-300;
     @apply focus:outline-none focus:ring-0 focus:border-blue-500;
     @apply disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed;
+    @apply placeholder:text-slate-400;
     @apply transition-all duration-150;
     border-radius: 0px;
   }
@@ -727,6 +728,13 @@
   /* Form Grid Layout - 2-column responsive grid */
   .form-grid {
     @apply grid grid-cols-1 md:grid-cols-2 gap-5 p-5;
+  }
+
+  /* Remove margins from component wrappers when inside form-grid */
+  .form-grid > .form-group-tw,
+  .form-grid > .autocomplete-wrapper,
+  .form-grid > .date-input-wrapper {
+    @apply mb-0;
   }
 
   .form-grid-3 {
@@ -783,8 +791,59 @@
     border-radius: 0px;
   }
 
+  /* Standalone form input - for use outside form-group wrappers */
+  .form-input {
+    @apply w-full px-3 py-2.5 text-sm font-medium text-slate-800;
+    @apply bg-white border border-slate-300;
+    @apply focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500;
+    @apply disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed;
+    @apply placeholder:text-slate-400;
+    @apply transition-all duration-150;
+    border-radius: 0px;
+  }
+
+  .form-input-sm {
+    @apply w-full px-2.5 py-2 text-sm text-slate-800;
+    @apply bg-white border border-slate-300;
+    @apply focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500;
+    @apply disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed;
+    @apply placeholder:text-slate-400;
+    @apply transition-all duration-150;
+    border-radius: 0px;
+  }
+
+  .form-input-readonly {
+    @apply bg-slate-100 text-slate-600 cursor-not-allowed;
+  }
+
+  /* Read-only display field (non-editable values) */
+  .form-display {
+    @apply px-3 py-2 bg-slate-100 text-sm text-slate-600;
+    border-radius: 0px;
+  }
+
+  .form-display-value {
+    @apply px-3 py-2 bg-slate-100 text-sm text-right font-medium text-slate-800;
+    border-radius: 0px;
+  }
+
   .form-group textarea {
     @apply resize-y min-h-[80px];
+  }
+
+  /* Checkbox exception - don't apply full width to checkboxes */
+  .form-group input[type="checkbox"] {
+    @apply w-4 h-4 p-0;
+    @apply flex-shrink-0;
+  }
+
+  /* Checkbox label wrapper with proper spacing */
+  .form-group .checkbox-label {
+    @apply inline-flex items-center gap-3 cursor-pointer py-2;
+  }
+
+  .form-group .checkbox-label span {
+    @apply text-sm text-slate-700 select-none;
   }
 
   .form-group select {
@@ -814,7 +873,7 @@
 
   /* Input container - Premium styling for Input component */
   .input-container {
-    @apply w-full bg-slate-50 border border-slate-200;
+    @apply w-full bg-white border border-slate-300;
     @apply focus-within:ring-0 focus-within:border-blue-500;
     @apply transition-all duration-150;
     border-radius: 0px !important;
@@ -859,7 +918,7 @@
 
   .autocomplete-control {
     @apply flex items-center justify-between w-full px-4 py-3;
-    @apply bg-slate-50 border border-slate-200 cursor-pointer;
+    @apply bg-white border border-slate-300 cursor-pointer;
     @apply transition-all duration-150;
     border-radius: 0px;
     min-height: 46px;
@@ -983,7 +1042,7 @@
 
   .date-input-container {
     @apply flex items-center w-full px-4;
-    @apply bg-slate-50 border border-slate-200;
+    @apply bg-white border border-slate-300;
     @apply transition-all duration-150;
     border-radius: 0px;
     min-height: 46px;
@@ -1157,37 +1216,67 @@
     font-family: 'Outfit', 'Inter', sans-serif;
   }
 
+  /* Role Modal Title - Icon + Text layout */
+  .role-modal-title {
+    @apply flex items-center gap-3;
+  }
+
+  .role-modal-title svg {
+    @apply w-5 h-5 text-blue-600 flex-shrink-0;
+  }
+
+  .role-modal-title span {
+    @apply text-xl font-bold text-slate-900 tracking-tight uppercase;
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+
+  .role-modal-title .status-badge {
+    @apply ml-2 text-[10px] py-1 px-2;
+  }
+
+  .dark .role-modal-title svg {
+    @apply text-blue-400;
+  }
+
+  .dark .role-modal-title span {
+    @apply text-white;
+  }
+
   /* Modal Dark Mode Support */
-  [data-theme="dark"] .modal-overlay-tw {
+  .dark .modal-overlay-tw {
     background: rgba(2, 6, 23, 0.75);
   }
 
-  [data-theme="dark"] .modal-content-tw {
+  .dark .modal-content-tw {
     @apply bg-slate-950;
     border-color: #334155;
   }
 
-  [data-theme="dark"] .modal-header-tw {
+  .dark .modal-header-tw {
     @apply border-slate-900;
   }
 
-  [data-theme="dark"] .modal-title-tw,
-  [data-theme="dark"] .modal-custom-title {
+  .dark .modal-title-tw,
+  .dark .modal-custom-title {
     @apply text-white;
   }
 
-  [data-theme="dark"] .modal-close-tw {
+  .dark .modal-close-tw {
     @apply bg-slate-900 border-slate-800 text-slate-400;
   }
 
-  [data-theme="dark"] .modal-close-tw:hover {
+  .dark .modal-close-tw:hover {
     @apply bg-white text-slate-950 border-white;
   }
 
-  [data-theme="dark"] .modal-footer-tw,
-  [data-theme="dark"] .modal-custom-footer {
+  .dark .modal-footer-tw,
+  .dark .modal-custom-footer {
     @apply border-slate-900;
     background: rgba(15, 23, 42, 0.2);
+  }
+
+  .dark .modal-body-tw {
+    @apply bg-slate-950;
   }
 
   /* ==========================================
@@ -2208,97 +2297,195 @@
   }
 
   /* ----- DARK MODE SUPPORT - Premium Design System ----- */
-  [data-theme="dark"] .card,
-  [data-theme="dark"] .entity-card,
-  [data-theme="dark"] .summary-card {
+  .dark .card,
+  .dark .entity-card,
+  .dark .summary-card {
     @apply bg-slate-800 border-slate-700;
   }
 
-  [data-theme="dark"] .form-input,
-  [data-theme="dark"] .form-select,
-  [data-theme="dark"] .form-textarea {
+  .dark .form-input,
+  .dark .form-select,
+  .dark .form-textarea {
     @apply bg-slate-900 border-slate-800 text-slate-100;
   }
 
-  [data-theme="dark"] .form-input:read-only {
+  .dark .form-input:read-only {
     @apply bg-slate-800/50 text-slate-500;
   }
 
-  [data-theme="dark"] .form-label {
+  .dark .form-label {
     @apply text-slate-400;
   }
 
-  [data-theme="dark"] .btn-secondary,
-  [data-theme="dark"] .btn-outline {
+  .dark .btn-secondary,
+  .dark .btn-outline {
     @apply text-slate-100;
     border-color: #f1f5f9;
   }
 
-  [data-theme="dark"] .btn-outline:hover {
+  .dark .btn-outline:hover {
     @apply bg-white text-slate-950;
   }
 
   /* Dark mode - Modals */
-  [data-theme="dark"] .modal {
+  .dark .modal {
     @apply bg-slate-950;
     border-color: #334155;
   }
 
-  [data-theme="dark"] .modal-header {
+  .dark .modal-header {
     @apply border-slate-900;
   }
 
-  [data-theme="dark"] .modal-title {
+  .dark .modal-title {
     @apply text-white;
   }
 
-  [data-theme="dark"] .modal-close {
+  .dark .modal-close {
     @apply bg-slate-900 border-slate-800 text-slate-400;
   }
 
-  [data-theme="dark"] .modal-close:hover {
+  .dark .modal-close:hover {
     @apply bg-white text-slate-950 border-white;
   }
 
-  [data-theme="dark"] .modal-footer {
+  .dark .modal-footer {
     @apply border-slate-900;
     background: rgba(15, 23, 42, 0.2);
   }
 
-  [data-theme="dark"] .btn-save:hover,
-  [data-theme="dark"] .modal-footer .btn-primary:hover,
-  [data-theme="dark"] .modal-footer-tw .btn-primary:hover {
+  .dark .btn-save:hover,
+  .dark .modal-footer .btn-primary:hover,
+  .dark .modal-footer-tw .btn-primary:hover {
     @apply bg-white text-slate-950;
     border-color: #fff;
   }
 
   /* Dark mode - Form components */
-  [data-theme="dark"] .autocomplete-control,
-  [data-theme="dark"] .date-input-container,
-  [data-theme="dark"] .input-container {
-    @apply bg-slate-900 border-slate-800;
+  .dark .autocomplete-control,
+  .dark .date-input-container,
+  .dark .input-container {
+    @apply bg-slate-900 border-slate-700;
   }
 
-  [data-theme="dark"] .autocomplete-placeholder,
-  [data-theme="dark"] .autocomplete-search-input,
-  [data-theme="dark"] .date-input-text {
+  .dark .autocomplete-placeholder,
+  .dark .autocomplete-search-input,
+  .dark .date-input-text,
+  .dark .input-container input {
     @apply text-slate-100;
   }
 
-  [data-theme="dark"] .autocomplete-menu {
+  .dark .input-container input::placeholder,
+  .dark .date-input-placeholder {
+    @apply text-slate-500;
+  }
+
+  .dark .autocomplete-label,
+  .dark .date-input-label,
+  .dark .input-label {
+    @apply text-slate-400;
+  }
+
+  .dark .autocomplete-helper-text,
+  .dark .input-helper-text {
+    @apply text-slate-500;
+  }
+
+  .dark .autocomplete-menu {
     @apply bg-slate-900 border-slate-800;
   }
 
-  [data-theme="dark"] .autocomplete-option {
+  .dark .autocomplete-option {
     @apply text-slate-200 hover:bg-slate-800;
   }
 
-  [data-theme="dark"] .autocomplete-option-selected {
+  .dark .autocomplete-option-selected {
     @apply bg-blue-900/50 text-blue-300;
   }
 
-  [data-theme="dark"] .autocomplete-chip {
+  .dark .autocomplete-chip {
     @apply bg-slate-700 text-slate-200;
+  }
+
+  /* Dark mode - Form System */
+  .dark .form-section {
+    @apply bg-slate-800 border-slate-700;
+  }
+
+  .dark .form-section-title {
+    @apply text-slate-300 bg-slate-900 border-slate-700;
+  }
+
+  .dark .form-group > label {
+    @apply text-slate-400;
+  }
+
+  .dark .form-group input,
+  .dark .form-group select,
+  .dark .form-group textarea {
+    @apply bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500;
+  }
+
+  .dark .form-group input:disabled,
+  .dark .form-group select:disabled,
+  .dark .form-group textarea:disabled {
+    @apply bg-slate-800 text-slate-500;
+  }
+
+  .dark .form-group .checkbox-label span {
+    @apply text-slate-300;
+  }
+
+  /* Dark mode for standalone form inputs */
+  .dark .form-input,
+  .dark .form-input-sm {
+    @apply bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500;
+  }
+
+  .dark .form-input:disabled,
+  .dark .form-input-sm:disabled {
+    @apply bg-slate-800 text-slate-500;
+  }
+
+  .dark .form-input-readonly {
+    @apply bg-slate-800 text-slate-400;
+  }
+
+  .dark .form-display {
+    @apply bg-slate-800 text-slate-400;
+  }
+
+  .dark .form-display-value {
+    @apply bg-slate-800 text-slate-200;
+  }
+
+  .dark .form-actions {
+    @apply bg-slate-900 border-slate-700;
+  }
+
+  .dark .form-hint {
+    @apply text-slate-500;
+  }
+
+  /* Dark mode - TW Form Classes (used by Input/Textarea components) */
+  .dark .form-input-tw {
+    @apply bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500;
+  }
+
+  .dark .form-input-tw:disabled {
+    @apply bg-slate-800 text-slate-500;
+  }
+
+  .dark .form-label-tw {
+    @apply text-slate-400;
+  }
+
+  .dark .form-error-tw {
+    @apply text-red-400;
+  }
+
+  .dark .form-hint-tw {
+    @apply text-slate-500;
   }
 
   /* ==========================================
@@ -3727,6 +3914,34 @@
   .btn-icon-danger {
     @apply btn-icon;
     @apply text-slate-400 hover:bg-red-50 hover:text-red-600 hover:border-red-200;
+  }
+
+  /* User count button - used in tables for viewing users */
+  .user-count-btn {
+    @apply inline-flex items-center gap-1.5;
+  }
+
+  .user-count-btn svg {
+    @apply w-3.5 h-3.5;
+  }
+
+  .user-count-badge {
+    @apply inline-flex items-center justify-center;
+    @apply min-w-[18px] h-[18px] px-1;
+    @apply text-[10px] font-bold;
+    @apply bg-slate-100 text-slate-600 rounded-full;
+  }
+
+  .user-count-btn:hover .user-count-badge {
+    @apply bg-slate-200;
+  }
+
+  .dark .user-count-badge {
+    @apply bg-slate-700 text-slate-300;
+  }
+
+  .dark .user-count-btn:hover .user-count-badge {
+    @apply bg-slate-600;
   }
 
   /* Button group (connected buttons) */
@@ -7620,4 +7835,339 @@ input[type="datetime-local"]::placeholder {
 
 .dark .login-link-secondary {
   @apply text-slate-400 hover:text-slate-300;
+}
+
+/* ==========================================
+   PERMISSION MATRIX - Role Management
+   Premium checkbox matrix for permissions
+   ========================================== */
+
+/* Main container */
+.permission-matrix {
+  @apply bg-white border border-slate-200 overflow-hidden;
+  border-radius: 0;
+}
+
+.permission-matrix.readonly {
+  @apply opacity-90;
+}
+
+/* Toolbar - Search and action buttons */
+.permission-matrix-toolbar {
+  @apply flex flex-wrap items-center justify-between gap-3 px-4 py-3;
+  @apply bg-slate-50 border-b border-slate-200;
+}
+
+.permission-matrix-toolbar .search-box {
+  @apply relative flex-1 min-w-[200px] max-w-xs;
+}
+
+.permission-matrix-toolbar .search-box svg {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none;
+}
+
+.permission-matrix-toolbar .search-box input {
+  @apply w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500;
+  @apply placeholder:text-slate-400;
+  border-radius: 0;
+}
+
+.toolbar-actions {
+  @apply flex items-center gap-1;
+}
+
+.toolbar-btn {
+  @apply px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide;
+  @apply text-slate-600 bg-white border border-slate-200;
+  @apply hover:bg-slate-50 hover:border-slate-300;
+  @apply transition-colors cursor-pointer;
+  border-radius: 0;
+}
+
+.toolbar-divider {
+  @apply w-px h-5 bg-slate-200 mx-1;
+}
+
+/* Permission summary */
+.permission-summary {
+  @apply px-4 py-2 bg-slate-50 border-b border-slate-200;
+}
+
+.summary-count {
+  @apply text-xs font-medium text-slate-600;
+  text-transform: none;
+}
+
+/* Modules list container */
+.permission-modules {
+  @apply max-h-[400px] overflow-y-auto;
+}
+
+.no-permissions {
+  @apply flex items-center justify-center py-8 text-sm text-slate-500;
+}
+
+/* Individual permission module */
+.permission-module {
+  @apply border-b border-slate-100 last:border-b-0;
+}
+
+.permission-module.expanded {
+  @apply bg-slate-50/50;
+}
+
+/* Module header */
+.module-header {
+  @apply flex items-center justify-between px-4 py-3;
+  @apply cursor-pointer transition-colors;
+  @apply hover:bg-slate-50;
+}
+
+.module-header-left {
+  @apply flex items-center gap-2;
+}
+
+.module-header-left svg:first-child {
+  @apply w-4 h-4 text-slate-400;
+}
+
+.module-icon {
+  @apply text-blue-500;
+}
+
+.module-label {
+  @apply text-sm font-semibold text-slate-700 capitalize;
+}
+
+.module-count {
+  @apply text-xs font-medium text-slate-400;
+}
+
+/* Module checkbox (all/partial/none) */
+.module-checkbox {
+  @apply p-1 border-0 bg-transparent cursor-pointer;
+  @apply transition-colors;
+}
+
+.module-checkbox svg {
+  @apply w-5 h-5;
+}
+
+.module-checkbox.none svg {
+  @apply text-slate-300 hover:text-slate-400;
+}
+
+.module-checkbox.partial svg {
+  @apply text-amber-500;
+}
+
+.module-checkbox.all svg {
+  @apply text-blue-600;
+}
+
+/* Permissions list inside module */
+.module-permissions {
+  @apply px-4 py-2 bg-white border-t border-slate-100;
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-1;
+}
+
+/* Individual permission item */
+.permission-item {
+  @apply flex items-start gap-3 px-3 py-2.5;
+  @apply cursor-pointer rounded-sm transition-colors;
+  @apply hover:bg-slate-50;
+}
+
+.permission-item.selected {
+  @apply bg-blue-50/50;
+}
+
+.permission-item input[type="checkbox"] {
+  @apply sr-only;
+}
+
+/* Custom checkbox visual */
+.checkbox-visual {
+  @apply flex-shrink-0 w-5 h-5 mt-0.5;
+  @apply flex items-center justify-center;
+  @apply bg-white;
+  @apply transition-all;
+  border: 2px solid #94a3b8;
+  border-radius: 3px;
+}
+
+.permission-item:hover .checkbox-visual {
+  border-color: #64748b;
+}
+
+.permission-item.selected .checkbox-visual {
+  @apply bg-blue-600;
+  border-color: #2563eb;
+}
+
+.checkbox-visual svg {
+  @apply text-white;
+}
+
+/* Permission info (label + description) */
+.permission-info {
+  @apply flex flex-col gap-0.5 min-w-0;
+}
+
+.permission-label {
+  @apply text-sm font-semibold text-slate-700 leading-tight;
+  text-transform: capitalize;
+}
+
+.permission-description {
+  @apply text-xs text-slate-500 leading-snug;
+  text-transform: none;
+  font-style: normal;
+}
+
+/* Skeleton loading */
+.permission-matrix-skeleton {
+  @apply space-y-4 p-4;
+}
+
+.skeleton-module {
+  @apply space-y-2;
+}
+
+.skeleton-header {
+  @apply h-10 bg-slate-100 animate-pulse;
+}
+
+.skeleton-permissions {
+  @apply grid grid-cols-2 gap-2 pl-6;
+}
+
+.skeleton-permission {
+  @apply h-8 bg-slate-50 animate-pulse;
+}
+
+/* ==========================================
+   PERMISSION MATRIX - Dark Mode
+   ========================================== */
+
+.dark .permission-matrix {
+  @apply bg-slate-900 border-slate-700;
+}
+
+.dark .permission-matrix-toolbar {
+  @apply bg-slate-800 border-slate-700;
+}
+
+.dark .permission-matrix-toolbar .search-box input {
+  @apply bg-slate-900 border-slate-600 text-slate-100;
+  @apply placeholder:text-slate-500;
+  @apply focus:border-blue-500;
+}
+
+.dark .toolbar-btn {
+  @apply text-slate-300 bg-slate-800 border-slate-600;
+  @apply hover:bg-slate-700 hover:border-slate-500;
+}
+
+.dark .toolbar-divider {
+  @apply bg-slate-600;
+}
+
+.dark .permission-summary {
+  @apply bg-slate-800 border-slate-700;
+}
+
+.dark .summary-count {
+  @apply text-slate-400;
+}
+
+.dark .permission-modules {
+  @apply bg-slate-900;
+}
+
+.dark .no-permissions {
+  @apply text-slate-500;
+}
+
+.dark .permission-module {
+  @apply border-slate-700;
+}
+
+.dark .permission-module.expanded {
+  @apply bg-slate-800/50;
+}
+
+.dark .module-header {
+  @apply hover:bg-slate-800;
+}
+
+.dark .module-header-left svg:first-child {
+  @apply text-slate-500;
+}
+
+.dark .module-icon {
+  @apply text-blue-400;
+}
+
+.dark .module-label {
+  @apply text-slate-200;
+}
+
+.dark .module-count {
+  @apply text-slate-500;
+}
+
+.dark .module-checkbox.none svg {
+  @apply text-slate-600 hover:text-slate-500;
+}
+
+.dark .module-checkbox.partial svg {
+  @apply text-amber-400;
+}
+
+.dark .module-checkbox.all svg {
+  @apply text-blue-400;
+}
+
+.dark .module-permissions {
+  @apply bg-slate-900 border-slate-700;
+}
+
+.dark .permission-item {
+  @apply hover:bg-slate-800;
+}
+
+.dark .permission-item.selected {
+  @apply bg-blue-900/30;
+}
+
+.dark .checkbox-visual {
+  @apply bg-slate-800;
+  border-color: #64748b;
+}
+
+.dark .permission-item:hover .checkbox-visual {
+  border-color: #94a3b8;
+}
+
+.dark .permission-item.selected .checkbox-visual {
+  @apply bg-blue-500;
+  border-color: #3b82f6;
+}
+
+.dark .permission-label {
+  @apply text-slate-200;
+}
+
+.dark .permission-description {
+  @apply text-slate-500;
+}
+
+.dark .skeleton-header {
+  @apply bg-slate-700;
+}
+
+.dark .skeleton-permission {
+  @apply bg-slate-800;
 }
