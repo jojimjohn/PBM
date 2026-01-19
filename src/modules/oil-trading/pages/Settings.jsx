@@ -32,14 +32,16 @@ import {
   Trash2,
   MapPin,
   Lock,
-  Tag
+  Tag,
+  Sun,
+  Moon
 } from 'lucide-react'
 // CSS moved to global index.css - using Tailwind classes
 
 const Settings = () => {
   const { user } = useAuth()
   const { t, currentLanguage, changeLanguage, getSupportedLanguages, isRTL } = useLocalization()
-  const { settings, updateSettings, resetToDefaults, getSettingsInfo } = useSystemSettings()
+  const { settings, updateSettings, resetToDefaults, getSettingsInfo, theme, setTheme } = useSystemSettings()
   const { hasPermission } = usePermissions()
 
   const [activeTab, setActiveTab] = useState('localization')
@@ -945,22 +947,38 @@ const Settings = () => {
                 <Palette size={18} />
                 {t('appearanceSettings')}
               </div>
-              <p className="px-5 pt-4 text-sm text-slate-500 m-0">{t('customizeVisualAppearance')}</p>
+              <p className="px-5 pt-4 text-sm text-slate-500 dark:text-slate-400 m-0">{t('customizeVisualAppearance')}</p>
 
               <div className="p-5">
                 <div className="form-group">
                   <label>{t('theme')}</label>
                   <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-3 bg-blue-50 border-2 border-blue-500 text-blue-700 text-sm font-medium cursor-pointer">
-                      <Monitor size={18} />
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer transition-all ${
+                        theme === 'light'
+                          ? 'bg-amber-50 dark:bg-amber-900/30 border-2 border-amber-500 text-amber-700 dark:text-amber-300'
+                          : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      <Sun size={18} />
                       {t('lightTheme')}
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-600 text-sm font-medium cursor-pointer hover:bg-slate-50">
-                      <Monitor size={18} />
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer transition-all ${
+                        theme === 'dark'
+                          ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-500 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      <Moon size={18} />
                       {t('darkTheme')}
                     </button>
                   </div>
-                  <span className="text-xs text-slate-400 italic mt-2">{t('availableInFutureUpdate')}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 mt-2 block">
+                    {t('themeWillBeSaved', 'Your theme preference will be saved automatically')}
+                  </span>
                 </div>
               </div>
             </div>

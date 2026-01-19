@@ -32,14 +32,16 @@ import {
   Trash2,
   MapPin,
   Lock,
-  Tag
+  Tag,
+  Sun,
+  Moon
 } from 'lucide-react'
 // CSS moved to global index.css - using Tailwind classes
 
 const Settings = () => {
   const { user } = useAuth()
   const { t, currentLanguage, changeLanguage, getSupportedLanguages, isRTL } = useLocalization()
-  const { settings, updateSettings, resetToDefaults, getSettingsInfo } = useSystemSettings()
+  const { settings, updateSettings, resetToDefaults, getSettingsInfo, theme, setTheme } = useSystemSettings()
   const { hasPermission } = usePermissions()
 
   const [activeTab, setActiveTab] = useState('localization')
@@ -823,23 +825,39 @@ const Settings = () => {
               <div className="section-header">
                 <Palette size={20} />
                 <h2>{t('appearanceSettings')}</h2>
-                <p>{t('customizeVisualAppearance')}</p>
+                <p className="dark:text-slate-400">{t('customizeVisualAppearance')}</p>
               </div>
 
               <div className="settings-grid">
                 <div className="setting-group">
                   <label>{t('theme')}</label>
-                  <div className="theme-options">
-                    <button className="theme-option light active">
-                      <Monitor size={20} />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer transition-all ${
+                        theme === 'light'
+                          ? 'bg-amber-50 dark:bg-amber-900/30 border-2 border-amber-500 text-amber-700 dark:text-amber-300'
+                          : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      <Sun size={18} />
                       {t('lightTheme')}
                     </button>
-                    <button className="theme-option dark">
-                      <Monitor size={20} />
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer transition-all ${
+                        theme === 'dark'
+                          ? 'bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-500 text-indigo-700 dark:text-indigo-300'
+                          : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      <Moon size={18} />
                       {t('darkTheme')}
                     </button>
                   </div>
-                  <span className="setting-note">{t('availableInFutureUpdate')}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 mt-2 block">
+                    {t('themeWillBeSaved', 'Your theme preference will be saved automatically')}
+                  </span>
                 </div>
               </div>
             </div>

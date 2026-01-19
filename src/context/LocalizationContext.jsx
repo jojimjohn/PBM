@@ -841,6 +841,7 @@ const translations = {
     availableInFutureUpdate: 'Available in Future Update',
     lightTheme: 'Light Theme',
     darkTheme: 'Dark Theme',
+    themeWillBeSaved: 'Your theme preference will be saved automatically',
     notifications: 'Notifications',
 
     // Branch Management
@@ -3033,6 +3034,7 @@ const translations = {
     theme: 'السمة',
     lightTheme: 'السمة الفاتحة',
     darkTheme: 'السمة المظلمة',
+    themeWillBeSaved: 'سيتم حفظ تفضيل السمة الخاص بك تلقائيًا',
     notifications: 'الإشعارات',
 
     // Branch Management

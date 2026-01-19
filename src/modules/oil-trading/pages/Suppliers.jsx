@@ -155,7 +155,7 @@ const OilTradingSuppliers = () => {
   const stats = getSummaryStats()
 
   return (
-    <div className="flex flex-col min-h-full bg-gray-50">
+    <div className="flex flex-col min-h-full bg-gray-50 dark:bg-slate-900">
       {/* Tab Navigation */}
       <div className="tab-navigation">
         <button
@@ -225,7 +225,7 @@ const OilTradingSuppliers = () => {
 
       {/* Supplier Locations Tab */}
       {activeTab === 'locations' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
           <SupplierLocationManager />
         </div>
       )}

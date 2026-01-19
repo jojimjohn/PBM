@@ -10,7 +10,7 @@ const systemSettingsService = {
     try {
       const url = `${API_BASE_URL}/system-settings`
       const data = await authService.makeAuthenticatedRequest(url)
-      return response
+      return data
     } catch (error) {
       console.error('Error fetching system settings:', error)
       return {
@@ -121,6 +121,118 @@ const systemSettingsService = {
       console.error('Error updating session timeout:', error)
       throw error
     }
+  },
+
+  // ============================================================================
+  // User Preferences
+  // ============================================================================
+
+  /**
+   * Get all user preferences for the current user
+   * @returns {Promise<Object>} Response with preferences object
+   */
+  async getUserPreferences() {
+    try {
+      const url = `${API_BASE_URL}/system-settings/user/preferences`
+      const data = await authService.makeAuthenticatedRequest(url)
+      return data
+    } catch (error) {
+      console.error('Error fetching user preferences:', error)
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch user preferences'
+      }
+    }
+  },
+
+  /**
+   * Get a specific user preference
+   * @param {string} key - Preference key (e.g., 'theme', 'language')
+   * @returns {Promise<Object>} Response with preference value
+   */
+  async getUserPreference(key) {
+    try {
+      const url = `${API_BASE_URL}/system-settings/user/preferences/${key}`
+      const data = await authService.makeAuthenticatedRequest(url)
+      return data
+    } catch (error) {
+      console.error(`Error fetching user preference ${key}:`, error)
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch preference'
+      }
+    }
+  },
+
+  /**
+   * Update a user preference
+   * @param {string} key - Preference key
+   * @param {any} value - New value
+   * @returns {Promise<Object>} Response
+   */
+  async updateUserPreference(key, value) {
+    try {
+      const url = `${API_BASE_URL}/system-settings/user/preferences/${key}`
+      const data = await authService.makeAuthenticatedRequest(url, {
+        method: 'PUT',
+        body: JSON.stringify({ value })
+      })
+      return data
+    } catch (error) {
+      console.error(`Error updating user preference ${key}:`, error)
+      return {
+        success: false,
+        error: error.message || 'Failed to update preference'
+      }
+    }
+  },
+
+  /**
+   * Bulk update user preferences
+   * @param {Object} preferences - Object with preference key-value pairs
+   * @returns {Promise<Object>} Response
+   */
+  async updateUserPreferences(preferences) {
+    try {
+      const url = `${API_BASE_URL}/system-settings/user/preferences`
+      const data = await authService.makeAuthenticatedRequest(url, {
+        method: 'PUT',
+        body: JSON.stringify({ preferences })
+      })
+      return data
+    } catch (error) {
+      console.error('Error updating user preferences:', error)
+      return {
+        success: false,
+        error: error.message || 'Failed to update preferences'
+      }
+    }
+  },
+
+  /**
+   * Get user's theme preference
+   * @returns {Promise<string>} Theme ('light' or 'dark'), defaults to 'light'
+   */
+  async getThemePreference() {
+    try {
+      const response = await this.getUserPreference('theme')
+      if (response.success && response.data?.value) {
+        return response.data.value
+      }
+      return 'light' // Default
+    } catch (error) {
+      console.error('Error fetching theme preference:', error)
+      return 'light'
+    }
+  },
+
+  /**
+   * Save user's theme preference
+   * @param {string} theme - 'light' or 'dark'
+   * @returns {Promise<Object>} Response
+   */
+  async saveThemePreference(theme) {
+    return this.updateUserPreference('theme', theme)
   }
 }
 

@@ -7089,6 +7089,92 @@ input[type="datetime-local"]::placeholder {
   @apply text-slate-600;
 }
 
+/* Dark mode - Workflow Stepper (Purchase page progress) */
+.dark .workflow-stepper {
+  @apply bg-slate-800 border-slate-700;
+}
+
+.dark .workflow-step {
+  @apply bg-slate-700 border-slate-600 text-slate-400;
+}
+
+.dark .workflow-step.active {
+  @apply bg-cyan-900/50 text-cyan-300 border-cyan-600;
+}
+
+.dark .workflow-step.completed {
+  @apply bg-emerald-900/50 text-emerald-300 border-emerald-600;
+}
+
+.dark .workflow-step.pending {
+  @apply bg-slate-800 text-slate-500 border-slate-600;
+}
+
+.dark .workflow-step.clickable:hover {
+  @apply bg-slate-600 border-slate-500;
+}
+
+.dark .workflow-step.active.clickable:hover {
+  @apply bg-cyan-800/60;
+}
+
+.dark .step-icon {
+  @apply bg-slate-600;
+}
+
+.dark .workflow-step.active .step-icon {
+  @apply bg-cyan-800 text-cyan-300;
+}
+
+.dark .workflow-step.completed .step-icon {
+  @apply bg-emerald-800 text-emerald-300;
+}
+
+.dark .step-number {
+  @apply text-slate-500;
+}
+
+.dark .step-indicator {
+  @apply bg-cyan-600;
+}
+
+.dark .workflow-connector {
+  @apply text-slate-600;
+}
+
+.dark .workflow-connector.completed {
+  @apply text-emerald-500;
+}
+
+/* Dark mode - Workflow Step Icons (larger step cards) */
+.dark .workflow-step-icon {
+  @apply bg-slate-700 border-slate-600 text-slate-400;
+}
+
+.dark .workflow-step.completed .workflow-step-icon {
+  @apply bg-emerald-900/50 border-emerald-500 text-emerald-400;
+}
+
+.dark .workflow-step.current .workflow-step-icon {
+  @apply bg-blue-900/50 border-blue-500 text-blue-400;
+}
+
+.dark .workflow-step.pending .workflow-step-icon {
+  @apply bg-slate-800 border-slate-600 text-slate-500;
+}
+
+.dark .workflow-step-label {
+  @apply text-slate-300;
+}
+
+.dark .workflow-step-sublabel {
+  @apply text-slate-500;
+}
+
+.dark .workflow-step-connector {
+  @apply bg-slate-600;
+}
+
 /* Dark mode - Grouped Bills Table */
 .dark .grouped-bills-table-container {
   @apply bg-slate-800 border-slate-700;
@@ -7637,12 +7723,32 @@ input[type="datetime-local"]::placeholder {
   border-color: #334155;
 }
 
+/* Fix: Match correct class names from base styles */
+.dark .summary-value {
+  color: #f1f5f9;
+}
+
+.dark .summary-label {
+  color: #94a3b8;
+}
+
+.dark .summary-icon {
+  background-color: #334155;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.dark .summary-info {
+  color: #f1f5f9;
+}
+
+/* Legacy class names for backward compatibility */
 .dark .summary-card-value {
   color: #f1f5f9;
 }
 
 .dark .summary-card-label {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .dark .summary-card-trend.up {
@@ -7654,7 +7760,9 @@ input[type="datetime-local"]::placeholder {
 }
 
 .dark .summary-card-icon {
-  /* Icon backgrounds are handled by inline Tailwind with color overrides */
+  background-color: #334155;
+  border-color: #475569;
+  color: #94a3b8;
 }
 
 /* ========================================

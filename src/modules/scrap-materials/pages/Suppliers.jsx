@@ -345,7 +345,7 @@ const ScrapMaterialsSuppliers = () => {
       sortable: true,
       filterable: true,
       render: (value) => (
-        <div className="font-mono font-semibold text-gray-700">
+        <div className="font-mono font-semibold text-gray-700 dark:text-slate-300 dark:text-slate-300">
           {value}
         </div>
       )
@@ -361,8 +361,8 @@ const ScrapMaterialsSuppliers = () => {
             {value.substring(0, 2).toUpperCase()}
           </div>
           <div className="flex flex-col gap-1">
-            <strong className="text-gray-900 font-semibold">{value}</strong>
-            <span className="text-xs text-gray-600 capitalize">{supplierTypes[row.type]?.name || row.type}</span>
+            <strong className="text-gray-900 dark:text-slate-100 font-semibold">{value}</strong>
+            <span className="text-xs text-gray-600 dark:text-slate-400 capitalize">{supplierTypes[row.type]?.name || row.type}</span>
           </div>
         </div>
       )
@@ -372,7 +372,7 @@ const ScrapMaterialsSuppliers = () => {
       header: t('contactPerson'),
       sortable: true,
       render: (value, row) => (
-        <div className="flex items-center gap-2 text-gray-700">
+        <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
           <User size={14} />
           <span>{value || 'N/A'}</span>
         </div>
@@ -383,7 +383,7 @@ const ScrapMaterialsSuppliers = () => {
       header: t('phone'),
       sortable: false,
       render: (value, row) => (
-        <div className="flex items-center gap-2 text-gray-700">
+        <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
           <Phone size={14} />
           <span>{row.phone || row.contactPhone || row.contact_phone || 'N/A'}</span>
         </div>
@@ -394,7 +394,7 @@ const ScrapMaterialsSuppliers = () => {
       header: t('city'),
       sortable: true,
       render: (value, row) => (
-        <div className="flex items-center gap-2 text-gray-700">
+        <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
           <MapPin size={14} />
           <span>{row.city || 'N/A'}</span>
         </div>
@@ -407,12 +407,12 @@ const ScrapMaterialsSuppliers = () => {
       render: (value) => (
         <div className="flex flex-wrap gap-1 max-w-[200px]">
           {value?.slice(0, 2).map((spec, index) => (
-            <span key={index} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium capitalize">
+            <span key={index} className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded text-xs font-medium capitalize">
               {spec.replace('_', ' ')}
             </span>
           ))}
           {value?.length > 2 && (
-            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-medium">+{value.length - 2}</span>
+            <span className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded text-xs font-medium">+{value.length - 2}</span>
           )}
         </div>
       )
@@ -424,7 +424,7 @@ const ScrapMaterialsSuppliers = () => {
       align: 'right',
       sortable: true,
       render: (value, row) => (
-        <div className="flex items-center gap-2 text-gray-700">
+        <div className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
           <Package size={14} />
           <span>{row.performance?.monthlyVolume || 0} KG</span>
         </div>
@@ -499,7 +499,7 @@ const ScrapMaterialsSuppliers = () => {
   ]
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-slate-900 p-4 md:p-6">
       <div className="page-header">
         <div className="page-title-section">
           <h1>{t('supplierManagement')}</h1>
@@ -567,7 +567,7 @@ const ScrapMaterialsSuppliers = () => {
       </div>
 
       {/* Suppliers Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
         <DataTable
           data={filteredSuppliers}
           columns={supplierColumns}

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import authService from '../services/authService'
+import systemSettingsService from '../services/systemSettingsService'
 import { API_BASE_URL } from '../config/api'
 
 const SystemSettingsContext = createContext({})
@@ -36,12 +37,72 @@ export const SystemSettingsProvider = ({ children }) => {
   }
   
   const [settings, setSettings] = useState(getDefaultSettings())
-  const [theme, setTheme] = useState('light')
   const [vatRate, setVatRate] = useState(5) // Default 5%, will be loaded from API
 
+  // Theme state with localStorage persistence
+  // Load initial theme from localStorage immediately (before user login) to prevent flash
+  const getInitialTheme = () => {
+    try {
+      const savedTheme = localStorage.getItem('pbm_theme')
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        return savedTheme
+      }
+      // Check system preference as fallback
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark'
+      }
+    } catch (e) {
+      console.warn('Could not access localStorage for theme:', e)
+    }
+    return 'light'
+  }
+
+  const [theme, setThemeState] = useState(getInitialTheme)
+
+  // Function to set theme and persist it
+  const setTheme = async (newTheme) => {
+    if (newTheme !== 'light' && newTheme !== 'dark') return
+
+    setThemeState(newTheme)
+
+    // Save to database via API if logged in
+    if (user && selectedCompany) {
+      try {
+        // Save to API (database)
+        const response = await systemSettingsService.saveThemePreference(newTheme)
+        if (!response.success) {
+          console.warn('Could not save theme to database:', response.error)
+        }
+
+        // Update pbm_theme for quick loading on next visit
+        localStorage.setItem('pbm_theme', newTheme)
+
+        // Also save to user-specific localStorage for backup/offline access
+        const userSettingsKey = `userSettings_${user.id}_${selectedCompany.id}`
+        const existing = localStorage.getItem(userSettingsKey)
+        const parsed = existing ? JSON.parse(existing) : {}
+        localStorage.setItem(userSettingsKey, JSON.stringify({
+          ...parsed,
+          theme: newTheme,
+          lastUpdated: new Date().toISOString()
+        }))
+      } catch (e) {
+        console.warn('Could not save theme preference:', e)
+      }
+    } else {
+      // No user logged in - just save to general localStorage
+      try {
+        localStorage.setItem('pbm_theme', newTheme)
+      } catch (e) {
+        console.warn('Could not save theme to localStorage:', e)
+      }
+    }
+  }
+
+  // Toggle theme helper
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+    setTheme(theme === 'light' ? 'dark' : 'light')
+  }
 
   useEffect(() => {
     // Tailwind dark mode requires 'dark' class on documentElement (html)
@@ -111,25 +172,56 @@ export const SystemSettingsProvider = ({ children }) => {
   
   const loadUserSettings = async () => {
     try {
-      // Try to load from server-side user preferences first
-      const userSettingsKey = `userSettings_${user.id}_${selectedCompany.id}`
-      
-      // Simulate API call - in real app this would be a REST API call
-      // For now, we'll use a more structured localStorage approach with user/company context
-      const savedSettings = localStorage.getItem(userSettingsKey)
-      
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings)
+      // Load user preferences from database API
+      const prefsResponse = await systemSettingsService.getUserPreferences()
+
+      if (prefsResponse.success && prefsResponse.data) {
+        const prefs = prefsResponse.data
+
+        // Load theme from database if available
+        if (prefs.theme === 'dark' || prefs.theme === 'light') {
+          setThemeState(prefs.theme)
+          // Also update localStorage for quick loading on next visit
+          localStorage.setItem('pbm_theme', prefs.theme)
+        }
+
+        // Store other preferences for local access
+        const userSettingsKey = `userSettings_${user.id}_${selectedCompany.id}`
+        localStorage.setItem(userSettingsKey, JSON.stringify({
+          ...prefs,
+          lastUpdated: new Date().toISOString()
+        }))
+
         setSettings(prev => ({
           ...prev,
-          ...parsed,
-          systemDate: new Date(), // Always override with current date
+          ...prefs,
+          systemDate: new Date(),
           settingsSource: 'user_preferences'
         }))
       } else {
-        // Use company defaults if no user preferences found
-        const companyDefaults = getDefaultSettings()
-        setSettings(companyDefaults)
+        // Fallback to localStorage if API fails
+        const userSettingsKey = `userSettings_${user.id}_${selectedCompany.id}`
+        const savedSettings = localStorage.getItem(userSettingsKey)
+
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings)
+
+          if (parsed.theme === 'dark' || parsed.theme === 'light') {
+            setThemeState(parsed.theme)
+            localStorage.setItem('pbm_theme', parsed.theme)
+          }
+
+          setSettings(prev => ({
+            ...prev,
+            ...parsed,
+            systemDate: new Date(),
+            settingsSource: 'user_preferences'
+          }))
+        } else {
+          // Use company defaults if no preferences found
+          const companyDefaults = getDefaultSettings()
+          setSettings(companyDefaults)
+        }
       }
     } catch (error) {
       console.error('Error loading user settings:', error)
@@ -338,7 +430,8 @@ export const SystemSettingsProvider = ({ children }) => {
     parseDate,        // Use when parsing dates from various formats
     systemDate: settings.systemDate,
     theme,
-    toggleTheme,
+    setTheme,         // Set theme directly (for Settings page)
+    toggleTheme,      // Toggle between light/dark (for header button)
     vatRate // VAT rate percentage from system settings
   }
 
