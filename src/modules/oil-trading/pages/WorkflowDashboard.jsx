@@ -107,7 +107,9 @@ const WorkflowDashboard = () => {
   const {
     data: pendingActions,
     loading: actionsLoading,
-    refresh: refreshActions
+    refreshing: actionsRefreshing,
+    refresh: refreshActions,
+    lastUpdated: actionsLastUpdated
   } = useDashboardCache(
     'pending-actions',
     useCallback(() => workflowService.getPendingActions(projectParams), [projectParams]),
@@ -117,6 +119,7 @@ const WorkflowDashboard = () => {
   const {
     data: workflowStats,
     loading: statsLoading,
+    refreshing: statsRefreshing,
     refresh: refreshStats
   } = useDashboardCache(
     'workflow-stats',
@@ -127,6 +130,7 @@ const WorkflowDashboard = () => {
   const {
     data: activityData,
     loading: activityLoading,
+    refreshing: activityRefreshing,
     refresh: refreshActivity
   } = useDashboardCache(
     'activity-feed',
@@ -137,6 +141,7 @@ const WorkflowDashboard = () => {
   const {
     data: notificationsData,
     loading: notificationsLoading,
+    refreshing: notificationsRefreshing,
     refresh: refreshNotifications
   } = useDashboardCache(
     'notifications',
@@ -147,8 +152,15 @@ const WorkflowDashboard = () => {
   const activityFeed = activityData?.activities || []
   const notifications = notificationsData || { notifications: [], total: 0, hasUrgent: false }
 
-  const loading = (actionsLoading && !pendingActions?.stats) ||
-                  (statsLoading && !workflowStats?.collections)
+  // Initial loading (no data yet)
+  const initialLoading = (actionsLoading && !pendingActions?.stats) ||
+                         (statsLoading && !workflowStats?.collections)
+
+  // Refreshing state (manual refresh - for button animation)
+  const isRefreshing = actionsRefreshing || statsRefreshing || activityRefreshing || notificationsRefreshing
+
+  // Combined loading state - show skeletons on initial load OR during refresh
+  const loading = initialLoading || isRefreshing
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([refreshActions(), refreshStats()])
@@ -160,7 +172,7 @@ const WorkflowDashboard = () => {
     sales: ['sales_delivery', 'customer_payment'],
     approvals: ['expense_approval', 'wastage_approval'],
     finance: ['record_payment', 'bank_reconciliation'],
-    alerts: ['low_stock', 'petty_cash_expiry', 'petty_cash_low_balance', 'contract_renewal']
+    alerts: ['low_stock', 'out_of_stock', 'petty_cash_expiry', 'petty_cash_low_balance', 'contract_renewal']
   }
 
   const getFilteredTasks = () => {
@@ -195,6 +207,7 @@ const WorkflowDashboard = () => {
       record_payment: <Banknote {...iconProps} />,
       contract_renewal: <Calendar {...iconProps} />,
       low_stock: <Warehouse {...iconProps} />,
+      out_of_stock: <AlertTriangle {...iconProps} />,
       petty_cash_expiry: <CreditCard {...iconProps} />,
       petty_cash_low_balance: <CreditCard {...iconProps} />,
       expense_approval: <CreditCard {...iconProps} />,
@@ -228,7 +241,9 @@ const WorkflowDashboard = () => {
       po_receipt: 'icon-bg-collections',
       generate_bill: 'icon-bg-orders',
       record_payment: 'icon-bg-alerts',
-      contract_renewal: 'icon-bg-contracts'
+      contract_renewal: 'icon-bg-contracts',
+      low_stock: 'icon-bg-inventory',
+      out_of_stock: 'bg-red-100 text-red-600' // Critical - out of stock
     }
     return styles[type] || 'bg-slate-100 text-slate-500'
   }
@@ -290,14 +305,21 @@ const WorkflowDashboard = () => {
             </h1>
             <p className="page-subtitle">{selectedCompany?.name}</p>
           </div>
-          <button
-            className="refresh-data-btn"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            <span>{t('refresh', 'Refresh')}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {actionsLastUpdated && (
+              <span className="text-xs text-slate-400">
+                {t('lastUpdated', 'Updated')}: {new Date(actionsLastUpdated).toLocaleTimeString()}
+              </span>
+            )}
+            <button
+              className="refresh-data-btn"
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              <span>{t('refresh', 'Refresh')}</span>
+            </button>
+          </div>
         </div>
       </header>
 

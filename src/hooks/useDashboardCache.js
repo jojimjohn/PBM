@@ -112,12 +112,14 @@ const useDashboardCache = (cacheKey, fetchFn, options = {}) => {
 
   const [data, setData] = useState(defaultValue);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // Separate state for manual refresh
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
 
-  // Use ref to track if we've done initial load
+  // Use ref to track if we've done initial load and prevent duplicate fetches
   const initialLoadDone = useRef(false);
   const fetchFnRef = useRef(fetchFn);
+  const isFetchingRef = useRef(false); // Use ref instead of state for fetch guard
 
   // Keep fetchFn ref updated
   useEffect(() => {
@@ -136,10 +138,17 @@ const useDashboardCache = (cacheKey, fetchFn, options = {}) => {
 
   /**
    * Fetch fresh data from API and update cache
+   * @param {boolean} force - If true, skip cache check (manual refresh)
+   * @param {boolean} isManualRefresh - If true, set refreshing state for UI feedback
    */
-  const fetchData = useCallback(async (force = false) => {
+  const fetchData = useCallback(async (force = false, isManualRefresh = false) => {
     if (!enabled) return;
-    if (loading) return; // Prevent duplicate fetches
+
+    // Use ref to prevent duplicate fetches (avoids closure issues with state)
+    if (isFetchingRef.current) {
+      console.log(`[DashboardCache] Skipping ${cacheKey} - already fetching`);
+      return;
+    }
 
     // Check cache first (unless forced refresh)
     if (!force) {
@@ -159,19 +168,20 @@ const useDashboardCache = (cacheKey, fetchFn, options = {}) => {
     }
 
     // Fetch from API
+    isFetchingRef.current = true;
     setLoading(true);
+    if (isManualRefresh) setRefreshing(true);
     setError(null);
 
     try {
-      console.log(`[DashboardCache] Fetching fresh ${cacheKey} from API`);
       const result = await fetchFnRef.current();
 
-      if (result.success) {
+      if (result && result.success) {
         setData(result.data);
         setLastUpdated(Date.now());
         setCachedData(cacheKey, result.data, projectId, companyId);
       } else {
-        setError(result.error || 'Failed to fetch data');
+        setError(result?.error || 'Failed to fetch data');
         // On error, still use cached data if available
         const cached = getCachedData(cacheKey, projectId, companyId);
         if (cached) {
@@ -189,16 +199,26 @@ const useDashboardCache = (cacheKey, fetchFn, options = {}) => {
         setLastUpdated(cached.timestamp);
       }
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
+      if (isManualRefresh) setRefreshing(false);
     }
-  }, [enabled, loading, cacheKey, projectId, companyId, ttlMinutes]);
+  }, [enabled, cacheKey, projectId, companyId, ttlMinutes]); // Removed 'loading' from dependencies
 
   /**
-   * Manual refresh - always fetches fresh data
+   * Manual refresh - always fetches fresh data with UI feedback
+   * Clears cache first to ensure truly fresh data
    */
   const refresh = useCallback(() => {
-    return fetchData(true);
-  }, [fetchData]);
+    // Clear this key's cache before fetching to ensure fresh data
+    try {
+      const cacheKeyFull = `${CACHE_PREFIX}${cacheKey}_${companyId}_${projectId || 'all'}`;
+      sessionStorage.removeItem(cacheKeyFull);
+    } catch (err) {
+      // Ignore cache clear errors
+    }
+    return fetchData(true, true); // force=true, isManualRefresh=true
+  }, [fetchData, cacheKey, companyId, projectId]);
 
   // Initial load or context change
   useEffect(() => {
@@ -229,6 +249,7 @@ const useDashboardCache = (cacheKey, fetchFn, options = {}) => {
   return {
     data,
     loading,
+    refreshing, // Separate state for manual refresh (for UI feedback)
     error,
     lastUpdated,
     isStale: isStale(),
