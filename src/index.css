@@ -6500,6 +6500,30 @@ input[type="datetime-local"]::placeholder {
   opacity: 0.7 !important;
 }
 
+/* Dark mode placeholder styles - dimmer to distinguish from typed text */
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark select::placeholder {
+  color: #64748b !important; /* slate-500 - dim in dark mode */
+  font-style: italic !important;
+  opacity: 0.8 !important;
+}
+
+.dark input[type="text"]::placeholder,
+.dark input[type="number"]::placeholder,
+.dark input[type="email"]::placeholder,
+.dark input[type="password"]::placeholder,
+.dark input[type="tel"]::placeholder,
+.dark input[type="url"]::placeholder,
+.dark input[type="search"]::placeholder,
+.dark input[type="date"]::placeholder,
+.dark input[type="time"]::placeholder,
+.dark input[type="datetime-local"]::placeholder {
+  color: #64748b !important; /* slate-500 - dim in dark mode */
+  font-style: italic !important;
+  opacity: 0.8 !important;
+}
+
 /* Modern Gradient Backgrounds */
 .gradient-bg {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e0 100%);

@@ -604,8 +604,8 @@ const MaterialFormModal = ({
                     disabled={saving || formData.is_composite}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 peer-disabled:opacity-50"></div>
-                  <span className="ml-2 text-xs font-medium text-slate-600">
+                  <div className="w-11 h-6 bg-slate-200 dark:bg-slate-800 ring-2 ring-slate-400 dark:ring-emerald-400 peer-focus:ring-emerald-500 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:rounded-sm after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 peer-checked:ring-emerald-600 peer-disabled:opacity-50 rounded"></div>
+                  <span className="ml-2 text-xs font-medium text-slate-600 dark:text-slate-200">
                     {formData.is_disposable ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
                   </span>
                 </label>
@@ -668,8 +668,8 @@ const MaterialFormModal = ({
                     disabled={saving}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500 peer-disabled:opacity-50"></div>
-                  <span className="ml-2 text-xs font-medium text-slate-600">
+                  <div className="w-11 h-6 bg-slate-200 dark:bg-slate-800 ring-2 ring-slate-400 dark:ring-blue-400 peer-focus:ring-blue-500 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:rounded-sm after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:ring-blue-600 peer-disabled:opacity-50 rounded"></div>
+                  <span className="ml-2 text-xs font-medium text-slate-600 dark:text-slate-200">
                     {formData.is_composite ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
                   </span>
                 </label>
