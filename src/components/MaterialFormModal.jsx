@@ -42,7 +42,7 @@ const MaterialFormModal = ({
     shelfLifeDays: '',
     specifications: '',
     barcode: '',
-    trackBatches: false,
+    trackBatches: true,  // Default to enabled for proper inventory tracking
     isActive: true,
     is_composite: false,
     // Disposable material fields
@@ -141,7 +141,7 @@ const MaterialFormModal = ({
       shelfLifeDays: '',
       specifications: '',
       barcode: '',
-      trackBatches: false,
+      trackBatches: true,  // Default to enabled for proper inventory tracking
       isActive: true,
       is_composite: false,
       is_disposable: false,
