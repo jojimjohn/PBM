@@ -446,21 +446,38 @@ const UserManagement = () => {
       key: 'name',
       header: t('name', 'Name'),
       render: (_, row) => (
-        <div className="user-name-cell">
-          <div className={`user-avatar ${row.isOnline ? 'online' : ''}`}>
-            {row.firstName?.[0]}{row.lastName?.[0]}
-            {row.isOnline && <span className="online-indicator" title={t('online', 'Online')} />}
+        <div className="flex items-center gap-3">
+          {/* Avatar with online indicator */}
+          <div className="relative">
+            <div className={`
+              w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold
+              ${row.isOnline
+                ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}
+            `}>
+              {row.firstName?.[0]}{row.lastName?.[0]}
+            </div>
+            {row.isOnline && (
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full"
+                title={t('online', 'Online')}
+              />
+            )}
           </div>
-          <div className="user-info">
-            <span className="user-fullname">
-              {row.firstName} {row.lastName}
+          {/* User info */}
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                {row.firstName} {row.lastName}
+              </span>
               {row.isOnline && (
-                <span className="online-status online">
-                  <Circle size={8} fill="currentColor" /> {t('online', 'Online')}
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 rounded">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  {t('online', 'Online')}
                 </span>
               )}
-            </span>
-            <span className="user-email">{row.email}</span>
+            </div>
+            <span className="text-sm text-slate-500 dark:text-slate-400 truncate">{row.email}</span>
           </div>
         </div>
       )
@@ -522,11 +539,15 @@ const UserManagement = () => {
       key: 'mfaEnabled',
       header: t('mfa', 'MFA'),
       render: (value) => (
-        <span className={`mfa-badge ${value ? 'enabled' : 'disabled'}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${
+          value
+            ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
+            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+        }`}>
           {value ? (
-            <><ShieldCheck size={14} /> Enabled</>
+            <><ShieldCheck size={14} /> {t('enabled', 'Enabled')}</>
           ) : (
-            <><ShieldOff size={14} /> Disabled</>
+            <><ShieldOff size={14} /> {t('disabled', 'Disabled')}</>
           )}
         </span>
       )
@@ -536,8 +557,8 @@ const UserManagement = () => {
       header: t('lastLogin', 'Last Login'),
       type: 'date',
       render: (value) => (
-        <span className="last-login">
-          <Clock size={14} />
+        <span className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+          <Clock size={14} className="text-slate-400 dark:text-slate-500" />
           {formatDate(value)}
         </span>
       )
