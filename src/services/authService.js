@@ -11,7 +11,7 @@
  */
 
 import { API_BASE_URL } from '../config/api.js';
-import { signalApiActivity } from '../hooks/useSessionTimeout.js';
+// NOTE: signalApiActivity removed - session extension is now purely server-side
 
 class AuthService {
   constructor() {
@@ -448,12 +448,7 @@ class AuthService {
           });
 
           const retryData = await retryResponse.json();
-
-          // Signal API activity on successful retry (meaningful user action)
-          if (retryResponse.ok) {
-            signalApiActivity();
-          }
-
+          // Session extension handled server-side on non-passive endpoints
           return retryData;
         } catch (refreshError) {
           // Refresh failed, redirect to login
@@ -464,13 +459,7 @@ class AuthService {
       }
 
       const responseData = await response.json();
-
-      // Signal API activity on successful response (meaningful user action)
-      // This extends the session when users are actively using the app
-      if (response.ok) {
-        signalApiActivity();
-      }
-
+      // Session extension handled server-side on non-passive endpoints
       return responseData;
     } catch (error) {
       console.error('API request error:', error);

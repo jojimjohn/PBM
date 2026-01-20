@@ -1,26 +1,18 @@
 /**
- * Session Timeout Hook - Production-Grade Implementation
- *
- * Monitors session activity and provides warning before timeout.
- * Shows a modal before session expires with option to extend.
+ * Session Timeout Hook - Server-Side Timeout Implementation
  *
  * ARCHITECTURE:
- * - Development mode: In-memory session tracking (no Redis dependency)
- * - Production mode: Redis-based session tracking
+ * - Session timeout is managed SERVER-SIDE (no client-side activity tracking)
+ * - Client periodically checks session status to show warning dialog
+ * - User can manually extend session via "Stay logged in" button
+ * - API calls through authService automatically extend session (server-side)
  *
- * SESSION EXTENSION POLICY:
- * - Session is ONLY extended on meaningful API activity (CRUD operations, form submissions)
- * - Idle page time, mouse movements, and random clicks do NOT extend the session
- * - API calls through authService.makeAuthenticatedRequest() trigger extension
- * - Extension is debounced (30 seconds) to prevent server spam
- *
- * SECURITY & PERFORMANCE FEATURES:
+ * FEATURES:
  * - Page Visibility API: Stops polling when tab is hidden (saves bandwidth)
- * - No mousemove tracking: Only deliberate actions count as activity
- * - API-based activity: Only successful API calls extend session (meaningful usage)
- * - Heartbeat is passive: Doesn't extend session, only reports status
+ * - NO client-side activity tracking (no mousemove, click, keypress listeners)
+ * - Periodic status check to display warning modal before timeout
+ * - Manual session extension via button click
  * - Handles REFRESH_IN_PROGRESS: Retries when concurrent refresh detected
- * - Stable callbacks: Prevents unnecessary re-renders
  *
  * Usage:
  * const { showWarning, remainingMinutes, extendSession } = useSessionTimeout(isAuthenticated, logout);
@@ -33,33 +25,13 @@ import authService from '../services/authService.js';
 // Configuration - matches backend sessionConfig.js
 const WARNING_THRESHOLD_MINUTES = 5; // Show warning 5 minutes before timeout
 const CHECK_INTERVAL_MS = 60 * 1000; // Check session status every 60 seconds
-const ACTIVITY_DEBOUNCE_MS = 60 * 1000; // Debounce activity reporting (60 seconds)
-const API_ACTIVITY_DEBOUNCE_MS = 30 * 1000; // Debounce API activity extension (30 seconds)
 const REFRESH_BASE_DELAY_MS = 500; // Base delay for exponential backoff (500ms)
 const MAX_REFRESH_DELAY_MS = 5000; // Maximum delay cap (5 seconds)
 const MAX_REFRESH_RETRIES = 3; // Maximum retry attempts for token refresh
 
-// Global callback for API activity tracking
-// This allows authService to notify when meaningful API calls succeed
-let globalApiActivityCallback = null;
-
-/**
- * Register a callback to be called when API activity extends session
- * @param {Function|null} callback - Function to call on API activity
- */
-export const registerApiActivityCallback = (callback) => {
-  globalApiActivityCallback = callback;
-};
-
-/**
- * Signal API activity from services (e.g., authService)
- * This is called when successful API calls are made
- */
-export const signalApiActivity = () => {
-  if (globalApiActivityCallback) {
-    globalApiActivityCallback();
-  }
-};
+// NOTE: API activity callbacks have been removed
+// Session extension is now purely server-side - the server extends
+// session on non-passive API calls automatically
 
 /**
  * Calculate delay with exponential backoff and jitter
@@ -108,12 +80,6 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
   const [isPageVisible, setIsPageVisible] = useState(true);
 
   // Use refs for values accessed in callbacks to avoid recreation
-  const lastActivityRef = useRef(Date.now());
-  // Initialize to Date.now() so first activity respects debounce
-  // (prevents immediate API call on component mount)
-  const lastHeartbeatRef = useRef(Date.now());
-  // Track last API-triggered session extension (more frequent than UI activity)
-  const lastApiExtendRef = useRef(Date.now());
   const checkIntervalRef = useRef(null);
   const warningDismissedRef = useRef(false);
   const onSessionExpiredRef = useRef(onSessionExpired);
@@ -367,7 +333,6 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
         if (data.success) {
           setShowWarning(false);
           setWarningDismissed(false);
-          lastActivityRef.current = Date.now();
           await fetchSessionStatus();
           return true;
         }
@@ -391,118 +356,11 @@ export const useSessionTimeout = (isAuthenticated, onSessionExpired = null) => {
     setShowWarning(false);
   }, []);
 
-  /**
-   * Silently extend session (called when meaningful API activity occurs)
-   * Does NOT update UI state - just extends server-side session
-   * DEBOUNCED: Only calls server every API_ACTIVITY_DEBOUNCE_MS
-   */
-  const extendSessionSilently = useCallback(async () => {
-    // Skip if not authenticated
-    if (!isAuthenticated) return;
-
-    const now = Date.now();
-    // Debounce - don't spam the server on rapid API calls
-    if (now - lastApiExtendRef.current < API_ACTIVITY_DEBOUNCE_MS) {
-      return;
-    }
-    lastApiExtendRef.current = now;
-    lastActivityRef.current = now;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/session/extend`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          // Update session status silently (no UI changes)
-          setSessionStatus(data.data);
-          // If session was about to expire but now extended, hide warning
-          if (data.data.remainingMinutes > WARNING_THRESHOLD_MINUTES) {
-            setShowWarning(false);
-            setWarningDismissed(false);
-          }
-          devLog('Session extended silently via API activity');
-        }
-      }
-    } catch (error) {
-      // Silently ignore - this is best-effort extension
-      if (isDevelopment) {
-        console.debug('[Session] Silent extend failed:', error.message);
-      }
-    }
-  }, [isAuthenticated]);
-
-  // Register the API activity callback when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      registerApiActivityCallback(extendSessionSilently);
-      devLog('API activity callback registered');
-    } else {
-      registerApiActivityCallback(null);
-    }
-
-    return () => {
-      registerApiActivityCallback(null);
-    };
-  }, [isAuthenticated, extendSessionSilently]);
-
-  /**
-   * Report activity to server (does NOT extend session - just reports)
-   * STABLE: Uses fetchSessionStatus which is now stable
-   */
-  const reportActivity = useCallback(async () => {
-    // Skip if not authenticated or page is hidden
-    if (!isAuthenticated || !isPageVisibleRef.current) return;
-
-    const now = Date.now();
-    // Debounce - don't spam the server
-    if (now - lastHeartbeatRef.current < ACTIVITY_DEBOUNCE_MS) {
-      return;
-    }
-    lastHeartbeatRef.current = now;
-
-    try {
-      await fetchSessionStatus();
-    } catch (error) {
-      if (isDevelopment) {
-        console.debug('[Session] Activity report failed:', error.message);
-      }
-    }
-  }, [isAuthenticated, fetchSessionStatus]);
-
-  /**
-   * Track user activity - STABLE callback
-   * Only deliberate actions count as activity (no mousemove)
-   */
-  const trackActivity = useCallback(() => {
-    lastActivityRef.current = Date.now();
-    reportActivity();
-  }, [reportActivity]);
-
-  // Set up activity listeners for status checks (NOT for session extension)
-  // Session extension only happens via API activity (signalApiActivity)
-  // These DOM events just check status to update the warning modal state
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    // Track deliberate user actions (no mousemove) for status checks only
-    // NOTE: These do NOT extend the session - only API calls extend session
-    const events = ['mousedown', 'keydown', 'touchstart'];
-
-    events.forEach(event => {
-      window.addEventListener(event, trackActivity, { passive: true });
-    });
-
-    return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, trackActivity);
-      });
-    };
-  }, [isAuthenticated, trackActivity]);
+  // NOTE: Silent session extension via API activity has been REMOVED
+  // Session timeout is now purely server-side:
+  // - Server extends session on non-passive API calls automatically
+  // - Frontend only shows warning dialog and allows manual "Stay logged in"
+  // - No frontend-initiated session extension on API activity
 
   // Set up periodic session status check - uses stable fetchSessionStatus
   // Only runs when page is visible
