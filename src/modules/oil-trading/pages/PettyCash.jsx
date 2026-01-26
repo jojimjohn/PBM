@@ -1492,7 +1492,7 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
       closeOnOverlayClick={false}
     >
       <form onSubmit={onSubmit} className="card-form">
-        {/* Card Type Selection - Show for both new and edit, but disabled when editing */}
+        {/* Card Type Selection - Allow changes for both new and edit */}
         <div className="mb-6">
           <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-3">
             {t('cardType', 'Card Type')}
@@ -1507,7 +1507,6 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                   ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
                   : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }
-                ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}
               `}
             >
               <input
@@ -1516,7 +1515,6 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                 value="top_up"
                 checked={formData.cardType === 'top_up'}
                 onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
-                disabled={isEditing}
                 className="mt-1 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
               />
               <div className="flex-1 min-w-0">
@@ -1541,7 +1539,6 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                   ? 'bg-amber-50 border-amber-500 ring-1 ring-amber-500'
                   : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }
-                ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}
               `}
             >
               <input
@@ -1550,7 +1547,6 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
                 value="petrol"
                 checked={formData.cardType === 'petrol'}
                 onChange={(e) => setFormData(prev => ({ ...prev, cardType: e.target.value }))}
-                disabled={isEditing}
                 className="mt-1 w-4 h-4 text-amber-600 border-slate-300 focus:ring-amber-500"
               />
               <div className="flex-1 min-w-0">
@@ -1573,10 +1569,11 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
               <p>{t('petrolCardNote', 'Petrol cards are shared across all users and can only be used for fuel expenses.')}</p>
             </div>
           )}
-          {isEditing && (
-            <p className="text-xs text-slate-500 mt-2 italic">
-              {t('cardTypeCannotChange', 'Card type cannot be changed after creation')}
-            </p>
+          {isEditing && card?.card_type !== formData.cardType && (
+            <div className="flex items-start gap-2 mt-3 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+              <p>{t('cardTypeChangeWarning', 'Changing card type may affect user assignments. Please verify petty cash user settings after this change.')}</p>
+            </div>
           )}
         </div>
 
