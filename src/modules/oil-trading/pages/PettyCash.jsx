@@ -379,6 +379,7 @@ const PettyCash = () => {
       merchant: expense.vendor || expense.merchant || '',  // Backend returns 'vendor'
       paymentMethod: expense.payment_method || expense.paymentMethod || 'top_up_card',
       notes: expense.notes || '',
+      projectId: expense.projectId?.toString() || expense.project_id?.toString() || '',
       receiptFile: null,
       existingReceipt: expense.receiptPhoto || null,
       existingReceiptKey: expense.receipt_key || null
@@ -440,7 +441,8 @@ const PettyCash = () => {
         description: formData.description,
         vendor: formData.merchant || null,  // Backend expects 'vendor' not 'merchant'
         paymentMethod: formData.paymentMethod || 'top_up_card',
-        notes: formData.notes || null
+        notes: formData.notes || null,
+        projectId: formData.projectId ? parseInt(formData.projectId) : null
       }
 
       const result = await pettyCashService.updateExpense(editingExpense.id, expenseData)
@@ -1346,6 +1348,7 @@ const PettyCash = () => {
           cards={cards}
           expenseTypes={expenseTypes}
           pettyCashUsers={pettyCashUsers}
+          projects={projects}
           formData={editExpenseForm}
           setFormData={setEditExpenseForm}
           t={t}
@@ -2228,6 +2231,7 @@ const EditExpenseFormModal = ({
   cards,
   expenseTypes,
   pettyCashUsers = [],
+  projects = [],
   formData,
   setFormData,
   t,
@@ -2886,6 +2890,28 @@ const EditExpenseFormModal = ({
             ))}
           </select>
         </div>
+
+        {/* Project Selection */}
+        {projects.length > 0 && (
+          <div className="form-group">
+            <label className="flex items-center gap-2">
+              <FolderOpen size={16} className="text-slate-400" />
+              {t('project', 'Project')}
+            </label>
+            <select
+              value={formData.projectId || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+              disabled={isApprovedExpense || isReadOnly}
+            >
+              <option value="">{t('selectProject', 'Select a project (optional)')}</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.code} - {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Payment Method Selection - THIRD (auto-populated based on user's cards) */}
         {selectedPcUser && (
