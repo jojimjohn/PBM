@@ -109,8 +109,11 @@ const PermissionMatrix = ({
   }
 
   // Toggle single permission
-  const togglePermission = (permissionKey) => {
+  const togglePermission = (permissionKey, event) => {
     if (readonly) return
+    // Blur to prevent any residual scroll-into-view behavior
+    event?.target?.blur?.()
+
     const newSelected = selectedSet.has(permissionKey)
       ? selectedPermissions.filter(p => p !== permissionKey)
       : [...selectedPermissions, permissionKey]
@@ -118,17 +121,18 @@ const PermissionMatrix = ({
   }
 
   // Toggle all permissions in a module
-  const toggleModule_ = (module) => {
+  const toggleModule_ = (module, event) => {
     if (readonly) return
+    // Blur to prevent any residual scroll-into-view behavior
+    event?.target?.blur?.()
+
     const modulePermKeys = module.permissions.map(p => p.key)
     const allSelected = modulePermKeys.every(key => selectedSet.has(key))
 
     let newSelected
     if (allSelected) {
-      // Deselect all in module
       newSelected = selectedPermissions.filter(p => !modulePermKeys.includes(p))
     } else {
-      // Select all in module
       const toAdd = modulePermKeys.filter(key => !selectedSet.has(key))
       newSelected = [...selectedPermissions, ...toAdd]
     }
@@ -250,7 +254,7 @@ const PermissionMatrix = ({
                       className={`module-checkbox ${selectionState}`}
                       onClick={(e) => {
                         e.stopPropagation()
-                        toggleModule_(module)
+                        toggleModule_(module, e)
                       }}
                       title={selectionState === 'all' ? (t('deselectModule') || 'Deselect all in module') : (t('selectModule') || 'Select all in module')}
                     >
@@ -271,7 +275,7 @@ const PermissionMatrix = ({
                         <input
                           type="checkbox"
                           checked={selectedSet.has(permission.key)}
-                          onChange={() => togglePermission(permission.key)}
+                          onChange={(e) => togglePermission(permission.key, e)}
                           disabled={readonly}
                         />
                         <span className="checkbox-visual">

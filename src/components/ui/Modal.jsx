@@ -86,22 +86,34 @@ const Modal = ({
     }
   }, [isOpen]);
 
-  // Prevent body scroll when modal is open
+  // Prevent body AND main-content-area scroll when modal is open
   useEffect(() => {
     if (!preventScroll) return;
+
+    const mainContent = document.querySelector('.main-content-area');
 
     if (isOpen) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = `${scrollbarWidth}px`;
+      // Also lock the main content area scroll
+      if (mainContent) {
+        mainContent.style.overflow = 'hidden';
+      }
     } else {
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
+      if (mainContent) {
+        mainContent.style.overflow = '';
+      }
     }
 
     return () => {
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
+      if (mainContent) {
+        mainContent.style.overflow = '';
+      }
     };
   }, [isOpen, preventScroll]);
 

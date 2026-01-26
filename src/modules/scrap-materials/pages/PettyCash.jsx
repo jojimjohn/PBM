@@ -448,38 +448,40 @@ const PettyCash = () => {
             <Eye size={14} />
           </button>
           {hasPermission('MANAGE_PETTY_CASH') && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleEditCard(row)
-                }}
-                className="action-btn edit"
-                title={t('edit', 'Edit')}
-              >
-                <Edit size={14} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleReloadCard(row)
-                }}
-                className="action-btn reload"
-                title={t('reloadCard', 'Reload Card')}
-              >
-                <RefreshCw size={14} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleAddExpense(row)
-                }}
-                className="action-btn expense"
-                title={t('addExpense', 'Add Expense')}
-              >
-                <Receipt size={14} />
-              </button>
-            </>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEditCard(row)
+              }}
+              className="action-btn edit"
+              title={t('edit', 'Edit')}
+            >
+              <Edit size={14} />
+            </button>
+          )}
+          {(hasPermission('RELOAD_CARD') || hasPermission('MANAGE_PETTY_CASH')) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleReloadCard(row)
+              }}
+              className="action-btn reload"
+              title={t('reloadCard', 'Reload Card')}
+            >
+              <RefreshCw size={14} />
+            </button>
+          )}
+          {(hasPermission('CREATE_EXPENSE') || hasPermission('MANAGE_PETTY_CASH')) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleAddExpense(row)
+              }}
+              className="action-btn expense"
+              title={t('addExpense', 'Add Expense')}
+            >
+              <Receipt size={14} />
+            </button>
           )}
         </div>
       )

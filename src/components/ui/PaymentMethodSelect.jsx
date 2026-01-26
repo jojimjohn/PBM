@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CreditCard, Banknote, Wallet, AlertCircle, Fuel, Building2 } from 'lucide-react'
+import { CreditCard, Banknote, Wallet, AlertCircle, Fuel } from 'lucide-react'
 import { useLocalization } from '../../context/LocalizationContext'
 // CSS moved to global index.css Tailwind
 
@@ -8,10 +8,9 @@ import { useLocalization } from '../../context/LocalizationContext'
  * PaymentMethodSelect Component
  *
  * A radio group component for selecting expense payment method.
- * Supports four payment methods:
+ * Supports three payment methods:
  * - top_up_card: User's assigned petty cash card (deducts from card balance)
- * - petrol_card: Shared fuel card (fuel expenses only)
- * - company_card: Company debit card (no petty cash deduction)
+ * - petrol_card: User's assigned petrol card (fuel expenses only)
  * - iou: Personal expense (requires reimbursement when approved)
  *
  * Usage:
@@ -46,17 +45,6 @@ const PAYMENT_METHODS = [
     requiresReimbursement: false,
     fuelOnly: true,  // Only available for fuel category
     color: '#f59e0b' // Amber
-  },
-  {
-    value: 'company_card',
-    icon: Building2,
-    labelKey: 'companyCardPayment',
-    defaultLabel: 'Company Card',
-    descKey: 'companyCardPaymentDesc',
-    defaultDesc: 'Company debit/credit card',
-    requiresReimbursement: false,
-    fuelOnly: false,
-    color: '#8b5cf6' // Purple
   },
   {
     value: 'iou',
@@ -124,7 +112,6 @@ const PaymentMethodSelect = forwardRef(({
               switch (method.value) {
                 case 'top_up_card': return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
                 case 'petrol_card': return 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500'
-                case 'company_card': return 'border-violet-500 bg-violet-50 text-violet-700 ring-1 ring-violet-500'
                 case 'iou': return 'border-red-500 bg-red-50 text-red-700 ring-1 ring-red-500'
                 default: return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
               }
@@ -198,7 +185,7 @@ const PaymentMethodSelect = forwardRef(({
       )}
 
       {/* Payment Method Options */}
-      <div className="payment-method-options payment-method-grid-4">
+      <div className="payment-method-options payment-method-grid-3">
         {PAYMENT_METHODS.map((method) => {
           const Icon = method.icon
           const isSelected = value === method.value

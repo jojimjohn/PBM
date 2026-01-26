@@ -20,6 +20,7 @@ import userService from '../../../services/userService'
 import pettyCashUsersService from '../../../services/pettyCashUsersService'
 import dataCacheService from '../../../services/dataCacheService'
 import PettyCashUsersSection from '../../../components/petty-cash/PettyCashUsersSection'
+import useProjects from '../../../hooks/useProjects'
 import {
   CreditCard,
   Plus,
@@ -47,7 +48,8 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Loader2,
-  Fuel
+  Fuel,
+  FolderOpen
 } from 'lucide-react'
 // CSS moved to global index.css - using Tailwind classes
 
@@ -56,6 +58,7 @@ const PettyCash = () => {
   const { t } = useLocalization()
   const { formatDate: systemFormatDate, getInputDate } = useSystemSettings()
   const { hasPermission } = usePermissions()
+  const { projects, selectedProjectId } = useProjects()
   const [searchParams] = useSearchParams()
 
   // Read search param from URL (used when clicking tasks from dashboard)
@@ -66,6 +69,7 @@ const PettyCash = () => {
   const [expenses, setExpenses] = useState([])
   const [expenseTypes, setExpenseTypes] = useState([])
   const [users, setUsers] = useState([])
+  const [pettyCashUsers, setPettyCashUsers] = useState([]) // PC users with their card assignments
   const [stats, setStats] = useState({})
   const [error, setError] = useState(null)
   
@@ -119,7 +123,7 @@ const PettyCash = () => {
       }
 
       // PERFORMANCE FIX: Load all data in parallel using dataCacheService for instant loading
-      const [cardsData, expensesData, typesResult, statsResult, usersResult] = await Promise.all([
+      const [cardsData, expensesData, typesResult, statsResult, usersResult, pcUsersResult] = await Promise.all([
         // Petty cash cards - CACHED (2 min TTL)
         dataCacheService.getPettyCashCards().catch(err => {
           console.error('Error loading petty cash cards:', err)
@@ -144,6 +148,11 @@ const PettyCash = () => {
         userService.getAll().catch(err => {
           console.error('Failed to load users:', err)
           return { success: false, data: [] }
+        }),
+        // Petty cash users (for mapping top-up cards to petrol cards)
+        pettyCashUsersService.getAll().catch(err => {
+          console.error('Failed to load petty cash users:', err)
+          return { success: false, data: [] }
         })
       ])
 
@@ -166,6 +175,13 @@ const PettyCash = () => {
         setUsers(usersResult.data || [])
       } else {
         setUsers([])
+      }
+
+      // Process petty cash users (for card mapping)
+      if (pcUsersResult.success) {
+        setPettyCashUsers(pcUsersResult.data || [])
+      } else {
+        setPettyCashUsers([])
       }
 
     } catch (error) {
@@ -278,16 +294,30 @@ const PettyCash = () => {
 
   const handleAddExpense = (card = null) => {
     setSelectedCard(card)
+
+    // If a card is provided, find which petty cash user owns it
+    let pcUserId = ''
+    if (card?.id) {
+      const ownerUser = pettyCashUsers.find(u =>
+        u.card_id === card.id || u.petrol_card_id === card.id
+      )
+      if (ownerUser) {
+        pcUserId = ownerUser.id.toString()
+      }
+    }
+
     setExpenseForm({
-      cardId: card?.id || '',
+      pcUserId: pcUserId, // User-first selection
+      cardId: card?.id?.toString() || '',
       expenseType: '',
       amount: '',
       description: '',
       merchant: '',
       transactionDate: getInputDate(), // Use local date, not UTC
       notes: '',
-      paymentMethod: 'top_up_card', // Default payment method
-      receiptFile: null // S3-integrated receipt file
+      paymentMethod: card ? (card.card_type === 'petrol' ? 'petrol_card' : 'top_up_card') : 'iou', // Default based on card or IOU
+      receiptFile: null, // S3-integrated receipt file
+      projectId: selectedProjectId && selectedProjectId !== 'all' ? selectedProjectId.toString() : '' // Default to selected project filter
     })
     setShowExpenseModal(true)
   }
@@ -324,8 +354,23 @@ const PettyCash = () => {
     setEditingExpense(expense)
     // Normalize category to lowercase to match dropdown values
     const categoryValue = (expense.category || expense.expenseType || '').toLowerCase()
+
+    // Find the petty cash user who owns this card (reverse lookup)
+    // Check both card_id and petrol_card_id to find the owner
+    const cardId = expense.cardId ? parseInt(expense.cardId) : null
+    let pcUserId = ''
+    if (cardId) {
+      const ownerUser = pettyCashUsers.find(u =>
+        u.card_id === cardId || u.petrol_card_id === cardId
+      )
+      if (ownerUser) {
+        pcUserId = ownerUser.id.toString()
+      }
+    }
+
     setEditExpenseForm({
       id: expense.id,
+      pcUserId: pcUserId, // Add pcUserId for user-first approach
       cardId: expense.cardId?.toString() || '',
       expenseType: categoryValue,
       amount: expense.amount?.toString() || '',
@@ -503,7 +548,8 @@ const PettyCash = () => {
         expenseDate: formData.transactionDate, // Frontend: transactionDate → Backend: expenseDate
         vendor: formData.merchant || null, // Frontend: merchant → Backend: vendor
         notes: formData.notes || null, // Convert empty string to null
-        paymentMethod: formData.paymentMethod || 'top_up_card'
+        paymentMethod: formData.paymentMethod || 'top_up_card',
+        projectId: formData.projectId ? parseInt(formData.projectId) : null // Link to project
       }
 
       const result = await pettyCashService.createExpense(expensePayload)
@@ -738,64 +784,68 @@ const PettyCash = () => {
             <Eye size={14} />
           </button>
           {hasPermission('MANAGE_PETTY_CASH') && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEditCard(row)
+              }}
+              className="btn btn-outline btn-sm"
+              title={t('edit', 'Edit')}
+            >
+              <Edit size={14} />
+            </button>
+          )}
+          {row.status === 'active' && (
             <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleEditCard(row)
-                }}
-                className="btn btn-outline btn-sm"
-                title={t('edit', 'Edit')}
-              >
-                <Edit size={14} />
-              </button>
-              {row.status === 'active' && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleReloadCard(row)
-                    }}
-                    className="btn btn-success btn-sm"
-                    title={t('reloadCard', 'Reload Card')}
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleAddExpense(row)
-                    }}
-                    className="btn btn-primary btn-sm"
-                    title={t('addExpense', 'Add Expense')}
-                  >
-                    <Receipt size={14} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      openDeactivateCardModal(row)
-                    }}
-                    className="btn btn-warning btn-sm"
-                    title={t('deactivateCard', 'Deactivate Card')}
-                  >
-                    <Ban size={14} />
-                  </button>
-                </>
-              )}
-              {row.status === 'suspended' && (
+              {(hasPermission('RELOAD_CARD') || hasPermission('MANAGE_PETTY_CASH')) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleReactivateCard(row)
+                    handleReloadCard(row)
                   }}
                   className="btn btn-success btn-sm"
-                  title={t('reactivateCard', 'Reactivate Card')}
+                  title={t('reloadCard', 'Reload Card')}
                 >
-                  <PlayCircle size={14} />
+                  <RefreshCw size={14} />
+                </button>
+              )}
+              {(hasPermission('CREATE_EXPENSE') || hasPermission('MANAGE_PETTY_CASH')) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleAddExpense(row)
+                  }}
+                  className="btn btn-primary btn-sm"
+                  title={t('addExpense', 'Add Expense')}
+                >
+                  <Receipt size={14} />
+                </button>
+              )}
+              {hasPermission('MANAGE_PETTY_CASH') && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openDeactivateCardModal(row)
+                  }}
+                  className="btn btn-warning btn-sm"
+                  title={t('deactivateCard', 'Deactivate Card')}
+                >
+                  <Ban size={14} />
                 </button>
               )}
             </>
+          )}
+          {row.status === 'suspended' && hasPermission('MANAGE_PETTY_CASH') && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleReactivateCard(row)
+              }}
+              className="btn btn-success btn-sm"
+              title={t('reactivateCard', 'Reactivate Card')}
+            >
+              <PlayCircle size={14} />
+            </button>
           )}
         </div>
       )
@@ -1173,6 +1223,8 @@ const PettyCash = () => {
           selectedCard={selectedCard}
           cards={cards}
           expenseTypes={expenseTypes}
+          projects={projects}
+          pettyCashUsers={pettyCashUsers}
           formData={expenseForm}
           setFormData={setExpenseForm}
           t={t}
@@ -1293,6 +1345,7 @@ const PettyCash = () => {
           expense={editingExpense}
           cards={cards}
           expenseTypes={expenseTypes}
+          pettyCashUsers={pettyCashUsers}
           formData={editExpenseForm}
           setFormData={setEditExpenseForm}
           t={t}
@@ -1634,53 +1687,151 @@ const CardFormModal = ({ isOpen, onClose, onSubmit, card, formData, setFormData,
   )
 }
 
-// Expense Form Modal Component
-const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expenseTypes, formData, setFormData, t }) => {
+// Expense Form Modal Component - USER-FIRST SELECTION APPROACH
+// Flow: Select User → Select Category → Payment Method auto-determined by user's cards
+const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expenseTypes, projects = [], pettyCashUsers = [], formData, setFormData, t }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState(null)
 
-  // Find the petrol card (shared fuel card)
-  const petrolCard = cards.find(c => c.card_type === 'petrol' && c.status === 'active')
+  // Get selected petty cash user and their cards
+  const selectedPcUser = React.useMemo(() => {
+    if (!formData.pcUserId) return null
+    return pettyCashUsers.find(u => u.id === parseInt(formData.pcUserId))
+  }, [formData.pcUserId, pettyCashUsers])
+
+  // Get the selected user's top-up card
+  const userTopUpCard = React.useMemo(() => {
+    if (!selectedPcUser?.card_id) return null
+    return cards.find(c => c.id === selectedPcUser.card_id && c.status === 'active')
+  }, [selectedPcUser, cards])
+
+  // Get the selected user's petrol card
+  const userPetrolCard = React.useMemo(() => {
+    if (!selectedPcUser?.petrol_card_id) return null
+    return cards.find(c => c.id === selectedPcUser.petrol_card_id && c.status === 'active')
+  }, [selectedPcUser, cards])
 
   // Determine if current expense type is fuel
   const isFuelExpense = formData.expenseType?.toLowerCase() === 'fuel'
 
-  // Get available cards for selection based on expense type
-  const getAvailableCards = () => {
-    if (isFuelExpense) {
-      // For fuel expenses, show petrol card first, then other active cards
-      const activeCards = cards.filter(card => card.status === 'active')
-      return activeCards.sort((a, b) => {
-        if (a.card_type === 'petrol') return -1
-        if (b.card_type === 'petrol') return 1
-        return 0
-      })
+  // Handle user selection - auto-select appropriate card based on context
+  const handleUserChange = (userId) => {
+    const pcUser = pettyCashUsers.find(u => u.id === parseInt(userId))
+    if (!pcUser) {
+      setFormData(prev => ({ ...prev, pcUserId: '', cardId: '', paymentMethod: 'iou' }))
+      return
+    }
+
+    // Get user's cards
+    const topUpCard = pcUser.card_id ? cards.find(c => c.id === pcUser.card_id && c.status === 'active') : null
+    const petrolCard = pcUser.petrol_card_id ? cards.find(c => c.id === pcUser.petrol_card_id && c.status === 'active') : null
+
+    // Determine initial payment method and card based on expense type
+    let paymentMethod = 'iou' // Default to IOU if no cards
+    let cardId = ''
+
+    if (isFuelExpense && petrolCard) {
+      paymentMethod = 'petrol_card'
+      cardId = petrolCard.id.toString()
+    } else if (topUpCard) {
+      paymentMethod = 'top_up_card'
+      cardId = topUpCard.id.toString()
+    } else if (petrolCard && !isFuelExpense) {
+      // User only has petrol card but expense is not fuel - use IOU
+      paymentMethod = 'iou'
+      cardId = ''
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      pcUserId: userId,
+      cardId,
+      paymentMethod
+    }))
+  }
+
+  // Handle expense type change - auto-select appropriate payment method for selected user
+  const handleExpenseTypeChange = (categoryId) => {
+    const normalizedCategory = categoryId?.toLowerCase()
+
+    if (!selectedPcUser) {
+      // No user selected yet, just update expense type
+      setFormData(prev => ({ ...prev, expenseType: categoryId }))
+      return
+    }
+
+    if (normalizedCategory === 'fuel') {
+      // Auto-select petrol card when fuel is selected (if user has one)
+      if (userPetrolCard) {
+        setFormData(prev => ({
+          ...prev,
+          expenseType: categoryId,
+          paymentMethod: 'petrol_card',
+          cardId: userPetrolCard.id.toString()
+        }))
+      } else {
+        // User doesn't have petrol card - fallback to top-up or IOU
+        setFormData(prev => ({
+          ...prev,
+          expenseType: categoryId,
+          paymentMethod: userTopUpCard ? 'top_up_card' : 'iou',
+          cardId: userTopUpCard ? userTopUpCard.id.toString() : ''
+        }))
+      }
     } else {
-      // For non-fuel expenses, show only top-up cards (exclude petrol)
-      return cards.filter(card => card.status === 'active' && card.card_type !== 'petrol')
+      // Non-fuel expense - use top-up card if available
+      setFormData(prev => ({
+        ...prev,
+        expenseType: categoryId,
+        paymentMethod: userTopUpCard ? 'top_up_card' : 'iou',
+        cardId: userTopUpCard ? userTopUpCard.id.toString() : ''
+      }))
     }
   }
 
-  const handleExpenseTypeChange = (categoryId) => {
-    const normalizedCategory = categoryId?.toLowerCase()
-    if (normalizedCategory === 'fuel') {
-      // Auto-select petrol card when fuel is selected
-      setFormData(prev => ({
-        ...prev,
-        expenseType: categoryId,
-        paymentMethod: 'petrol_card',
-        cardId: petrolCard ? petrolCard.id.toString() : ''
-      }))
-    } else {
-      // Reset to top_up_card payment method when switching away from fuel
-      setFormData(prev => ({
-        ...prev,
-        expenseType: categoryId,
-        paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod,
-        // Clear card selection if it was petrol card
-        cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
-      }))
+  // Get available payment methods for selected user
+  const getAvailablePaymentMethods = () => {
+    const methods = []
+
+    // Top-up card available if user has one
+    if (userTopUpCard) {
+      methods.push({
+        id: 'top_up_card',
+        label: t('topUpCard', 'Top-up Card'),
+        cardNumber: userTopUpCard.cardNumber,
+        balance: parseFloat(userTopUpCard.currentBalance || 0)
+      })
     }
+
+    // Petrol card available only for fuel expenses if user has one
+    if (userPetrolCard && isFuelExpense) {
+      methods.push({
+        id: 'petrol_card',
+        label: t('petrolCard', 'Petrol Card'),
+        cardNumber: userPetrolCard.cardNumber,
+        balance: parseFloat(userPetrolCard.currentBalance || 0)
+      })
+    }
+
+    // IOU always available
+    methods.push({
+      id: 'iou',
+      label: t('iouPayment', 'IOU (Personal)'),
+      balance: null
+    })
+
+    return methods
+  }
+
+  // Handle payment method change
+  const handlePaymentMethodChange = (method) => {
+    let cardId = ''
+    if (method === 'top_up_card' && userTopUpCard) {
+      cardId = userTopUpCard.id.toString()
+    } else if (method === 'petrol_card' && userPetrolCard) {
+      cardId = userPetrolCard.id.toString()
+    }
+    setFormData(prev => ({ ...prev, paymentMethod: method, cardId }))
   }
 
   const handleSubmit = async (e) => {
@@ -1710,7 +1861,83 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
       closeOnOverlayClick={false}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Expense Type Selection - FIRST to trigger payment method and card auto-selection */}
+        {/* USER SELECTION - FIRST (determines available cards) */}
+        <div className="form-group">
+          <label className="flex items-center gap-2">
+            <User size={16} className="text-slate-400" />
+            {t('selectUser', 'Select User')} *
+          </label>
+          <select
+            value={formData.pcUserId || ''}
+            onChange={(e) => handleUserChange(e.target.value)}
+            required
+            className="w-full"
+          >
+            <option value="">{t('selectPettyCashUser', 'Select Petty Cash User')}</option>
+            {pettyCashUsers.filter(u => u.is_active !== false).map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name} {user.department ? `(${user.department})` : ''}
+                {user.card_id || user.petrol_card_id ? '' : ' - No cards'}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-slate-500 mt-1">
+            {t('selectUserForExpense', 'Select the user this expense belongs to')}
+          </p>
+        </div>
+
+        {/* Selected User Info Panel - Show cards available */}
+        {selectedPcUser && (
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded">
+            <div className="text-sm font-medium text-slate-700 mb-2">{selectedPcUser.name}</div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {userTopUpCard ? (
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                  💳 {t('topUpCard', 'Top-up Card')}: OMR {parseFloat(userTopUpCard.currentBalance || 0).toFixed(3)}
+                </span>
+              ) : (
+                <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded">
+                  💳 {t('noTopUpCard', 'No top-up card')}
+                </span>
+              )}
+              {userPetrolCard ? (
+                <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded">
+                  ⛽ {t('petrolCard', 'Petrol Card')}: OMR {parseFloat(userPetrolCard.currentBalance || 0).toFixed(3)}
+                </span>
+              ) : (
+                <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded">
+                  ⛽ {t('noPetrolCard', 'No petrol card')}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Project Selection - SECOND for context */}
+        {projects.length > 0 && (
+          <div className="form-group">
+            <label className="flex items-center gap-2">
+              <FolderOpen size={16} className="text-slate-400" />
+              {t('project', 'Project')}
+            </label>
+            <select
+              value={formData.projectId || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
+            >
+              <option value="">{t('selectProject', 'Select a project (optional)')}</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.code} - {project.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              {t('projectExpenseNote', 'Link this expense to a specific project')}
+            </p>
+          </div>
+        )}
+
+        {/* Expense Type Selection - THIRD to trigger payment method auto-selection */}
         <div className="form-group">
           <label>{t('expenseType', 'Expense Type')} *</label>
           <select
@@ -1727,101 +1954,83 @@ const ExpenseFormModal = ({ isOpen, onClose, onSave, selectedCard, cards, expens
           </select>
         </div>
 
-        {/* Payment Method Selection - SECOND (triggers card selection) */}
-        <PaymentMethodSelect
-          label={t('paymentMethod', 'Payment Method')}
-          value={formData.paymentMethod || 'top_up_card'}
-          onChange={(method) => {
-            // Handle payment method change with card auto-selection
-            if (method === 'company_card' || method === 'iou') {
-              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
-            } else if (method === 'petrol_card') {
-              // Auto-select petrol card when petrol_card payment method is selected
-              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: petrolCard ? petrolCard.id.toString() : '' }))
-            } else {
-              // For top_up_card, clear card if it was petrol card
-              setFormData(prev => ({
-                ...prev,
-                paymentMethod: method,
-                cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
-              }))
-            }
-          }}
-          category={formData.expenseType}
-          compact={true}
-          required
-        />
-
-        {/* Card Selection - THIRD (show for card-based payment methods) */}
-        {(formData.paymentMethod === 'top_up_card' || formData.paymentMethod === 'petrol_card' || !formData.paymentMethod) && (
+        {/* Payment Method Selection - FOURTH (auto-populated based on user's cards) */}
+        {selectedPcUser && (
           <div className="form-group">
-            <label>{t('selectCard', 'Select Card')} *</label>
-            <select
-              value={formData.cardId}
-              onChange={(e) => {
-                const selectedCardId = e.target.value
-                const selectedCard = cards.find(c => c.id === parseInt(selectedCardId))
-                // Update payment method based on selected card type
-                const newPaymentMethod = selectedCard?.card_type === 'petrol' ? 'petrol_card' : 'top_up_card'
-                setFormData(prev => ({ ...prev, cardId: selectedCardId, paymentMethod: newPaymentMethod }))
-              }}
-              required
-            >
-              <option value="">{t('selectCard', 'Select Card')}</option>
-              {getAvailableCards().map(card => (
-                <option key={card.id} value={card.id}>
-                  {card.card_type === 'petrol' ? '⛽ ' : ''}{card.cardNumber} - {card.cardName || card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
-                </option>
-              ))}
-            </select>
-            {/* Petrol card auto-selected info */}
-            {isFuelExpense && petrolCard && formData.cardId === petrolCard.id.toString() && (
-              <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs">
-                <span>⛽</span>
-                <p>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</p>
+            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              {t('paymentMethod', 'Payment Method')} *
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {getAvailablePaymentMethods().map(method => {
+                const isSelected = formData.paymentMethod === method.id
+                const isRecommended = method.id === 'petrol_card' && isFuelExpense
+
+                // Color classes based on payment method type
+                const getColorClasses = () => {
+                  if (!isSelected) return 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  switch (method.id) {
+                    case 'top_up_card': return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
+                    case 'petrol_card': return 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500'
+                    case 'iou': return 'border-red-500 bg-red-50 text-red-700 ring-1 ring-red-500'
+                    default: return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
+                  }
+                }
+
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => handlePaymentMethodChange(method.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border transition-all duration-150 ${getColorClasses()}`}
+                    title={method.balance !== null ? `${t('balance', 'Balance')}: OMR ${method.balance.toFixed(3)}` : ''}
+                  >
+                    {method.id === 'top_up_card' && <CreditCard size={14} />}
+                    {method.id === 'petrol_card' && <Fuel size={14} />}
+                    {method.id === 'iou' && <Banknote size={14} />}
+                    <span>{method.label}</span>
+                    {method.cardNumber && <span className="text-[10px] opacity-75">({method.cardNumber})</span>}
+                    {isRecommended && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-semibold rounded">
+                        {t('recommended', 'Recommended')}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            {/* Balance info for selected method */}
+            {formData.paymentMethod && formData.paymentMethod !== 'iou' && (
+              <div className="mt-2 text-xs text-slate-500">
+                {formData.paymentMethod === 'top_up_card' && userTopUpCard && (
+                  <span>{t('balance', 'Balance')}: OMR {parseFloat(userTopUpCard.currentBalance || 0).toFixed(3)}</span>
+                )}
+                {formData.paymentMethod === 'petrol_card' && userPetrolCard && (
+                  <span>{t('balance', 'Balance')}: OMR {parseFloat(userPetrolCard.currentBalance || 0).toFixed(3)}</span>
+                )}
               </div>
             )}
-            {/* Warning when using non-petrol card for fuel */}
-            {isFuelExpense && formData.cardId && petrolCard && formData.cardId !== petrolCard.id.toString() && (
+            {/* Info messages */}
+            {isFuelExpense && userPetrolCard && formData.paymentMethod === 'petrol_card' && (
+              <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs">
+                <Fuel size={14} className="shrink-0" />
+                <span>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</span>
+              </div>
+            )}
+            {isFuelExpense && !userPetrolCard && (
               <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-                <span>⚠️</span>
-                <p>{t('usingNonPetrolCard', 'Using a non-petrol card for fuel expense')}</p>
+                <AlertCircle size={14} className="shrink-0" />
+                <span>{t('noPetrolCardWarning', 'This user has no petrol card assigned. Consider using IOU for fuel expenses.')}</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Selected Card Info Panel */}
-        {formData.cardId && (formData.paymentMethod === 'top_up_card' || formData.paymentMethod === 'petrol_card' || !formData.paymentMethod) && (() => {
-          const selectedCard = cards.find(c => c.id === parseInt(formData.cardId));
-          if (!selectedCard) return null;
-          return (
-            <div className="p-4 bg-blue-50 border border-blue-200">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-sm font-semibold text-blue-800">
-                    {selectedCard.card_type === 'petrol' ? '⛽ ' : ''}{selectedCard.cardNumber}
-                  </div>
-                  <div className="text-sm text-blue-700 mt-1">
-                    {selectedCard.cardName || selectedCard.assignedStaff?.name || t('unassigned', 'Unassigned')}
-                  </div>
-                  {selectedCard.pettyCashUser && (
-                    <div className="text-xs text-blue-600 mt-1">
-                      {selectedCard.pettyCashUser.department || selectedCard.department || 'N/A'}
-                      {selectedCard.pettyCashUser.phone && ` • ${selectedCard.pettyCashUser.phone}`}
-                    </div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-blue-600">{t('availableBalance', 'Available Balance')}</div>
-                  <div className="text-lg font-bold text-blue-800">
-                    OMR {parseFloat(selectedCard.currentBalance || 0).toFixed(3)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        {/* Prompt to select user first */}
+        {!selectedPcUser && (
+          <div className="p-4 bg-slate-100 border border-slate-200 rounded text-center text-slate-600 text-sm">
+            {t('selectUserFirst', 'Please select a user first to see available payment methods')}
+          </div>
+        )}
 
         <div className="form-grid">
           <div className="form-group">
@@ -2013,7 +2222,7 @@ const CardReloadModal = ({ isOpen, onClose, onSubmit, card, formData, setFormDat
   )
 }
 
-// Edit Expense Form Modal Component
+// Edit Expense Form Modal Component - USER-FIRST SELECTION APPROACH
 const EditExpenseFormModal = ({
   isOpen,
   onClose,
@@ -2021,6 +2230,7 @@ const EditExpenseFormModal = ({
   expense,
   cards,
   expenseTypes,
+  pettyCashUsers = [],
   formData,
   setFormData,
   t,
@@ -2048,48 +2258,134 @@ const EditExpenseFormModal = ({
     }
   }, [isOpen, expense?.cardId, expense?.amount])
 
-  // Find the petrol card (shared fuel card)
-  const petrolCard = cards.find(c => c.card_type === 'petrol' && c.status === 'active')
+  // Get selected petty cash user and their cards (USER-FIRST APPROACH)
+  const selectedPcUser = React.useMemo(() => {
+    if (!formData.pcUserId) return null
+    return pettyCashUsers.find(u => u.id === parseInt(formData.pcUserId))
+  }, [formData.pcUserId, pettyCashUsers])
+
+  // Get the selected user's top-up card
+  const userTopUpCard = React.useMemo(() => {
+    if (!selectedPcUser?.card_id) return null
+    return cards.find(c => c.id === selectedPcUser.card_id && c.status === 'active')
+  }, [selectedPcUser, cards])
+
+  // Get the selected user's petrol card
+  const userPetrolCard = React.useMemo(() => {
+    if (!selectedPcUser?.petrol_card_id) return null
+    return cards.find(c => c.id === selectedPcUser.petrol_card_id && c.status === 'active')
+  }, [selectedPcUser, cards])
 
   // Determine if current expense type is fuel
   const isFuelExpense = formData.expenseType?.toLowerCase() === 'fuel'
 
-  // Get available cards for selection based on expense type
-  const getAvailableCards = () => {
-    if (isFuelExpense) {
-      // For fuel expenses, show petrol card first, then other active cards
-      const activeCards = cards.filter(card => card.status === 'active')
-      return activeCards.sort((a, b) => {
-        if (a.card_type === 'petrol') return -1
-        if (b.card_type === 'petrol') return 1
-        return 0
-      })
+  // Handle user selection - auto-select appropriate card based on context
+  const handleUserChange = (userId) => {
+    const pcUser = pettyCashUsers.find(u => u.id === parseInt(userId))
+    if (!pcUser) {
+      setFormData(prev => ({ ...prev, pcUserId: '', cardId: '', paymentMethod: 'iou' }))
+      return
+    }
+
+    // Get user's cards
+    const topUpCard = pcUser.card_id ? cards.find(c => c.id === pcUser.card_id && c.status === 'active') : null
+    const petrolCard = pcUser.petrol_card_id ? cards.find(c => c.id === pcUser.petrol_card_id && c.status === 'active') : null
+
+    // Determine payment method and card based on expense type
+    let paymentMethod = 'iou'
+    let cardId = ''
+
+    if (isFuelExpense && petrolCard) {
+      paymentMethod = 'petrol_card'
+      cardId = petrolCard.id.toString()
+    } else if (topUpCard) {
+      paymentMethod = 'top_up_card'
+      cardId = topUpCard.id.toString()
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      pcUserId: userId,
+      cardId,
+      paymentMethod
+    }))
+  }
+
+  // Handle expense type change - auto-select appropriate payment method
+  const handleExpenseTypeChange = (categoryId) => {
+    const normalizedCategory = categoryId?.toLowerCase()
+
+    if (!selectedPcUser) {
+      setFormData(prev => ({ ...prev, expenseType: categoryId }))
+      return
+    }
+
+    if (normalizedCategory === 'fuel') {
+      if (userPetrolCard) {
+        setFormData(prev => ({
+          ...prev,
+          expenseType: categoryId,
+          paymentMethod: 'petrol_card',
+          cardId: userPetrolCard.id.toString()
+        }))
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          expenseType: categoryId,
+          paymentMethod: userTopUpCard ? 'top_up_card' : 'iou',
+          cardId: userTopUpCard ? userTopUpCard.id.toString() : ''
+        }))
+      }
     } else {
-      // For non-fuel expenses, show only top-up cards (exclude petrol)
-      return cards.filter(card => card.status === 'active' && card.card_type !== 'petrol')
+      setFormData(prev => ({
+        ...prev,
+        expenseType: categoryId,
+        paymentMethod: userTopUpCard ? 'top_up_card' : 'iou',
+        cardId: userTopUpCard ? userTopUpCard.id.toString() : ''
+      }))
     }
   }
 
-  const handleExpenseTypeChange = (categoryId) => {
-    const normalizedCategory = categoryId?.toLowerCase()
-    if (normalizedCategory === 'fuel') {
-      // Auto-select petrol card when fuel is selected
-      setFormData(prev => ({
-        ...prev,
-        expenseType: categoryId,
-        paymentMethod: 'petrol_card',
-        cardId: petrolCard ? petrolCard.id.toString() : ''
-      }))
-    } else {
-      // Reset to top_up_card payment method when switching away from fuel
-      setFormData(prev => ({
-        ...prev,
-        expenseType: categoryId,
-        paymentMethod: prev.paymentMethod === 'petrol_card' ? 'top_up_card' : prev.paymentMethod,
-        // Clear card selection if it was petrol card
-        cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
-      }))
+  // Get available payment methods for selected user
+  const getAvailablePaymentMethods = () => {
+    const methods = []
+
+    if (userTopUpCard) {
+      methods.push({
+        id: 'top_up_card',
+        label: t('topUpCard', 'Top-up Card'),
+        cardNumber: userTopUpCard.cardNumber,
+        balance: parseFloat(userTopUpCard.currentBalance || 0)
+      })
     }
+
+    if (userPetrolCard && isFuelExpense) {
+      methods.push({
+        id: 'petrol_card',
+        label: t('petrolCard', 'Petrol Card'),
+        cardNumber: userPetrolCard.cardNumber,
+        balance: parseFloat(userPetrolCard.currentBalance || 0)
+      })
+    }
+
+    methods.push({
+      id: 'iou',
+      label: t('iouPayment', 'IOU (Personal)'),
+      balance: null
+    })
+
+    return methods
+  }
+
+  // Handle payment method change
+  const handlePaymentMethodChange = (method) => {
+    let cardId = ''
+    if (method === 'top_up_card' && userTopUpCard) {
+      cardId = userTopUpCard.id.toString()
+    } else if (method === 'petrol_card' && userPetrolCard) {
+      cardId = userPetrolCard.id.toString()
+    }
+    setFormData(prev => ({ ...prev, paymentMethod: method, cardId }))
   }
 
   // Load existing receipts when modal opens
@@ -2526,7 +2822,57 @@ const EditExpenseFormModal = ({
           </div>
         )}
 
-        {/* Expense Type Selection - FIRST to trigger payment method and card auto-selection */}
+        {/* USER SELECTION - FIRST (determines available cards) */}
+        <div className="form-group">
+          <label className="flex items-center gap-2">
+            <User size={16} className="text-slate-400" />
+            {t('selectUser', 'Select User')} *
+          </label>
+          <select
+            value={formData.pcUserId || ''}
+            onChange={(e) => handleUserChange(e.target.value)}
+            required
+            disabled={isApprovedExpense || isReadOnly}
+            className="w-full"
+          >
+            <option value="">{t('selectPettyCashUser', 'Select Petty Cash User')}</option>
+            {pettyCashUsers.filter(u => u.is_active !== false).map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name} {user.department ? `(${user.department})` : ''}
+                {user.card_id || user.petrol_card_id ? '' : ' - No cards'}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Selected User Info Panel */}
+        {selectedPcUser && (
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded">
+            <div className="text-sm font-medium text-slate-700 mb-2">{selectedPcUser.name}</div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {userTopUpCard ? (
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                  💳 {t('topUpCard', 'Top-up Card')}: OMR {parseFloat(userTopUpCard.currentBalance || 0).toFixed(3)}
+                </span>
+              ) : (
+                <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded">
+                  💳 {t('noTopUpCard', 'No top-up card')}
+                </span>
+              )}
+              {userPetrolCard ? (
+                <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded">
+                  ⛽ {t('petrolCard', 'Petrol Card')}: OMR {parseFloat(userPetrolCard.currentBalance || 0).toFixed(3)}
+                </span>
+              ) : (
+                <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded">
+                  ⛽ {t('noPetrolCard', 'No petrol card')}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Expense Type Selection - SECOND */}
         <div className="form-group">
           <label>{t('expenseType', 'Expense Type')} *</label>
           <select
@@ -2544,69 +2890,84 @@ const EditExpenseFormModal = ({
           </select>
         </div>
 
-        {/* Payment Method Selection - SECOND (triggers card selection) - disabled for approved */}
-        <PaymentMethodSelect
-          label={t('paymentMethod', 'Payment Method')}
-          value={formData.paymentMethod || 'top_up_card'}
-          onChange={(method) => {
-            // Handle payment method change with card auto-selection
-            if (method === 'company_card' || method === 'iou') {
-              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: '' }))
-            } else if (method === 'petrol_card') {
-              // Auto-select petrol card when petrol_card payment method is selected
-              setFormData(prev => ({ ...prev, paymentMethod: method, cardId: petrolCard ? petrolCard.id.toString() : '' }))
-            } else {
-              // For top_up_card, clear card if it was petrol card
-              setFormData(prev => ({
-                ...prev,
-                paymentMethod: method,
-                cardId: (prev.cardId && petrolCard && prev.cardId === petrolCard.id.toString()) ? '' : prev.cardId
-              }))
-            }
-          }}
-          category={formData.expenseType}
-          compact={true}
-          required
-          disabled={isApprovedExpense || isReadOnly}
-        />
-
-        {/* Card Selection - THIRD (show for card-based payment methods) */}
-        {(formData.paymentMethod === 'top_up_card' || formData.paymentMethod === 'petrol_card' || !formData.paymentMethod) && (
+        {/* Payment Method Selection - THIRD (auto-populated based on user's cards) */}
+        {selectedPcUser && (
           <div className="form-group">
-            <label>{t('selectCard', 'Select Card')} *</label>
-            <select
-              value={formData.cardId}
-              onChange={(e) => {
-                const selectedCardId = e.target.value
-                const selectedCard = cards.find(c => c.id === parseInt(selectedCardId))
-                // Update payment method based on selected card type
-                const newPaymentMethod = selectedCard?.card_type === 'petrol' ? 'petrol_card' : 'top_up_card'
-                setFormData(prev => ({ ...prev, cardId: selectedCardId, paymentMethod: newPaymentMethod }))
-              }}
-              required
-              disabled={isReadOnly}
-            >
-              <option value="">{t('selectCard', 'Select Card')}</option>
-              {getAvailableCards().map(card => (
-                <option key={card.id} value={card.id}>
-                  {card.card_type === 'petrol' ? '⛽ ' : ''}{card.cardNumber} - {card.cardName || card.assignedStaff?.name || t('unassigned', 'Unassigned')} ({t('balance', 'Balance')}: OMR {parseFloat(card.currentBalance || 0).toFixed(3)})
-                </option>
-              ))}
-            </select>
-            {/* Petrol card auto-selected info */}
-            {isFuelExpense && petrolCard && formData.cardId === petrolCard.id.toString() && (
-              <div className="ds-form-info-box success mt-2">
-                <span>⛽</span>
-                <p>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</p>
+            <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              {t('paymentMethod', 'Payment Method')} *
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {getAvailablePaymentMethods().map(method => {
+                const isSelected = formData.paymentMethod === method.id
+                const isRecommended = method.id === 'petrol_card' && isFuelExpense
+                const isMethodDisabled = (isApprovedExpense && method.id !== formData.paymentMethod) || isReadOnly
+
+                // Color classes based on payment method type
+                const getColorClasses = () => {
+                  if (isMethodDisabled) return 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+                  if (!isSelected) return 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  switch (method.id) {
+                    case 'top_up_card': return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
+                    case 'petrol_card': return 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500'
+                    case 'iou': return 'border-red-500 bg-red-50 text-red-700 ring-1 ring-red-500'
+                    default: return 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500'
+                  }
+                }
+
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => !isMethodDisabled && handlePaymentMethodChange(method.id)}
+                    disabled={isMethodDisabled}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border transition-all duration-150 ${getColorClasses()}`}
+                    title={method.balance !== null ? `${t('balance', 'Balance')}: OMR ${method.balance.toFixed(3)}` : ''}
+                  >
+                    {method.id === 'top_up_card' && <CreditCard size={14} />}
+                    {method.id === 'petrol_card' && <Fuel size={14} />}
+                    {method.id === 'iou' && <Banknote size={14} />}
+                    <span>{method.label}</span>
+                    {method.cardNumber && <span className="text-[10px] opacity-75">({method.cardNumber})</span>}
+                    {isRecommended && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-semibold rounded">
+                        {t('recommended', 'Recommended')}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            {/* Balance info for selected method */}
+            {formData.paymentMethod && formData.paymentMethod !== 'iou' && (
+              <div className="mt-2 text-xs text-slate-500">
+                {formData.paymentMethod === 'top_up_card' && userTopUpCard && (
+                  <span>{t('balance', 'Balance')}: OMR {parseFloat(userTopUpCard.currentBalance || 0).toFixed(3)}</span>
+                )}
+                {formData.paymentMethod === 'petrol_card' && userPetrolCard && (
+                  <span>{t('balance', 'Balance')}: OMR {parseFloat(userPetrolCard.currentBalance || 0).toFixed(3)}</span>
+                )}
               </div>
             )}
-            {/* Warning when using non-petrol card for fuel */}
-            {isFuelExpense && formData.cardId && petrolCard && formData.cardId !== petrolCard.id.toString() && (
-              <div className="ds-form-info-box warning mt-2">
-                <span>⚠️</span>
-                <p>{t('usingNonPetrolCard', 'Using a non-petrol card for fuel expense')}</p>
+            {/* Info messages */}
+            {isFuelExpense && userPetrolCard && formData.paymentMethod === 'petrol_card' && (
+              <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs">
+                <Fuel size={14} className="shrink-0" />
+                <span>{t('petrolCardAutoSelected', 'Petrol card auto-selected for fuel expenses')}</span>
               </div>
             )}
+            {isFuelExpense && !userPetrolCard && (
+              <div className="flex items-center gap-2 px-3 py-2 mt-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
+                <AlertCircle size={14} className="shrink-0" />
+                <span>{t('noPetrolCardWarning', 'This user has no petrol card assigned.')}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prompt to select user first */}
+        {!selectedPcUser && (
+          <div className="p-4 bg-slate-100 border border-slate-200 rounded text-center text-slate-600 text-sm">
+            {t('selectUserFirst', 'Please select a user first to see available payment methods')}
           </div>
         )}
 

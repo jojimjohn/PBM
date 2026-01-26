@@ -30,11 +30,13 @@ import {
   ArrowDownCircle,
   Ban,
   PlayCircle,
+  UserCircle,
 } from 'lucide-react';
 import DataTable from '../ui/DataTable';
 import Modal from '../ui/Modal';
 import pettyCashUsersService from '../../services/pettyCashUsersService';
 import pettyCashService from '../../services/pettyCashService';
+import userService from '../../services/userService';
 // CSS moved to global index.css Tailwind
 
 const PettyCashUsersSection = ({
@@ -48,6 +50,10 @@ const PettyCashUsersSection = ({
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // System users for linking
+  const [systemUsers, setSystemUsers] = useState([]);
+  const [loadingSystemUsers, setLoadingSystemUsers] = useState(false);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -69,6 +75,8 @@ const PettyCashUsersSection = ({
   // Form states
   const [formData, setFormData] = useState({
     cardId: '',
+    petrolCardId: '',
+    userId: '',
     name: '',
     phone: '',
     department: '',
@@ -103,11 +111,29 @@ const PettyCashUsersSection = ({
     }
   }, []);
 
+  // Load system users for linking dropdown
+  const loadSystemUsers = useCallback(async () => {
+    try {
+      setLoadingSystemUsers(true);
+      const result = await userService.getAll({ isActive: true });
+      if (result.success) {
+        setSystemUsers(result.data || []);
+      } else {
+        console.error('Failed to load system users:', result.error);
+      }
+    } catch (err) {
+      console.error('Error loading system users:', err);
+    } finally {
+      setLoadingSystemUsers(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadUsers();
-  }, [loadUsers]);
+    loadSystemUsers();
+  }, [loadUsers, loadSystemUsers]);
 
-  // Get available cards (not assigned to any PC user)
+  // Get available top-up cards (not assigned to any PC user)
   // Note: A card can have both a system user (assignedTo) AND a PC user (for mobile portal)
   // We only filter out cards that already have a PC user assigned
   const getAvailableCards = (excludeUserId = null) => {
@@ -118,7 +144,33 @@ const PettyCashUsersSection = ({
     return cards.filter(
       (card) =>
         card.status === 'active' &&
+        card.card_type === 'top_up' &&
         !assignedCardIds.includes(card.id)
+    );
+  };
+
+  // Get available petrol cards (not assigned to any PC user)
+  const getAvailablePetrolCards = (excludeUserId = null) => {
+    const assignedPetrolCardIds = users
+      .filter((u) => excludeUserId ? u.id !== excludeUserId : true)
+      .map((u) => u.petrol_card_id)
+      .filter(Boolean);
+    return cards.filter(
+      (card) =>
+        card.status === 'active' &&
+        card.card_type === 'petrol' &&
+        !assignedPetrolCardIds.includes(card.id)
+    );
+  };
+
+  // Get available system users (not already linked to a PC user)
+  const getAvailableSystemUsers = (excludePcUserId = null) => {
+    const linkedUserIds = users
+      .filter((u) => excludePcUserId ? u.id !== excludePcUserId : true)
+      .map((u) => u.user_id)
+      .filter(Boolean);
+    return systemUsers.filter(
+      (user) => !linkedUserIds.includes(user.id)
     );
   };
 
@@ -164,6 +216,8 @@ const PettyCashUsersSection = ({
     try {
       const result = await pettyCashUsersService.create({
         cardId: parseInt(formData.cardId),
+        petrolCardId: formData.petrolCardId ? parseInt(formData.petrolCardId) : null,
+        userId: formData.userId ? parseInt(formData.userId) : null,
         name: formData.name,
         phone: formData.phone || null,
         department: formData.department || null,
@@ -206,6 +260,8 @@ const PettyCashUsersSection = ({
     try {
       const result = await pettyCashUsersService.update(selectedUser.id, {
         cardId: formData.cardId ? parseInt(formData.cardId) : null,
+        petrolCardId: formData.petrolCardId ? parseInt(formData.petrolCardId) : null,
+        userId: formData.userId ? parseInt(formData.userId) : null,
         name: formData.name,
         phone: formData.phone || null,
         department: formData.department || null,
@@ -467,6 +523,8 @@ const PettyCashUsersSection = ({
   const openCreateModal = () => {
     setFormData({
       cardId: '',
+      petrolCardId: '',
+      userId: '',
       name: '',
       phone: '',
       department: '',
@@ -483,6 +541,8 @@ const PettyCashUsersSection = ({
     setSelectedUser(user);
     setFormData({
       cardId: user.card_id || '',
+      petrolCardId: user.petrol_card_id || '',
+      userId: user.user_id || '',
       name: user.name || '',
       phone: user.phone || '',
       department: user.department || '',
@@ -553,10 +613,18 @@ const PettyCashUsersSection = ({
     },
     {
       key: 'cardNumber',
-      header: t('card', 'Card'),
+      header: t('topUpCard', 'Top-Up Card'),
       sortable: true,
       render: (value) => (
         <span className="card-number">{value || '-'}</span>
+      ),
+    },
+    {
+      key: 'petrolCardNumber',
+      header: t('petrolCard', 'Petrol Card'),
+      sortable: true,
+      render: (value) => (
+        <span className="card-number text-amber-600">{value || '-'}</span>
       ),
     },
     {
@@ -564,6 +632,22 @@ const PettyCashUsersSection = ({
       header: t('department', 'Department'),
       sortable: true,
       render: (value) => value || '-',
+    },
+    {
+      key: 'linkedUserFirstName',
+      header: t('linkedUser', 'System User'),
+      sortable: true,
+      render: (value, row) => {
+        if (row?.user_id && row?.linkedUserFirstName) {
+          return (
+            <div className="flex items-center gap-1.5 text-sm">
+              <UserCircle size={14} className="text-blue-500" />
+              <span>{row.linkedUserFirstName} {row.linkedUserLastName}</span>
+            </div>
+          );
+        }
+        return <span className="text-slate-400 text-xs">-</span>;
+      },
     },
     {
       key: 'currentBalance',
@@ -739,7 +823,7 @@ const PettyCashUsersSection = ({
           )}
 
           <div className="form-group">
-            <label>{t('selectCard', 'Select Card')} *</label>
+            <label>{t('selectTopUpCard', 'Top-Up Card')} *</label>
             <select
               name="cardId"
               value={formData.cardId}
@@ -755,9 +839,53 @@ const PettyCashUsersSection = ({
             </select>
             {availableCards.length === 0 && (
               <span className="form-hint warning">
-                {t('noAvailableCards', 'No available cards. Create a new card first or ensure existing cards are not already assigned.')}
+                {t('noAvailableCards', 'No available top-up cards. Create a new card first or ensure existing cards are not already assigned.')}
               </span>
             )}
+            <span className="form-hint">
+              {t('topUpCardHint', 'Primary card for general (non-fuel) expenses')}
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label>{t('selectPetrolCard', 'Petrol Card')} ({t('optional', 'Optional')})</label>
+            <select
+              name="petrolCardId"
+              value={formData.petrolCardId}
+              onChange={handleInputChange}
+            >
+              <option value="">{t('noPetrolCard', '-- None --')}</option>
+              {getAvailablePetrolCards().map((card) => (
+                <option key={card.id} value={card.id}>
+                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                </option>
+              ))}
+            </select>
+            <span className="form-hint">
+              {t('petrolCardHint', 'Dedicated card for fuel expenses. Auto-selected when expense category is Fuel.')}
+            </span>
+          </div>
+
+          <div className="form-group">
+            <label className="flex items-center gap-2">
+              <UserCircle size={16} className="text-slate-400" />
+              {t('linkSystemUser', 'Link to System User')}
+            </label>
+            <select
+              name="userId"
+              value={formData.userId}
+              onChange={handleInputChange}
+            >
+              <option value="">{t('noSystemUserLink', '-- None (standalone PC user) --')}</option>
+              {getAvailableSystemUsers().map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName} ({user.email}) - {user.role}
+                </option>
+              ))}
+            </select>
+            <span className="form-hint">
+              {t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}
+            </span>
           </div>
 
           <div className="form-group">
@@ -881,9 +1009,9 @@ const PettyCashUsersSection = ({
             </div>
           )}
 
-          {/* Card Assignment - show available cards + current card */}
+          {/* Top-Up Card Assignment */}
           <div className="form-group">
-            <label>{t('assignedCard', 'Assigned Card')}</label>
+            <label>{t('topUpCard', 'Top-Up Card')}</label>
             <select
               name="cardId"
               value={formData.cardId}
@@ -904,7 +1032,64 @@ const PettyCashUsersSection = ({
               )}
             </select>
             <span className="form-hint">
-              {t('cardAssignmentHint', 'Assign or change the petty cash card for this user')}
+              {t('topUpCardHint', 'Primary card for general (non-fuel) expenses')}
+            </span>
+          </div>
+
+          {/* Petrol Card Assignment */}
+          <div className="form-group">
+            <label>{t('petrolCard', 'Petrol Card')}</label>
+            <select
+              name="petrolCardId"
+              value={formData.petrolCardId}
+              onChange={handleInputChange}
+            >
+              <option value="">{t('noPetrolCard', '-- None --')}</option>
+              {/* Show available petrol cards for this user (includes their current card) */}
+              {getAvailablePetrolCards(selectedUser?.id).map((card) => (
+                <option key={card.id} value={card.id}>
+                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                </option>
+              ))}
+              {/* If user has a petrol card that's not in available list, show it separately */}
+              {selectedUser?.petrol_card_id && !getAvailablePetrolCards(selectedUser?.id).find(c => c.id === selectedUser.petrol_card_id) && (
+                <option value={selectedUser.petrol_card_id}>
+                  {selectedUser.petrolCardNumber || `Card #${selectedUser.petrol_card_id}`} (current)
+                </option>
+              )}
+            </select>
+            <span className="form-hint">
+              {t('petrolCardHint', 'Dedicated card for fuel expenses. Auto-selected when expense category is Fuel.')}
+            </span>
+          </div>
+
+          {/* System User Link */}
+          <div className="form-group">
+            <label className="flex items-center gap-2">
+              <UserCircle size={16} className="text-slate-400" />
+              {t('linkSystemUser', 'Link to System User')}
+            </label>
+            <select
+              name="userId"
+              value={formData.userId}
+              onChange={handleInputChange}
+            >
+              <option value="">{t('noSystemUserLink', '-- None (standalone PC user) --')}</option>
+              {/* Show available system users + current linked user */}
+              {getAvailableSystemUsers(selectedUser?.id).map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.firstName} {user.lastName} ({user.email}) - {user.role}
+                </option>
+              ))}
+              {/* If user has a linked system user that's not in available list, show it */}
+              {selectedUser?.user_id && !getAvailableSystemUsers(selectedUser?.id).find(u => u.id === selectedUser.user_id) && (
+                <option value={selectedUser.user_id}>
+                  {selectedUser.linkedUserFirstName} {selectedUser.linkedUserLastName} ({selectedUser.linkedUserEmail}) - current
+                </option>
+              )}
+            </select>
+            <span className="form-hint">
+              {t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}
             </span>
           </div>
 

@@ -161,6 +161,24 @@ const getCategories = async () => {
 };
 
 /**
+ * Get projects the PC user belongs to
+ * Returns only active projects the user is assigned to via user_projects
+ * @returns {Promise<{success: boolean, data?: array, error?: string}>}
+ */
+const getProjects = async () => {
+  try {
+    const response = await makeRequest('/projects');
+    return await response.json();
+  } catch (error) {
+    console.error('Get projects error:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch projects',
+    };
+  }
+};
+
+/**
  * Get expense history
  * @param {object} params - Query parameters (page, limit, status, category, dateFrom, dateTo)
  * @returns {Promise<{success: boolean, data?: array, pagination?: object, error?: string}>}
@@ -277,6 +295,7 @@ const pettyCashPortalService = {
   logout,
   getMe,
   getCategories,
+  getProjects,
   getExpenses,
   getExpense,
   submitExpense,

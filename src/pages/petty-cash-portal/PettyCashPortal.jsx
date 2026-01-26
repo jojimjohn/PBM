@@ -37,6 +37,7 @@ const PettyCashPortal = () => {
   const [view, setView] = useState(VIEWS.PIN_ENTRY);
   const [user, setUser] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loginError, setLoginError] = useState(null);
   const [remainingAttempts, setRemainingAttempts] = useState(null);
@@ -76,6 +77,18 @@ const PettyCashPortal = () => {
     };
     loadCategories();
   }, []);
+
+  // Load projects when user is authenticated
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (!user) return;
+      const result = await pettyCashPortalService.getProjects();
+      if (result.success) {
+        setProjects(result.data);
+      }
+    };
+    loadProjects();
+  }, [user]);
 
   // Handle session expiration
   useEffect(() => {
@@ -286,6 +299,7 @@ const PettyCashPortal = () => {
           <ExpenseSubmitForm
             user={user}
             categories={categories}
+            projects={projects}
             onSuccess={handleExpenseSuccess}
             onCancel={() => setView(VIEWS.DASHBOARD)}
           />

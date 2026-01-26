@@ -638,18 +638,160 @@ const DataTable = ({
 
           {/* Advanced Filters */}
           {filterable && (
-            <button
-              className="btn btn-icon"
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              title={t('advancedFilters')}
-            >
-              <Filter size={16} />
-              {Object.values(advancedFilters).some(f => f.enabled) && (
-                <span className="filter-count">
-                  {Object.values(advancedFilters).filter(f => f.enabled).length}
-                </span>
+            <div className="advanced-filter-toggle">
+              <button
+                className="btn btn-icon"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                title={t('advancedFilters')}
+              >
+                <Filter size={16} />
+                {Object.values(advancedFilters).some(f => f.enabled) && (
+                  <span className="filter-count">
+                    {Object.values(advancedFilters).filter(f => f.enabled).length}
+                  </span>
+                )}
+              </button>
+              {showAdvancedFilters && (
+                <>
+                  <div
+                    className="advanced-filters-backdrop"
+                    onClick={() => setShowAdvancedFilters(false)}
+                  />
+                  <div className="advanced-filters-panel">
+                    <div className="filters-header">
+                      <h3>{t('advancedFilters')}</h3>
+                      <button
+                        className="btn-icon"
+                        onClick={() => setShowAdvancedFilters(false)}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="filters-content">
+                      {activeColumns
+                        .filter(col => col.filterable !== false && col.key !== 'actions')
+                        .map(col => (
+                          <div key={col.key} className="filter-group">
+                            <label>{col.header}</label>
+                            {(col.type === 'date') ? (
+                              <div className="date-range-filter">
+                                <input
+                                  type="date"
+                                  placeholder={t('from')}
+                                  value={advancedFilters[col.key]?.dateRange?.from || ''}
+                                  onChange={(e) => setAdvancedFilters(prev => ({
+                                    ...prev,
+                                    [col.key]: {
+                                      ...prev[col.key],
+                                      enabled: true,
+                                      dateRange: {
+                                        ...prev[col.key]?.dateRange,
+                                        from: e.target.value
+                                      }
+                                    }
+                                  }))}
+                                />
+                                <input
+                                  type="date"
+                                  placeholder={t('to')}
+                                  value={advancedFilters[col.key]?.dateRange?.to || ''}
+                                  onChange={(e) => setAdvancedFilters(prev => ({
+                                    ...prev,
+                                    [col.key]: {
+                                      ...prev[col.key],
+                                      enabled: true,
+                                      dateRange: {
+                                        ...prev[col.key]?.dateRange,
+                                        to: e.target.value
+                                      }
+                                    }
+                                  }))}
+                                />
+                              </div>
+                            ) : (col.type === 'currency' || col.type === 'number') ? (
+                              <div className="number-range-filter">
+                                <input
+                                  type="number"
+                                  placeholder={t('min')}
+                                  value={advancedFilters[col.key]?.min || ''}
+                                  onChange={(e) => setAdvancedFilters(prev => ({
+                                    ...prev,
+                                    [col.key]: {
+                                      ...prev[col.key],
+                                      enabled: true,
+                                      min: e.target.value ? parseFloat(e.target.value) : undefined
+                                    }
+                                  }))}
+                                />
+                                <input
+                                  type="number"
+                                  placeholder={t('max')}
+                                  value={advancedFilters[col.key]?.max || ''}
+                                  onChange={(e) => setAdvancedFilters(prev => ({
+                                    ...prev,
+                                    [col.key]: {
+                                      ...prev[col.key],
+                                      enabled: true,
+                                      max: e.target.value ? parseFloat(e.target.value) : undefined
+                                    }
+                                  }))}
+                                />
+                              </div>
+                            ) : (
+                              <select
+                                multiple
+                                value={advancedFilters[col.key]?.values || []}
+                                onChange={(e) => {
+                                  const values = Array.from(e.target.selectedOptions, option => option.value)
+                                  setAdvancedFilters(prev => ({
+                                    ...prev,
+                                    [col.key]: {
+                                      enabled: values.length > 0,
+                                      values
+                                    }
+                                  }))
+                                }}
+                              >
+                                {(columnFilterOptions[col.key] || []).map(option => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {advancedFilters[col.key]?.enabled && (
+                              <button
+                                className="clear-filter"
+                                onClick={() => setAdvancedFilters(prev => {
+                                  const newFilters = { ...prev }
+                                  delete newFilters[col.key]
+                                  return newFilters
+                                })}
+                              >
+                                {t('clear')}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                    <div className="filters-footer">
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => setAdvancedFilters({})}
+                      >
+                        {t('clearAll')}
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => setShowAdvancedFilters(false)}
+                      >
+                        {t('apply')}
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
-            </button>
+            </div>
           )}
 
           {/* Export */}
@@ -695,148 +837,6 @@ const DataTable = ({
           )}
         </div>
       </div>
-
-      {/* Advanced Filters Panel */}
-      {showAdvancedFilters && (
-        <>
-          <div 
-            className="advanced-filters-backdrop"
-            onClick={() => setShowAdvancedFilters(false)}
-          />
-          <div className="advanced-filters-panel">
-          <div className="filters-header">
-            <h3>{t('advancedFilters')}</h3>
-            <button 
-              className="btn-icon"
-              onClick={() => setShowAdvancedFilters(false)}
-            >
-              <X size={16} />
-            </button>
-          </div>
-          <div className="filters-content">
-            {activeColumns
-              .filter(col => col.filterable !== false && col.key !== 'actions')
-              .map(col => (
-                <div key={col.key} className="filter-group">
-                  <label>{col.header}</label>
-                  {(col.type === 'date') ? (
-                    <div className="date-range-filter">
-                      <input
-                        type="date"
-                        placeholder={t('from')}
-                        value={advancedFilters[col.key]?.dateRange?.from || ''}
-                        onChange={(e) => setAdvancedFilters(prev => ({
-                          ...prev,
-                          [col.key]: {
-                            ...prev[col.key],
-                            enabled: true,
-                            dateRange: {
-                              ...prev[col.key]?.dateRange,
-                              from: e.target.value
-                            }
-                          }
-                        }))}
-                      />
-                      <input
-                        type="date"
-                        placeholder={t('to')}
-                        value={advancedFilters[col.key]?.dateRange?.to || ''}
-                        onChange={(e) => setAdvancedFilters(prev => ({
-                          ...prev,
-                          [col.key]: {
-                            ...prev[col.key],
-                            enabled: true,
-                            dateRange: {
-                              ...prev[col.key]?.dateRange,
-                              to: e.target.value
-                            }
-                          }
-                        }))}
-                      />
-                    </div>
-                  ) : (col.type === 'currency' || col.type === 'number') ? (
-                    <div className="number-range-filter">
-                      <input
-                        type="number"
-                        placeholder={t('min')}
-                        value={advancedFilters[col.key]?.min || ''}
-                        onChange={(e) => setAdvancedFilters(prev => ({
-                          ...prev,
-                          [col.key]: {
-                            ...prev[col.key],
-                            enabled: true,
-                            min: e.target.value ? parseFloat(e.target.value) : undefined
-                          }
-                        }))}
-                      />
-                      <input
-                        type="number"
-                        placeholder={t('max')}
-                        value={advancedFilters[col.key]?.max || ''}
-                        onChange={(e) => setAdvancedFilters(prev => ({
-                          ...prev,
-                          [col.key]: {
-                            ...prev[col.key],
-                            enabled: true,
-                            max: e.target.value ? parseFloat(e.target.value) : undefined
-                          }
-                        }))}
-                      />
-                    </div>
-                  ) : (
-                    <select
-                      multiple
-                      value={advancedFilters[col.key]?.values || []}
-                      onChange={(e) => {
-                        const values = Array.from(e.target.selectedOptions, option => option.value)
-                        setAdvancedFilters(prev => ({
-                          ...prev,
-                          [col.key]: {
-                            enabled: values.length > 0,
-                            values
-                          }
-                        }))
-                      }}
-                    >
-                      {(columnFilterOptions[col.key] || []).map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  {advancedFilters[col.key]?.enabled && (
-                    <button
-                      className="clear-filter"
-                      onClick={() => setAdvancedFilters(prev => {
-                        const newFilters = { ...prev }
-                        delete newFilters[col.key]
-                        return newFilters
-                      })}
-                    >
-                      {t('clear')}
-                    </button>
-                  )}
-                </div>
-              ))}
-          </div>
-          <div className="filters-footer">
-            <button 
-              className="btn btn-outline"
-              onClick={() => setAdvancedFilters({})}
-            >
-              {t('clearAll')}
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowAdvancedFilters(false)}
-            >
-              {t('apply')}
-            </button>
-          </div>
-        </div>
-        </>
-      )}
 
       {/* Mobile Card Layout */}
       {showMobileCards && paginatedData.length > 0 ? (

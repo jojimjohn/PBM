@@ -22,6 +22,7 @@ import {
   CreditCard,
   Wallet,
   Fuel,
+  FolderOpen,
 } from 'lucide-react';
 import pettyCashPortalService from '../../services/pettyCashPortalService';
 // CSS moved to global index.css - using Tailwind classes
@@ -48,9 +49,9 @@ const categoryIcons = {
   emergency: '🚨',
 };
 
-// Payment method options for mobile portal (updated for card type system)
+// Payment method options for mobile portal
 // top_up_card: User's assigned petty cash card - deducts from their card balance
-// petrol_card: Shared company fuel card - only for fuel category (preferred for fuel)
+// petrol_card: User's assigned petrol card - deducts from their petrol card balance (fuel only)
 // iou: Personal expense - reimbursed when approved
 const PAYMENT_METHODS = [
   {
@@ -60,18 +61,19 @@ const PAYMENT_METHODS = [
     desc: 'Use your assigned card',
     icon: CreditCard,
     color: '#3b82f6',
-    fuelOnly: false,
-    requiresReimbursement: false
+    requiresReimbursement: false,
+    fuelOnly: false
   },
   {
     value: 'petrol_card',
     label: 'Petrol Card',
     labelAr: 'بطاقة البترول',
-    desc: 'Shared fuel card',
+    desc: 'Your assigned petrol card',
     icon: Fuel,
     color: '#f59e0b',
+    requiresReimbursement: false,
     fuelOnly: true,  // Only available for fuel category
-    requiresReimbursement: false
+    requiresPetrolCard: true  // User must have a petrol card assigned
   },
   {
     value: 'iou',
@@ -80,14 +82,15 @@ const PAYMENT_METHODS = [
     desc: 'Reimbursed when approved',
     icon: Wallet,
     color: '#ef4444',
-    fuelOnly: false,
-    requiresReimbursement: true
+    requiresReimbursement: true,
+    fuelOnly: false
   },
 ];
 
 const ExpenseSubmitForm = ({
   user,
   categories = [],
+  projects = [],
   onSuccess,
   onCancel,
 }) => {
@@ -99,6 +102,7 @@ const ExpenseSubmitForm = ({
     vendor: '',
     receiptNumber: '',
     paymentMethod: 'top_up_card', // Default to user's assigned card
+    projectId: '', // Optional project assignment
   });
   const [receipt, setReceipt] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(null);
@@ -107,29 +111,51 @@ const ExpenseSubmitForm = ({
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Get balances
+  // Get balances and petrol card status
   const currentBalance = user?.currentBalance || 0;
   const petrolCardBalance = user?.petrolCardBalance || 0;
+  const hasPetrolCard = user?.hasPetrolCard || false;
 
-  // Fuel category payment logic
-  const isFuelCategory = formData.category === 'fuel';
+  // Fuel category payment logic (normalize to lowercase for case-insensitive comparison)
+  const isFuelCategory = formData.category?.toLowerCase() === 'fuel';
   const expenseAmount = parseFloat(formData.amount) || 0;
-  const petrolCardHasSufficientBalance = petrolCardBalance > 0 && petrolCardBalance >= expenseAmount;
+  // User can use petrol card only if they have one assigned AND it has sufficient balance
+  const petrolCardHasSufficientBalance = hasPetrolCard && petrolCardBalance > 0 && petrolCardBalance >= expenseAmount;
 
   // Validate form
   const isValid = formData.category && formData.description && formData.amount && formData.expenseDate;
   const amountExceedsBalance = expenseAmount > currentBalance;
 
-  // Auto-switch payment method for fuel based on petrol card balance
+  // Auto-select project from main system's localStorage if user has access
+  // This creates a seamless UX where the project filter carries over to mobile expense submission
+  useEffect(() => {
+    if (projects.length > 0 && !formData.projectId) {
+      try {
+        const savedProject = localStorage.getItem('pbm_selected_project');
+        if (savedProject) {
+          const parsed = JSON.parse(savedProject);
+          const projectId = parsed.projectId;
+          // Check if user has access to this project (it's in their projects list)
+          if (projectId && projectId !== 'all' && projects.some(p => p.id === projectId)) {
+            setFormData(prev => ({ ...prev, projectId: projectId.toString() }));
+          }
+        }
+      } catch {
+        // Ignore localStorage parsing errors - just don't auto-select
+      }
+    }
+  }, [projects]); // Only run when projects load
+
+  // Auto-switch payment method for fuel based on petrol card availability and balance
   useEffect(() => {
     if (isFuelCategory && formData.paymentMethod === 'petrol_card' && !petrolCardHasSufficientBalance && expenseAmount > 0) {
-      // Switch to top_up_card if petrol card balance is insufficient
+      // Switch to top_up_card if petrol card is not available or balance is insufficient
       setFormData((prev) => ({ ...prev, paymentMethod: 'top_up_card' }));
     } else if (isFuelCategory && formData.paymentMethod === 'top_up_card' && petrolCardHasSufficientBalance) {
-      // Switch back to petrol_card if balance becomes sufficient
+      // Switch back to petrol_card if user has one and balance becomes sufficient
       setFormData((prev) => ({ ...prev, paymentMethod: 'petrol_card' }));
     }
-  }, [isFuelCategory, expenseAmount, petrolCardHasSufficientBalance, formData.paymentMethod]);
+  }, [isFuelCategory, expenseAmount, petrolCardHasSufficientBalance, formData.paymentMethod, hasPetrolCard]);
 
   // Handle input change
   const handleChange = (e) => {
@@ -198,6 +224,7 @@ const ExpenseSubmitForm = ({
         vendor: formData.vendor || null,
         receiptNumber: formData.receiptNumber || null,
         paymentMethod: formData.paymentMethod || 'top_up_card',
+        projectId: formData.projectId ? parseInt(formData.projectId, 10) : null,
       };
 
       const result = await pettyCashPortalService.submitExpense(expenseData);
@@ -263,6 +290,32 @@ const ExpenseSubmitForm = ({
         </div>
       )}
 
+      {/* Project Selection - shown first for context */}
+      {projects.length > 0 && (
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <FolderOpen size={16} className="text-slate-400" />
+            Project
+          </label>
+          <select
+            name="projectId"
+            value={formData.projectId}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select a project (optional)</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.code} - {project.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-slate-500">
+            Link this expense to one of your assigned projects
+          </p>
+        </div>
+      )}
+
       {/* Category Selection */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
@@ -280,7 +333,10 @@ const ExpenseSubmitForm = ({
                   : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                 }`}
               onClick={() => {
-                if (cat.id === 'fuel') {
+                // Normalize to lowercase for case-insensitive fuel detection
+                const isFuel = cat.id?.toLowerCase() === 'fuel';
+                if (isFuel && hasPetrolCard) {
+                  // Auto-select petrol card for fuel if user has one assigned
                   setFormData((prev) => ({ ...prev, category: cat.id, paymentMethod: 'petrol_card' }));
                 } else {
                   setFormData((prev) => ({
@@ -291,7 +347,7 @@ const ExpenseSubmitForm = ({
                 }
               }}
             >
-              <span className="text-xl">{categoryIcons[cat.id] || '📋'}</span>
+              <span className="text-xl">{categoryIcons[cat.id?.toLowerCase()] || '📋'}</span>
               <span className="text-xs font-medium truncate w-full">{cat.name}</span>
             </button>
           ))}
@@ -399,11 +455,15 @@ const ExpenseSubmitForm = ({
             const Icon = method.icon;
             const isSelected = formData.paymentMethod === method.value;
 
-            // Determine if method is disabled based on category and balance
+            // Determine if method is disabled based on category, petrol card assignment, and balance
             let isDisabled = false;
             let disabledReason = '';
 
-            if (method.fuelOnly && !isFuelCategory) {
+            if (method.requiresPetrolCard && !hasPetrolCard) {
+              // Petrol card disabled if user doesn't have one assigned
+              isDisabled = true;
+              disabledReason = 'No petrol card assigned';
+            } else if (method.fuelOnly && !isFuelCategory) {
               // Petrol card disabled for non-fuel categories
               isDisabled = true;
               disabledReason = 'Fuel expenses only';
@@ -448,12 +508,20 @@ const ExpenseSubmitForm = ({
 
         {/* Petrol Card Balance Info for Fuel */}
         {isFuelCategory && (
-          <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs">
+          <div className={`flex items-center gap-2 p-2.5 border text-xs ${
+            hasPetrolCard ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600'
+          }`}>
             <Fuel size={14} className="shrink-0" />
             <span>
-              Petrol Card Balance: <strong>{petrolCardBalance.toFixed(3)} OMR</strong>
-              {!petrolCardHasSufficientBalance && expenseAmount > 0 && (
-                <span className="text-red-600 ml-1">(Insufficient - use My Card)</span>
+              {hasPetrolCard ? (
+                <>
+                  Petrol Card Balance: <strong>{petrolCardBalance.toFixed(3)} OMR</strong>
+                  {!petrolCardHasSufficientBalance && expenseAmount > 0 && (
+                    <span className="text-red-600 ml-1">(Insufficient - use My Card)</span>
+                  )}
+                </>
+              ) : (
+                <span className="text-slate-500">No petrol card assigned - use My Card or IOU</span>
               )}
             </span>
           </div>
