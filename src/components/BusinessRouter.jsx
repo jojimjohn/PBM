@@ -48,6 +48,8 @@ const EmployeeDetailPage = lazy(() => import('../pages/Employees/EmployeeDetailP
 const VehiclesPage = lazy(() => import('../pages/Vehicles/VehiclesPage'))
 const VehicleDetailPage = lazy(() => import('../pages/Vehicles/VehicleDetailPage'))
 const VehicleTypesPage = lazy(() => import('../pages/Vehicles/VehicleTypesPage'))
+const TankLogsPage = lazy(() => import('../pages/TankLogs/TankLogsPage'))
+const TankHistoryPage = lazy(() => import('../pages/TankLogs/TankHistoryPage'))
 
 /**
  * LazyRoute - Wrapper component for lazy-loaded routes
@@ -93,6 +95,8 @@ const BusinessRouter = () => {
         <Route path="/vehicles" element={<LazyRoute><VehiclesPage /></LazyRoute>} />
         <Route path="/vehicles/:id" element={<LazyRoute><VehicleDetailPage /></LazyRoute>} />
         <Route path="/settings/vehicle-types" element={<LazyRoute><VehicleTypesPage /></LazyRoute>} />
+        <Route path="/tank-logs" element={<LazyRoute><TankLogsPage /></LazyRoute>} />
+        <Route path="/tank-logs/history/:tankId" element={<LazyRoute><TankHistoryPage /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )
@@ -122,6 +126,8 @@ const BusinessRouter = () => {
         <Route path="/vehicles" element={<LazyRoute><VehiclesPage /></LazyRoute>} />
         <Route path="/vehicles/:id" element={<LazyRoute><VehicleDetailPage /></LazyRoute>} />
         <Route path="/settings/vehicle-types" element={<LazyRoute><VehicleTypesPage /></LazyRoute>} />
+        <Route path="/tank-logs" element={<LazyRoute><TankLogsPage /></LazyRoute>} />
+        <Route path="/tank-logs/history/:tankId" element={<LazyRoute><TankHistoryPage /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )

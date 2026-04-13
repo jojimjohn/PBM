@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'oil',
           logo: '/images/alramrami-logo.png',
           modules: {
-            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'projects', 'users', 'employees', 'vehicles', 'settings']
+            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'tank-logs', 'petty-cash', 'banking', 'reports', 'projects', 'users', 'employees', 'vehicles', 'settings']
           }
         },
         {
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'scrap',
           logo: '/images/pridemuscat-logo.png',
           modules: {
-            enabled: ['dashboard', 'suppliers', 'inventory', 'sales', 'purchase', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'users', 'employees', 'vehicles', 'settings']
+            enabled: ['dashboard', 'suppliers', 'inventory', 'sales', 'purchase', 'collections', 'wastage', 'tank-logs', 'petty-cash', 'banking', 'reports', 'users', 'employees', 'vehicles', 'settings']
           }
         }
       ];

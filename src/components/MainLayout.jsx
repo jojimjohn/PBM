@@ -218,7 +218,7 @@ const MainLayout = () => {
     )
 
     // Define section groupings
-    const coreNavModules = ['dashboard', 'customers', 'suppliers', 'inventory', 'fuel-inventory', 'material-inventory', 'sales', 'purchase', 'wastage']
+    const coreNavModules = ['dashboard', 'customers', 'suppliers', 'inventory', 'fuel-inventory', 'material-inventory', 'sales', 'purchase', 'wastage', 'tank-logs']
     const legalFinanceModules = ['contracts', 'petty-cash', 'banking', 'invoices', 'expenses']
     const adminModules = ['users', 'roles', 'projects', 'reports', 'employees', 'vehicles']
 
@@ -243,7 +243,8 @@ const MainLayout = () => {
       'roles': '/roles',
       'projects': '/projects',
       'employees': '/employees',
-      'vehicles': '/vehicles'
+      'vehicles': '/vehicles',
+      'tank-logs': '/tank-logs'
     }
 
     // Map module IDs to display labels
@@ -267,7 +268,8 @@ const MainLayout = () => {
       'roles': 'roleManagement',
       'projects': 'projects',
       'employees': 'employees',
-      'vehicles': 'vehicles'
+      'vehicles': 'vehicles',
+      'tank-logs': 'tankLogs'
     }
 
     // Determine section for each module

@@ -137,6 +137,11 @@ export const MODULE_PERMISSIONS = {
     manage: ['MANAGE_VEHICLES'],
     manageTypes: ['MANAGE_VEHICLE_TYPES'],
     requiredPermissions: ['VIEW_VEHICLES']
+  },
+  'tank-logs': {
+    view: ['VIEW_TANK_LOGS'],
+    manage: ['MANAGE_TANK_LOGS'],
+    requiredPermissions: ['VIEW_TANK_LOGS']
   }
 }
 
@@ -162,7 +167,8 @@ export const DEFAULT_MODULE_LABELS = {
   'users': 'User Management',
   'projects': 'Projects',
   'employees': 'Employees',
-  'vehicles': 'Vehicles'
+  'vehicles': 'Vehicles',
+  'tank-logs': 'Tank Logs'
 }
 
 // Icon SVG paths for modules (to be used in JSX components)
@@ -321,6 +327,12 @@ export const MODULE_ICON_PATHS = {
       "M1 3h15v13H1z",
       "M16 8h4l3 3v5h-7V8z",
       "M5.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM18.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"
+    ]
+  },
+  'tank-logs': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
     ]
   }
 }

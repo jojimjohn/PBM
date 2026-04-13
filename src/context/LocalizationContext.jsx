@@ -125,6 +125,9 @@ const translations = {
     // Employee Management
     employees: 'Employees',
 
+    // Tank Log Management
+    tankLogs: 'Tank Logs',
+
     // Vehicle Management
     vehicles: 'Vehicles',
 
@@ -2246,6 +2249,7 @@ const translations = {
     wastage: 'الهدر',
     banking: 'الخدمات المصرفية',
     employees: 'الموظفين',
+    tankLogs: 'سجلات الخزانات',
     vehicles: 'المركبات',
     projects: 'المشاريع',
     projectManagement: 'إدارة المشاريع',
