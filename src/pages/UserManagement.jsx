@@ -18,6 +18,7 @@ import { useSystemSettings } from '../context/SystemSettingsContext'
 import { usePermissions } from '../hooks/usePermissions'
 import { PERMISSIONS, getRoleDisplayName, getRoleColor } from '../config/roles'
 import userService from '../services/userService'
+import employeeService from '../services/employeeService'
 import roleService from '../services/roleService'
 import DataTable from '../components/ui/DataTable'
 import RoleManagement from './RoleManagement'
@@ -315,6 +316,10 @@ const UserManagement = () => {
   useEffect(() => {
     loadUsers()
     loadRoles()
+    // Load employees for the employee link dropdown in create user modal
+    employeeService.getAll({ status: 'active', limit: 500 }).then(r => {
+      if (r.success) window._employeeList = r.data
+    })
   }, [loadUsers, loadRoles])
 
   // Show message with auto-dismiss
@@ -1001,6 +1006,46 @@ const CreateUserModal = ({ isOpen, onClose, onSubmit, loading, currentUserRole, 
               />
               <span className="text-xs text-slate-500 mt-1">{t('usernameHint', 'Letters, numbers, and underscores only. Can be used for login.')}</span>
               {errors.username && <span className="text-xs text-red-500 mt-1">{errors.username}</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* Employee Link Section */}
+        <div className="form-section">
+          <h4 className="form-section-title">
+            <User size={16} />
+            Link to Employee
+          </h4>
+          <div className="form-grid">
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>Employee (optional — auto-fills name from employee record)</label>
+              <select
+                value={formData.employee_id || ''}
+                onChange={(e) => {
+                  const empId = e.target.value ? parseInt(e.target.value) : null
+                  setFormData(prev => ({ ...prev, employee_id: empId }))
+                  // Auto-populate name from employee if selected
+                  if (empId && window._employeeList) {
+                    const emp = window._employeeList.find(em => em.id === empId)
+                    if (emp) {
+                      const parts = emp.full_name.split(' ')
+                      setFormData(prev => ({
+                        ...prev,
+                        employee_id: empId,
+                        firstName: parts[0] || '',
+                        lastName: parts.slice(1).join(' ') || ''
+                      }))
+                    }
+                  }
+                }}
+                disabled={loading}
+              >
+                <option value="">Create new employee automatically</option>
+                {(window._employeeList || []).map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code}){emp.employee_type ? ` — ${emp.employee_type}` : ''}</option>
+                ))}
+              </select>
+              <span className="text-xs text-slate-400 mt-1">If no employee is selected, one will be created automatically from the name fields below.</span>
             </div>
           </div>
         </div>

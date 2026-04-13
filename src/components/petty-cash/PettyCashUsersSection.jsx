@@ -37,6 +37,7 @@ import Modal from '../ui/Modal';
 import pettyCashUsersService from '../../services/pettyCashUsersService';
 import pettyCashService from '../../services/pettyCashService';
 import userService from '../../services/userService';
+import employeeService from '../../services/employeeService';
 import { PERMISSIONS } from '../../config/roles';
 // CSS moved to global index.css Tailwind
 
@@ -78,6 +79,7 @@ const PettyCashUsersSection = ({
     cardId: '',
     petrolCardId: '',
     userId: '',
+    employee_record_id: null,
     name: '',
     phone: '',
     department: '',
@@ -132,6 +134,10 @@ const PettyCashUsersSection = ({
   useEffect(() => {
     loadUsers();
     loadSystemUsers();
+    // Load employees for the employee link dropdown
+    employeeService.getAll({ status: 'active', limit: 500 }).then(r => {
+      if (r.success) window._employeeList = r.data
+    });
   }, [loadUsers, loadSystemUsers]);
 
   // Get available top-up cards (not assigned to any PC user)
@@ -219,6 +225,7 @@ const PettyCashUsersSection = ({
         cardId: parseInt(formData.cardId),
         petrolCardId: formData.petrolCardId ? parseInt(formData.petrolCardId) : null,
         userId: formData.userId ? parseInt(formData.userId) : null,
+        employee_record_id: formData.employee_record_id || null,
         name: formData.name,
         phone: formData.phone || null,
         department: formData.department || null,
@@ -887,6 +894,32 @@ const PettyCashUsersSection = ({
             <span className="form-hint">
               {t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}
             </span>
+          </div>
+
+          <div className="form-group">
+            <label>Link to Employee (auto-fills name, phone, department)</label>
+            <select
+              name="employee_record_id"
+              value={formData.employee_record_id || ''}
+              onChange={(e) => {
+                const empId = e.target.value ? parseInt(e.target.value) : null
+                const updatedForm = { ...formData, employee_record_id: empId }
+                if (empId && window._employeeList) {
+                  const emp = window._employeeList.find(em => em.id === empId)
+                  if (emp) {
+                    updatedForm.name = emp.full_name
+                    updatedForm.phone = emp.phone || formData.phone
+                    updatedForm.department = emp.department || formData.department
+                  }
+                }
+                setFormData(updatedForm)
+              }}
+            >
+              <option value="">Select employee...</option>
+              {(window._employeeList || []).map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code}){emp.employee_type ? ` — ${emp.employee_type}` : ''}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">
