@@ -37,7 +37,7 @@ const EmployeesPage = () => {
   const loadEmployees = useCallback(async () => {
     setLoading(true)
     const result = await employeeService.getAll({ limit: 200 })
-    if (result.success) setEmployees(result.data)
+    if (result.success) setEmployees(Array.isArray(result.data) ? result.data.filter(Boolean) : [])
     setLoading(false)
   }, [])
 
@@ -98,13 +98,13 @@ const EmployeesPage = () => {
       key: 'designation',
       label: 'Designation',
       sortable: true,
-      render: (row) => row.designation || '—'
+      render: (row) => row?.designation || '—'
     },
     {
       key: 'department',
       label: 'Department',
       sortable: true,
-      render: (row) => row.department || '—'
+      render: (row) => row?.department || '—'
     },
     {
       key: 'phone',
