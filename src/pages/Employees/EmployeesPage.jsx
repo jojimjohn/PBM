@@ -86,51 +86,51 @@ const EmployeesPage = () => {
       label: 'Code',
       sortable: true,
       width: '100px',
-      render: (row) => row ? <span className="font-mono text-xs">{row.employee_code}</span> : null
+      render: (value) => <span className="font-mono text-xs">{value}</span>
     },
     {
       key: 'full_name',
       label: 'Name',
       sortable: true,
-      render: (row) => row ? <span className="font-medium">{row.full_name}</span> : null
+      render: (value) => <span className="font-medium">{value}</span>
     },
     {
       key: 'designation',
       label: 'Designation',
       sortable: true,
-      render: (row) => row?.designation || '—'
+      render: (value) => value || '—'
     },
     {
       key: 'department',
       label: 'Department',
       sortable: true,
-      render: (row) => row?.department || '—'
+      render: (value) => value || '—'
     },
     {
       key: 'phone',
       label: 'Contact',
-      render: (row) => row ? (
+      render: (value, row) => (
         <div>
-          <div>{row.phone || '—'}</div>
-          {row.email && <div className="text-xs text-slate-400">{row.email}</div>}
+          <div>{value || '—'}</div>
+          {row?.email && <div className="text-xs text-slate-400">{row.email}</div>}
         </div>
-      ) : '—'
+      )
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (row) => row ? (
-        <span className={STATUS_BADGE[row.status] || 'badge'}>
-          {row.status?.toUpperCase()}
+      render: (value) => (
+        <span className={STATUS_BADGE[value] || 'badge'}>
+          {value?.toUpperCase()}
         </span>
-      ) : null
+      )
     },
     {
       key: 'actions',
       label: '',
       width: '120px',
-      render: (row) => !row ? null : (
+      render: (value, row) => !row ? null : (
         <div className="flex items-center gap-1">
           <button
             className="btn-icon"

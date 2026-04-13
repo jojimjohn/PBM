@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { usePermissions } from '../../hooks/usePermissions'
 import { useAuth } from '../../context/AuthContext'
 import employeeService from '../../services/employeeService'
+import branchService from '../../services/branchService'
 import authService from '../../services/authService'
 import { API_BASE_URL } from '../../config/api.js'
 import Modal from '../../components/ui/Modal'
@@ -69,8 +70,28 @@ const EmployeeDetailPage = () => {
 
   const loadLocations = useCallback(async () => {
     try {
-      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`)
-      setLocations(data.data || data || [])
+      // Load both supplier locations (FK target) and branches for display
+      const [slResult, brResult] = await Promise.all([
+        authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`).catch(() => ({ data: [] })),
+        branchService.getAll({ is_active: true, limit: 200 }).catch(() => ({ data: [] }))
+      ])
+
+      const supplierLocs = (slResult.data || slResult || []).map(l => ({
+        ...l,
+        locationName: l.locationName || l.name,
+        locationCode: l.locationCode || l.code,
+        _type: 'supplier_location'
+      }))
+
+      const branches = (brResult.data || []).map(b => ({
+        id: b.id,
+        locationName: `${b.name} (Branch)`,
+        locationCode: b.code || `BR-${b.id}`,
+        address: b.address,
+        _type: 'branch'
+      }))
+
+      setLocations([...supplierLocs, ...branches])
     } catch { setLocations([]) }
   }, [])
 
