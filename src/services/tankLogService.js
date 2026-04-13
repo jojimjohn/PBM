@@ -67,6 +67,22 @@ class TankLogService {
     }
   }
 
+  // Linkable collection orders (not yet linked to any tank log)
+  async getLinkableCollections(date, search = '') {
+    try {
+      const params = new URLSearchParams();
+      if (date) params.set('date', date);
+      if (search) params.set('search', search);
+      const qs = params.toString();
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/tank-logs/linkable-collections${qs ? `?${qs}` : ''}`
+      );
+      return { success: true, data: data.data || [] };
+    } catch (error) {
+      return { success: false, error: error.message, data: [] };
+    }
+  }
+
   // History
   async getTankHistory(tankId, from, to) {
     try {

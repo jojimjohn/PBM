@@ -5,6 +5,7 @@ import { useLocalization } from '../../context/LocalizationContext'
 import tankLogService from '../../services/tankLogService'
 import showToast from '../../components/ui/Toast'
 import TankFormModal from './components/TankFormModal'
+import CollectionEntriesPanel from './components/CollectionEntriesPanel'
 import { Save, Plus, RefreshCw, ChevronLeft, ChevronRight, Droplet, Settings, History } from 'lucide-react'
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -213,13 +214,32 @@ const TankLogsPage = () => {
                   </tr>
 
                   {/* Collections (total per tank) */}
+                  {/* Collections — expandable per tank with vehicle entries */}
                   <tr className="border-b border-slate-100 bg-emerald-50/30">
-                    <td className="px-4 py-2.5 text-xs font-semibold text-slate-700 sticky left-0 bg-emerald-50/30 z-10">Collections</td>
-                    {tankData.map(({ tank }) => {
-                      const colTotal = (drafts[tank.id]?.collections || []).reduce((s, c) => s + (parseFloat(c.collected_quantity) || 0), 0)
-                      return <td key={tank.id} className={`px-4 py-2.5 text-sm text-emerald-700 ${numClass}`}>{colTotal.toFixed(3)}</td>
-                    })}
-                    <td className={`px-4 py-2.5 text-sm font-bold text-emerald-800 bg-slate-50 ${numClass}`}>{totals.collections.toFixed(3)}</td>
+                    <td className="px-4 py-2.5 text-xs font-semibold text-slate-700 sticky left-0 bg-emerald-50/30 z-10 align-top">
+                      Collections
+                      <div className="text-[9px] text-slate-400 font-normal mt-0.5">per vehicle</div>
+                    </td>
+                    {tankData.map(({ tank }) => (
+                      <td key={tank.id} className="px-2 py-2 align-top min-w-[180px]">
+                        <CollectionEntriesPanel
+                          tankId={tank.id}
+                          collections={drafts[tank.id]?.collections || []}
+                          onChange={(newCollections) => {
+                            setDrafts(prev => ({
+                              ...prev,
+                              [tank.id]: { ...prev[tank.id], collections: newCollections, dirty: true }
+                            }))
+                          }}
+                          canManage={canManage}
+                          selectedDate={selectedDate}
+                        />
+                        <div className={`mt-1 pt-1 border-t border-emerald-200 text-xs font-bold text-emerald-700 ${numClass}`}>
+                          {(drafts[tank.id]?.collections || []).reduce((s, c) => s + (parseFloat(c.collected_quantity) || 0), 0).toFixed(3)}
+                        </div>
+                      </td>
+                    ))}
+                    <td className={`px-4 py-2.5 text-sm font-bold text-emerald-800 bg-slate-50 align-top ${numClass}`}>{totals.collections.toFixed(3)}</td>
                   </tr>
 
                   {/* Closing Stock */}
