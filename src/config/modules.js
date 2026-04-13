@@ -142,6 +142,12 @@ export const MODULE_PERMISSIONS = {
     view: ['VIEW_TANK_LOGS'],
     manage: ['MANAGE_TANK_LOGS'],
     requiredPermissions: ['VIEW_TANK_LOGS']
+  },
+  'expense-sheets': {
+    view: ['VIEW_EXPENSE_SHEETS'],
+    manage: ['MANAGE_EXPENSE_SHEETS'],
+    approve: ['APPROVE_EXPENSE_SHEETS'],
+    requiredPermissions: ['VIEW_EXPENSE_SHEETS']
   }
 }
 
@@ -168,7 +174,8 @@ export const DEFAULT_MODULE_LABELS = {
   'projects': 'Projects',
   'employees': 'Employees',
   'vehicles': 'Vehicles',
-  'tank-logs': 'Tank Logs'
+  'tank-logs': 'Tank Logs',
+  'expense-sheets': 'Expense Sheets'
 }
 
 // Icon SVG paths for modules (to be used in JSX components)
@@ -333,6 +340,13 @@ export const MODULE_ICON_PATHS = {
     viewBox: "0 0 24 24",
     paths: [
       "M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
+    ]
+  },
+  'expense-sheets': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+      "M14 2v6h6M16 13H8M16 17H8M10 9H8"
     ]
   }
 }

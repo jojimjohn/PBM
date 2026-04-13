@@ -128,6 +128,9 @@ const translations = {
     // Tank Log Management
     tankLogs: 'Tank Logs',
 
+    // Expense Sheet Management
+    expenseSheets: 'Expense Sheets',
+
     // Vehicle Management
     vehicles: 'Vehicles',
 
@@ -2250,6 +2253,7 @@ const translations = {
     banking: 'الخدمات المصرفية',
     employees: 'الموظفين',
     tankLogs: 'سجلات الخزانات',
+    expenseSheets: 'أوراق المصروفات',
     vehicles: 'المركبات',
     projects: 'المشاريع',
     projectManagement: 'إدارة المشاريع',
