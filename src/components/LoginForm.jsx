@@ -267,6 +267,8 @@ const LoginForm = () => {
             <label className="login-label">{t('emailOrUsername', 'Email or Username')}</label>
             <input
               type="text"
+              name="email"
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value.toLowerCase())}
               placeholder="you@company.com"
@@ -283,6 +285,8 @@ const LoginForm = () => {
             </div>
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"

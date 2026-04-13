@@ -3,17 +3,21 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { usePermissions } from '../../hooks/usePermissions'
 import { useAuth } from '../../context/AuthContext'
 import employeeService from '../../services/employeeService'
+import authService from '../../services/authService'
+import { API_BASE_URL } from '../../config/api.js'
+import Modal from '../../components/ui/Modal'
+import showToast from '../../components/ui/Toast'
 import DocumentExpiryBadge from './components/DocumentExpiryBadge'
 import LocationAssignmentPanel from './components/LocationAssignmentPanel'
-import { ArrowLeft, Save, Trash2 } from 'lucide-react'
+import EmployeeFormModal from './components/EmployeeFormModal'
+import { ArrowLeft, Edit, Save, Plus, FileText, MapPin, User, Home } from 'lucide-react'
 
-const TABS = ['Profile', 'Addresses', 'Documents', 'Locations']
-
-const EMPTY_EMPLOYEE = {
-  full_name: '', phone: '', email: '', nationality: '',
-  date_of_birth: '', gender: '', employment_start_date: '',
-  designation: '', department: '', status: 'active'
-}
+const TABS = [
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'addresses', label: 'Addresses', icon: Home },
+  { id: 'documents', label: 'Documents', icon: FileText },
+  { id: 'locations', label: 'Locations', icon: MapPin }
+]
 
 const EMPTY_ADDRESS = {
   address_type: 'oman_residential', address_line1: '', address_line2: '',
@@ -29,24 +33,23 @@ const EmployeeDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
-  const { selectedCompany } = useAuth()
-  const isNew = id === 'new'
   const canManage = hasPermission('MANAGE_EMPLOYEES')
-  const canDelete = hasPermission('DELETE_EMPLOYEES')
 
-  const [activeTab, setActiveTab] = useState('Profile')
-  const [employee, setEmployee] = useState(EMPTY_EMPLOYEE)
+  const [activeTab, setActiveTab] = useState('profile')
+  const [employee, setEmployee] = useState(null)
   const [addresses, setAddresses] = useState([])
   const [documents, setDocuments] = useState([])
   const [locations, setLocations] = useState([])
-  const [loading, setLoading] = useState(!isNew)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [docForm, setDocForm] = useState(null) // null = hidden, object = editing
+
+  // Modal state
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDocModal, setShowDocModal] = useState(false)
+  const [docForm, setDocForm] = useState(EMPTY_DOCUMENT)
   const [editingDocId, setEditingDocId] = useState(null)
 
-  // Load employee data
   const loadEmployee = useCallback(async () => {
-    if (isNew) return
     setLoading(true)
     const result = await employeeService.getById(id)
     if (result.success && result.data) {
@@ -57,47 +60,34 @@ const EmployeeDetailPage = () => {
       navigate('/employees')
     }
     setLoading(false)
-  }, [id, isNew, navigate])
+  }, [id, navigate])
 
   const loadDocuments = useCallback(async () => {
-    if (isNew) return
     const result = await employeeService.getDocuments(id)
     if (result.success) setDocuments(result.data)
-  }, [id, isNew])
+  }, [id])
 
   const loadLocations = useCallback(async () => {
-    // Load available supplier_locations for the assignment dropdown
     try {
-      const { makeAuthenticatedRequest } = await import('../../services/authService').then(m => m.default)
-      const { API_BASE_URL } = await import('../../config/api.js')
-      const data = await makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`)
+      const data = await authService.makeAuthenticatedRequest(`${API_BASE_URL}/supplier-locations`)
       setLocations(data.data || data || [])
     } catch { setLocations([]) }
   }, [])
 
   useEffect(() => { loadEmployee() }, [loadEmployee])
-  useEffect(() => { if (activeTab === 'Documents' && !isNew) loadDocuments() }, [activeTab, loadDocuments, isNew])
-  useEffect(() => { if (activeTab === 'Locations') loadLocations() }, [activeTab, loadLocations])
+  useEffect(() => { if (activeTab === 'documents') loadDocuments() }, [activeTab, loadDocuments])
+  useEffect(() => { if (activeTab === 'locations') loadLocations() }, [activeTab, loadLocations])
 
-  // Save employee profile
-  const handleSaveProfile = async () => {
+  // Save employee (from edit modal)
+  const handleSaveEmployee = async (formData) => {
     setSaving(true)
-    const payload = { ...employee }
-    delete payload.id
-    delete payload.employee_code
-    delete payload.created_at
-    delete payload.updated_at
-
-    const result = isNew
-      ? await employeeService.create(payload)
-      : await employeeService.update(id, payload)
-
+    const result = await employeeService.update(id, formData)
     if (result.success) {
-      if (isNew && result.data?.id) {
-        navigate(`/employees/${result.data.id}`, { replace: true })
-      } else {
-        loadEmployee()
-      }
+      showToast.success('Employee updated')
+      setShowEditModal(false)
+      loadEmployee()
+    } else {
+      showToast.error(result.error || 'Failed to update')
     }
     setSaving(false)
   }
@@ -106,18 +96,16 @@ const EmployeeDetailPage = () => {
   const handleSaveAddresses = async () => {
     setSaving(true)
     const result = await employeeService.updateAddresses(id, addresses)
-    if (result.success && result.data) setAddresses(result.data)
+    if (result.success) {
+      if (result.data) setAddresses(result.data)
+      showToast.success('Addresses saved')
+    } else {
+      showToast.error(result.error || 'Failed to save addresses')
+    }
     setSaving(false)
   }
 
-  // Delete (soft)
-  const handleDelete = async () => {
-    if (!confirm('Deactivate this employee? This will set their status to terminated.')) return
-    const result = await employeeService.delete(id)
-    if (result.success) navigate('/employees')
-  }
-
-  // Document save
+  // Save document
   const handleSaveDocument = async () => {
     setSaving(true)
     const payload = { ...docForm }
@@ -130,324 +118,262 @@ const EmployeeDetailPage = () => {
       : await employeeService.addDocument(id, payload)
 
     if (result.success) {
-      setDocForm(null)
+      showToast.success(editingDocId ? 'Document updated' : 'Document added')
+      setShowDocModal(false)
       setEditingDocId(null)
       loadDocuments()
+    } else {
+      showToast.error(result.error || 'Failed to save document')
     }
     setSaving(false)
   }
 
-  // Ensure oman + home_country slots exist
+  // Address helpers
   const ensureAddressSlots = (addrs) => {
     const result = [...addrs]
-    if (!result.find(a => a.address_type === 'oman_residential')) {
+    if (!result.find(a => a.address_type === 'oman_residential'))
       result.push({ ...EMPTY_ADDRESS, address_type: 'oman_residential' })
-    }
-    if (!result.find(a => a.address_type === 'home_country')) {
+    if (!result.find(a => a.address_type === 'home_country'))
       result.push({ ...EMPTY_ADDRESS, address_type: 'home_country' })
-    }
     return result
   }
 
-  if (loading) return <div className="p-6 text-gray-400">Loading...</div>
+  const updateAddress = (addressType, field, value) => {
+    setAddresses(prev => {
+      const slots = ensureAddressSlots(prev)
+      return slots.map(a => a.address_type === addressType ? { ...a, [field]: value } : a)
+    })
+  }
 
-  const inputClass = "w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-200 focus:outline-none focus:border-accent/50"
-  const labelClass = "block text-xs font-medium text-gray-400 mb-1"
+  if (loading) return <div className="p-6 text-slate-500">Loading...</div>
+  if (!employee) return null
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col min-h-full bg-gray-50 dark:bg-slate-900">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="px-6 pt-6 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/employees')} className="p-2 rounded-lg hover:bg-white/5 text-gray-400">
-            <ArrowLeft size={18} />
+          <button onClick={() => navigate('/employees')} className="btn btn-outline btn-sm">
+            <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-xl font-semibold text-gray-100">
-              {isNew ? 'New Employee' : employee.full_name}
-            </h1>
-            {!isNew && <p className="text-xs text-gray-500">{employee.employee_code}</p>}
+            <h1 className="text-xl font-bold text-slate-800">{employee.full_name}</h1>
+            <p className="text-xs text-slate-500 font-mono">{employee.employee_code} · {employee.designation || 'No designation'} · <span className="capitalize">{employee.status}</span></p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {canDelete && !isNew && employee.status !== 'terminated' && (
-            <button onClick={handleDelete} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 text-sm">
-              <Trash2 size={14} /> Deactivate
-            </button>
-          )}
-        </div>
+        {canManage && (
+          <button className="btn btn-primary" onClick={() => setShowEditModal(true)}>
+            <Edit size={16} />
+            Edit Employee
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
-      {!isNew && (
-        <div className="flex gap-1 border-b border-white/10">
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                activeTab === tab
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="tab-navigation">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            <tab.icon size={16} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      {/* Profile Tab */}
-      {(activeTab === 'Profile' || isNew) && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className={labelClass}>Full Name *</label>
-              <input className={inputClass} value={employee.full_name} onChange={e => setEmployee(p => ({ ...p, full_name: e.target.value }))} required />
+      <div className="p-6">
+        {/* Profile Tab - Read-only display */}
+        {activeTab === 'profile' && (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                ['Full Name', employee.full_name],
+                ['Phone', employee.phone],
+                ['Email', employee.email],
+                ['Nationality', employee.nationality],
+                ['Date of Birth', employee.date_of_birth],
+                ['Gender', employee.gender ? employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1) : null],
+                ['Designation', employee.designation],
+                ['Department', employee.department],
+                ['Start Date', employee.employment_start_date],
+                ['Status', employee.status?.toUpperCase()]
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-[10px] uppercase font-bold tracking-widest text-slate-500">{label}</dt>
+                  <dd className="mt-1 text-sm text-slate-800 font-medium">{value || '—'}</dd>
+                </div>
+              ))}
             </div>
-            <div>
-              <label className={labelClass}>Phone</label>
-              <input className={inputClass} value={employee.phone || ''} onChange={e => setEmployee(p => ({ ...p, phone: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>Email</label>
-              <input className={inputClass} type="email" value={employee.email || ''} onChange={e => setEmployee(p => ({ ...p, email: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>Nationality</label>
-              <input className={inputClass} value={employee.nationality || ''} onChange={e => setEmployee(p => ({ ...p, nationality: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>Date of Birth</label>
-              <input className={inputClass} type="date" value={employee.date_of_birth || ''} onChange={e => setEmployee(p => ({ ...p, date_of_birth: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>Gender</label>
-              <select className={inputClass} value={employee.gender || ''} onChange={e => setEmployee(p => ({ ...p, gender: e.target.value || null }))}>
-                <option value="">Select...</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Employment Start Date</label>
-              <input className={inputClass} type="date" value={employee.employment_start_date || ''} onChange={e => setEmployee(p => ({ ...p, employment_start_date: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>Designation</label>
-              <input className={inputClass} value={employee.designation || ''} onChange={e => setEmployee(p => ({ ...p, designation: e.target.value }))} />
-            </div>
-            <div>
-              <label className={labelClass}>Department</label>
-              <input className={inputClass} value={employee.department || ''} onChange={e => setEmployee(p => ({ ...p, department: e.target.value }))} />
-            </div>
-            {!isNew && (
-              <div>
-                <label className={labelClass}>Status</label>
-                <select className={inputClass} value={employee.status} onChange={e => setEmployee(p => ({ ...p, status: e.target.value }))}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="terminated">Terminated</option>
-                </select>
-              </div>
-            )}
           </div>
-          {canManage && (
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving || !employee.full_name}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 disabled:opacity-50 transition-colors"
-            >
-              <Save size={14} />
-              {saving ? 'Saving...' : isNew ? 'Create Employee' : 'Save Changes'}
-            </button>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Addresses Tab */}
-      {activeTab === 'Addresses' && !isNew && (
-        <div className="space-y-6">
-          {ensureAddressSlots(addresses).map((addr, idx) => (
-            <div key={addr.address_type} className="p-4 rounded-xl bg-white/3 border border-white/10 space-y-3">
-              <h3 className="text-sm font-medium text-gray-300">
-                {addr.address_type === 'oman_residential' ? 'Oman Residential Address' : 'Home Country Address'}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className={labelClass}>Address Line 1</label>
-                  <input className={inputClass} value={addr.address_line1 || ''} onChange={e => {
-                    const updated = ensureAddressSlots(addresses).map(a =>
-                      a.address_type === addr.address_type ? { ...a, address_line1: e.target.value } : a
-                    )
-                    setAddresses(updated)
-                  }} />
-                </div>
-                <div>
-                  <label className={labelClass}>Address Line 2</label>
-                  <input className={inputClass} value={addr.address_line2 || ''} onChange={e => {
-                    const updated = ensureAddressSlots(addresses).map(a =>
-                      a.address_type === addr.address_type ? { ...a, address_line2: e.target.value } : a
-                    )
-                    setAddresses(updated)
-                  }} />
-                </div>
-                <div>
-                  <label className={labelClass}>City</label>
-                  <input className={inputClass} value={addr.city || ''} onChange={e => {
-                    const updated = ensureAddressSlots(addresses).map(a =>
-                      a.address_type === addr.address_type ? { ...a, city: e.target.value } : a
-                    )
-                    setAddresses(updated)
-                  }} />
-                </div>
-                <div>
-                  <label className={labelClass}>State / Region</label>
-                  <input className={inputClass} value={addr.state || ''} onChange={e => {
-                    const updated = ensureAddressSlots(addresses).map(a =>
-                      a.address_type === addr.address_type ? { ...a, state: e.target.value } : a
-                    )
-                    setAddresses(updated)
-                  }} />
-                </div>
-                <div>
-                  <label className={labelClass}>Country</label>
-                  <input className={inputClass} value={addr.country || ''} onChange={e => {
-                    const updated = ensureAddressSlots(addresses).map(a =>
-                      a.address_type === addr.address_type ? { ...a, country: e.target.value } : a
-                    )
-                    setAddresses(updated)
-                  }} />
-                </div>
-                <div>
-                  <label className={labelClass}>Postal Code</label>
-                  <input className={inputClass} value={addr.postal_code || ''} onChange={e => {
-                    const updated = ensureAddressSlots(addresses).map(a =>
-                      a.address_type === addr.address_type ? { ...a, postal_code: e.target.value } : a
-                    )
-                    setAddresses(updated)
-                  }} />
-                </div>
-              </div>
-            </div>
-          ))}
-          {canManage && (
-            <button
-              onClick={handleSaveAddresses}
-              disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 disabled:opacity-50 transition-colors"
-            >
-              <Save size={14} />
-              {saving ? 'Saving...' : 'Save Addresses'}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Documents Tab */}
-      {activeTab === 'Documents' && !isNew && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-300">Employee Documents</h3>
-            {canManage && !docForm && (
-              <button
-                onClick={() => { setDocForm({ ...EMPTY_DOCUMENT }); setEditingDocId(null) }}
-                className="text-xs px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
-              >
-                + Add Document
-              </button>
-            )}
-          </div>
-
-          {/* Document form */}
-          {docForm && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className={labelClass}>Document Type *</label>
-                  <select className={inputClass} value={docForm.document_type} onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))}>
-                    <option value="passport">Passport</option>
-                    <option value="resident_id">Resident ID</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Document Number</label>
-                  <input className={inputClass} value={docForm.document_number} onChange={e => setDocForm(f => ({ ...f, document_number: e.target.value }))} />
-                </div>
-                <div>
-                  <label className={labelClass}>Issue Date</label>
-                  <input className={inputClass} type="date" value={docForm.issue_date || ''} onChange={e => setDocForm(f => ({ ...f, issue_date: e.target.value }))} />
-                </div>
-                <div>
-                  <label className={labelClass}>Expiry Date</label>
-                  <input className={inputClass} type="date" value={docForm.expiry_date || ''} onChange={e => setDocForm(f => ({ ...f, expiry_date: e.target.value }))} />
-                </div>
-                <div>
-                  <label className={labelClass}>File Path</label>
-                  <input className={inputClass} value={docForm.file_path || ''} onChange={e => setDocForm(f => ({ ...f, file_path: e.target.value }))} placeholder="/uploads/docs/..." />
-                </div>
-                <div>
-                  <label className={labelClass}>Notes</label>
-                  <input className={inputClass} value={docForm.notes || ''} onChange={e => setDocForm(f => ({ ...f, notes: e.target.value }))} />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={handleSaveDocument} disabled={saving} className="px-4 py-2 rounded-lg bg-accent text-white text-sm hover:bg-accent/90 disabled:opacity-50">
-                  {saving ? 'Saving...' : editingDocId ? 'Update' : 'Add'}
-                </button>
-                <button onClick={() => { setDocForm(null); setEditingDocId(null) }} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Document list */}
-          <div className="space-y-2">
-            {documents.length === 0 && !docForm && (
-              <p className="text-sm text-gray-500 py-4 text-center">No documents recorded</p>
-            )}
-            {documents.map(doc => (
-              <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg bg-white/3 border border-white/10">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="text-sm text-gray-200 capitalize">{doc.document_type.replace('_', ' ')}</p>
-                    {doc.document_number && <p className="text-xs text-gray-500">{doc.document_number}</p>}
+        {/* Addresses Tab */}
+        {activeTab === 'addresses' && (
+          <div className="space-y-6">
+            {ensureAddressSlots(addresses).map(addr => (
+              <div key={addr.address_type} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
+                <div className="form-section">
+                  <div className="form-section-title">
+                    <Home size={20} />
+                    {addr.address_type === 'oman_residential' ? 'Oman Residential Address' : 'Home Country Address'}
                   </div>
-                  <DocumentExpiryBadge expiryDate={doc.expiry_date} daysRemaining={doc.daysRemaining} />
-                </div>
-                <div className="flex items-center gap-2">
-                  {doc.expiry_date && <span className="text-xs text-gray-500">Exp: {doc.expiry_date}</span>}
-                  {canManage && (
-                    <button
-                      onClick={() => {
-                        setDocForm({
-                          document_type: doc.document_type,
-                          document_number: doc.document_number || '',
-                          issue_date: doc.issue_date || '',
-                          expiry_date: doc.expiry_date || '',
-                          file_path: doc.file_path || '',
-                          notes: doc.notes || ''
-                        })
-                        setEditingDocId(doc.id)
-                      }}
-                      className="text-xs text-accent hover:text-accent/80"
-                    >
-                      Edit
-                    </button>
-                  )}
+                  <div className="form-grid">
+                    {['address_line1', 'address_line2', 'city', 'state', 'country', 'postal_code'].map(field => (
+                      <div className="form-group" key={field}>
+                        <label>{field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</label>
+                        <input
+                          type="text"
+                          value={addr[field] || ''}
+                          onChange={e => updateAddress(addr.address_type, field, e.target.value)}
+                          disabled={!canManage}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
+            {canManage && (
+              <div className="flex justify-end">
+                <button className="btn btn-primary" onClick={handleSaveAddresses} disabled={saving}>
+                  <Save size={16} />
+                  {saving ? 'Saving...' : 'Save Addresses'}
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* Documents Tab */}
+        {activeTab === 'documents' && (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Employee Documents</h3>
+              {canManage && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => { setDocForm({ ...EMPTY_DOCUMENT }); setEditingDocId(null); setShowDocModal(true) }}
+                >
+                  <Plus size={14} />
+                  Add Document
+                </button>
+              )}
+            </div>
+            <div className="divide-y divide-gray-200 dark:divide-slate-700">
+              {documents.length === 0 ? (
+                <div className="px-6 py-8 text-center text-sm text-slate-400">No documents recorded</div>
+              ) : (
+                documents.map(doc => (
+                  <div key={doc.id} className="px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800 capitalize">{doc.document_type.replace('_', ' ')}</p>
+                        {doc.document_number && <p className="text-xs text-slate-500 font-mono">{doc.document_number}</p>}
+                      </div>
+                      <DocumentExpiryBadge expiryDate={doc.expiry_date} daysRemaining={doc.daysRemaining} />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {doc.expiry_date && <span className="text-xs text-slate-400">Exp: {doc.expiry_date}</span>}
+                      {canManage && (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => {
+                            setDocForm({
+                              document_type: doc.document_type,
+                              document_number: doc.document_number || '',
+                              issue_date: doc.issue_date || '',
+                              expiry_date: doc.expiry_date || '',
+                              file_path: doc.file_path || '',
+                              notes: doc.notes || ''
+                            })
+                            setEditingDocId(doc.id)
+                            setShowDocModal(true)
+                          }}
+                        >
+                          <Edit size={14} />
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Locations Tab */}
+        {activeTab === 'locations' && (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
+            <LocationAssignmentPanel employeeId={parseInt(id)} locations={locations} />
+          </div>
+        )}
+      </div>
+
+      {/* Edit Employee Modal */}
+      {showEditModal && (
+        <EmployeeFormModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleSaveEmployee}
+          employee={employee}
+          loading={saving}
+        />
       )}
 
-      {/* Locations Tab */}
-      {activeTab === 'Locations' && !isNew && (
-        <LocationAssignmentPanel employeeId={parseInt(id)} locations={locations} />
-      )}
+      {/* Document Form Modal */}
+      <Modal
+        isOpen={showDocModal}
+        onClose={() => { setShowDocModal(false); setEditingDocId(null) }}
+        title={editingDocId ? 'Edit Document' : 'Add Document'}
+        size="md"
+        footer={
+          <div className="form-actions">
+            <button className="btn btn-outline" onClick={() => { setShowDocModal(false); setEditingDocId(null) }}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleSaveDocument} disabled={saving}>
+              <Save size={16} />
+              {saving ? 'Saving...' : editingDocId ? 'Update' : 'Add Document'}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-section">
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Document Type *</label>
+              <select value={docForm.document_type} onChange={e => setDocForm(f => ({ ...f, document_type: e.target.value }))}>
+                <option value="passport">Passport</option>
+                <option value="resident_id">Resident ID</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Document Number</label>
+              <input type="text" value={docForm.document_number} onChange={e => setDocForm(f => ({ ...f, document_number: e.target.value }))} placeholder="e.g. AB1234567" />
+            </div>
+            <div className="form-group">
+              <label>Issue Date</label>
+              <input type="date" value={docForm.issue_date || ''} onChange={e => setDocForm(f => ({ ...f, issue_date: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label>Expiry Date</label>
+              <input type="date" value={docForm.expiry_date || ''} onChange={e => setDocForm(f => ({ ...f, expiry_date: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label>File Path</label>
+              <input type="text" value={docForm.file_path || ''} onChange={e => setDocForm(f => ({ ...f, file_path: e.target.value }))} placeholder="/uploads/docs/..." />
+            </div>
+            <div className="form-group">
+              <label>Notes</label>
+              <input type="text" value={docForm.notes || ''} onChange={e => setDocForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { usePermissions } from '../../../hooks/usePermissions'
 import employeeService from '../../../services/employeeService'
+import showToast from '../../../components/ui/Toast'
+import Modal from '../../../components/ui/Modal'
+import { Plus, Trash2, Save, MapPin } from 'lucide-react'
 
 const ROLE_LABELS = {
   in_charge: 'In Charge',
@@ -9,11 +12,11 @@ const ROLE_LABELS = {
   helper: 'Helper'
 }
 
-const ROLE_COLORS = {
-  in_charge: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
-  staff: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
-  driver: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  helper: 'bg-gray-500/15 text-gray-400 border-gray-500/25'
+const ROLE_BADGE = {
+  in_charge: 'badge badge-active',
+  staff: 'badge badge-info',
+  driver: 'badge badge-pending',
+  helper: 'badge badge-neutral'
 }
 
 const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
@@ -22,8 +25,13 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
 
   const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ location_id: '', role: 'staff', assigned_from: new Date().toISOString().split('T')[0], assigned_to: '' })
+  const [saving, setSaving] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({
+    location_id: '', role: 'staff',
+    assigned_from: new Date().toISOString().split('T')[0],
+    assigned_to: ''
+  })
 
   const loadAssignments = async () => {
     setLoading(true)
@@ -34,8 +42,8 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
 
   useEffect(() => { loadAssignments() }, [employeeId])
 
-  const handleAssign = async (e) => {
-    e.preventDefault()
+  const handleAssign = async () => {
+    setSaving(true)
     const payload = {
       location_id: parseInt(form.location_id),
       role: form.role,
@@ -44,111 +52,59 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
     }
     const result = await employeeService.assignLocation(employeeId, payload)
     if (result.success) {
-      setShowForm(false)
+      showToast.success('Location assigned')
+      setShowModal(false)
       setForm({ location_id: '', role: 'staff', assigned_from: new Date().toISOString().split('T')[0], assigned_to: '' })
       loadAssignments()
+    } else {
+      showToast.error(result.error || 'Failed to assign')
     }
+    setSaving(false)
   }
 
   const handleRemove = async (assignId) => {
     if (!confirm('Remove this location assignment?')) return
     const result = await employeeService.removeLocationAssignment(employeeId, assignId)
-    if (result.success) loadAssignments()
+    if (result.success) {
+      showToast.success('Assignment removed')
+      loadAssignments()
+    }
   }
 
   const currentAssignments = assignments.filter(a => !a.assigned_to)
   const pastAssignments = assignments.filter(a => a.assigned_to)
 
-  if (loading) return <div className="text-sm text-gray-400 py-4">Loading assignments...</div>
+  if (loading) return <div className="text-sm text-slate-400 py-4">Loading assignments...</div>
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-300">Location Assignments</h3>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Location Assignments</h3>
         {canManage && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="text-xs px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
-          >
-            {showForm ? 'Cancel' : '+ Assign'}
+          <button className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            <Plus size={14} />
+            Assign Location
           </button>
         )}
       </div>
 
-      {showForm && (
-        <form onSubmit={handleAssign} className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Location</label>
-              <select
-                value={form.location_id}
-                onChange={e => setForm(f => ({ ...f, location_id: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-200"
-                required
-              >
-                <option value="">Select location...</option>
-                {locations.map(loc => (
-                  <option key={loc.id} value={loc.id}>{loc.locationName} ({loc.locationCode})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Role</label>
-              <select
-                value={form.role}
-                onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-200"
-              >
-                {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">From</label>
-              <input
-                type="date"
-                value={form.assigned_from}
-                onChange={e => setForm(f => ({ ...f, assigned_from: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-200"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">To (blank = current)</label>
-              <input
-                type="date"
-                value={form.assigned_to}
-                onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-200"
-              />
-            </div>
-          </div>
-          <button type="submit" className="px-4 py-2 rounded-lg bg-accent text-white text-sm hover:bg-accent/90 transition-colors">
-            Assign Location
-          </button>
-        </form>
-      )}
-
-      {/* Current assignments */}
+      {/* Current */}
       {currentAssignments.length > 0 && (
-        <div>
-          <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">Current</p>
-          <div className="space-y-2">
+        <div className="mb-4">
+          <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">Current</p>
+          <div className="divide-y divide-gray-200 dark:divide-slate-700 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
             {currentAssignments.map(a => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+              <div key={a.id} className="px-4 py-3 flex items-center justify-between bg-white dark:bg-slate-800">
                 <div className="flex items-center gap-3">
-                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium border rounded-full ${ROLE_COLORS[a.role]}`}>
-                    {ROLE_LABELS[a.role]}
-                  </span>
+                  <span className={ROLE_BADGE[a.role] || 'badge'}>{ROLE_LABELS[a.role]}</span>
                   <div>
-                    <p className="text-sm text-gray-200">{a.locationName}</p>
-                    <p className="text-xs text-gray-500">Since {a.assigned_from}</p>
+                    <p className="text-sm font-medium text-slate-800">{a.locationName}</p>
+                    <p className="text-xs text-slate-400">Since {a.assigned_from}</p>
                   </div>
                 </div>
                 {canManage && (
-                  <button onClick={() => handleRemove(a.id)} className="text-xs text-red-400 hover:text-red-300">
-                    Remove
+                  <button className="btn-icon text-red-500" onClick={() => handleRemove(a.id)} title="Remove">
+                    <Trash2 size={14} />
                   </button>
                 )}
               </div>
@@ -157,21 +113,17 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
         </div>
       )}
 
-      {/* Past assignments */}
+      {/* Past */}
       {pastAssignments.length > 0 && (
-        <div>
-          <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">Past</p>
-          <div className="space-y-2">
+        <div className="mb-4">
+          <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">Past</p>
+          <div className="divide-y divide-gray-200 dark:divide-slate-700 border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden opacity-60">
             {pastAssignments.map(a => (
-              <div key={a.id} className="p-3 rounded-lg bg-white/3 border border-white/5 opacity-60">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex px-2 py-0.5 text-xs font-medium border rounded-full bg-gray-500/10 text-gray-500 border-gray-500/20">
-                    {ROLE_LABELS[a.role]}
-                  </span>
-                  <div>
-                    <p className="text-sm text-gray-400">{a.locationName}</p>
-                    <p className="text-xs text-gray-600">{a.assigned_from} — {a.assigned_to}</p>
-                  </div>
+              <div key={a.id} className="px-4 py-3 flex items-center gap-3 bg-white dark:bg-slate-800">
+                <span className="badge badge-neutral">{ROLE_LABELS[a.role]}</span>
+                <div>
+                  <p className="text-sm text-slate-600">{a.locationName}</p>
+                  <p className="text-xs text-slate-400">{a.assigned_from} — {a.assigned_to}</p>
                 </div>
               </div>
             ))}
@@ -180,8 +132,55 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
       )}
 
       {assignments.length === 0 && (
-        <p className="text-sm text-gray-500 py-4 text-center">No location assignments yet</p>
+        <p className="text-sm text-slate-400 py-8 text-center">No location assignments yet</p>
       )}
+
+      {/* Assign Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Assign to Location"
+        size="md"
+        footer={
+          <div className="form-actions">
+            <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleAssign} disabled={saving || !form.location_id}>
+              <Save size={16} />
+              {saving ? 'Assigning...' : 'Assign'}
+            </button>
+          </div>
+        }
+      >
+        <div className="form-section">
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Location *</label>
+              <select value={form.location_id} onChange={e => setForm(f => ({ ...f, location_id: e.target.value }))} required>
+                <option value="">Select location...</option>
+                {locations.map(loc => (
+                  <option key={loc.id} value={loc.id}>{loc.locationName} ({loc.locationCode})</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Role *</label>
+              <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
+                {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>From Date *</label>
+              <input type="date" value={form.assigned_from} onChange={e => setForm(f => ({ ...f, assigned_from: e.target.value }))} required />
+            </div>
+            <div className="form-group">
+              <label>To Date (blank = current)</label>
+              <input type="date" value={form.assigned_to} onChange={e => setForm(f => ({ ...f, assigned_to: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
