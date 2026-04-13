@@ -174,7 +174,7 @@ export const DEFAULT_MODULE_LABELS = {
   'projects': 'Projects',
   'employees': 'Employees',
   'vehicles': 'Vehicles',
-  'tank-logs': 'Tank Logs',
+  'tank-logs': 'Storage',
   'expense-sheets': 'Expense Sheets'
 }
 

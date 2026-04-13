@@ -37,7 +37,7 @@ const TankLogsPage = () => {
   const loadLogs = useCallback(async () => {
     setLoading(true)
     const result = await tankLogService.getLogsByDate(selectedDate)
-    if (result.success) {
+    if (result.success && Array.isArray(result.data)) {
       setTankData(result.data)
       // Initialize drafts from loaded data
       const newDrafts = {}
