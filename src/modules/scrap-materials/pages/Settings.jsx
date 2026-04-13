@@ -9,6 +9,7 @@ import branchService from '../../../services/branchService'
 import dataCacheService from '../../../services/dataCacheService'
 import MFASetup from '../../../components/MFASetup'
 import ExpenseCategoryManager from '../../../components/ExpenseCategoryManager'
+import VehicleTypesPage from '../../../pages/Vehicles/VehicleTypesPage'
 import Modal from '../../../components/ui/Modal'
 import {
   Settings as SettingsIcon,
@@ -33,6 +34,7 @@ import {
   MapPin,
   Lock,
   Tag,
+  Truck,
   Sun,
   Moon
 } from 'lucide-react'
@@ -314,6 +316,7 @@ const Settings = () => {
     { id: 'security', label: t('securitySettings', 'Security'), icon: Lock },
     { id: 'branches', label: t('branchManagement', 'Branch Management'), icon: Building },
     { id: 'expense-categories', label: t('expenseCategories', 'Expense Categories'), icon: Tag },
+    { id: 'vehicle-types', label: 'Vehicle Types', icon: Truck },
     { id: 'appearance', label: t('appearanceSettings'), icon: Palette },
     { id: 'notifications', label: t('notificationSettings'), icon: Bell }
   ]
@@ -817,6 +820,11 @@ const Settings = () => {
             <div className="settings-section">
               <ExpenseCategoryManager />
             </div>
+          )}
+
+          {/* Vehicle Types Settings */}
+          {activeTab === 'vehicle-types' && (
+            <VehicleTypesPage />
           )}
 
           {/* Appearance Settings */}
