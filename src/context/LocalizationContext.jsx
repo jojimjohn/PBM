@@ -125,6 +125,9 @@ const translations = {
     // Employee Management
     employees: 'Employees',
 
+    // Vehicle Management
+    vehicles: 'Vehicles',
+
     // Project Management
     projects: 'Projects',
     projectManagement: 'Project Management',
@@ -2243,6 +2246,7 @@ const translations = {
     wastage: 'الهدر',
     banking: 'الخدمات المصرفية',
     employees: 'الموظفين',
+    vehicles: 'المركبات',
     projects: 'المشاريع',
     projectManagement: 'إدارة المشاريع',
     projectManagementDesc: 'إدارة المشاريع وتعيينات المستخدمين للتحكم في الوصول',

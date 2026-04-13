@@ -131,6 +131,12 @@ export const MODULE_PERMISSIONS = {
     manage: ['MANAGE_EMPLOYEES'],
     delete: ['DELETE_EMPLOYEES'],
     requiredPermissions: ['VIEW_EMPLOYEES']
+  },
+  'vehicles': {
+    view: ['VIEW_VEHICLES'],
+    manage: ['MANAGE_VEHICLES'],
+    manageTypes: ['MANAGE_VEHICLE_TYPES'],
+    requiredPermissions: ['VIEW_VEHICLES']
   }
 }
 
@@ -155,7 +161,8 @@ export const DEFAULT_MODULE_LABELS = {
   'banking': 'Banking',
   'users': 'User Management',
   'projects': 'Projects',
-  'employees': 'Employees'
+  'employees': 'Employees',
+  'vehicles': 'Vehicles'
 }
 
 // Icon SVG paths for modules (to be used in JSX components)
@@ -306,6 +313,14 @@ export const MODULE_ICON_PATHS = {
       "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
       "M8.5 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
       "M17 11l2 2 4-4"
+    ]
+  },
+  'vehicles': {
+    viewBox: "0 0 24 24",
+    paths: [
+      "M1 3h15v13H1z",
+      "M16 8h4l3 3v5h-7V8z",
+      "M5.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM18.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"
     ]
   }
 }

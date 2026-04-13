@@ -220,7 +220,7 @@ const MainLayout = () => {
     // Define section groupings
     const coreNavModules = ['dashboard', 'customers', 'suppliers', 'inventory', 'fuel-inventory', 'material-inventory', 'sales', 'purchase', 'wastage']
     const legalFinanceModules = ['contracts', 'petty-cash', 'banking', 'invoices', 'expenses']
-    const adminModules = ['users', 'roles', 'projects', 'reports', 'employees']
+    const adminModules = ['users', 'roles', 'projects', 'reports', 'employees', 'vehicles']
 
     // Map module IDs to navigation paths
     const pathMapping = {
@@ -242,7 +242,8 @@ const MainLayout = () => {
       'users': '/users',
       'roles': '/roles',
       'projects': '/projects',
-      'employees': '/employees'
+      'employees': '/employees',
+      'vehicles': '/vehicles'
     }
 
     // Map module IDs to display labels
@@ -265,7 +266,8 @@ const MainLayout = () => {
       'users': 'userManagement',
       'roles': 'roleManagement',
       'projects': 'projects',
-      'employees': 'employees'
+      'employees': 'employees',
+      'vehicles': 'vehicles'
     }
 
     // Determine section for each module

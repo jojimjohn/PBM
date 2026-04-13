@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Truck, User, AlertCircle, Car } from 'lucide-react';
+import { Truck, User, AlertCircle, Car, Search } from 'lucide-react';
 import { useLocalization } from '../../context/LocalizationContext';
 import Modal from '../ui/Modal';
+import vehicleTypeService from '../../services/vehicleTypeService';
+import vehicleService from '../../services/vehicleService';
 
 const DriverAssignmentModal = ({ collectionOrder, isOpen, onClose, onSave }) => {
   const { t, isRTL } = useLocalization();
@@ -13,13 +15,29 @@ const DriverAssignmentModal = ({ collectionOrder, isOpen, onClose, onSave }) => 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Vehicle type options matching backend enum
-  const vehicleTypeOptions = [
-    { value: 'truck', label: t('vehicleTypeTruck') || 'Truck' },
-    { value: 'pickup', label: t('vehicleTypePickup') || 'Pickup' },
-    { value: 'van', label: t('vehicleTypeVan') || 'Van' },
-    { value: 'trailer', label: t('vehicleTypeTrailer') || 'Trailer' }
-  ];
+  // Dynamic vehicle types from API
+  const [vehicleTypeOptions, setVehicleTypeOptions] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [vehicleSuggestions, setVehicleSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Load vehicle types and vehicles from API
+  useEffect(() => {
+    if (isOpen) {
+      vehicleTypeService.getAll(true).then(result => {
+        if (result.success) {
+          setVehicleTypeOptions(result.data.map(vt => ({
+            value: vt.type_name.toLowerCase().replace(/\s+/g, '_'),
+            label: vt.type_name,
+            id: vt.id
+          })));
+        }
+      });
+      vehicleService.getAll({ status: 'active' }).then(result => {
+        if (result.success) setVehicles(result.data);
+      });
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (collectionOrder && isOpen) {
@@ -31,6 +49,31 @@ const DriverAssignmentModal = ({ collectionOrder, isOpen, onClose, onSave }) => 
       setErrors({});
     }
   }, [collectionOrder, isOpen]);
+
+  // Filter vehicles by plate as user types
+  const handlePlateChange = (value) => {
+    const upperValue = value.toUpperCase();
+    handleChange('vehiclePlate', upperValue);
+    if (upperValue.length >= 2) {
+      const matches = vehicles.filter(v => v.vehicle_plate.includes(upperValue));
+      setVehicleSuggestions(matches.slice(0, 5));
+      setShowSuggestions(matches.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectVehicle = (vehicle) => {
+    handleChange('vehiclePlate', vehicle.vehicle_plate);
+    // Auto-populate vehicle type from master data
+    if (vehicle.vehicle_type_name) {
+      const matchingType = vehicleTypeOptions.find(vt =>
+        vt.label.toLowerCase() === vehicle.vehicle_type_name.toLowerCase()
+      );
+      if (matchingType) handleChange('vehicleType', matchingType.value);
+    }
+    setShowSuggestions(false);
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -152,23 +195,45 @@ const DriverAssignmentModal = ({ collectionOrder, isOpen, onClose, onSave }) => 
             <Truck style={{ width: '16px', height: '16px', display: 'inline', marginRight: '6px' }} />
             {t('vehiclePlate') || 'Vehicle Plate'} *
           </label>
-          <input
-            type="text"
-            value={formData.vehiclePlate}
-            onChange={(e) => handleChange('vehiclePlate', e.target.value.toUpperCase())}
-            placeholder={t('enterVehiclePlate') || 'Enter vehicle plate (e.g. OM-1234)'}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: `1px solid ${errors.vehiclePlate ? 'var(--red-500)' : 'var(--gray-300)'}`,
-              borderRadius: '6px',
-              fontSize: '14px',
-              backgroundColor: 'white',
-              textTransform: 'uppercase',
-              transition: 'border-color 0.2s'
-            }}
-            required
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              value={formData.vehiclePlate}
+              onChange={(e) => handlePlateChange(e.target.value)}
+              onFocus={() => formData.vehiclePlate.length >= 2 && vehicleSuggestions.length > 0 && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder={t('enterVehiclePlate') || 'Search by plate or type manually'}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: `1px solid ${errors.vehiclePlate ? 'var(--red-500)' : 'var(--gray-300)'}`,
+                borderRadius: '6px',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                textTransform: 'uppercase',
+                transition: 'border-color 0.2s'
+              }}
+              required
+            />
+            {showSuggestions && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                backgroundColor: 'white', border: '1px solid var(--gray-300)',
+                borderRadius: '6px', marginTop: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                {vehicleSuggestions.map(v => (
+                  <div key={v.id} onClick={() => selectVehicle(v)} style={{
+                    padding: '8px 12px', cursor: 'pointer', fontSize: '13px',
+                    borderBottom: '1px solid var(--gray-100)'
+                  }}
+                  onMouseEnter={e => e.target.style.backgroundColor = 'var(--blue-50)'}
+                  onMouseLeave={e => e.target.style.backgroundColor = 'white'}>
+                    <strong>{v.vehicle_plate}</strong> — {v.vehicle_type_name || 'No type'} {v.make ? `(${v.make} ${v.model || ''})` : ''}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {errors.vehiclePlate && (
             <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--red-600)' }}>
               <AlertCircle style={{ width: '12px', height: '12px', display: 'inline', marginRight: '4px' }} />

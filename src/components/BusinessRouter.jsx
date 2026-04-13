@@ -45,6 +45,9 @@ const RoleManagement = lazy(() => import('../pages/RoleManagement'))
 const Projects = lazy(() => import('../pages/Projects'))
 const EmployeesPage = lazy(() => import('../pages/Employees/EmployeesPage'))
 const EmployeeDetailPage = lazy(() => import('../pages/Employees/EmployeeDetailPage'))
+const VehiclesPage = lazy(() => import('../pages/Vehicles/VehiclesPage'))
+const VehicleDetailPage = lazy(() => import('../pages/Vehicles/VehicleDetailPage'))
+const VehicleTypesPage = lazy(() => import('../pages/Vehicles/VehicleTypesPage'))
 
 /**
  * LazyRoute - Wrapper component for lazy-loaded routes
@@ -87,6 +90,9 @@ const BusinessRouter = () => {
         <Route path="/projects" element={<LazyRoute><Projects /></LazyRoute>} />
         <Route path="/employees" element={<LazyRoute><EmployeesPage /></LazyRoute>} />
         <Route path="/employees/:id" element={<LazyRoute><EmployeeDetailPage /></LazyRoute>} />
+        <Route path="/vehicles" element={<LazyRoute><VehiclesPage /></LazyRoute>} />
+        <Route path="/vehicles/:id" element={<LazyRoute><VehicleDetailPage /></LazyRoute>} />
+        <Route path="/settings/vehicle-types" element={<LazyRoute><VehicleTypesPage /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )
@@ -113,6 +119,9 @@ const BusinessRouter = () => {
         <Route path="/roles" element={<LazyRoute><RoleManagement /></LazyRoute>} />
         <Route path="/employees" element={<LazyRoute><EmployeesPage /></LazyRoute>} />
         <Route path="/employees/:id" element={<LazyRoute><EmployeeDetailPage /></LazyRoute>} />
+        <Route path="/vehicles" element={<LazyRoute><VehiclesPage /></LazyRoute>} />
+        <Route path="/vehicles/:id" element={<LazyRoute><VehicleDetailPage /></LazyRoute>} />
+        <Route path="/settings/vehicle-types" element={<LazyRoute><VehicleTypesPage /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )
