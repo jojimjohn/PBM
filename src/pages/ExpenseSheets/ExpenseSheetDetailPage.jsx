@@ -49,12 +49,23 @@ const ExpenseSheetDetailPage = () => {
   // Lookups
   const [vehicles, setVehicles] = useState([])
   const [employees, setEmployees] = useState([])
+  const [drivers, setDrivers] = useState([])
+  const [helpers, setHelpers] = useState([])
   const [tanks, setTanks] = useState([])
 
   // Load lookups
   useEffect(() => {
-    vehicleService.getAll({ status: 'active' }).then(r => r.success && setVehicles(r.data))
-    employeeService.getAll({ status: 'active', limit: 200 }).then(r => r.success && setEmployees(r.data))
+    vehicleService.getAll({ status: 'active' }).then(r => {
+      if (r.success) setVehicles(r.data)
+    })
+    employeeService.getAll({ status: 'active', limit: 200 }).then(r => {
+      if (r.success) {
+        setEmployees(r.data)
+        // Filter drivers and helpers for dropdowns
+        setDrivers(r.data.filter(e => e.employee_type === 'driver' || !e.employee_type))
+        setHelpers(r.data.filter(e => e.employee_type === 'helper' || !e.employee_type))
+      }
+    })
     tankLogService.getTanks(true).then(r => r.success && setTanks(r.data))
   }, [])
 
@@ -240,14 +251,18 @@ const ExpenseSheetDetailPage = () => {
                 <label>Driver</label>
                 <select value={sheet.driver_employee_id || ''} onChange={e => setSheet(p => ({ ...p, driver_employee_id: e.target.value ? parseInt(e.target.value) : null }))} disabled={isReadOnly}>
                   <option value="">Select driver...</option>
-                  {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code})</option>)}
+                  {(drivers.length > 0 ? drivers : employees).map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code}){emp.employee_type ? ` — ${emp.employee_type}` : ''}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
                 <label>Helper</label>
                 <select value={sheet.helper_employee_id || ''} onChange={e => setSheet(p => ({ ...p, helper_employee_id: e.target.value ? parseInt(e.target.value) : null }))} disabled={isReadOnly}>
                   <option value="">Select helper...</option>
-                  {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code})</option>)}
+                  {(helpers.length > 0 ? helpers : employees).map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code}){emp.employee_type ? ` — ${emp.employee_type}` : ''}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">

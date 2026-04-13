@@ -2,10 +2,21 @@ import React, { useState, useEffect } from 'react'
 import { User, Save } from 'lucide-react'
 import Modal from '../../../components/ui/Modal'
 
+const EMPLOYEE_TYPES = [
+  { value: 'driver', label: 'Driver' },
+  { value: 'helper', label: 'Helper' },
+  { value: 'operator', label: 'Operator' },
+  { value: 'supervisor', label: 'Supervisor' },
+  { value: 'mechanic', label: 'Mechanic' },
+  { value: 'admin_staff', label: 'Admin Staff' },
+  { value: 'contract_worker', label: 'Contract Worker' },
+  { value: 'other', label: 'Other' }
+]
+
 const EMPTY_EMPLOYEE = {
   full_name: '', phone: '', email: '', nationality: '',
   date_of_birth: '', gender: '', employment_start_date: '',
-  designation: '', department: '', status: 'active'
+  designation: '', department: '', employee_type: '', status: 'active'
 }
 
 const EmployeeFormModal = ({ isOpen, onClose, onSave, employee = null, loading }) => {
@@ -24,6 +35,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employee = null, loading }
         employment_start_date: employee.employment_start_date || '',
         designation: employee.designation || '',
         department: employee.department || '',
+        employee_type: employee.employee_type || '',
         status: employee.status || 'active'
       })
     } else {
@@ -137,12 +149,19 @@ const EmployeeFormModal = ({ isOpen, onClose, onSave, employee = null, loading }
         </div>
         <div className="form-grid">
           <div className="form-group">
-            <label>Designation</label>
+            <label>Employee Type</label>
+            <select value={formData.employee_type} onChange={e => updateField('employee_type', e.target.value)}>
+              <option value="">Select type...</option>
+              {EMPLOYEE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Designation / Job Title</label>
             <input
               type="text"
               value={formData.designation}
               onChange={e => updateField('designation', e.target.value)}
-              placeholder="e.g. Driver, Operator"
+              placeholder="e.g. Senior Driver, Head Operator"
             />
           </div>
           <div className="form-group">

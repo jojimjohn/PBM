@@ -17,6 +17,7 @@ class EmployeeService {
       if (params.status) query.set('status', params.status);
       if (params.search) query.set('search', params.search);
       if (params.department) query.set('department', params.department);
+      if (params.employee_type) query.set('employee_type', params.employee_type);
       if (params.page) query.set('page', params.page);
       if (params.limit) query.set('limit', params.limit);
 
