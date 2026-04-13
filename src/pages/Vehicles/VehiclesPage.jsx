@@ -8,7 +8,8 @@ import DataTable from '../../components/ui/DataTable'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import showToast from '../../components/ui/Toast'
 import VehicleFormModal from './components/VehicleFormModal'
-import { Plus, RefreshCw, Eye, Edit, Trash2 } from 'lucide-react'
+import VehicleTypesPage from './VehicleTypesPage'
+import { Plus, RefreshCw, Eye, Edit, Trash2, Truck, Tag } from 'lucide-react'
 
 const STATUS_BADGE = {
   active: 'badge badge-active',
@@ -28,6 +29,7 @@ const VehiclesPage = () => {
   const { t } = useLocalization()
   const canManage = hasPermission('MANAGE_VEHICLES')
 
+  const [activeTab, setActiveTab] = useState('vehicles')
   const [vehicles, setVehicles] = useState([])
   const [vehicleTypes, setVehicleTypes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -119,28 +121,54 @@ const VehiclesPage = () => {
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50 dark:bg-slate-900">
-      <div className="p-6">
-        <DataTable
-          data={vehicles} columns={columns}
-          title={t('vehicles', 'Vehicles')}
-          subtitle={`Manage company fleet — ${vehicles.length} vehicles`}
-          headerActions={
-            <div className="flex items-center gap-2">
-              <button className="btn btn-outline" onClick={handleRefresh} disabled={isRefreshing} title="Refresh">
-                <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-              </button>
-              {canManage && (
-                <button className="btn btn-primary" onClick={() => { setSelectedVehicle(null); setShowAddModal(true) }}>
-                  <Plus size={16} /> Add Vehicle
-                </button>
-              )}
-            </div>
-          }
-          loading={loading} searchable sortable paginated filterable
-          onRowClick={row => navigate(`/vehicles/${row.id}`)}
-          emptyMessage="No vehicles found" initialPageSize={10} stickyHeader
-        />
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          className={`tab-btn ${activeTab === 'vehicles' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vehicles')}
+        >
+          <Truck size={16} />
+          {t('vehicles', 'Vehicles')}
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'vehicle-types' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vehicle-types')}
+        >
+          <Tag size={16} />
+          Vehicle Types
+        </button>
       </div>
+
+      {/* Vehicles Tab */}
+      {activeTab === 'vehicles' && (
+        <div className="p-6">
+          <DataTable
+            data={vehicles} columns={columns}
+            title={t('vehicles', 'Vehicles')}
+            subtitle={`Manage company fleet — ${vehicles.length} vehicles`}
+            headerActions={
+              <div className="flex items-center gap-2">
+                <button className="btn btn-outline" onClick={handleRefresh} disabled={isRefreshing} title="Refresh">
+                  <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+                </button>
+                {canManage && (
+                  <button className="btn btn-primary" onClick={() => { setSelectedVehicle(null); setShowAddModal(true) }}>
+                    <Plus size={16} /> Add Vehicle
+                  </button>
+                )}
+              </div>
+            }
+            loading={loading} searchable sortable paginated filterable
+            onRowClick={row => navigate(`/vehicles/${row.id}`)}
+            emptyMessage="No vehicles found" initialPageSize={10} stickyHeader
+          />
+        </div>
+      )}
+
+      {/* Vehicle Types Tab */}
+      {activeTab === 'vehicle-types' && (
+        <VehicleTypesPage />
+      )}
 
       {showAddModal && <VehicleFormModal isOpen onClose={() => setShowAddModal(false)} onSave={handleSave} vehicleTypes={vehicleTypes} loading={saving} />}
       {showEditModal && selectedVehicle && <VehicleFormModal isOpen onClose={() => { setShowEditModal(false); setSelectedVehicle(null) }} onSave={handleSave} vehicle={selectedVehicle} vehicleTypes={vehicleTypes} loading={saving} />}
