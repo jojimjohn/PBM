@@ -86,13 +86,13 @@ const EmployeesPage = () => {
       label: 'Code',
       sortable: true,
       width: '100px',
-      render: (row) => <span className="font-mono text-xs">{row.employee_code}</span>
+      render: (row) => row ? <span className="font-mono text-xs">{row.employee_code}</span> : null
     },
     {
       key: 'full_name',
       label: 'Name',
       sortable: true,
-      render: (row) => <span className="font-medium">{row.full_name}</span>
+      render: (row) => row ? <span className="font-medium">{row.full_name}</span> : null
     },
     {
       key: 'designation',
@@ -109,28 +109,28 @@ const EmployeesPage = () => {
     {
       key: 'phone',
       label: 'Contact',
-      render: (row) => (
+      render: (row) => row ? (
         <div>
           <div>{row.phone || '—'}</div>
           {row.email && <div className="text-xs text-slate-400">{row.email}</div>}
         </div>
-      )
+      ) : '—'
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (row) => (
+      render: (row) => row ? (
         <span className={STATUS_BADGE[row.status] || 'badge'}>
           {row.status?.toUpperCase()}
         </span>
-      )
+      ) : null
     },
     {
       key: 'actions',
       label: '',
       width: '120px',
-      render: (row) => (
+      render: (row) => !row ? null : (
         <div className="flex items-center gap-1">
           <button
             className="btn-icon"
