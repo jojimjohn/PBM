@@ -86,28 +86,28 @@ const VehiclesPage = () => {
 
   const columns = [
     {
-      key: 'vehicle_plate', label: 'Plate', sortable: true, width: '120px',
-      render: (row) => <span className="font-mono font-bold text-sm">{row.vehicle_plate}</span>
+      key: 'vehicle_plate', header: 'Plate', sortable: true, width: '120px',
+      render: (value) => <span className="font-mono font-bold text-sm">{value}</span>
     },
     {
-      key: 'vehicle_type_name', label: 'Type', sortable: true,
-      render: (row) => row.vehicle_type_name || '—'
+      key: 'vehicle_type_name', header: 'Type', sortable: true,
+      render: (value) => value || '—'
     },
     {
-      key: 'make', label: 'Make / Model', sortable: true,
-      render: (row) => [row.make, row.model].filter(Boolean).join(' ') || '—'
+      key: 'make', header: 'Make / Model', sortable: true,
+      render: (value, row) => [row?.make, row?.model].filter(Boolean).join(' ') || '—'
     },
     {
-      key: 'year', label: 'Year', sortable: true, width: '80px',
-      render: (row) => row.year || '—'
+      key: 'year', header: 'Year', sortable: true, width: '80px',
+      render: (value) => value || '—'
     },
     {
-      key: 'status', label: 'Status', sortable: true,
-      render: (row) => <span className={STATUS_BADGE[row.status] || 'badge'}>{STATUS_LABEL[row.status] || row.status}</span>
+      key: 'status', header: 'Status', sortable: true,
+      render: (value) => <span className={STATUS_BADGE[value] || 'badge'}>{STATUS_LABEL[value] || value}</span>
     },
     {
-      key: 'actions', label: '', width: '120px',
-      render: (row) => (
+      key: 'actions', header: '', width: '120px',
+      render: (value, row) => (
         <div className="flex items-center gap-1">
           <button className="btn-icon" onClick={e => { e.stopPropagation(); navigate(`/vehicles/${row.id}`) }} title="Details"><Eye size={14} /></button>
           {canManage && <button className="btn-icon" onClick={e => { e.stopPropagation(); setSelectedVehicle(row); setShowEditModal(true) }} title="Edit"><Edit size={14} /></button>}

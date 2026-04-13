@@ -83,32 +83,32 @@ const EmployeesPage = () => {
   const columns = [
     {
       key: 'employee_code',
-      label: 'Code',
+      header: 'Code',
       sortable: true,
       width: '100px',
       render: (value) => <span className="font-mono text-xs">{value}</span>
     },
     {
       key: 'full_name',
-      label: 'Name',
+      header: 'Name',
       sortable: true,
       render: (value) => <span className="font-medium">{value}</span>
     },
     {
       key: 'designation',
-      label: 'Designation',
+      header: 'Designation',
       sortable: true,
       render: (value) => value || '—'
     },
     {
       key: 'department',
-      label: 'Department',
+      header: 'Department',
       sortable: true,
       render: (value) => value || '—'
     },
     {
       key: 'phone',
-      label: 'Contact',
+      header: 'Contact',
       render: (value, row) => (
         <div>
           <div>{value || '—'}</div>
@@ -118,7 +118,7 @@ const EmployeesPage = () => {
     },
     {
       key: 'status',
-      label: 'Status',
+      header: 'Status',
       sortable: true,
       render: (value) => (
         <span className={STATUS_BADGE[value] || 'badge'}>
@@ -128,7 +128,7 @@ const EmployeesPage = () => {
     },
     {
       key: 'actions',
-      label: '',
+      header: '',
       width: '120px',
       render: (value, row) => !row ? null : (
         <div className="flex items-center gap-1">

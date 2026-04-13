@@ -41,44 +41,44 @@ const ExpenseSheetsPage = () => {
 
   const columns = [
     {
-      key: 'sheet_date', label: 'Date', sortable: true, width: '110px',
-      render: (row) => <span className="font-mono text-sm">{row.sheet_date}</span>
+      key: 'sheet_date', header: 'Date', sortable: true, width: '110px',
+      render: (value) => <span className="font-mono text-sm">{value}</span>
     },
     {
-      key: 'vehicle_plate', label: 'Vehicle', sortable: true,
-      render: (row) => (
+      key: 'vehicle_plate', header: 'Vehicle', sortable: true,
+      render: (value, row) => (
         <div>
-          <span className="font-mono font-bold text-sm">{row.vehicle_plate}</span>
-          {row.vehicle_make && <span className="text-xs text-slate-400 ml-2">{row.vehicle_make} {row.vehicle_model || ''}</span>}
+          <span className="font-mono font-bold text-sm">{value}</span>
+          {row?.vehicle_make && <span className="text-xs text-slate-400 ml-2">{row.vehicle_make} {row.vehicle_model || ''}</span>}
         </div>
       )
     },
     {
-      key: 'driver_name', label: 'Driver', sortable: true,
-      render: (row) => row.driver_name || '—'
+      key: 'driver_name', header: 'Driver', sortable: true,
+      render: (value) => value || '—'
     },
     {
-      key: 'advance_given', label: 'Advance', sortable: true,
-      render: (row) => <span className="font-mono text-sm">{parseFloat(row.advance_given || 0).toFixed(3)}</span>
+      key: 'advance_given', header: 'Advance', sortable: true,
+      render: (value) => <span className="font-mono text-sm">{parseFloat(value || 0).toFixed(3)}</span>
     },
     {
-      key: 'total_expenses', label: 'Expenses', sortable: true,
-      render: (row) => <span className="font-mono text-sm text-red-600">{parseFloat(row.total_expenses || 0).toFixed(3)}</span>
+      key: 'total_expenses', header: 'Expenses', sortable: true,
+      render: (value) => <span className="font-mono text-sm text-red-600">{parseFloat(value || 0).toFixed(3)}</span>
     },
     {
-      key: 'closing_balance', label: 'Balance', sortable: true,
-      render: (row) => {
-        const bal = parseFloat(row.closing_balance || 0)
+      key: 'closing_balance', header: 'Balance', sortable: true,
+      render: (value) => {
+        const bal = parseFloat(value || 0)
         return <span className={`font-mono text-sm font-bold ${bal < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{bal.toFixed(3)}</span>
       }
     },
     {
-      key: 'status', label: 'Status', sortable: true,
-      render: (row) => <span className={STATUS_BADGE[row.status] || 'badge'}>{row.status?.toUpperCase()}</span>
+      key: 'status', header: 'Status', sortable: true,
+      render: (value) => <span className={STATUS_BADGE[value] || 'badge'}>{value?.toUpperCase()}</span>
     },
     {
-      key: 'actions', label: '', width: '60px',
-      render: (row) => (
+      key: 'actions', header: '', width: '60px',
+      render: (value, row) => (
         <button className="btn-icon" onClick={e => { e.stopPropagation(); navigate(`/expense-sheets/${row.id}`) }} title="View/Edit">
           <Eye size={14} />
         </button>
