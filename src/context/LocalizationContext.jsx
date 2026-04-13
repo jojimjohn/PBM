@@ -122,6 +122,9 @@ const translations = {
     wastage: 'Wastage',
     banking: 'Banking',
 
+    // Employee Management
+    employees: 'Employees',
+
     // Project Management
     projects: 'Projects',
     projectManagement: 'Project Management',
@@ -1039,6 +1042,12 @@ const translations = {
     levelHighestCustom: 'Highest Custom',
     selectRole: 'Select a role...',
     selectPermissionsHint: 'Select the permissions this role should have',
+    hierarchyViewHint: 'Click on permissions to toggle them. Parent permissions automatically grant child permissions.',
+    matrix: 'Matrix',
+    hierarchy: 'Hierarchy',
+    noPermissionsSelected: 'No permissions selected yet',
+    switchToMatrixToSelect: 'Click on permissions in the tree to toggle them',
+    loadingPermissions: 'Loading permissions...',
     permissionsSelected: 'permissions selected',
     noRolesFound: 'No roles found',
     systemRoles: 'System',
@@ -2233,6 +2242,7 @@ const translations = {
     reports: 'التقارير',
     wastage: 'الهدر',
     banking: 'الخدمات المصرفية',
+    employees: 'الموظفين',
     projects: 'المشاريع',
     projectManagement: 'إدارة المشاريع',
     projectManagementDesc: 'إدارة المشاريع وتعيينات المستخدمين للتحكم في الوصول',
@@ -3347,6 +3357,12 @@ const translations = {
     levelHighestCustom: 'الأعلى المخصص',
     selectRole: 'اختر دوراً...',
     selectPermissionsHint: 'اختر الصلاحيات التي يجب أن يمتلكها هذا الدور',
+    hierarchyViewHint: 'انقر على الصلاحيات لتبديلها. الصلاحيات الأصلية تمنح الصلاحيات الفرعية تلقائياً.',
+    matrix: 'المصفوفة',
+    hierarchy: 'التسلسل الهرمي',
+    noPermissionsSelected: 'لم يتم تحديد أي صلاحيات بعد',
+    switchToMatrixToSelect: 'انقر على الصلاحيات في الشجرة لتبديلها',
+    loadingPermissions: 'جاري تحميل الصلاحيات...',
     permissionsSelected: 'صلاحيات محددة',
     noRolesFound: 'لم يتم العثور على أدوار',
     systemRoles: 'النظام',

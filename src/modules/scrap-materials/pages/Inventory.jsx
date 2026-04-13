@@ -7,6 +7,7 @@ import DataTable from '../../../components/ui/DataTable'
 import MaterialEntryForm from '../components/MaterialEntryForm'
 import inventoryService from '../../../services/inventoryService'
 import materialService from '../../../services/materialService'
+import { PERMISSIONS } from '../../../config/roles'
 import { 
   Eye, 
   Edit, 
@@ -262,7 +263,7 @@ const ScrapMaterialsInventory = () => {
     ]
 
     // Add photos column if user can view images
-    if (hasPermission('VIEW_INVENTORY')) {
+    if (hasPermission(PERMISSIONS.VIEW_INVENTORY)) {
       columns.push({
         key: 'photos',
         header: t('photos', 'Photos'),
@@ -280,7 +281,7 @@ const ScrapMaterialsInventory = () => {
     }
 
     // Add actions column if user has permissions
-    if (hasPermission('MANAGE_INVENTORY')) {
+    if (hasPermission(PERMISSIONS.MANAGE_INVENTORY)) {
       columns.push({
         key: 'actions',
         header: t('actions', 'Actions'),
@@ -350,7 +351,7 @@ const ScrapMaterialsInventory = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {hasPermission('MANAGE_INVENTORY') && (
+          {hasPermission(PERMISSIONS.MANAGE_INVENTORY) && (
             <button
               className="btn btn-primary"
               onClick={() => {
@@ -548,7 +549,7 @@ const ScrapMaterialsInventory = () => {
                     )}
                   </div>
 
-                  {hasPermission('MANAGE_INVENTORY') && (
+                  {hasPermission(PERMISSIONS.MANAGE_INVENTORY) && (
                     <div className="flex items-center justify-end gap-2 px-4 py-3 bg-gray-50 border-t border-gray-100">
                       <button
                         onClick={() => console.log('View details:', item)}

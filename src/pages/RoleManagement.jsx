@@ -20,6 +20,7 @@ import dataCacheService from '../services/dataCacheService'
 import DataTable from '../components/ui/DataTable'
 import Modal from '../components/ui/Modal'
 import PermissionMatrix from '../components/ui/PermissionMatrix'
+import PermissionHierarchyTree from '../components/ui/PermissionHierarchyTree'
 import {
   Shield,
   ShieldPlus,
@@ -36,7 +37,9 @@ import {
   Eye,
   RefreshCw,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  List,
+  GitBranch
 } from 'lucide-react'
 // CSS moved to global index.css - using Tailwind classes
 
@@ -73,6 +76,7 @@ const RoleManagement = ({ embedded = false }) => {
   })
   const [cloneName, setCloneName] = useState('')
   const [cloneSuccess, setCloneSuccess] = useState(false)
+  const [viewMode, setViewMode] = useState('matrix') // 'matrix' or 'hierarchy'
 
   // Check permissions
   const canManageRoles = hasPermission(PERMISSIONS.MANAGE_ROLES)
@@ -117,8 +121,9 @@ const RoleManagement = ({ embedded = false }) => {
     try {
       const result = await roleService.getPermissions()
       if (result.success) {
-        // Backend returns { byModule: {...}, allKeys: [...] }
-        setPermissionGroups(result.data?.byModule || result.data?.permissions || [])
+        // Backend returns { byModule: {...} }
+        const byModule = result.data?.byModule || result.data?.permissions || []
+        setPermissionGroups(byModule)
       }
     } catch (err) {
       console.error('Error loading permissions:', err)
@@ -201,7 +206,7 @@ const RoleManagement = ({ embedded = false }) => {
       if (result.success) {
         setShowCreateModal(false)
         showMessage('success', result.message || 'Role created successfully')
-        loadRoles()
+        loadRoles(true) // Force refresh to invalidate cache
       } else {
         showMessage('error', result.error || 'Failed to create role')
       }
@@ -221,7 +226,7 @@ const RoleManagement = ({ embedded = false }) => {
       if (result.success) {
         setShowEditModal(false)
         showMessage('success', result.message || 'Role updated successfully')
-        loadRoles()
+        loadRoles(true) // Force refresh to invalidate cache
       } else {
         showMessage('error', result.error || 'Failed to update role')
       }
@@ -245,7 +250,7 @@ const RoleManagement = ({ embedded = false }) => {
       if (result.success) {
         console.log('Clone successful, setting cloneSuccess to true')
         setCloneSuccess(true)  // Show success state instead of closing
-        loadRoles()
+        loadRoles(true) // Force refresh to invalidate cache
       } else {
         showMessage('error', result.error || 'Failed to clone role')
       }
@@ -273,7 +278,7 @@ const RoleManagement = ({ embedded = false }) => {
       if (result.success) {
         setShowDeleteModal(false)
         showMessage('success', result.message || 'Role deleted successfully')
-        loadRoles()
+        loadRoles(true) // Force refresh to invalidate cache
       } else {
         showMessage('error', result.error || 'Failed to delete role')
       }
@@ -292,7 +297,7 @@ const RoleManagement = ({ embedded = false }) => {
 
       if (result.success) {
         showMessage('success', `Role ${newStatus ? 'activated' : 'deactivated'} successfully`)
-        loadRoles()
+        loadRoles(true) // Force refresh to invalidate cache
       } else {
         showMessage('error', result.error || 'Failed to update role status')
       }
@@ -626,23 +631,81 @@ const RoleManagement = ({ embedded = false }) => {
                 <ShieldCheck size={16} />
                 {t('permissions') || 'Permissions'}
               </h4>
-              {formData.permissions.length > 0 && (
-                <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold">
-                  {formData.permissions.length} {t('permissionsSelected') || 'selected'}
-                </span>
-              )}
+              <div className="flex items-center gap-3">
+                {/* View Mode Toggle */}
+                <div className="inline-flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('matrix')}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all ${
+                      viewMode === 'matrix'
+                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <List size={14} />
+                    {t('matrix') || 'Matrix'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('hierarchy')}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-all ${
+                      viewMode === 'hierarchy'
+                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <GitBranch size={14} />
+                    {t('hierarchy') || 'Hierarchy'}
+                  </button>
+                </div>
+                {formData.permissions.length > 0 && (
+                  <span className="inline-flex items-center px-2.5 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold">
+                    {formData.permissions.length} {t('permissionsSelected') || 'selected'}
+                  </span>
+                )}
+              </div>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              {t('selectPermissionsHint') || 'Select the permissions this role should have'}
+              {viewMode === 'matrix'
+                ? (t('selectPermissionsHint') || 'Select the permissions this role should have')
+                : (t('hierarchyViewHint') || 'Click on permissions to toggle them. Parent permissions automatically grant child permissions.')
+              }
             </p>
 
-            <PermissionMatrix
-              permissions={permissionGroups}
-              selectedPermissions={formData.permissions}
-              onChange={(perms) => setFormData({ ...formData, permissions: perms })}
-              readonly={selectedRole?.is_system}
-              loading={permissionGroups.length === 0}
-            />
+            {/* Matrix View - For selection */}
+            {viewMode === 'matrix' && (
+              <PermissionMatrix
+                permissions={permissionGroups}
+                selectedPermissions={formData.permissions}
+                onChange={(perms) => setFormData({ ...formData, permissions: perms })}
+                readonly={selectedRole?.is_system}
+                loading={permissionGroups.length === 0}
+              />
+            )}
+
+            {/* Hierarchy View - Interactive permission selection */}
+            {viewMode === 'hierarchy' && (
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                {permissionGroups.length > 0 ? (
+                  <PermissionHierarchyTree
+                    permissions={formData.permissions}
+                    permissionGroups={permissionGroups}
+                    title={null}
+                    showImplied={true}
+                    readonly={selectedRole?.is_system}
+                    onChange={(perms) => setFormData({ ...formData, permissions: perms })}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center text-center py-8">
+                    <GitBranch size={32} className="text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {t('loadingPermissions') || 'Loading permissions...'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Modal Actions */}

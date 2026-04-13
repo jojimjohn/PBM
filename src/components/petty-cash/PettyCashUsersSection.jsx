@@ -37,6 +37,7 @@ import Modal from '../ui/Modal';
 import pettyCashUsersService from '../../services/pettyCashUsersService';
 import pettyCashService from '../../services/pettyCashService';
 import userService from '../../services/userService';
+import { PERMISSIONS } from '../../config/roles';
 // CSS moved to global index.css Tailwind
 
 const PettyCashUsersSection = ({
@@ -696,7 +697,7 @@ const PettyCashUsersSection = ({
             >
               <QrCode size={14} />
             </button>
-            {hasPermission('MANAGE_PETTY_CASH') && (
+            {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
               <>
                 <button
                   className="btn btn-outline btn-sm"

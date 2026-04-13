@@ -19,6 +19,7 @@ import { useSuppliers } from '../hooks/useSuppliers'
 import SupplierFormModal from '../components/suppliers/SupplierFormModal'
 import SupplierDetailsModal from '../components/suppliers/SupplierDetailsModal'
 import { getTableColumns } from './suppliersTableConfig'
+import { PERMISSIONS } from '../../../config/roles'
 import {
   Plus,
   User,
@@ -197,7 +198,7 @@ const OilTradingSuppliers = () => {
                   >
                     <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
                   </button>
-                  {hasPermission('MANAGE_SUPPLIERS') && (
+                  {hasPermission(PERMISSIONS.MANAGE_SUPPLIERS) && (
                     <button className="btn btn-primary" onClick={handleAddSupplier}>
                       <Plus size={16} />
                       {t('addSupplier')}

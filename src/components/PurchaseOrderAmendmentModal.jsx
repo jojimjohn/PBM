@@ -5,6 +5,7 @@ import { usePermissions } from '../hooks/usePermissions';
 import purchaseOrderAmendmentService from '../services/purchaseOrderAmendmentService';
 import purchaseOrderService from '../services/purchaseOrderService';
 import { FileText, Clock, CheckCircle, XCircle, AlertCircle, Plus, Trash2, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
+import { PERMISSIONS } from '../config/roles';
 // CSS moved to global index.css Tailwind
 
 const PurchaseOrderAmendmentModal = ({
@@ -1024,7 +1025,7 @@ const PurchaseOrderAmendmentModal = ({
           )}
 
         {/* Approval Actions - Only show for pending amendments with permission */}
-        {selectedAmendment.status === 'pending' && hasPermission('APPROVE_PURCHASE') && (
+        {selectedAmendment.status === 'pending' && hasPermission(PERMISSIONS.APPROVE_PURCHASE) && (
           <div className="amendment-details-section">
             <h4>Approval Actions</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

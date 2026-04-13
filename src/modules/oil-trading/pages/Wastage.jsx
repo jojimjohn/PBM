@@ -13,6 +13,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useProjects } from '../../../context/ProjectContext'
 import { usePermissions } from '../../../hooks/usePermissions'
+import { PERMISSIONS } from '../../../config/roles'
 import DataTable from '../../../components/ui/DataTable'
 import wastageService from '../../../services/wastageService'
 import WastageForm from '../components/WastageForm'
@@ -313,7 +314,7 @@ const Wastage = () => {
 
   // Handle pending card click - toggles pending filter
   const handlePendingCardClick = () => {
-    if (!hasPermission('APPROVE_WASTAGE')) return
+    if (!hasPermission(PERMISSIONS.APPROVE_WASTAGE)) return
 
     if (pendingFilterActive) {
       setFilter('status', 'all')
@@ -351,7 +352,7 @@ const Wastage = () => {
         pendingCount={summaryData.pendingCount}
         approvedCount={summaryData.approvedCount}
         loading={isLoading}
-        onPendingClick={hasPermission('APPROVE_WASTAGE') ? handlePendingCardClick : undefined}
+        onPendingClick={hasPermission(PERMISSIONS.APPROVE_WASTAGE) ? handlePendingCardClick : undefined}
         pendingFilterActive={pendingFilterActive}
       />
 
@@ -434,7 +435,7 @@ const Wastage = () => {
                 >
                   <Eye size={14} />
                 </button>
-                {hasPermission('EDIT_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
+                {hasPermission(PERMISSIONS.EDIT_WASTAGE) && (row.status === 'pending' || row.status === 'pending_approval') && (
                   <button
                     className="btn btn-outline btn-sm"
                     onClick={() => handleEditWastage(row)}
@@ -443,7 +444,7 @@ const Wastage = () => {
                     <Edit size={14} />
                   </button>
                 )}
-                {hasPermission('DELETE_WASTAGE') && (row.status === 'pending' || row.status === 'pending_approval') && (
+                {hasPermission(PERMISSIONS.DELETE_WASTAGE) && (row.status === 'pending' || row.status === 'pending_approval') && (
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => handleDeleteWastage(row.id)}
@@ -475,7 +476,7 @@ const Wastage = () => {
               <BarChart3 size={16} />
               {t('viewAnalytics', 'View Analytics')}
             </button>
-            {hasPermission('CREATE_WASTAGE') && (
+            {hasPermission(PERMISSIONS.CREATE_WASTAGE) && (
               <button
                 className="btn btn-primary"
                 onClick={handleAddWastage}
@@ -516,7 +517,7 @@ const Wastage = () => {
         wasteTypes={wasteTypesForForm}
         onApprove={handleApproveWastage}
         onReject={handleRejectWastage}
-        canApprove={hasPermission('APPROVE_WASTAGE')}
+        canApprove={hasPermission(PERMISSIONS.APPROVE_WASTAGE)}
       />
 
       {/* WastageAnalytics Modal */}

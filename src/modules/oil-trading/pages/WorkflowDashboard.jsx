@@ -6,6 +6,7 @@ import { useProjects } from '../../../hooks/useProjects'
 import useDashboardCache from '../../../hooks/useDashboardCache'
 import { useNavigate } from 'react-router-dom'
 import workflowService from '../../../services/workflowService'
+import employeeService from '../../../services/employeeService'
 import {
   AlertTriangle, CheckCircle, Package, FileText,
   Banknote, Clock, Calendar,
@@ -89,6 +90,16 @@ const WorkflowDashboard = () => {
   const [taskTypeTab, setTaskTypeTab] = useState('all')
   const [showNotifications, setShowNotifications] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [docExpiryAlerts, setDocExpiryAlerts] = useState([])
+
+  // Fetch document expiry alerts
+  useEffect(() => {
+    const fetchExpiryAlerts = async () => {
+      const result = await employeeService.getExpiryAlerts(60)
+      if (result.success) setDocExpiryAlerts(result.data)
+    }
+    fetchExpiryAlerts()
+  }, [])
 
   const cacheEnabled = projectsInitialized && (!isProjectRequired || selectedProjectId)
 
@@ -172,7 +183,7 @@ const WorkflowDashboard = () => {
     sales: ['sales_delivery', 'customer_payment'],
     approvals: ['expense_approval', 'wastage_approval'],
     finance: ['record_payment', 'bank_reconciliation'],
-    alerts: ['low_stock', 'out_of_stock', 'petty_cash_expiry', 'petty_cash_low_balance', 'contract_renewal']
+    alerts: ['low_stock', 'out_of_stock', 'petty_cash_expiry', 'petty_cash_low_balance', 'contract_renewal', 'document_expiry']
   }
 
   const getFilteredTasks = () => {
@@ -639,14 +650,47 @@ const WorkflowDashboard = () => {
               </div>
             ))}
 
-            {!loading && getFilteredTasks().length === 0 && taskTypeTab !== 'all' && (
+            {/* Document Expiry Alerts - shown in alerts tab */}
+            {!loading && (taskTypeTab === 'alerts' || taskTypeTab === 'all') && docExpiryAlerts.length > 0 && (
+              docExpiryAlerts.map((alert, index) => (
+                <div
+                  key={`doc-expiry-${alert.documentId}-${index}`}
+                  className={alert.severity === 'critical' || alert.expired ? 'task-item-urgent' : 'task-item'}
+                >
+                  <div className={`task-icon ${alert.expired || alert.severity === 'critical' ? 'icon-bg-alerts' : 'icon-bg-pending'}`}>
+                    <AlertTriangle size={18} strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+                    <span className="task-title">
+                      {alert.document_type === 'passport' ? 'Passport' : 'Resident ID'} — {alert.full_name}
+                    </span>
+                    <span className="task-desc">
+                      {alert.expired ? 'Document has expired' : `Expires in ${alert.daysRemaining} days`} • {alert.document_number || 'No number'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className={`badge ${alert.expired || alert.severity === 'critical' ? 'badge-error' : alert.severity === 'warning' ? 'badge-pending' : 'badge-neutral'}`}>
+                      {alert.expired ? 'EXPIRED' : `${alert.daysRemaining}d`}
+                    </span>
+                    <button
+                      className="btn-tw-secondary btn-tw-sm"
+                      onClick={() => navigate(`/employees/${alert.employeeId}`)}
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+
+            {!loading && getFilteredTasks().length === 0 && taskTypeTab !== 'all' && docExpiryAlerts.length === 0 && (
               <div className="empty-state py-8">
                 <CheckCircle size={32} strokeWidth={1} className="empty-state-icon" />
                 <p className="empty-state-text">No {taskTypeTab} tasks</p>
               </div>
             )}
 
-            {!loading && pendingActions.high.length === 0 && pendingActions.normal.length === 0 && (
+            {!loading && pendingActions.high.length === 0 && pendingActions.normal.length === 0 && docExpiryAlerts.length === 0 && (
               <div className="empty-state">
                 <CheckCircle size={40} strokeWidth={1} className="text-emerald-500 mb-4" />
                 <h3 className="empty-state-title">All caught up!</h3>

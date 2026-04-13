@@ -72,7 +72,7 @@ const Settings = () => {
   const [loadingBranches, setLoadingBranches] = useState(false)
 
   // Check if user can manage settings
-  const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS) || user?.role === 'SUPER_ADMIN'
+  const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS)
 
   useEffect(() => {
     if (!canManageSettings) {

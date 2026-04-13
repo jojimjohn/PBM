@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
+import { PERMISSIONS } from '../../../config/roles'
 import { parseDate } from '../../../utils/dateParser'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
@@ -785,7 +786,7 @@ const PettyCash = () => {
           >
             <Eye size={14} />
           </button>
-          {hasPermission('MANAGE_PETTY_CASH') && (
+          {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -799,7 +800,7 @@ const PettyCash = () => {
           )}
           {row.status === 'active' && (
             <>
-              {(hasPermission('RELOAD_CARD') || hasPermission('MANAGE_PETTY_CASH')) && (
+              {(hasPermission(PERMISSIONS.RELOAD_CARD) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -811,7 +812,7 @@ const PettyCash = () => {
                   <RefreshCw size={14} />
                 </button>
               )}
-              {(hasPermission('CREATE_EXPENSE') || hasPermission('MANAGE_PETTY_CASH')) && (
+              {(hasPermission(PERMISSIONS.CREATE_EXPENSE) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -823,7 +824,7 @@ const PettyCash = () => {
                   <Receipt size={14} />
                 </button>
               )}
-              {hasPermission('MANAGE_PETTY_CASH') && (
+              {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -837,7 +838,7 @@ const PettyCash = () => {
               )}
             </>
           )}
-          {row.status === 'suspended' && hasPermission('MANAGE_PETTY_CASH') && (
+          {row.status === 'suspended' && hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -948,7 +949,7 @@ const PettyCash = () => {
           >
             <Receipt size={14} />
           </button>
-          {hasPermission('MANAGE_PETTY_CASH') && (
+          {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
             <button
               className="btn btn-outline btn-sm"
               title={row.status === 'rejected'
@@ -961,7 +962,7 @@ const PettyCash = () => {
               {row.status === 'rejected' ? <Eye size={14} /> : <Edit size={14} />}
             </button>
           )}
-          {row.status === 'pending' && hasPermission('APPROVE_EXPENSE') && (
+          {row.status === 'pending' && hasPermission(PERMISSIONS.APPROVE_EXPENSE) && (
             <>
               <button
                 className="btn btn-success btn-sm"
@@ -1080,7 +1081,7 @@ const PettyCash = () => {
           <Receipt size={16} />
           {t('expenses', 'Expenses')}
         </button>
-        {hasPermission('MANAGE_PETTY_CASH') && (
+        {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
           <button
             className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
@@ -1108,7 +1109,7 @@ const PettyCash = () => {
               >
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               </button>
-              {hasPermission('MANAGE_PETTY_CASH') && (
+              {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
                 <button className="btn btn-primary" onClick={handleAddCard}>
                   <Plus size={16} />
                   {t('addCard', 'Add Card')}
@@ -1156,7 +1157,7 @@ const PettyCash = () => {
               >
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               </button>
-              {hasPermission('MANAGE_PETTY_CASH') && (
+              {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
                 <button className="btn btn-primary" onClick={() => handleAddExpense()}>
                   <Plus size={16} />
                   {t('addExpense', 'Add Expense')}
@@ -1188,7 +1189,7 @@ const PettyCash = () => {
       )}
 
       {/* Petty Cash Users Tab */}
-      {activeTab === 'users' && hasPermission('MANAGE_PETTY_CASH') && (
+      {activeTab === 'users' && hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
         <PettyCashUsersSection
           cards={cards}
           loading={loading}

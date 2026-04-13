@@ -284,6 +284,36 @@ class AuthService {
   }
 
   /**
+   * Refresh current user data from server
+   * Useful when user permissions or profile are updated
+   * @returns {Promise<Object|null>} Updated user object or null
+   */
+  async refreshCurrentUser() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.user) {
+          this.user = data.data.user;
+          return this.user;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get access token - DEPRECATED
    * Tokens are now in HttpOnly cookies, not accessible to JavaScript
    * This method is kept for backward compatibility during migration
@@ -494,8 +524,8 @@ class AuthService {
     if (!this.user) {
       return false;
     }
-    // Super admin has access to all companies
-    if (this.user.role === 'SUPER_ADMIN' || this.user.role === 'super-admin') {
+    // Users with SWITCH_COMPANIES permission have access to all companies
+    if (this.user.permissions?.includes('SWITCH_COMPANIES')) {
       return true;
     }
     return this.user.companyId === companyId;

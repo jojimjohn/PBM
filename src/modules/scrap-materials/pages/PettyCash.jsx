@@ -3,6 +3,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { useSystemSettings } from '../../../context/SystemSettingsContext'
 import { usePermissions } from '../../../hooks/usePermissions'
+import { PERMISSIONS } from '../../../config/roles'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 import Modal from '../../../components/ui/Modal'
 import DataTable from '../../../components/ui/DataTable'
@@ -447,7 +448,7 @@ const PettyCash = () => {
           >
             <Eye size={14} />
           </button>
-          {hasPermission('MANAGE_PETTY_CASH') && (
+          {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -459,7 +460,7 @@ const PettyCash = () => {
               <Edit size={14} />
             </button>
           )}
-          {(hasPermission('RELOAD_CARD') || hasPermission('MANAGE_PETTY_CASH')) && (
+          {(hasPermission(PERMISSIONS.RELOAD_CARD) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -471,7 +472,7 @@ const PettyCash = () => {
               <RefreshCw size={14} />
             </button>
           )}
-          {(hasPermission('CREATE_EXPENSE') || hasPermission('MANAGE_PETTY_CASH')) && (
+          {(hasPermission(PERMISSIONS.CREATE_EXPENSE) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -570,7 +571,7 @@ const PettyCash = () => {
           >
             <Receipt size={14} />
           </button>
-          {row.status === 'pending' && hasPermission('APPROVE_EXPENSE') && (
+          {row.status === 'pending' && hasPermission(PERMISSIONS.APPROVE_EXPENSE) && (
             <>
               <button
                 className="action-btn approve"
@@ -613,7 +614,7 @@ const PettyCash = () => {
           <p>{t('pettyCashSubtitle', 'Manage staff expense cards and track spending')}</p>
         </div>
         <div className="header-actions">
-          {hasPermission('MANAGE_PETTY_CASH') && (
+          {hasPermission(PERMISSIONS.MANAGE_PETTY_CASH) && (
             <button className="btn btn-primary" onClick={handleAddCard}>
               <Plus size={20} />
               {t('addCard', 'Add Card')}

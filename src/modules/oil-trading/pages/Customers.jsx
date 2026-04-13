@@ -21,6 +21,7 @@ import AlertDialog from '../../../components/ui/AlertDialog'
 import showToast from '../../../components/ui/Toast'
 import typesService from '../../../services/typesService'
 import { useCustomers } from '../hooks/useCustomers'
+import { PERMISSIONS } from '../../../config/roles'
 import {
   CustomerFormModal,
   CustomerDetailsModal,
@@ -274,7 +275,7 @@ const OilTradingCustomers = () => {
               >
                 <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
               </button>
-              {hasPermission('MANAGE_CUSTOMERS') && (
+              {hasPermission(PERMISSIONS.MANAGE_CUSTOMERS) && (
                 <AddCustomerButton onClick={() => setShowAddForm(true)} t={t} />
               )}
             </div>

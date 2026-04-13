@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'oil',
           logo: '/images/alramrami-logo.png',
           modules: {
-            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'projects', 'users', 'settings']
+            enabled: ['dashboard', 'customers', 'suppliers', 'inventory', 'sales', 'purchase', 'contracts', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'projects', 'users', 'employees', 'settings']
           }
         },
         {
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
           businessType: 'scrap',
           logo: '/images/pridemuscat-logo.png',
           modules: {
-            enabled: ['dashboard', 'suppliers', 'inventory', 'sales', 'purchase', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'users', 'settings']
+            enabled: ['dashboard', 'suppliers', 'inventory', 'sales', 'purchase', 'collections', 'wastage', 'petty-cash', 'banking', 'reports', 'users', 'employees', 'settings']
           }
         }
       ];
@@ -305,6 +305,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
+   * Refresh current user profile
+   * Fetches updated user data from server (useful after permission changes)
+   */
+  const refreshUserProfile = async () => {
+    try {
+      const updatedUser = await authService.refreshCurrentUser();
+      if (updatedUser) {
+        setUser(updatedUser);
+        // Also refresh company details in case modules changed
+        const companyDetails = await loadCompanyDetails(updatedUser.companyId);
+        setSelectedCompany(companyDetails);
+        // Update cache with new permissions
+        dataCacheService.prefetchTransactional(updatedUser.permissions || []);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('User profile refresh failed:', error);
+      return false;
+    }
+  };
+
+  /**
    * Switch company (for super-admin users)
    */
   const switchCompany = async (newCompanyId) => {
@@ -320,9 +343,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // For super-admin, we can switch companies
+      // For users with SWITCH_COMPANIES permission, we can switch companies
       // For regular users, they can only access their assigned company
-      if (user.role === 'SUPER_ADMIN' || user.role === 'super-admin' || user.companyId === newCompanyId) {
+      const canSwitchCompanies = user.permissions?.includes('SWITCH_COMPANIES');
+      if (canSwitchCompanies || user.companyId === newCompanyId) {
         const companyDetails = await loadCompanyDetails(newCompanyId);
         setSelectedCompany(companyDetails);
 
@@ -433,6 +457,7 @@ export const AuthProvider = ({ children }) => {
     verifyMfa,
     logout,
     refreshSession,
+    refreshUserProfile,
     switchCompany,
 
     // Permission methods

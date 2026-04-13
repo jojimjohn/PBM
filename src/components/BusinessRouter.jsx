@@ -43,6 +43,8 @@ const Banking = lazy(() => import('../pages/Banking'))
 const UserManagement = lazy(() => import('../pages/UserManagement'))
 const RoleManagement = lazy(() => import('../pages/RoleManagement'))
 const Projects = lazy(() => import('../pages/Projects'))
+const EmployeesPage = lazy(() => import('../pages/Employees/EmployeesPage'))
+const EmployeeDetailPage = lazy(() => import('../pages/Employees/EmployeeDetailPage'))
 
 /**
  * LazyRoute - Wrapper component for lazy-loaded routes
@@ -83,6 +85,8 @@ const BusinessRouter = () => {
         <Route path="/users" element={<LazyRoute><UserManagement /></LazyRoute>} />
         <Route path="/roles" element={<LazyRoute><RoleManagement /></LazyRoute>} />
         <Route path="/projects" element={<LazyRoute><Projects /></LazyRoute>} />
+        <Route path="/employees" element={<LazyRoute><EmployeesPage /></LazyRoute>} />
+        <Route path="/employees/:id" element={<LazyRoute><EmployeeDetailPage /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )
@@ -107,6 +111,8 @@ const BusinessRouter = () => {
         <Route path="/settings" element={<LazyRoute><ScrapMaterialsSettings /></LazyRoute>} />
         <Route path="/users" element={<LazyRoute><UserManagement /></LazyRoute>} />
         <Route path="/roles" element={<LazyRoute><RoleManagement /></LazyRoute>} />
+        <Route path="/employees" element={<LazyRoute><EmployeesPage /></LazyRoute>} />
+        <Route path="/employees/:id" element={<LazyRoute><EmployeeDetailPage /></LazyRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     )

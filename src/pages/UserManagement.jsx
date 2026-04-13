@@ -22,6 +22,7 @@ import roleService from '../services/roleService'
 import DataTable from '../components/ui/DataTable'
 import RoleManagement from './RoleManagement'
 import Modal from '../components/ui/Modal'
+import PermissionHierarchyTree from '../components/ui/PermissionHierarchyTree'
 import {
   Users,
   User,
@@ -44,7 +45,9 @@ import {
   Search,
   Filter,
   Copy,
-  Circle
+  Circle,
+  List,
+  GitBranch
 } from 'lucide-react'
 // CSS moved to global index.css - using Tailwind classes
 
@@ -102,9 +105,11 @@ const groupPermissions = (permissions) => {
 /**
  * Role Info Panel Component
  * Displays permissions for a selected role in a collapsible, categorized format
+ * Now with hierarchical tree view option
  */
 const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
   const [isExpanded, setIsExpanded] = useState(expanded)
+  const [viewMode, setViewMode] = useState('hierarchy') // 'grouped' or 'hierarchy'
 
   if (!role) return null
 
@@ -141,33 +146,81 @@ const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
             <p className="text-sm text-slate-600 dark:text-slate-400 italic">{role.description}</p>
           )}
 
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
-            {t('accessLevel', 'Access Level')}: <strong>{role.level}</strong> / 10
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+              {t('accessLevel', 'Access Level')}: <strong>{role.level}</strong> / 10
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="inline-flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-700 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setViewMode('hierarchy')}
+                className={`
+                  flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                  ${viewMode === 'hierarchy'
+                    ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }
+                `}
+                title="Hierarchical tree view"
+              >
+                <GitBranch size={14} />
+                Hierarchy
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grouped')}
+                className={`
+                  flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors
+                  ${viewMode === 'grouped'
+                    ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }
+                `}
+                title="Grouped category view"
+              >
+                <List size={14} />
+                Grouped
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {Object.entries(groupedPermissions).map(([category, perms]) => (
-              <div key={category} className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3">
-                <h5 className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">
-                  {category}
-                  <span className="inline-flex items-center justify-center w-5 h-5 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-200 rounded-full text-[10px] font-bold">
-                    {perms.length}
-                  </span>
-                </h5>
-                <div className="flex flex-wrap gap-1.5">
-                  {perms.map(perm => (
-                    <span
-                      key={perm}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded text-xs font-medium"
-                    >
-                      <CheckCircle size={10} />
-                      {formatPermission(perm)}
+          {/* Hierarchy View */}
+          {viewMode === 'hierarchy' && permissions.length > 0 && (
+            <PermissionHierarchyTree
+              permissions={permissions}
+              title={null}
+              showImplied={true}
+            />
+          )}
+
+          {/* Grouped View */}
+          {viewMode === 'grouped' && (
+            <div className="space-y-4">
+              {Object.entries(groupedPermissions).map(([category, perms]) => (
+                <div key={category} className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3">
+                  <h5 className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    {category}
+                    <span className="inline-flex items-center justify-center w-5 h-5 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-200 rounded-full text-[10px] font-bold">
+                      {perms.length}
                     </span>
-                  ))}
+                  </h5>
+                  <div className="flex flex-wrap gap-1.5">
+                    {perms.map(perm => (
+                      <span
+                        key={perm}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded text-xs font-medium"
+                      >
+                        <CheckCircle size={10} />
+                        {formatPermission(perm)}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {permissions.length === 0 && (
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4 italic">
@@ -181,7 +234,7 @@ const RoleInfoPanel = ({ role, expanded = false, onToggle, t }) => {
 }
 
 const UserManagement = () => {
-  const { user } = useAuth()
+  const { user, refreshUserProfile } = useAuth()
   const { t } = useLocalization()
   const { formatDate: systemFormatDate, formatDateTime: systemFormatDateTime } = useSystemSettings()
   const { hasPermission, userRole } = usePermissions()
@@ -307,6 +360,12 @@ const UserManagement = () => {
         setShowEditModal(false)
         setSelectedUser(null)
         loadUsers()
+
+        // If the updated user is the current user, refresh their profile
+        // This ensures permission changes reflect immediately without requiring logout/login
+        if (userId === user?.id) {
+          await refreshUserProfile()
+        }
       } else {
         showMessage('error', result.error || 'Failed to update user')
       }

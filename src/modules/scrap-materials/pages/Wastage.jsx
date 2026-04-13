@@ -8,6 +8,7 @@ import Modal from '../../../components/ui/Modal'
 import StockChart from '../../../components/StockChart'
 import wastageService from '../../../services/wastageService'
 import materialService from '../../../services/materialService'
+import { PERMISSIONS } from '../../../config/roles'
 import {
   Plus,
   AlertTriangle,
@@ -584,7 +585,7 @@ const Wastage = () => {
                   >
                     <Eye size={14} />
                   </button>
-                  {hasPermission('EDIT_WASTAGE') && (
+                  {hasPermission(PERMISSIONS.EDIT_WASTAGE) && (
                     <button
                       className="btn btn-outline btn-sm"
                       onClick={() => handleEditWastage(row)}
@@ -593,7 +594,7 @@ const Wastage = () => {
                       <Edit size={14} />
                     </button>
                   )}
-                  {hasPermission('DELETE_WASTAGE') && (
+                  {hasPermission(PERMISSIONS.DELETE_WASTAGE) && (
                     <button
                       className="btn btn-outline btn-sm btn-danger"
                       onClick={() => handleDeleteWastage(row.id)}
@@ -703,7 +704,7 @@ const Wastage = () => {
             onClose={() => setShowViewModal(false)}
             onApprove={handleApproveWastage}
             onReject={handleRejectWastage}
-            canApprove={hasPermission('APPROVE_WASTAGE')}
+            canApprove={hasPermission(PERMISSIONS.APPROVE_WASTAGE)}
           />
         </Modal>
     </div>

@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useLocalization } from '../context/LocalizationContext'
 import { usePermissions } from '../hooks/usePermissions'
 import expenseCategoryService from '../services/expenseCategoryService'
+import { PERMISSIONS } from '../config/roles'
 import {
   Plus,
   Edit,
@@ -60,7 +61,7 @@ const ExpenseCategoryManager = () => {
   const [formErrors, setFormErrors] = useState({})
 
   // Permissions
-  const canManage = hasPermission('MANAGE_EXPENSE_CATEGORIES')
+  const canManage = hasPermission(PERMISSIONS.MANAGE_EXPENSE_CATEGORIES)
 
   // Load categories
   const loadCategories = useCallback(async () => {

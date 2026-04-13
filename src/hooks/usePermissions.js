@@ -52,11 +52,18 @@ export const usePermissions = () => {
   const hasPermission = (permission) => {
     if (!permission) return false
     if (!user) return false
-    
-    // Super admin has all permissions
-    if (userRole === USER_ROLES.SUPER_ADMIN) return true
-    
-    return userPermissions.includes(permission)
+
+    // Direct permission check
+    if (userPermissions.includes(permission)) return true
+
+    // Hierarchical permission checking: _ALL implies _OWN
+    // If checking for *_OWN permission, see if user has *_ALL version
+    if (permission.endsWith('_OWN')) {
+      const allPermission = permission.replace('_OWN', '_ALL')
+      if (userPermissions.includes(allPermission)) return true
+    }
+
+    return false
   }
 
   const hasAnyPermission = (permissions) => {
@@ -71,21 +78,18 @@ export const usePermissions = () => {
 
   const canAccessModule = (moduleName) => {
     if (!selectedCompany || !moduleName) return false
-    
+
     // Check if module is enabled for this company
     if (!selectedCompany.modules?.enabled?.includes(moduleName)) return false
-    
+
     // Check if user has required permissions for this module
     const moduleConfig = MODULE_PERMISSIONS[moduleName]
     if (!moduleConfig) return true // If no config, allow access
-    
-    // Super admin bypasses permission checks
-    if (userRole === USER_ROLES.SUPER_ADMIN) return true
-    
+
     // Check if user has any of the required permissions for this module
     const requiredPermissions = moduleConfig.requiredPermissions || []
     if (requiredPermissions.length === 0) return true // No permissions required
-    
+
     return requiredPermissions.some(permission => hasPermission(permission))
   }
 
@@ -105,12 +109,7 @@ export const usePermissions = () => {
 
   const getAccessibleModules = () => {
     if (!selectedCompany?.modules?.enabled) return []
-    
-    // Super admin gets access to all enabled modules for the company
-    if (userRole === USER_ROLES.SUPER_ADMIN) {
-      return selectedCompany.modules.enabled
-    }
-    
+
     // Filter modules based on user permissions
     return selectedCompany.modules.enabled.filter(moduleId => {
       return canAccessModule(moduleId)
