@@ -9,6 +9,7 @@ import { PERMISSIONS } from '../config/roles'
 import { getModuleIconPaths } from '../config/modules'
 import PermissionGate from './PermissionGate'
 import BusinessRouter from './BusinessRouter'
+import ImpersonationBanner from './ImpersonationBanner'
 import CommandPalette from './ui/CommandPalette'
 import NotificationPanel from './ui/NotificationPanel'
 import SessionTimeoutWarning from './SessionTimeoutWarning'
@@ -312,7 +313,9 @@ const MainLayout = () => {
   }
 
   return (
-    <div className="main-layout flex h-screen overflow-hidden">
+    <div className="main-layout flex flex-col h-screen overflow-hidden">
+      <ImpersonationBanner />
+      <div className="flex flex-1 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside
         className={`sidebar-desktop sidebar-gradient hidden lg:flex flex-col flex-shrink-0 border-r border-white/5 transition-all duration-300 ease-in-out ${
@@ -782,6 +785,7 @@ const MainLayout = () => {
 
       {/* Product Tour - Driver.js overlay */}
       <ProductTour />
+      </div>
     </div>
   )
 }

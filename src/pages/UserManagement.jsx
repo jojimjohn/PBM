@@ -28,6 +28,7 @@ import {
   Users,
   User,
   UserPlus,
+  UserCheck,
   Edit,
   Trash2,
   Key,
@@ -485,6 +486,28 @@ const UserManagement = () => {
     }
   }
 
+  // Impersonate user (super admin only) — log in AS the target user
+  const handleImpersonate = async (targetUser) => {
+    if (!window.confirm(`Impersonate ${targetUser.firstName} ${targetUser.lastName}? You will see the system as they do. Exit via the banner at the top.`)) {
+      return
+    }
+    try {
+      setActionLoading(true)
+      const authService = (await import('../services/authService')).default
+      const result = await authService.impersonate(targetUser.id)
+      if (result.success) {
+        // Reload to pick up the new session context
+        window.location.href = '/dashboard'
+      } else {
+        showMessage('error', result.error || 'Failed to impersonate')
+      }
+    } catch (err) {
+      showMessage('error', err.message || 'Failed to impersonate')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return t('never', 'Never')
@@ -672,6 +695,20 @@ const UserManagement = () => {
               >
                 <LogOut size={14} />
               </button>
+
+              {/* Super Admin only: Impersonate */}
+              {(userRole === 'SUPER_ADMIN' || userRole === 'super-admin') && row.id !== user?.id && row.isActive && (
+                <button
+                  className="btn btn-outline btn-sm text-amber-600 border-amber-300 hover:bg-amber-50"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleImpersonate(row)
+                  }}
+                  title="Impersonate this user (log in as them)"
+                >
+                  <UserCheck size={14} />
+                </button>
+              )}
 
               {row.isActive ? (
                 <button

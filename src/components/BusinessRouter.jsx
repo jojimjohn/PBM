@@ -2,12 +2,7 @@ import React, { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PageLoader from './ui/PageLoader'
-
-// ============================================================================
-// EAGERLY LOADED - Dashboard pages (first page after login, instant display)
-// ============================================================================
-import WorkflowDashboard from '../modules/oil-trading/pages/WorkflowDashboard'
-import ScrapMaterialsDashboard from '../modules/scrap-materials/pages/Dashboard'
+import DashboardRouter from './DashboardRouter'
 
 // ============================================================================
 // LAZY LOADED - Oil Trading Module Components
@@ -72,8 +67,8 @@ const BusinessRouter = () => {
     return (
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        {/* Dashboard is eagerly loaded - no Suspense needed */}
-        <Route path="/dashboard" element={<WorkflowDashboard />} />
+        {/* Dashboard is role-based via DashboardRouter */}
+        <Route path="/dashboard" element={<DashboardRouter />} />
 
         {/* All other routes are lazy loaded with Suspense */}
         <Route path="/customers" element={<LazyRoute><OilTradingCustomers /></LazyRoute>} />
@@ -109,8 +104,8 @@ const BusinessRouter = () => {
     return (
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        {/* Dashboard is eagerly loaded - no Suspense needed */}
-        <Route path="/dashboard" element={<ScrapMaterialsDashboard />} />
+        {/* Dashboard is role-based via DashboardRouter */}
+        <Route path="/dashboard" element={<DashboardRouter />} />
 
         {/* All other routes are lazy loaded with Suspense */}
         <Route path="/suppliers" element={<LazyRoute><ScrapMaterialsSuppliers /></LazyRoute>} />

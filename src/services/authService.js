@@ -129,6 +129,8 @@ class AuthService {
         const data = await response.json();
         if (data.success && data.data?.user) {
           this.user = data.data.user;
+          // Track impersonation state on the user object for UI access
+          this.user.impersonation = data.data.impersonation || { active: false };
           return true;
         }
       }
@@ -274,6 +276,37 @@ class AuthService {
    */
   isAuthenticated() {
     return !!this.user;
+  }
+
+  /**
+   * Start impersonating another user (super admin only)
+   * Backend issues a new JWT with impersonated_by claim.
+   */
+  async impersonate(targetUserId) {
+    try {
+      const data = await this.makeAuthenticatedRequest(
+        `${API_BASE_URL}/auth/impersonate/${targetUserId}`,
+        { method: 'POST' }
+      );
+      return { success: true, data: data.data, message: data.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Stop impersonating and restore original super admin session
+   */
+  async stopImpersonating() {
+    try {
+      const data = await this.makeAuthenticatedRequest(
+        `${API_BASE_URL}/auth/stop-impersonating`,
+        { method: 'POST' }
+      );
+      return { success: true, data: data.data, message: data.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
   /**
