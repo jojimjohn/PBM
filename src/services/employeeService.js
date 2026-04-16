@@ -18,6 +18,7 @@ class EmployeeService {
       if (params.search) query.set('search', params.search);
       if (params.department) query.set('department', params.department);
       if (params.employee_type) query.set('employee_type', params.employee_type);
+      if (params.is_manager) query.set('is_manager', 'true');
       if (params.page) query.set('page', params.page);
       if (params.limit) query.set('limit', params.limit);
 
@@ -181,6 +182,21 @@ class EmployeeService {
     } catch (error) {
       console.error('Error removing assignment:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // =========================================================================
+  // Location Managers (in-charge tracking)
+  // =========================================================================
+  async getManagers() {
+    try {
+      const data = await authService.makeAuthenticatedRequest(
+        `${API_BASE_URL}/employees/managers`
+      );
+      return { success: true, data: data.data || { byEmployee: [], byLocation: [], total: 0 } };
+    } catch (error) {
+      console.error('Error fetching managers:', error);
+      return { success: false, error: error.message, data: { byEmployee: [], byLocation: [], total: 0 } };
     }
   }
 

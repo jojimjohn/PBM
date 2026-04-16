@@ -180,6 +180,17 @@ const EmployeeDetailPage = () => {
           <div>
             <h1 className="text-xl font-bold text-slate-800">{employee.full_name}</h1>
             <p className="text-xs text-slate-500 font-mono">{employee.employee_code} · {employee.designation || 'No designation'} · <span className="capitalize">{employee.status}</span></p>
+            {employee.in_charge_locations && employee.in_charge_locations.length > 0 && (
+              <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-purple-600">In charge of:</span>
+                {employee.in_charge_locations.map(loc => (
+                  <span key={`${loc.source}-${loc.id}`} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700 border border-purple-200">
+                    {loc.name}
+                    {loc.source === 'branch' && <span className="text-[9px] opacity-60">(Branch)</span>}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         {canManage && (

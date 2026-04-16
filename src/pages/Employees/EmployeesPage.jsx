@@ -8,7 +8,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import showToast from '../../components/ui/Toast'
 import EmployeeFormModal from './components/EmployeeFormModal'
 import DocumentExpiryBadge from './components/DocumentExpiryBadge'
-import { Plus, RefreshCw, Eye, Edit, Trash2 } from 'lucide-react'
+import { Plus, RefreshCw, Eye, Edit, Trash2, MapPin } from 'lucide-react'
 
 const STATUS_BADGE = {
   active: 'badge badge-active',
@@ -27,6 +27,7 @@ const EmployeesPage = () => {
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [managersOnly, setManagersOnly] = useState(false)
 
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false)
@@ -36,10 +37,12 @@ const EmployeesPage = () => {
 
   const loadEmployees = useCallback(async () => {
     setLoading(true)
-    const result = await employeeService.getAll({ limit: 200 })
+    const params = { limit: 200 }
+    if (managersOnly) params.is_manager = true
+    const result = await employeeService.getAll(params)
     if (result.success) setEmployees(Array.isArray(result.data) ? result.data.filter(Boolean) : [])
     setLoading(false)
-  }, [])
+  }, [managersOnly])
 
   useEffect(() => { loadEmployees() }, [loadEmployees])
 
@@ -127,6 +130,22 @@ const EmployeesPage = () => {
       )
     },
     {
+      key: 'in_charge_count',
+      header: 'Managing',
+      sortable: true,
+      width: '110px',
+      render: (value) => {
+        const count = parseInt(value) || 0
+        if (count === 0) return <span className="text-xs text-slate-400">—</span>
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+            <MapPin size={10} />
+            {count} location{count > 1 ? 's' : ''}
+          </span>
+        )
+      }
+    },
+    {
       key: 'actions',
       header: '',
       width: '120px',
@@ -172,6 +191,14 @@ const EmployeesPage = () => {
           subtitle={`Manage employee records, documents, and assignments — ${employees.length} employees`}
           headerActions={
             <div className="flex items-center gap-2">
+              <button
+                className={`btn btn-sm ${managersOnly ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setManagersOnly(m => !m)}
+                title="Show only employees who are in charge of at least one location"
+              >
+                <MapPin size={14} />
+                {managersOnly ? 'Managers Only' : 'All Employees'}
+              </button>
               <button
                 className="btn btn-outline"
                 onClick={handleRefresh}

@@ -28,7 +28,7 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
   const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({
-    location_id: '', role: 'staff',
+    location_id: '', location_key: '', role: 'staff',
     assigned_from: new Date().toISOString().split('T')[0],
     assigned_to: ''
   })
@@ -44,8 +44,13 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
 
   const handleAssign = async () => {
     setSaving(true)
+    // Find the selected location to determine its source
+    const selectedLoc = locations.find(l => String(l.id) === String(form.location_id) && l._locKey === form.location_key)
+    const location_source = selectedLoc?._type === 'supplier_location' ? 'supplier_location' : 'branch'
+
     const payload = {
       location_id: parseInt(form.location_id),
+      location_source,
       role: form.role,
       assigned_from: form.assigned_from,
       assigned_to: form.assigned_to || null
@@ -54,7 +59,7 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
     if (result.success) {
       showToast.success('Location assigned')
       setShowModal(false)
-      setForm({ location_id: '', role: 'staff', assigned_from: new Date().toISOString().split('T')[0], assigned_to: '' })
+      setForm({ location_id: '', location_key: '', role: 'staff', assigned_from: new Date().toISOString().split('T')[0], assigned_to: '' })
       loadAssignments()
     } else {
       showToast.error(result.error || 'Failed to assign')
@@ -155,11 +160,30 @@ const LocationAssignmentPanel = ({ employeeId, locations = [] }) => {
           <div className="form-grid">
             <div className="form-group">
               <label>Location *</label>
-              <select value={form.location_id} onChange={e => setForm(f => ({ ...f, location_id: e.target.value }))} required>
+              <select
+                value={form.location_key}
+                onChange={e => {
+                  const key = e.target.value
+                  const loc = locations.find(l => l._locKey === key)
+                  setForm(f => ({
+                    ...f,
+                    location_id: loc ? loc.id : '',
+                    location_key: key
+                  }))
+                }}
+                required
+              >
                 <option value="">Select location...</option>
-                {locations.map(loc => (
-                  <option key={loc.id} value={loc.id}>{loc.locationName} ({loc.locationCode})</option>
-                ))}
+                {locations.map(loc => {
+                  const key = `${loc._type || 'branch'}-${loc.id}`
+                  // Attach the key to the location object so handleAssign can find it
+                  loc._locKey = key
+                  return (
+                    <option key={key} value={key}>
+                      {loc.locationName} {loc.locationCode ? `(${loc.locationCode})` : ''}
+                    </option>
+                  )
+                })}
               </select>
             </div>
             <div className="form-group">
