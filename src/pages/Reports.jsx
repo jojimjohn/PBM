@@ -134,6 +134,27 @@ const Reports = () => {
       icon: Receipt,
       description: 'Invoice status and payments',
       permission: PERMISSIONS.VIEW_PURCHASE
+    },
+    {
+      id: 'vat-return',
+      name: 'VAT Return',
+      icon: Receipt,
+      description: 'Oman VAT filing (output - input VAT)',
+      permission: PERMISSIONS.VIEW_REPORTS
+    },
+    {
+      id: 'receivables-aging',
+      name: 'Receivables Aging',
+      icon: Banknote,
+      description: 'Unpaid invoices by age bucket',
+      permission: PERMISSIONS.VIEW_REPORTS
+    },
+    {
+      id: 'profit-loss',
+      name: 'Profit & Loss',
+      icon: FileText,
+      description: 'Revenue, COGS, expenses & net profit',
+      permission: PERMISSIONS.VIEW_REPORTS
     }
   ];
 
@@ -194,6 +215,15 @@ const Reports = () => {
             payment_status: paymentStatusFilter,
             bill_type: billTypeFilter
           });
+          break;
+        case 'vat-return':
+          result = await reportService.getVatReturnReport(params);
+          break;
+        case 'receivables-aging':
+          result = await reportService.getReceivablesAgingReport({});
+          break;
+        case 'profit-loss':
+          result = await reportService.getProfitLossReport(params);
           break;
         default:
           result = { success: false, error: 'Unknown report type' };
@@ -710,6 +740,261 @@ const Reports = () => {
     );
   };
 
+  // Render VAT Return report (custom layout, not tabular)
+  const renderVatReturn = () => {
+    const s = reportData?.summary;
+    if (!s) return null;
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <SummaryCard icon={<Receipt size={20} />} label="Output VAT (Sales)" value={formatCurrency(s.outputVat)} color="green" />
+          <SummaryCard icon={<Receipt size={20} />} label="Input VAT (Purchases)" value={formatCurrency(s.inputVat)} color="orange" />
+          <SummaryCard
+            icon={<Banknote size={20} />}
+            label={s.netVatPayable >= 0 ? 'Net VAT Payable' : 'Net VAT Refundable'}
+            value={formatCurrency(Math.abs(s.netVatPayable))}
+            color={s.netVatPayable >= 0 ? 'purple' : 'blue'}
+          />
+          <SummaryCard icon={<FileText size={20} />} label="Period" value={s.period} color="blue" />
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="px-6 py-3 bg-slate-50 border-b border-slate-200">
+            <h3 className="text-sm font-bold text-slate-800">Output VAT — Sales ({reportData.sales?.length || 0} invoices)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Invoice</th>
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Date</th>
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Customer</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">Net</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">VAT</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(reportData.sales || []).slice(0, 100).map((r) => (
+                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-2 font-mono">{r.orderNumber}</td>
+                    <td className="px-4 py-2 text-slate-600">{formatDate(r.orderDate)}</td>
+                    <td className="px-4 py-2">{r.customerName || '—'}</td>
+                    <td className="px-4 py-2 text-right font-mono">{formatCurrency(r.subtotal)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-emerald-700">{formatCurrency(r.vatAmount)}</td>
+                    <td className="px-4 py-2 text-right font-mono font-bold">{formatCurrency(r.totalAmount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-100 font-bold">
+                  <td colSpan={3} className="px-4 py-2 text-right">Totals:</td>
+                  <td className="px-4 py-2 text-right font-mono">{formatCurrency(s.outputTaxable)}</td>
+                  <td className="px-4 py-2 text-right font-mono text-emerald-700">{formatCurrency(s.outputVat)}</td>
+                  <td className="px-4 py-2 text-right font-mono">{formatCurrency(s.outputTaxable + s.outputVat)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="px-6 py-3 bg-slate-50 border-b border-slate-200">
+            <h3 className="text-sm font-bold text-slate-800">Input VAT — Purchases ({reportData.purchases?.length || 0} invoices)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">PO Number</th>
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Date</th>
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Supplier</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">Net</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">VAT</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(reportData.purchases || []).slice(0, 100).map((r) => (
+                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-2 font-mono">{r.orderNumber}</td>
+                    <td className="px-4 py-2 text-slate-600">{formatDate(r.orderDate)}</td>
+                    <td className="px-4 py-2">{r.supplierName || '—'}</td>
+                    <td className="px-4 py-2 text-right font-mono">{formatCurrency(r.subtotal)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-amber-700">{formatCurrency(r.vatAmount)}</td>
+                    <td className="px-4 py-2 text-right font-mono font-bold">{formatCurrency(r.totalAmount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-slate-100 font-bold">
+                  <td colSpan={3} className="px-4 py-2 text-right">Totals:</td>
+                  <td className="px-4 py-2 text-right font-mono">{formatCurrency(s.inputTaxable)}</td>
+                  <td className="px-4 py-2 text-right font-mono text-amber-700">{formatCurrency(s.inputVat)}</td>
+                  <td className="px-4 py-2 text-right font-mono">{formatCurrency(s.inputTaxable + s.inputVat)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Receivables Aging report
+  const renderReceivablesAging = () => {
+    const s = reportData?.summary;
+    if (!s) return null;
+    const bucketColors = {
+      '0-30 days': 'bg-emerald-50 border-emerald-200 text-emerald-700',
+      '31-60 days': 'bg-yellow-50 border-yellow-200 text-yellow-700',
+      '61-90 days': 'bg-amber-50 border-amber-200 text-amber-700',
+      '90+ days': 'bg-red-50 border-red-200 text-red-700'
+    };
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {s.buckets.map(b => (
+            <div key={b.label} className={`border rounded-lg p-4 ${bucketColors[b.label] || ''}`}>
+              <div className="text-xs uppercase font-bold tracking-widest opacity-75">{b.label}</div>
+              <div className="mt-2 text-2xl font-bold font-mono">{formatCurrency(b.total)}</div>
+              <div className="text-xs mt-1">{b.count} invoice{b.count !== 1 ? 's' : ''}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-800">By Customer ({reportData.byCustomer?.length || 0})</h3>
+            <span className="text-sm font-bold text-slate-900">Total Outstanding: {formatCurrency(s.grandTotal)}</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Customer</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-600 uppercase">Orders</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-emerald-700 uppercase">0-30</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-yellow-700 uppercase">31-60</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-amber-700 uppercase">61-90</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-red-700 uppercase">90+</th>
+                  <th className="px-4 py-2 text-right text-xs font-bold text-slate-800 uppercase">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(reportData.byCustomer || []).map((c, idx) => (
+                  <tr key={c.customerId || idx} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-2 font-medium">{c.customerName}</td>
+                    <td className="px-4 py-2 text-right text-slate-600">{c.orderCount}</td>
+                    <td className="px-4 py-2 text-right font-mono">{formatCurrency(c.current)}</td>
+                    <td className="px-4 py-2 text-right font-mono">{formatCurrency(c.bucket_31_60)}</td>
+                    <td className="px-4 py-2 text-right font-mono">{formatCurrency(c.bucket_61_90)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-red-600">{formatCurrency(c.bucket_90_plus)}</td>
+                    <td className="px-4 py-2 text-right font-mono font-bold">{formatCurrency(c.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Profit & Loss report
+  const renderProfitLoss = () => {
+    const s = reportData?.summary;
+    if (!s) return null;
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <SummaryCard icon={<Banknote size={20} />} label="Revenue" value={formatCurrency(s.revenue)} color="green" />
+          <SummaryCard icon={<Banknote size={20} />} label="COGS" value={formatCurrency(s.cogs)} color="orange" />
+          <SummaryCard icon={<Banknote size={20} />} label="Gross Profit" value={`${formatCurrency(s.grossProfit)} (${s.grossMargin}%)`} color="blue" />
+          <SummaryCard
+            icon={<Banknote size={20} />}
+            label={s.netProfit >= 0 ? 'Net Profit' : 'Net Loss'}
+            value={`${formatCurrency(Math.abs(s.netProfit))} (${s.netMargin}%)`}
+            color={s.netProfit >= 0 ? 'purple' : 'orange'}
+          />
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Income Statement — {s.period}</h3>
+          <div className="space-y-2 text-sm font-mono">
+            <div className="flex justify-between py-2 border-b border-slate-200">
+              <span className="font-semibold text-slate-700">Revenue (Sales)</span>
+              <span className="text-emerald-700 font-bold">{formatCurrency(s.revenue)}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-200">
+              <span className="font-semibold text-slate-700">— Cost of Goods Sold</span>
+              <span className="text-red-600">({formatCurrency(s.cogs)})</span>
+            </div>
+            <div className="flex justify-between py-2 border-b-2 border-slate-300 font-bold">
+              <span className="text-slate-800">= Gross Profit</span>
+              <span className="text-slate-900">{formatCurrency(s.grossProfit)}</span>
+            </div>
+            <div className="pt-3 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-widest">Operating Expenses</div>
+            <div className="flex justify-between py-1 pl-4">
+              <span className="text-slate-600">Collection Expenses</span>
+              <span className="text-red-600">({formatCurrency(s.operatingExpenses.collection)})</span>
+            </div>
+            <div className="flex justify-between py-1 pl-4">
+              <span className="text-slate-600">Petty Cash Expenses</span>
+              <span className="text-red-600">({formatCurrency(s.operatingExpenses.pettyCash)})</span>
+            </div>
+            <div className="flex justify-between py-1 pl-4 border-b border-slate-200">
+              <span className="text-slate-600">Vehicle Daily Expenses</span>
+              <span className="text-red-600">({formatCurrency(s.operatingExpenses.vehicle)})</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-200">
+              <span className="font-semibold text-slate-700">— Total Operating Expenses</span>
+              <span className="text-red-600">({formatCurrency(s.operatingExpenses.total)})</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-200">
+              <span className="font-semibold text-slate-700">— Wastage Cost</span>
+              <span className="text-red-600">({formatCurrency(s.wastageCost)})</span>
+            </div>
+            <div className={`flex justify-between py-3 border-t-2 border-slate-400 font-bold text-base ${s.netProfit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+              <span>= {s.netProfit >= 0 ? 'NET PROFIT' : 'NET LOSS'}</span>
+              <span>{formatCurrency(s.netProfit)}</span>
+            </div>
+          </div>
+        </div>
+
+        {reportData.breakdown && reportData.breakdown.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="px-6 py-3 bg-slate-50 border-b border-slate-200">
+              <h3 className="text-sm font-bold text-slate-800">Monthly Breakdown</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-2 text-left text-xs font-bold text-slate-600 uppercase">Month</th>
+                    <th className="px-4 py-2 text-right text-xs font-bold text-emerald-700 uppercase">Revenue</th>
+                    <th className="px-4 py-2 text-right text-xs font-bold text-amber-700 uppercase">COGS</th>
+                    <th className="px-4 py-2 text-right text-xs font-bold text-slate-700 uppercase">Gross Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.breakdown.map(b => (
+                    <tr key={b.period} className="border-b border-slate-100">
+                      <td className="px-4 py-2 font-mono">{b.period}</td>
+                      <td className="px-4 py-2 text-right font-mono text-emerald-700">{formatCurrency(b.revenue)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-amber-700">{formatCurrency(b.cogs)}</td>
+                      <td className="px-4 py-2 text-right font-mono font-bold">{formatCurrency(b.grossProfit)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Render report-specific filters
   const renderReportFilters = () => {
     switch (activeReport) {
@@ -955,16 +1240,26 @@ const Reports = () => {
           </div>
         ) : (
           <>
-            {/* Summary cards */}
-            {renderSummaryCards()}
+            {/* Financial reports use custom rendering */}
+            {activeReport === 'vat-return' && renderVatReturn()}
+            {activeReport === 'receivables-aging' && renderReceivablesAging()}
+            {activeReport === 'profit-loss' && renderProfitLoss()}
 
-            {/* Charts (for collection expenses) */}
-            {renderExpenseCharts()}
+            {/* Traditional tabular reports */}
+            {!['vat-return', 'receivables-aging', 'profit-loss'].includes(activeReport) && (
+              <>
+                {/* Summary cards */}
+                {renderSummaryCards()}
 
-            {/* Data table */}
-            <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-              {renderDataTable()}
-            </div>
+                {/* Charts (for collection expenses) */}
+                {renderExpenseCharts()}
+
+                {/* Data table */}
+                <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                  {renderDataTable()}
+                </div>
+              </>
+            )}
           </>
         )}
       </main>

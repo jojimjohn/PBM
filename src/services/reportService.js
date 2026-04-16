@@ -213,6 +213,58 @@ const reportService = {
   },
 
   // ========================================================================
+  // VAT RETURN REPORT (Oman VAT filing)
+  // ========================================================================
+  getVatReturnReport: async (params = {}) => {
+    try {
+      const qs = buildQueryString(params);
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/reports/vat-return?${qs}`);
+      return { success: true, data: data.data };
+    } catch (error) {
+      console.error('Error fetching VAT return:', error);
+      return { success: false, error: error.message };
+    }
+  },
+  exportVatReturn: async (params = {}, format = 'csv') => {
+    const qs = buildQueryString({ ...params, format });
+    const filename = `VAT_Return_${params.from_date || 'all'}_to_${params.to_date || 'now'}.${format}`;
+    return downloadFile(`${BASE_URL}/reports/vat-return/export?${qs}`, filename);
+  },
+
+  // ========================================================================
+  // RECEIVABLES AGING REPORT
+  // ========================================================================
+  getReceivablesAgingReport: async (params = {}) => {
+    try {
+      const qs = buildQueryString(params);
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/reports/receivables-aging?${qs}`);
+      return { success: true, data: data.data };
+    } catch (error) {
+      console.error('Error fetching receivables aging:', error);
+      return { success: false, error: error.message };
+    }
+  },
+  exportReceivablesAging: async (params = {}, format = 'csv') => {
+    const qs = buildQueryString({ ...params, format });
+    const filename = `Receivables_Aging_${new Date().toISOString().split('T')[0]}.${format}`;
+    return downloadFile(`${BASE_URL}/reports/receivables-aging/export?${qs}`, filename);
+  },
+
+  // ========================================================================
+  // PROFIT & LOSS REPORT
+  // ========================================================================
+  getProfitLossReport: async (params = {}) => {
+    try {
+      const qs = buildQueryString(params);
+      const data = await authService.makeAuthenticatedRequest(`${BASE_URL}/reports/profit-loss?${qs}`);
+      return { success: true, data: data.data };
+    } catch (error) {
+      console.error('Error fetching P&L:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // ========================================================================
   // UTILITIES
   // ========================================================================
 
