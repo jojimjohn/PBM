@@ -10,7 +10,7 @@ import authService from '../services/authService'
  * user. Provides a one-click exit to restore the original session.
  */
 const ImpersonationBanner = () => {
-  const { user, refreshUser, logout } = useAuth()
+  const { user, logout } = useAuth()
   const [exiting, setExiting] = useState(false)
 
   // Only show if actively impersonating

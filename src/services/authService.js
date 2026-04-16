@@ -335,6 +335,7 @@ class AuthService {
         const data = await response.json();
         if (data.success && data.data?.user) {
           this.user = data.data.user;
+          this.user.impersonation = data.data.impersonation || { active: false };
           return this.user;
         }
       }
