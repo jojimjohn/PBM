@@ -253,8 +253,7 @@ const CalloutManager = () => {
       try {
         const response = await calloutService.deleteCallout(calloutId);
         if (response.success) {
-          loadCallouts();
-          loadGlobalStats(); // Refresh stats after delete
+          loadCallouts(); // loadCallouts recomputes globalStats internally
         }
       } catch (error) {
         console.error('Error deleting callout:', error);
@@ -277,7 +276,6 @@ const CalloutManager = () => {
       const response = await calloutService.updateDriverDetails(selectedCollectionOrder.id, driverData);
       if (response.success) {
         loadCallouts();
-        loadGlobalStats(); // Refresh stats after status change
         setShowDriverModal(false);
         setSelectedCollectionOrder(null);
       }
@@ -293,7 +291,6 @@ const CalloutManager = () => {
 
   const handleWCNFinalizationSuccess = () => {
     loadCallouts();
-    loadGlobalStats(); // Refresh stats after finalization
     setShowWCNFinalizationModal(false);
     setSelectedWCNOrder(null);
   };
@@ -305,7 +302,6 @@ const CalloutManager = () => {
 
   const handleWCNRectificationSuccess = () => {
     loadCallouts();
-    loadGlobalStats(); // Refresh stats after rectification
     setShowWCNRectificationModal(false);
     setSelectedWCNOrder(null);
   };
@@ -671,7 +667,6 @@ const CalloutManager = () => {
           }}
           onSubmit={() => {
             loadCallouts();
-            loadGlobalStats(); // Refresh stats after create/edit
             setShowCreateModal(false);
             setSelectedCallout(null);
           }}
@@ -711,7 +706,6 @@ const CalloutManager = () => {
           }}
           onSuccess={async () => {
             await loadCallouts();
-            await loadGlobalStats(); // Refresh stats after status change
           }}
         />
       )}

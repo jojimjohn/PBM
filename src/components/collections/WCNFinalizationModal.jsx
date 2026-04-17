@@ -435,7 +435,117 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
       title="Finalize WCN (Waste Consignment Note)"
       size="large"
     >
-      <div className="wcn-finalization-modal">
+      <div className="wcn-finalization-modal" style={{ position: 'relative' }}>
+        {/* Full-body overlay while finalizing — covers the scrollable body so
+            the user sees progress regardless of where they scrolled. */}
+        {processing && finalizationStep > 0 && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+              padding: '32px',
+              width: '100%',
+              maxWidth: '560px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+                <Loader size={22} style={{ color: 'var(--blue-600, #2563eb)', animation: 'spin 1s linear infinite' }} />
+                <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--gray-900, #0f172a)' }}>
+                  Finalizing WCN...
+                </span>
+              </div>
+
+              {/* Horizontal stepper */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative', marginBottom: '20px' }}>
+                {/* Connector line */}
+                <div style={{
+                  position: 'absolute',
+                  top: '14px',
+                  left: '14px',
+                  right: '14px',
+                  height: '2px',
+                  background: 'var(--gray-200, #e2e8f0)',
+                  zIndex: 0
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  top: '14px',
+                  left: '14px',
+                  height: '2px',
+                  background: 'var(--emerald-500, #10b981)',
+                  zIndex: 1,
+                  width: `calc((100% - 28px) * ${Math.max(0, finalizationStep - 1) / (finalizationSteps.length - 1)})`,
+                  transition: 'width 0.3s ease'
+                }} />
+
+                {finalizationSteps.map((step, index) => {
+                  const stepNum = index + 1;
+                  const isCompleted = finalizationStep > stepNum;
+                  const isActive = finalizationStep === stepNum;
+
+                  const bg = isCompleted ? 'var(--emerald-500, #10b981)'
+                           : isActive    ? 'var(--blue-600, #2563eb)'
+                                         : 'white';
+                  const border = isCompleted ? 'var(--emerald-500, #10b981)'
+                               : isActive    ? 'var(--blue-600, #2563eb)'
+                                             : 'var(--gray-300, #cbd5e1)';
+                  const textColor = (isCompleted || isActive) ? 'white' : 'var(--gray-500, #64748b)';
+                  const labelColor = isActive ? 'var(--blue-700, #1d4ed8)' : isCompleted ? 'var(--gray-700, #334155)' : 'var(--gray-500, #64748b)';
+
+                  return (
+                    <div key={index} style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      flex: 1, position: 'relative', zIndex: 2
+                    }}>
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%',
+                        background: bg,
+                        border: `2px solid ${border}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '12px', fontWeight: 700, color: textColor,
+                        boxShadow: isActive ? '0 0 0 4px rgba(37, 99, 235, 0.15)' : 'none',
+                        transition: 'all 0.2s'
+                      }}>
+                        {isCompleted ? <CheckCircle size={14} /> : stepNum}
+                      </div>
+                      <div style={{
+                        marginTop: '8px', fontSize: '11px', fontWeight: isActive ? 600 : 500,
+                        color: labelColor, textAlign: 'center', lineHeight: 1.3,
+                        maxWidth: '80px'
+                      }}>
+                        {step.label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {finalizationMessage && (
+                <div style={{
+                  marginTop: '20px', padding: '12px 14px',
+                  background: 'var(--blue-50, #eff6ff)',
+                  border: '1px solid var(--blue-200, #bfdbfe)',
+                  borderRadius: '8px',
+                  fontSize: '13px', color: 'var(--blue-800, #1e40af)',
+                  textAlign: 'center'
+                }}>
+                  {finalizationMessage}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="loading-container">
             <LoadingSpinner />
@@ -447,42 +557,6 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
               <div className="alert alert-error">
                 <AlertCircle size={20} />
                 <span>{error}</span>
-              </div>
-            )}
-
-            {/* Progress Indicator - Shows during finalization */}
-            {processing && finalizationStep > 0 && (
-              <div className="wcn-progress-indicator">
-                <div className="progress-header">
-                  <Loader size={20} className="spinner" />
-                  <span>Finalizing WCN...</span>
-                </div>
-                <div className="progress-steps">
-                  {finalizationSteps.map((step, index) => {
-                    const stepNum = index + 1;
-                    const isCompleted = finalizationStep > stepNum;
-                    const isActive = finalizationStep === stepNum;
-
-                    return (
-                      <div
-                        key={index}
-                        className={`progress-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
-                      >
-                        <div className="step-circle">
-                          {isCompleted ? (
-                            <CheckCircle size={16} />
-                          ) : (
-                            <span>{stepNum}</span>
-                          )}
-                        </div>
-                        <div className="step-label">{step.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="progress-message">
-                  {finalizationMessage}
-                </div>
               </div>
             )}
 
