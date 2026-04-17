@@ -15,6 +15,9 @@ import './styles/responsive.css'
 // Lazy load the PettyCashPortal - it's a separate public route
 const PettyCashPortal = lazy(() => import('./pages/petty-cash-portal/PettyCashPortal'))
 
+// Public WCN verification page (accessed via QR code scans)
+const WCNVerifyPage = lazy(() => import('./pages/Compliance/WCNVerifyPage'))
+
 function App() {
   return (
     <Router>
@@ -23,6 +26,13 @@ function App() {
         <Route path="/pc-portal" element={
           <Suspense fallback={<PageLoader />}>
             <PettyCashPortal />
+          </Suspense>
+        } />
+
+        {/* Public route - WCN manifest verification (scanned by regulators) */}
+        <Route path="/compliance/verify" element={
+          <Suspense fallback={<PageLoader />}>
+            <WCNVerifyPage />
           </Suspense>
         } />
 

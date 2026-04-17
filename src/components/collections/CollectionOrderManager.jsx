@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight, Droplet, Upload } from 'lucide-react';
+import { Truck, Plus, Search, Filter, Calendar, MapPin, Package, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, User, Star, Banknote, FileText, ArrowRight, Droplet, Upload, FileDown } from 'lucide-react';
+import complianceService from '../../services/complianceService';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useProjects } from '../../context/ProjectContext';
 import { collectionOrderService, calloutService } from '../../services/collectionService';
@@ -272,6 +273,16 @@ const CollectionOrderManager = () => {
                 title={t('recordWastage') || 'Record Wastage'}
               >
                 <Droplet className="w-4 h-4" />
+              </button>
+            )}
+            {/* Download WCN Manifest PDF - only for finalized orders */}
+            {isFinalized && (
+              <button
+                onClick={() => complianceService.downloadWcnPdf(row.id)}
+                className="p-1.5 border border-emerald-200 bg-emerald-50 text-emerald-700 cursor-pointer transition-all hover:bg-emerald-100 hover:border-emerald-400"
+                title="Download WCN Manifest PDF (MD 18/2017)"
+              >
+                <FileDown className="w-4 h-4" />
               </button>
             )}
             {(row.status === 'scheduled' || row.status === 'in_transit') && (

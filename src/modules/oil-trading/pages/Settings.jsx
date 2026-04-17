@@ -9,6 +9,7 @@ import branchService from '../../../services/branchService'
 import dataCacheService from '../../../services/dataCacheService'
 import MFASetup from '../../../components/MFASetup'
 import ExpenseCategoryManager from '../../../components/ExpenseCategoryManager'
+import ComplianceSettings from '../../../pages/Settings/ComplianceSettings'
 import Modal from '../../../components/ui/Modal'
 import {
   Settings as SettingsIcon,
@@ -349,6 +350,7 @@ const Settings = () => {
     { id: 'security', label: t('securitySettings', 'Security'), icon: Lock },
     { id: 'branches', label: t('branchManagement', 'Branch Management'), icon: Building },
     { id: 'expense-categories', label: t('expenseCategories', 'Expense Categories'), icon: Tag },
+    { id: 'compliance', label: 'Compliance (VAT / MD 18/2017)', icon: Shield },
     { id: 'appearance', label: t('appearanceSettings'), icon: Palette },
     { id: 'notifications', label: t('notificationSettings'), icon: Bell }
   ]
@@ -938,6 +940,11 @@ const Settings = () => {
             <div className="form-section">
               <ExpenseCategoryManager />
             </div>
+          )}
+
+          {/* Compliance Settings (VAT + MD 18/2017) */}
+          {activeTab === 'compliance' && (
+            <ComplianceSettings />
           )}
 
           {/* Appearance Settings */}

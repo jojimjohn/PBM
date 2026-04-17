@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Modal from './ui/Modal';
-import { FileText, Calendar, User, Package, Banknote, CheckCircle, AlertTriangle, Layers, DollarSign, TrendingUp, ChevronDown, ChevronUp, Hash } from 'lucide-react';
+import { FileText, Calendar, User, Package, Banknote, CheckCircle, AlertTriangle, Layers, DollarSign, TrendingUp, ChevronDown, ChevronUp, Hash, FileDown, FileCode, QrCode } from 'lucide-react';
+import einvoicingService from '../services/einvoicingService';
+import showToast from './ui/Toast';
 // CSS moved to global index.css Tailwind
 
 const SalesOrderViewModal = ({
@@ -11,8 +13,27 @@ const SalesOrderViewModal = ({
   t
 }) => {
   const [expandedAllocations, setExpandedAllocations] = useState({});
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   if (!orderData) return null;
+
+  // E-invoice generation — idempotent
+  const handleGenerateEInvoice = async () => {
+    setGeneratingInvoice(true);
+    const result = await einvoicingService.generate(orderData.id);
+    if (result.success) {
+      showToast.success(result.message || 'E-invoice generated');
+      // Update the local order data so the download buttons appear
+      orderData.invoice_uuid = result.data.invoiceUuid;
+      orderData.qr_code_tlv = result.data.qrCodeTlv;
+      orderData.invoiceNumber = result.data.invoiceNumber;
+    } else {
+      showToast.error(result.error || 'Failed to generate e-invoice');
+    }
+    setGeneratingInvoice(false);
+  };
+
+  const hasEInvoice = !!(orderData.invoice_uuid || orderData.qr_code_tlv);
 
   const toggleAllocation = (itemId) => {
     setExpandedAllocations(prev => ({
@@ -362,6 +383,47 @@ const SalesOrderViewModal = ({
             </div>
           </div>
         )}
+
+        {/* E-Invoice Actions */}
+        <div className="my-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+          <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">
+            Oman E-Invoicing (OTA)
+          </div>
+          {!hasEInvoice ? (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleGenerateEInvoice}
+              disabled={generatingInvoice}
+            >
+              <FileCode size={14} />
+              {generatingInvoice ? 'Generating...' : 'Generate E-Invoice'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-emerald-700 font-mono">
+                ✓ Invoice: {orderData.invoiceNumber}
+              </span>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => einvoicingService.downloadPdf(orderData.id)}
+              >
+                <FileDown size={14} /> PDF
+              </button>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => einvoicingService.downloadXml(orderData.id)}
+              >
+                <FileCode size={14} /> UBL XML
+              </button>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => window.open(einvoicingService.getQrUrl(orderData.id), '_blank')}
+              >
+                <QrCode size={14} /> QR
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Action Buttons */}
         <div className="modal-actions">
