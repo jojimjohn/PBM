@@ -260,9 +260,13 @@
     @apply bg-accent border-accent;
   }
 
-  /* Native labels - Premium style */
+  /* Native labels - readable sentence-case default.
+     Components needing uppercase/tracked labels (stat cards, table headers,
+     legacy .form-group > label) set that themselves; we do not force it
+     globally because many labels contain prose like descriptions inside
+     radio/checkbox options. */
   label {
-    @apply block text-[10px] font-bold text-slate-400 uppercase tracking-ultra mb-2;
+    @apply block text-sm font-medium text-slate-700 mb-1;
   }
 
   /* Inline labels for checkbox/radio */
@@ -1163,9 +1167,9 @@
     @apply shrink-0;
   }
 
-  /* Modal title - uppercase premium typography */
+  /* Modal title - readable sentence-case typography */
   .modal-title-tw {
-    @apply text-xl font-bold text-slate-900 tracking-tight uppercase;
+    @apply text-xl font-bold text-slate-900 tracking-tight;
     font-family: 'Outfit', 'Inter', sans-serif;
   }
 
@@ -2197,7 +2201,9 @@
 
   /* Table wrapper for overflow */
   .table-wrapper {
-    @apply border border-slate-200 overflow-hidden;
+    @apply border border-slate-200;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   /* ----- ALERTS (replaces .alert-* system) ----- */
@@ -5267,11 +5273,13 @@
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
     margin-top: 12px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .data-table {
     width: 100%;
+    min-width: 900px;
     font-size: 14px;
     border-radius: 0px;
     background-color: #ffffff;
@@ -8482,99 +8490,252 @@ input[type="datetime-local"]::placeholder {
   @apply bg-slate-800;
 }
 
-/* ==========================================
-   WCN Finalization / Rectification Modal
-   Shared styling for collection-order modals that use
-   the .wcn-section / .section-title / .info-grid / .info-item pattern.
-   ========================================== */
+/* ==========================================================================
+   DESIGN SYSTEM: Form Primitives
+   --------------------------------------------------------------------------
+   Single source of truth for form styling inside every modal in the system.
+   Use these classes on new modals; existing modals should migrate toward
+   them rather than inventing parallel vocabularies.
 
-.wcn-finalization-modal,
-.wcn-rectification-modal {
-  @apply p-5 space-y-5;
+     .ds-form-section         card container with header
+     .ds-form-section.info    tinted info variant
+     .ds-form-section > h4    section heading (put icon inline)
+     .ds-form-grid            2-col responsive grid
+     .ds-form-grid-3          3-col responsive grid
+     .ds-form-group           label + input vertical stack
+     .ds-form-group.full-width  spans all grid columns
+     .ds-form-label           field label (labels also styled by descendant
+                              selector so unclassed <label>s work too)
+     .ds-info-grid            2-col read-only info display
+     .ds-info-item            label + value pair
+     .ds-modal-actions        right-aligned button row at bottom of a modal
+     .required                red asterisk marker
+
+   DESIGN RULES:
+   - Labels use sentence case. No CSS-forced uppercase.
+   - Focus ring: 2px blue-100 + blue-500 border.
+   - Inputs and sections never self-style text-transform.
+   ========================================================================== */
+
+.ds-form-section {
+  @apply bg-white border border-slate-200 rounded-lg p-5 space-y-4;
+}
+.ds-form-section + .ds-form-section { @apply mt-5; }
+.ds-form-section.info { @apply bg-blue-50 border-blue-200; }
+.ds-form-section.warning { @apply bg-amber-50 border-amber-200; }
+
+.ds-form-section > h4 {
+  @apply flex items-center gap-2 text-sm font-semibold text-slate-800 m-0 pb-3 border-b border-slate-100;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.ds-form-section > h4 svg { @apply text-blue-600 shrink-0; }
+.ds-form-section.warning > h4 { @apply text-amber-900 border-amber-200; }
+.ds-form-section.warning > h4 svg { @apply text-amber-600; }
+
+.ds-form-grid   { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
+.ds-form-grid-3 { @apply grid grid-cols-1 md:grid-cols-3 gap-4; }
+
+.ds-form-group { @apply flex flex-col gap-1.5; }
+.ds-form-group.full-width { @apply md:col-span-2; }
+
+.ds-form-label,
+.ds-form-group > label {
+  @apply flex items-center gap-1.5 text-sm font-medium text-slate-700 m-0;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
-.wcn-section {
-  @apply bg-white border border-slate-200 rounded-lg p-5;
+.ds-form-group input[type="text"],
+.ds-form-group input[type="number"],
+.ds-form-group input[type="date"],
+.ds-form-group input[type="email"],
+.ds-form-group input[type="tel"],
+.ds-form-group textarea,
+.ds-form-group select {
+  @apply w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md text-slate-900 outline-none transition-colors;
+}
+.ds-form-group input:focus,
+.ds-form-group textarea:focus,
+.ds-form-group select:focus {
+  @apply border-blue-500 ring-2 ring-blue-100;
+}
+.ds-form-group input:disabled,
+.ds-form-group textarea:disabled,
+.ds-form-group select:disabled {
+  @apply bg-slate-100 text-slate-500 cursor-not-allowed;
 }
 
-.wcn-section + .wcn-section {
-  @apply mt-5;
-}
+.ds-form-label .required,
+.ds-form-section h4 .required,
+.required { @apply text-rose-500 font-semibold ml-0.5; }
 
-.wcn-section .section-title {
-  @apply flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-700 border-b border-slate-100 pb-3 mb-4 m-0;
+/* Read-only info display (e.g., "Order Number: 123") */
+.ds-info-grid { @apply grid grid-cols-1 sm:grid-cols-2 gap-4; }
+.ds-info-item { @apply flex flex-col gap-1; }
+.ds-info-item > label {
+  @apply text-xs font-medium text-slate-500 m-0;
+  text-transform: none;
+  letter-spacing: normal;
 }
+.ds-info-item > strong { @apply text-sm text-slate-900 font-semibold; }
+.ds-info-item > span   { @apply text-sm text-slate-800; }
 
-.wcn-section .section-title svg {
-  @apply text-blue-600;
-}
-
-.wcn-section .info-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
-}
-
-.wcn-section .info-item {
-  @apply flex flex-col gap-1;
-}
-
-.wcn-section .info-item label {
-  @apply text-xs font-medium text-slate-500 uppercase tracking-wide m-0;
-}
-
-.wcn-section .info-item strong,
-.wcn-section .info-item span {
-  @apply text-sm text-slate-800;
-}
-
-.wcn-section .form-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 gap-4 p-0;
-}
-
-.wcn-section .form-group {
-  @apply flex flex-col gap-1.5;
-}
-
-.wcn-section .form-group.full-width {
-  @apply md:col-span-2;
-}
-
-.wcn-section .form-group > label {
-  @apply flex items-center gap-1.5 text-xs font-semibold text-slate-700 uppercase tracking-wide m-0;
-}
-
-.wcn-section .form-group input[type="date"],
-.wcn-section .form-group input[type="number"],
-.wcn-section .form-group input[type="text"],
-.wcn-section .form-group textarea,
-.wcn-section .form-group select {
-  @apply w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-md text-slate-900 outline-none transition-colors;
-}
-
-.wcn-section .form-group input:focus,
-.wcn-section .form-group textarea:focus,
-.wcn-section .form-group select:focus {
-  @apply border-blue-500 bg-white ring-2 ring-blue-100;
-}
-
-/* Status badge inside WCN modals */
-.wcn-section .status-badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
-}
-.wcn-section .status-badge.completed { @apply bg-emerald-100 text-emerald-800; }
-.wcn-section .status-badge.scheduled { @apply bg-amber-100 text-amber-800; }
-.wcn-section .status-badge.in_transit,
-.wcn-section .status-badge.collecting { @apply bg-blue-100 text-blue-800; }
-.wcn-section .status-badge.cancelled,
-.wcn-section .status-badge.failed { @apply bg-rose-100 text-rose-800; }
-
-/* Modal action buttons row at the bottom of WCN modals */
-.wcn-finalization-modal .modal-actions,
-.wcn-rectification-modal .modal-actions {
+/* Right-aligned button row at the bottom of a modal body */
+.ds-modal-actions {
   @apply flex justify-end items-center gap-3 pt-5 border-t border-slate-200 mt-2;
 }
 
-/* Keyframes for overlay spinner (used inline in WCNFinalizationModal) */
+/* Status badge — shared across many modals */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+}
+.status-badge.completed { @apply bg-emerald-100 text-emerald-800; }
+.status-badge.scheduled { @apply bg-amber-100 text-amber-800; }
+.status-badge.in_transit,
+.status-badge.collecting { @apply bg-blue-100 text-blue-800; }
+.status-badge.cancelled,
+.status-badge.failed { @apply bg-rose-100 text-rose-800; }
+
+/* Keyframes for overlay spinner (inline usage in finalization modal) */
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   PurchaseInvoiceModal: bill-type & PO-selector styling
+   Scoped styles for elements unique to the Create Invoice flow.
+   ========================================================================== */
+
+.bill-type-selector {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-3;
+}
+.bill-type-option {
+  @apply flex items-start gap-3 p-3 border border-slate-200 rounded-lg bg-white cursor-pointer transition-colors;
+}
+.bill-type-option:hover { @apply border-slate-300 bg-slate-50; }
+.bill-type-option.active { @apply border-blue-500 bg-blue-50; }
+.bill-type-option input[type="radio"] { @apply mt-1 shrink-0; }
+.bill-type-content { @apply flex flex-col gap-0.5; }
+.bill-type-content strong { @apply text-sm font-semibold text-slate-900; }
+.bill-type-content small  { @apply text-xs text-slate-600; }
+
+.po-selector {
+  @apply border border-slate-200 rounded-lg bg-white overflow-hidden;
+}
+.po-selector-header {
+  @apply flex items-center justify-between px-4 py-2 text-xs font-medium text-slate-600 bg-slate-50 border-b border-slate-200;
+}
+.po-total { @apply text-slate-900 font-semibold; }
+
+.po-selector-list {
+  @apply max-h-72 overflow-y-auto divide-y divide-slate-100;
+}
+.po-selector-item {
+  @apply flex items-start gap-3 p-3 cursor-pointer transition-colors;
+}
+.po-selector-item:hover   { @apply bg-slate-50; }
+.po-selector-item.selected { @apply bg-blue-50; }
+.po-selector-item input[type="checkbox"] { @apply mt-1 shrink-0; }
+
+.po-selector-info { @apply flex flex-col gap-1 flex-1 min-w-0; }
+.po-selector-header-row {
+  @apply flex items-center justify-between gap-2 text-sm text-slate-900;
+}
+.po-selector-amount { @apply font-semibold text-slate-900; }
+.po-selector-details {
+  @apply flex items-center gap-2 text-xs text-slate-500;
+}
+
+.loading-pos, .no-pos {
+  @apply py-8 text-center text-sm text-slate-500 italic;
+}
+
+/* ==========================================================================
+   WCN Rectification Modal — domain-specific styling
+   Adjustment rows and Inventory Impact Preview table. Generic form pieces
+   (section/grid/group/label) come from the ds-form-* primitives above.
+   ========================================================================== */
+
+.rectification-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800;
+}
+
+.adjustments-container { @apply flex flex-col gap-4; }
+
+.adjustment-item {
+  @apply bg-slate-50 border border-slate-200 rounded-lg p-4 transition-colors;
+}
+.adjustment-item.changed { @apply bg-blue-50 border-blue-300; }
+
+.adjustment-header {
+  @apply flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-200;
+}
+.adjustment-item.changed .adjustment-header { @apply border-blue-200; }
+
+.material-info { @apply flex items-center gap-2 text-sm text-slate-800; }
+.material-info strong { @apply font-semibold; }
+.material-code { @apply text-xs text-slate-500 font-mono; }
+
+.change-indicator .increase,
+.change-indicator .decrease {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold;
+}
+.change-indicator .increase { @apply bg-emerald-100 text-emerald-700; }
+.change-indicator .decrease { @apply bg-rose-100 text-rose-700; }
+
+.adjustment-controls { @apply mt-1; }
+.quantity-field { @apply flex flex-col gap-1 relative; }
+
+.quantity-input {
+  @apply w-full px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900 outline-none transition-colors;
+}
+.quantity-input:focus        { @apply border-blue-500 ring-2 ring-blue-100; }
+.quantity-input.disabled,
+.quantity-input:disabled     { @apply bg-slate-100 text-slate-500 cursor-not-allowed; }
+.quantity-input.changed      { @apply border-blue-500 bg-blue-50 font-semibold; }
+
+.quantity-field .unit-label {
+  @apply absolute right-3 top-8 text-xs text-slate-500 pointer-events-none;
+}
+.quantity-arrow {
+  @apply text-lg text-slate-400 font-semibold select-none;
+}
+
+.adjustment-item label {
+  @apply block text-xs font-medium text-slate-600 mb-1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.adjustment-item textarea,
+.adjustment-item input[type="text"] {
+  @apply w-full px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900 outline-none;
+}
+.adjustment-item textarea:focus,
+.adjustment-item input[type="text"]:focus {
+  @apply border-blue-500 ring-2 ring-blue-100;
+}
+
+/* Inventory Impact Preview */
+.impact-table-container {
+  @apply mt-3 rounded-lg border border-slate-200 bg-white overflow-x-auto;
+}
+.impact-table { @apply w-full border-collapse text-sm; }
+.impact-table thead th {
+  @apply bg-slate-50 text-left px-3 py-2 text-xs font-semibold text-slate-600 border-b border-slate-200;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.impact-table tbody td {
+  @apply px-3 py-2 border-b border-slate-100 align-middle text-slate-800;
+}
+.impact-table tbody tr:last-child td { @apply border-b-0; }
+.impact-table tbody tr:hover         { @apply bg-slate-50; }
+
+.impact-table td .adjustment-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold;
+}
+.impact-table td .adjustment-badge.increase { @apply bg-emerald-100 text-emerald-700; }
+.impact-table td .adjustment-badge.decrease { @apply bg-rose-100 text-rose-700; }
+
