@@ -109,11 +109,8 @@ const PermissionMatrix = ({
   }
 
   // Toggle single permission
-  const togglePermission = (permissionKey, event) => {
+  const togglePermission = (permissionKey) => {
     if (readonly) return
-    // Blur to prevent any residual scroll-into-view behavior
-    event?.target?.blur?.()
-
     const newSelected = selectedSet.has(permissionKey)
       ? selectedPermissions.filter(p => p !== permissionKey)
       : [...selectedPermissions, permissionKey]
@@ -123,8 +120,6 @@ const PermissionMatrix = ({
   // Toggle all permissions in a module
   const toggleModule_ = (module, event) => {
     if (readonly) return
-    // Blur to prevent any residual scroll-into-view behavior
-    event?.target?.blur?.()
 
     const modulePermKeys = module.permissions.map(p => p.key)
     const allSelected = modulePermKeys.every(key => selectedSet.has(key))
@@ -271,12 +266,25 @@ const PermissionMatrix = ({
                       <label
                         key={permission.key}
                         className={`permission-item ${selectedSet.has(permission.key) ? 'selected' : ''}`}
+                        tabIndex={readonly ? -1 : 0}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          togglePermission(permission.key)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === ' ') {
+                            e.preventDefault()
+                            togglePermission(permission.key)
+                          }
+                        }}
                       >
                         <input
                           type="checkbox"
                           checked={selectedSet.has(permission.key)}
-                          onChange={(e) => togglePermission(permission.key, e)}
+                          onChange={() => {}}
                           disabled={readonly}
+                          tabIndex={-1}
+                          aria-hidden="true"
                         />
                         <span className="checkbox-visual">
                           {selectedSet.has(permission.key) && <Check size={12} />}
