@@ -446,6 +446,41 @@ const organizePermissionsByModule = (permissionGroups, selectedPermissions) => {
 }
 
 /**
+ * Build a fallback single-module tree when permissionGroups is not provided.
+ * Uses the local PERMISSION_HIERARCHY to identify roots vs standalone perms.
+ */
+const buildFallbackModules = (perms) => {
+  if (!perms || perms.length === 0) return []
+
+  const allChildPermissions = new Set()
+  Object.values(PERMISSION_HIERARCHY).forEach(config => {
+    config.children?.forEach(child => allChildPermissions.add(child))
+  })
+
+  const roots = []
+  const standalone = []
+
+  perms.forEach(perm => {
+    const hasChildren = PERMISSION_HIERARCHY[perm]?.children?.length > 0
+    const isChild = allChildPermissions.has(perm)
+    if (hasChildren) {
+      roots.push(perm)
+    } else if (!isChild) {
+      standalone.push(perm)
+    }
+    // pure children are rendered under their parent — skip here
+  })
+
+  return [{
+    key: 'permissions',
+    name: 'Permissions',
+    roots: roots.sort(),
+    standalone: standalone.sort(),
+    allPermissions: perms
+  }]
+}
+
+/**
  * Permission Hierarchy Tree Component
  *
  * @param {string[]} permissions - Array of selected permission keys
@@ -464,10 +499,10 @@ const PermissionHierarchyTree = ({
   readonly = true,
   onChange = null
 }) => {
-  // Organize permissions by module if groups provided
+  // Organize permissions by module if groups provided; fall back to hierarchy-only grouping
   const modules = permissionGroups
     ? organizePermissionsByModule(permissionGroups, permissions)
-    : []
+    : buildFallbackModules(permissions)
 
   return (
     <div className="space-y-4">

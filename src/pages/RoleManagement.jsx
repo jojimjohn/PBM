@@ -121,12 +121,16 @@ const RoleManagement = ({ embedded = false }) => {
     try {
       const result = await roleService.getPermissions()
       if (result.success) {
-        // Backend returns { byModule: {...} }
+        // Backend returns { byModule: [...] }
         const byModule = result.data?.byModule || result.data?.permissions || []
         setPermissionGroups(byModule)
+      } else {
+        console.error('Failed to load permissions:', result.error)
+        setError('Failed to load available permissions. You may not have permission to view them.')
       }
     } catch (err) {
       console.error('Error loading permissions:', err)
+      setError('Failed to load available permissions.')
     }
   }, [])
 
