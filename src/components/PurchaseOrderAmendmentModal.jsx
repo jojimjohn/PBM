@@ -1025,7 +1025,7 @@ const PurchaseOrderAmendmentModal = ({
           )}
 
         {/* Approval Actions - Only show for pending amendments with permission */}
-        {selectedAmendment.status === 'pending' && hasPermission(PERMISSIONS.APPROVE_PURCHASE) && (
+        {selectedAmendment.status === 'pending' && hasPermission(PERMISSIONS.EDIT_PURCHASE) && (
           <div className="amendment-details-section">
             <h4>Approval Actions</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

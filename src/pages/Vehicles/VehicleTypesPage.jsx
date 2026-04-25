@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, Save, RefreshCw } from 'lucide-react'
 
 const VehicleTypesPage = () => {
   const { hasPermission } = usePermissions()
-  const canManage = hasPermission('MANAGE_VEHICLE_TYPES')
+  const canManage = hasPermission('MANAGE_VEHICLES')
 
   const [types, setTypes] = useState([])
   const [loading, setLoading] = useState(true)

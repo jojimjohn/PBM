@@ -116,8 +116,7 @@ const Banking = () => {
   const [loadingAttachments, setLoadingAttachments] = useState(false)
 
   // Permission check
-  // TODO: Use VIEW_BANK_ACCOUNTS/EDIT_BANK_ACCOUNTS instead of MANAGE_SETTINGS
-  const canManage = hasPermission(PERMISSIONS.MANAGE_SETTINGS)
+  const canManage = hasPermission(PERMISSIONS.MANAGE_BANKING)
 
   useEffect(() => {
     loadAccounts()

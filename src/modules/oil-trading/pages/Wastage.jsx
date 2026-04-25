@@ -314,7 +314,7 @@ const Wastage = () => {
 
   // Handle pending card click - toggles pending filter
   const handlePendingCardClick = () => {
-    if (!hasPermission(PERMISSIONS.APPROVE_WASTAGE)) return
+    if (!hasPermission(PERMISSIONS.EDIT_WASTAGE)) return
 
     if (pendingFilterActive) {
       setFilter('status', 'all')
@@ -352,7 +352,7 @@ const Wastage = () => {
         pendingCount={summaryData.pendingCount}
         approvedCount={summaryData.approvedCount}
         loading={isLoading}
-        onPendingClick={hasPermission(PERMISSIONS.APPROVE_WASTAGE) ? handlePendingCardClick : undefined}
+        onPendingClick={hasPermission(PERMISSIONS.EDIT_WASTAGE) ? handlePendingCardClick : undefined}
         pendingFilterActive={pendingFilterActive}
       />
 
@@ -517,7 +517,7 @@ const Wastage = () => {
         wasteTypes={wasteTypesForForm}
         onApprove={handleApproveWastage}
         onReject={handleRejectWastage}
-        canApprove={hasPermission(PERMISSIONS.APPROVE_WASTAGE)}
+        canApprove={hasPermission(PERMISSIONS.EDIT_WASTAGE)}
       />
 
       {/* WastageAnalytics Modal */}

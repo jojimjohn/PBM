@@ -15,204 +15,29 @@ import { ChevronDown, ChevronRight, CheckCircle, Circle, Shield } from 'lucide-r
  * Defines parent-child relationships between permissions
  */
 const PERMISSION_HIERARCHY = {
-  // Purchase Order Expenses Module
-  MANAGE_PO_EXPENSES: {
-    children: [
-      'VIEW_PO_EXPENSES_ALL',
-      'CREATE_PO_EXPENSES',
-      'EDIT_PO_EXPENSES_ALL',
-      'DELETE_PO_EXPENSES_ALL'
-    ]
-  },
-  VIEW_PO_EXPENSES_ALL: {
-    children: ['VIEW_PO_EXPENSES_OWN']
-  },
-  EDIT_PO_EXPENSES_ALL: {
-    children: ['EDIT_PO_EXPENSES_OWN']
-  },
-  DELETE_PO_EXPENSES_ALL: {
-    children: ['DELETE_PO_EXPENSES_OWN']
-  },
-
-  // Purchase Order Amendments Module
-  MANAGE_AMENDMENTS: {
-    children: [
-      'VIEW_AMENDMENTS_ALL',
-      'CREATE_AMENDMENTS',
-      'EDIT_AMENDMENTS_ALL',
-      'APPROVE_AMENDMENTS'
-    ]
-  },
-  VIEW_AMENDMENTS_ALL: {
-    children: ['VIEW_AMENDMENTS_OWN']
-  },
-  EDIT_AMENDMENTS_ALL: {
-    children: ['EDIT_AMENDMENTS_OWN']
-  },
-
-  // Petty Cash Module
-  MANAGE_PETTY_CASH: {
-    children: [
-      'VIEW_PETTY_CASH',
-      'CREATE_EXPENSE',
-      'APPROVE_EXPENSE',
-      'RELOAD_CARD',
-      'VIEW_EXPENSE_REPORTS'
-    ]
-  },
-
-  // Financial Management
-  MANAGE_EXPENSES: {
-    children: [
-      'VIEW_EXPENSES',
-      'APPROVE_EXPENSES',
-      'MANAGE_EXPENSE_CATEGORIES'
-    ]
-  },
-
-  // Sales Module
-  MANAGE_SALES: {
-    children: [
-      'CREATE_SALES',
-      'VIEW_SALES',
-      'EDIT_SALES',
-      'DELETE_SALES',
-      'APPROVE_SALES'
-    ]
-  },
-
-  // Purchase Module
-  MANAGE_PURCHASE: {
-    children: [
-      'CREATE_PURCHASE',
-      'VIEW_PURCHASE',
-      'EDIT_PURCHASE',
-      'DELETE_PURCHASE',
-      'APPROVE_PURCHASE'
-    ]
-  },
-
-  // Purchase Orders
-  MANAGE_PURCHASE_ORDER: {
-    children: [
-      'CREATE_PURCHASE_ORDER',
-      'VIEW_PURCHASE_ORDER',
-      'EDIT_PURCHASE_ORDER',
-      'DELETE_PURCHASE_ORDER',
-      'APPROVE_PURCHASE_ORDER'
-    ]
-  },
-
-  // Inventory Management
-  MANAGE_INVENTORY: {
-    children: [
-      'VIEW_INVENTORY',
-      'UPDATE_STOCK',
-      'VIEW_INVENTORY_BATCHES',
-      'MANAGE_INVENTORY_BATCHES',
-      'VIEW_MATERIAL_COMPOSITIONS',
-      'CREATE_MATERIAL_COMPOSITIONS',
-      'EDIT_MATERIAL_COMPOSITIONS',
-      'DELETE_MATERIAL_COMPOSITIONS'
-    ]
-  },
-
-  // Customer Management
-  MANAGE_CUSTOMERS: {
-    children: [
-      'VIEW_CUSTOMERS',
-      'VIEW_CUSTOMER_TYPES'
-    ]
-  },
-
-  // Supplier Management
-  MANAGE_SUPPLIERS: {
-    children: [
-      'VIEW_SUPPLIERS',
-      'VIEW_SUPPLIER_TYPES',
-      'VIEW_SUPPLIER_LOCATIONS',
-      'CREATE_SUPPLIER_LOCATIONS',
-      'EDIT_SUPPLIER_LOCATIONS',
-      'DELETE_SUPPLIER_LOCATIONS',
-      'VIEW_SUPPLIER_CONTRACTS'
-    ]
-  },
-
-  // Contracts Management
-  MANAGE_CONTRACTS: {
-    children: [
-      'VIEW_CONTRACTS',
-      'APPROVE_CONTRACTS',
-      'VIEW_CONTRACT_LOCATIONS',
-      'CREATE_CONTRACT_LOCATIONS',
-      'EDIT_CONTRACT_LOCATIONS',
-      'MANAGE_CONTRACT_LOCATION_RATES',
-      'VIEW_CONTRACT_LOCATION_RATES'
-    ]
-  },
-
-  // Collections Management
-  MANAGE_COLLECTIONS: {
-    children: [
-      'VIEW_COLLECTIONS',
-      'CREATE_COLLECTIONS',
-      'EDIT_COLLECTIONS',
-      'DELETE_COLLECTIONS',
-      'APPROVE_COLLECTIONS'
-    ]
-  },
-
-  // Wastage Management
-  MANAGE_WASTAGE: {
-    children: [
-      'VIEW_WASTAGE',
-      'CREATE_WASTAGE',
-      'EDIT_WASTAGE',
-      'DELETE_WASTAGE',
-      'APPROVE_WASTAGE'
-    ]
-  },
-
-  // Reports Module
-  MANAGE_REPORTS: {
-    children: [
-      'VIEW_REPORTS',
-      'EXPORT_REPORTS',
-      'CREATE_CUSTOM_REPORTS'
-    ]
-  },
-
-  // System Settings
-  MANAGE_SETTINGS: {
-    children: [
-      'VIEW_SETTINGS',
-      'VIEW_AUDIT_LOGS',
-      'MANAGE_BACKUPS',
-      'VIEW_BRANCHES',
-      'VIEW_BANK_ACCOUNTS',
-      'CREATE_BANK_ACCOUNTS',
-      'EDIT_BANK_ACCOUNTS',
-      'DELETE_BANK_ACCOUNTS'
-    ]
-  },
-
-  // User Management
-  MANAGE_USERS: {
-    children: [
-      'VIEW_USERS',
-      'ASSIGN_ROLES',
-      'MANAGE_ROLES',
-      'VIEW_ROLES'
-    ]
-  },
-
-  // Company Management
-  MANAGE_COMPANIES: {
-    children: [
-      'VIEW_COMPANIES',
-      'SWITCH_COMPANIES'
-    ]
-  }
+  MANAGE_USERS:          { children: ['VIEW_USERS',          'CREATE_USERS',          'EDIT_USERS',          'DELETE_USERS']          },
+  MANAGE_ROLES:          { children: ['VIEW_ROLES']          },
+  MANAGE_COMPANIES:      { children: ['VIEW_COMPANIES',       'SWITCH_COMPANIES']      },
+  MANAGE_SUPPLIERS:      { children: ['VIEW_SUPPLIERS',       'CREATE_SUPPLIERS',      'EDIT_SUPPLIERS',      'DELETE_SUPPLIERS']      },
+  MANAGE_CUSTOMERS:      { children: ['VIEW_CUSTOMERS',       'CREATE_CUSTOMERS',      'EDIT_CUSTOMERS',      'DELETE_CUSTOMERS']      },
+  MANAGE_MATERIALS:      { children: ['VIEW_MATERIALS',       'CREATE_MATERIALS',      'EDIT_MATERIALS',      'DELETE_MATERIALS']      },
+  MANAGE_INVENTORY:      { children: ['VIEW_INVENTORY',       'EDIT_INVENTORY']        },
+  MANAGE_CONTRACTS:      { children: ['VIEW_CONTRACTS',       'CREATE_CONTRACTS',      'EDIT_CONTRACTS',      'DELETE_CONTRACTS']      },
+  MANAGE_COLLECTIONS:    { children: ['VIEW_COLLECTIONS',     'CREATE_COLLECTIONS',    'EDIT_COLLECTIONS',    'DELETE_COLLECTIONS']    },
+  MANAGE_SALES:          { children: ['VIEW_SALES',           'CREATE_SALES',          'EDIT_SALES',          'DELETE_SALES']          },
+  MANAGE_PURCHASE:       { children: ['VIEW_PURCHASE',        'CREATE_PURCHASE',       'EDIT_PURCHASE',       'DELETE_PURCHASE']       },
+  MANAGE_WASTAGE:        { children: ['VIEW_WASTAGE',         'CREATE_WASTAGE',        'EDIT_WASTAGE',        'DELETE_WASTAGE']        },
+  MANAGE_PETTY_CASH:     { children: ['VIEW_PETTY_CASH',      'CREATE_PETTY_CASH',     'EDIT_PETTY_CASH',     'DELETE_PETTY_CASH']     },
+  MANAGE_FINANCE:        { children: ['VIEW_FINANCE',         'CREATE_FINANCE',        'EDIT_FINANCE',        'DELETE_FINANCE']        },
+  MANAGE_INVOICES:       { children: ['VIEW_INVOICES',        'CREATE_INVOICES',       'EDIT_INVOICES',       'DELETE_INVOICES']       },
+  MANAGE_BANKING:        { children: ['VIEW_BANKING',         'CREATE_BANKING',        'EDIT_BANKING',        'DELETE_BANKING']        },
+  MANAGE_REPORTS:        { children: ['VIEW_REPORTS']         },
+  MANAGE_SETTINGS:       { children: ['VIEW_SETTINGS',        'MANAGE_BACKUPS']        },
+  MANAGE_PROJECTS:       { children: ['VIEW_PROJECTS',        'CREATE_PROJECTS',       'EDIT_PROJECTS',       'DELETE_PROJECTS']       },
+  MANAGE_EMPLOYEES:      { children: ['VIEW_EMPLOYEES',       'CREATE_EMPLOYEES',      'EDIT_EMPLOYEES',      'DELETE_EMPLOYEES']      },
+  MANAGE_VEHICLES:       { children: ['VIEW_VEHICLES',        'CREATE_VEHICLES',       'EDIT_VEHICLES',       'DELETE_VEHICLES']       },
+  MANAGE_TANK_LOGS:      { children: ['VIEW_TANK_LOGS',       'CREATE_TANK_LOGS',      'EDIT_TANK_LOGS',      'DELETE_TANK_LOGS']      },
+  MANAGE_EXPENSE_SHEETS: { children: ['VIEW_EXPENSE_SHEETS',  'CREATE_EXPENSE_SHEETS', 'EDIT_EXPENSE_SHEETS', 'DELETE_EXPENSE_SHEETS'] },
 }
 
 /**

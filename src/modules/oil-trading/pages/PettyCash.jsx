@@ -800,7 +800,7 @@ const PettyCash = () => {
           )}
           {row.status === 'active' && (
             <>
-              {(hasPermission(PERMISSIONS.RELOAD_CARD) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
+              {(hasPermission(PERMISSIONS.EDIT_PETTY_CASH) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -812,7 +812,7 @@ const PettyCash = () => {
                   <RefreshCw size={14} />
                 </button>
               )}
-              {(hasPermission(PERMISSIONS.CREATE_EXPENSE) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
+              {(hasPermission(PERMISSIONS.CREATE_PETTY_CASH) || hasPermission(PERMISSIONS.MANAGE_PETTY_CASH)) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -962,7 +962,7 @@ const PettyCash = () => {
               {row.status === 'rejected' ? <Eye size={14} /> : <Edit size={14} />}
             </button>
           )}
-          {row.status === 'pending' && hasPermission(PERMISSIONS.APPROVE_EXPENSE) && (
+          {row.status === 'pending' && hasPermission(PERMISSIONS.EDIT_PETTY_CASH) && (
             <>
               <button
                 className="btn btn-success btn-sm"

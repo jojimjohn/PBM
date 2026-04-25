@@ -33,7 +33,7 @@ const ExpenseSheetDetailPage = () => {
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canManage = hasPermission('MANAGE_EXPENSE_SHEETS')
-  const canApprove = hasPermission('APPROVE_EXPENSE_SHEETS')
+  const canApprove = hasPermission('EDIT_EXPENSE_SHEETS')
   const isNew = id === 'new'
 
   const [sheet, setSheet] = useState({

@@ -16,17 +16,17 @@ export const MODULE_PERMISSIONS = {
   },
   'inventory': {
     view: ['VIEW_INVENTORY'],
-    manage: ['MANAGE_INVENTORY', 'UPDATE_STOCK'],
+    manage: ['MANAGE_INVENTORY'],
     requiredPermissions: ['VIEW_INVENTORY', 'MANAGE_INVENTORY']
   },
   'fuel-inventory': {
     view: ['VIEW_INVENTORY'],
-    manage: ['MANAGE_INVENTORY', 'UPDATE_STOCK'],
+    manage: ['MANAGE_INVENTORY'],
     requiredPermissions: ['VIEW_INVENTORY', 'MANAGE_INVENTORY']
   },
   'material-inventory': {
     view: ['VIEW_INVENTORY'],
-    manage: ['MANAGE_INVENTORY', 'UPDATE_STOCK'],
+    manage: ['MANAGE_INVENTORY'],
     requiredPermissions: ['VIEW_INVENTORY', 'MANAGE_INVENTORY']
   },
   'sales': {
@@ -34,7 +34,6 @@ export const MODULE_PERMISSIONS = {
     create: ['CREATE_SALES'],
     edit: ['EDIT_SALES'],
     delete: ['DELETE_SALES'],
-    approve: ['APPROVE_SALES'],
     requiredPermissions: ['VIEW_SALES', 'CREATE_SALES']
   },
   'purchase': {
@@ -42,80 +41,65 @@ export const MODULE_PERMISSIONS = {
     create: ['CREATE_PURCHASE'],
     edit: ['EDIT_PURCHASE'],
     delete: ['DELETE_PURCHASE'],
-    approve: ['APPROVE_PURCHASE'],
     requiredPermissions: ['VIEW_PURCHASE', 'CREATE_PURCHASE']
   },
   'contracts': {
     view: ['VIEW_CONTRACTS'],
     manage: ['MANAGE_CONTRACTS'],
-    approve: ['APPROVE_CONTRACTS'],
     requiredPermissions: ['VIEW_CONTRACTS']
   },
   'reports': {
     view: ['VIEW_REPORTS'],
-    export: ['EXPORT_REPORTS'],
-    create: ['CREATE_CUSTOM_REPORTS'],
     requiredPermissions: ['VIEW_REPORTS']
   },
   'expenses': {
-    view: ['VIEW_FINANCIALS'],
-    manage: ['MANAGE_EXPENSES'],
-    approve: ['APPROVE_EXPENSES'],
-    requiredPermissions: ['VIEW_FINANCIALS', 'MANAGE_EXPENSES']
-  },
-  'petty-cash': {
-    view: ['VIEW_FINANCIALS'],
-    manage: ['MANAGE_PETTY_CASH'],
-    requiredPermissions: ['MANAGE_PETTY_CASH']
+    view: ['VIEW_FINANCE'],
+    manage: ['MANAGE_FINANCE'],
+    requiredPermissions: ['VIEW_FINANCE', 'MANAGE_FINANCE']
   },
   'invoices': {
     view: ['VIEW_INVOICES'],
     create: ['CREATE_INVOICES'],
     edit: ['EDIT_INVOICES'],
+    delete: ['DELETE_INVOICES'],
     requiredPermissions: ['VIEW_INVOICES', 'CREATE_INVOICES']
   },
   'settings': {
-    view: ['MANAGE_SETTINGS'],
+    view: ['VIEW_SETTINGS'],
     manage: ['MANAGE_SETTINGS'],
-    requiredPermissions: ['MANAGE_SETTINGS']
+    requiredPermissions: ['VIEW_SETTINGS']
   },
   'wastage': {
     view: ['VIEW_WASTAGE'],
     create: ['CREATE_WASTAGE'],
     edit: ['EDIT_WASTAGE'],
     delete: ['DELETE_WASTAGE'],
-    approve: ['APPROVE_WASTAGE'],
     requiredPermissions: ['VIEW_WASTAGE']
   },
   'collections': {
-    view: ['VIEW_CONTRACTS', 'VIEW_PURCHASE'],
-    create: ['CREATE_PURCHASE'],
-    manage: ['MANAGE_CONTRACTS'],
-    approve: ['APPROVE_PURCHASE'],
-    requiredPermissions: ['VIEW_CONTRACTS', 'VIEW_PURCHASE']
+    view: ['VIEW_COLLECTIONS', 'VIEW_PURCHASE'],
+    create: ['CREATE_COLLECTIONS'],
+    manage: ['MANAGE_COLLECTIONS'],
+    requiredPermissions: ['VIEW_COLLECTIONS', 'VIEW_PURCHASE']
   },
   'petty-cash': {
     view: ['VIEW_PETTY_CASH'],
     manage: ['MANAGE_PETTY_CASH'],
-    create: ['CREATE_EXPENSE'],
-    approve: ['APPROVE_EXPENSE'],
-    reload: ['RELOAD_CARD'],
-    reports: ['VIEW_EXPENSE_REPORTS'],
+    create: ['CREATE_PETTY_CASH'],
+    edit: ['EDIT_PETTY_CASH'],
     requiredPermissions: ['VIEW_PETTY_CASH']
   },
   'banking': {
-    view: ['VIEW_FINANCIALS'],
-    manage: ['MANAGE_SETTINGS'],
-    create: ['MANAGE_SETTINGS'],
-    reconcile: ['MANAGE_SETTINGS'],
-    requiredPermissions: ['VIEW_FINANCIALS']
+    view: ['VIEW_BANKING'],
+    manage: ['MANAGE_BANKING'],
+    create: ['CREATE_BANKING'],
+    requiredPermissions: ['VIEW_BANKING']
   },
   'users': {
     view: ['VIEW_USERS'],
     manage: ['MANAGE_USERS'],
-    create: ['MANAGE_USERS'],
-    delete: ['MANAGE_USERS'],
-    assignRoles: ['ASSIGN_ROLES'],
+    create: ['CREATE_USERS'],
+    delete: ['DELETE_USERS'],
     requiredPermissions: ['VIEW_USERS', 'MANAGE_USERS']
   },
   'projects': {
@@ -129,13 +113,17 @@ export const MODULE_PERMISSIONS = {
   'employees': {
     view: ['VIEW_EMPLOYEES'],
     manage: ['MANAGE_EMPLOYEES'],
+    create: ['CREATE_EMPLOYEES'],
+    edit: ['EDIT_EMPLOYEES'],
     delete: ['DELETE_EMPLOYEES'],
     requiredPermissions: ['VIEW_EMPLOYEES']
   },
   'vehicles': {
     view: ['VIEW_VEHICLES'],
     manage: ['MANAGE_VEHICLES'],
-    manageTypes: ['MANAGE_VEHICLE_TYPES'],
+    create: ['CREATE_VEHICLES'],
+    edit: ['EDIT_VEHICLES'],
+    delete: ['DELETE_VEHICLES'],
     requiredPermissions: ['VIEW_VEHICLES']
   },
   'tank-logs': {
@@ -146,7 +134,9 @@ export const MODULE_PERMISSIONS = {
   'expense-sheets': {
     view: ['VIEW_EXPENSE_SHEETS'],
     manage: ['MANAGE_EXPENSE_SHEETS'],
-    approve: ['APPROVE_EXPENSE_SHEETS'],
+    create: ['CREATE_EXPENSE_SHEETS'],
+    edit: ['EDIT_EXPENSE_SHEETS'],
+    delete: ['DELETE_EXPENSE_SHEETS'],
     requiredPermissions: ['VIEW_EXPENSE_SHEETS']
   }
 }

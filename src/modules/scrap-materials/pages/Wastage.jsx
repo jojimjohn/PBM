@@ -704,7 +704,7 @@ const Wastage = () => {
             onClose={() => setShowViewModal(false)}
             onApprove={handleApproveWastage}
             onReject={handleRejectWastage}
-            canApprove={hasPermission(PERMISSIONS.APPROVE_WASTAGE)}
+            canApprove={hasPermission(PERMISSIONS.EDIT_WASTAGE)}
           />
         </Modal>
     </div>

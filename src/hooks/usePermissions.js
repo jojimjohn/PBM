@@ -122,10 +122,10 @@ export const usePermissions = () => {
       'sales': PERMISSIONS.EDIT_SALES,
       'purchase': PERMISSIONS.EDIT_PURCHASE,
       'contracts': PERMISSIONS.MANAGE_CONTRACTS,
-      'expenses': PERMISSIONS.MANAGE_EXPENSES,
+      'expenses': PERMISSIONS.MANAGE_FINANCE,
       'invoices': PERMISSIONS.EDIT_INVOICES
     }
-    
+
     return hasPermission(editPermissions[permission])
   }
 
@@ -135,18 +135,18 @@ export const usePermissions = () => {
       'sales': PERMISSIONS.DELETE_SALES,
       'purchase': PERMISSIONS.DELETE_PURCHASE
     }
-    
+
     return hasPermission(deletePermissions[permission])
   }
 
   const canApprove = (permission) => {
     const approvePermissions = {
-      'sales': PERMISSIONS.APPROVE_SALES,
-      'purchase': PERMISSIONS.APPROVE_PURCHASE,
-      'contracts': PERMISSIONS.APPROVE_CONTRACTS,
-      'expenses': PERMISSIONS.APPROVE_EXPENSES
+      'sales': PERMISSIONS.MANAGE_SALES,
+      'purchase': PERMISSIONS.MANAGE_PURCHASE,
+      'contracts': PERMISSIONS.MANAGE_CONTRACTS,
+      'expenses': PERMISSIONS.MANAGE_FINANCE
     }
-    
+
     return hasPermission(approvePermissions[permission])
   }
 
