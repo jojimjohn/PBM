@@ -364,6 +364,15 @@ const Purchase = () => {
                   )
                 },
                 {
+                  key: 'reference_number',
+                  header: 'Reference No.',
+                  render: (value) => value ? (
+                    <span className="text-slate-600 text-sm">{value}</span>
+                  ) : (
+                    <span className="text-slate-400">—</span>
+                  )
+                },
+                {
                   key: 'source_type',
                   header: 'Source',
                   sortable: true,
