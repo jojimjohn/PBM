@@ -426,7 +426,7 @@ const PurchaseOrderForm = ({
           
           <div className="form-grid">
             {/* Document numbers — grouped as a visual pair */}
-            <div className="col-span-2 grid grid-cols-2 gap-5">
+            <div className="col-span-2 grid grid-cols-2 max-md:grid-cols-1 gap-5">
               <div className="flex flex-col gap-1.5">
                 <label className="form-label-tw">PO Number</label>
                 <div className="flex items-center px-3 py-2 bg-slate-100 border border-slate-200 min-h-[40px]">
