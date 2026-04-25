@@ -425,22 +425,26 @@ const PurchaseOrderForm = ({
           </div>
           
           <div className="form-grid">
-            <Input
-              label="PO Number"
-              type="text"
-              value={isEdit ? formData.orderNumber : 'Auto-generated on save'}
-              readOnly
-              className="bg-gray-50 text-gray-500"
-            />
-
-            <Input
-              label="Reference Number"
-              type="text"
-              value={formData.reference_number || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
-              placeholder="Optional — enter your internal or supplier reference"
-              maxLength={100}
-            />
+            {/* Document numbers — grouped as a visual pair */}
+            <div className="col-span-2 grid grid-cols-2 gap-5">
+              <div className="flex flex-col gap-1.5">
+                <label className="form-label-tw">PO Number</label>
+                <div className="flex items-center px-3 py-2 bg-slate-100 border border-slate-200 min-h-[40px]">
+                  {isEdit && formData.orderNumber
+                    ? <span className="font-mono font-semibold text-slate-700 text-sm">{formData.orderNumber}</span>
+                    : <span className="italic text-slate-400 text-sm">Auto-generated on save</span>
+                  }
+                </div>
+              </div>
+              <Input
+                label="Reference Number"
+                type="text"
+                value={formData.reference_number || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
+                placeholder="Optional — your internal or supplier reference"
+                maxLength={100}
+              />
+            </div>
 
             <Autocomplete
               label="Supplier"
