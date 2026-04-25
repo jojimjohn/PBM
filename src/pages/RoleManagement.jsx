@@ -419,7 +419,7 @@ const RoleManagement = ({ embedded = false }) => {
         if (!row) return null
         return (
           <div className="cell-actions">
-            {canManageRoles && !row.is_system && (
+            {canManageRoles && row.slug !== 'super_admin' && (
               <>
                 <button
                   className="btn btn-outline btn-sm"
@@ -464,7 +464,7 @@ const RoleManagement = ({ embedded = false }) => {
                 </button>
               </>
             )}
-            {canManageRoles && row.is_system && (
+            {canManageRoles && row.slug === 'super_admin' && (
               <button
                 className="btn btn-outline btn-sm"
                 onClick={(e) => {
@@ -528,7 +528,7 @@ const RoleManagement = ({ embedded = false }) => {
         title={!embedded ? t('roles', 'Roles') : undefined}
         subtitle={!embedded ? t('manageUsersDescription', 'Manage user accounts, roles, and permissions') : undefined}
         emptyMessage={t('noRolesFound') || 'No roles found'}
-        onRowClick={(row) => !row.is_system && canManageRoles && openEditModal(row)}
+        onRowClick={(row) => row.slug !== 'super_admin' && canManageRoles && openEditModal(row)}
         headerActions={
           <div className="flex items-center gap-3">
             <button
@@ -564,10 +564,16 @@ const RoleManagement = ({ embedded = false }) => {
       >
         <div className="space-y-5">
           {/* System Role Info Banner */}
-          {selectedRole?.is_system && (
+          {selectedRole?.slug === 'super_admin' && (
             <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
               <Lock size={18} className="flex-shrink-0" />
               <span>{t('cannotEditSystemRole') || 'System roles cannot be edited'} - {t('viewOnly') || 'View Only'}</span>
+            </div>
+          )}
+          {selectedRole?.is_system && selectedRole?.slug !== 'super_admin' && (
+            <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-200">
+              <Lock size={18} className="flex-shrink-0" />
+              <span>This is a system role. You can edit permissions but not the role name.</span>
             </div>
           )}
 
@@ -589,7 +595,7 @@ const RoleManagement = ({ embedded = false }) => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('enterRoleName') || 'Enter role name'}
-                  disabled={selectedRole?.is_system}
+                  disabled={selectedRole?.slug === 'super_admin' || selectedRole?.is_system}
                 />
               </div>
 
@@ -598,7 +604,7 @@ const RoleManagement = ({ embedded = false }) => {
                 <select
                   value={formData.hierarchyLevel}
                   onChange={(e) => setFormData({ ...formData, hierarchyLevel: parseInt(e.target.value) })}
-                  disabled={selectedRole?.is_system}
+                  disabled={selectedRole?.slug === 'super_admin' || selectedRole?.is_system}
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(level => (
                     <option key={level} value={level}>
@@ -619,7 +625,7 @@ const RoleManagement = ({ embedded = false }) => {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder={t('enterDescription') || 'Enter description'}
                 rows={2}
-                disabled={selectedRole?.is_system}
+                disabled={selectedRole?.slug === 'super_admin'}
               />
             </div>
           </div>
@@ -679,7 +685,7 @@ const RoleManagement = ({ embedded = false }) => {
                 permissions={permissionGroups}
                 selectedPermissions={formData.permissions}
                 onChange={(perms) => setFormData({ ...formData, permissions: perms })}
-                readonly={selectedRole?.is_system}
+                readonly={selectedRole?.slug === 'super_admin'}
                 loading={permissionGroups.length === 0}
               />
             )}
@@ -693,7 +699,7 @@ const RoleManagement = ({ embedded = false }) => {
                     permissionGroups={permissionGroups}
                     title={null}
                     showImplied={true}
-                    readonly={selectedRole?.is_system}
+                    readonly={selectedRole?.slug === 'super_admin'}
                     onChange={(perms) => setFormData({ ...formData, permissions: perms })}
                   />
                 ) : (
@@ -717,9 +723,9 @@ const RoleManagement = ({ embedded = false }) => {
                 setShowEditModal(false)
               }}
             >
-              {selectedRole?.is_system ? (t('close') || 'Close') : (t('cancel') || 'Cancel')}
+              {selectedRole?.slug === 'super_admin' ? (t('close') || 'Close') : (t('cancel') || 'Cancel')}
             </button>
-            {!selectedRole?.is_system && (
+            {selectedRole?.slug !== 'super_admin' && (
               <button
                 className="btn btn-primary"
                 onClick={showCreateModal ? handleCreateRole : handleUpdateRole}

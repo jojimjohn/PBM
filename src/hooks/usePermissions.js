@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   USER_ROLES,
   PERMISSIONS,
+  PARENT_PERMISSIONS,
   ROLE_HIERARCHY
 } from '../config/roles'
 import { MODULE_PERMISSIONS } from '../config/modules'
@@ -52,17 +53,14 @@ export const usePermissions = () => {
   const hasPermission = (permission) => {
     if (!permission) return false
     if (!user) return false
-
-    // Direct permission check
     if (userPermissions.includes(permission)) return true
-
-    // Hierarchical permission checking: _ALL implies _OWN
-    // If checking for *_OWN permission, see if user has *_ALL version
     if (permission.endsWith('_OWN')) {
-      const allPermission = permission.replace('_OWN', '_ALL')
-      if (userPermissions.includes(allPermission)) return true
+      const allPerm = permission.replace('_OWN', '_ALL')
+      if (userPermissions.includes(allPerm)) return true
     }
-
+    for (const held of userPermissions) {
+      if (PARENT_PERMISSIONS[held]?.includes(permission)) return true
+    }
     return false
   }
 

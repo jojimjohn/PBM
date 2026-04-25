@@ -229,21 +229,21 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
             )}
 
             {/* WCN Info */}
-            <div className="wcn-section">
-              <h3 className="section-title">
+            <div className="ds-form-section">
+              <h4>
                 <Package size={20} />
                 WCN Information
-              </h3>
-              <div className="info-grid">
-                <div className="info-item">
+              </h4>
+              <div className="ds-info-grid">
+                <div className="ds-info-item">
                   <label>WCN Number:</label>
                   <strong>{collectionOrder.wcn_number || 'N/A'}</strong>
                 </div>
-                <div className="info-item">
+                <div className="ds-info-item">
                   <label>Order Number:</label>
                   <span>{collectionOrder.orderNumber}</span>
                 </div>
-                <div className="info-item">
+                <div className="ds-info-item">
                   <label>Finalized Date:</label>
                   <span>
                     {collectionOrder.finalized_at
@@ -251,7 +251,7 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
                       : 'N/A'}
                   </span>
                 </div>
-                <div className="info-item">
+                <div className="ds-info-item">
                   <label>Rectification Count:</label>
                   <span className="rectification-badge">
                     {collectionOrder.rectification_count || 0} times
@@ -270,11 +270,11 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
             </div>
 
             {/* Adjustment Form */}
-            <div className="wcn-section">
-              <h3 className="section-title">
+            <div className="ds-form-section">
+              <h4>
                 <Edit3 size={20} />
                 Adjust Quantities {changedCount > 0 && `(${changedCount} changed)`}
-              </h3>
+              </h4>
               <div className="adjustments-container">
                 {adjustments.map((adj, index) => {
                   const hasChanged = adj.newQuantity !== adj.currentQuantity;
@@ -414,8 +414,8 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
             </div>
 
             {/* General Notes */}
-            <div className="wcn-section">
-              <div className="form-group">
+            <div className="ds-form-section">
+              <div className="ds-form-group">
                 <label htmlFor="notes">General Notes (Optional)</label>
                 <textarea
                   id="notes"
@@ -429,11 +429,11 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
 
             {/* Inventory Impact Preview */}
             {showImpactPreview && inventoryImpact.length > 0 && (
-              <div className="wcn-section impact-preview">
-                <h3 className="section-title">
+              <div className="ds-form-section warning impact-preview">
+                <h4>
                   <AlertTriangle size={20} />
                   Inventory Impact Preview
-                </h3>
+                </h4>
                 <div className="alert alert-info">
                   <AlertCircle size={18} />
                   <span>Review the inventory changes before confirming rectification:</span>
@@ -482,7 +482,7 @@ const WCNRectificationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) 
             )}
 
             {/* Action Buttons */}
-            <div className="modal-actions">
+            <div className="ds-modal-actions">
               <button
                 type="button"
                 className="btn btn-secondary"

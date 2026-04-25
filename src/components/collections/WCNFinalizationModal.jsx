@@ -561,25 +561,25 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
             )}
 
             {/* Collection Order Info */}
-            <div className="wcn-section">
-              <h3 className="section-title">
+            <div className="ds-form-section">
+              <h4>
                 <Truck size={20} />
                 Collection Order Details
-              </h3>
-              <div className="info-grid">
-                <div className="info-item">
+              </h4>
+              <div className="ds-info-grid">
+                <div className="ds-info-item">
                   <label>Order Number:</label>
                   <strong>{collectionOrder.orderNumber}</strong>
                 </div>
-                <div className="info-item">
+                <div className="ds-info-item">
                   <label>Supplier:</label>
                   <span>{collectionOrder.supplierName}</span>
                 </div>
-                <div className="info-item">
+                <div className="ds-info-item">
                   <label>Collection Date:</label>
                   <span>{formatDate(collectionOrder.scheduledDate)}</span>
                 </div>
-                <div className="info-item">
+                <div className="ds-info-item">
                   <label>Status:</label>
                   <span className={`status-badge ${collectionOrder.status}`}>
                     {collectionOrder.status}
@@ -589,13 +589,13 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
             </div>
 
             {/* WCN Details Form */}
-            <div className="wcn-section">
-              <h3 className="section-title">
+            <div className="ds-form-section">
+              <h4>
                 <FileText size={20} />
                 WCN Details
-              </h3>
-              <div className="form-grid">
-                <div className="form-group">
+              </h4>
+              <div className="ds-form-grid">
+                <div className="ds-form-group">
                   <label htmlFor="wcnDate">
                     <Calendar size={16} />
                     WCN Date *
@@ -609,7 +609,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                     required
                   />
                 </div>
-                <div className="form-group full-width">
+                <div className="ds-form-group full-width">
                   <label htmlFor="notes">Notes (Optional)</label>
                   <textarea
                     id="notes"
@@ -623,9 +623,9 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
             </div>
 
             {/* Collection Items - Editable Verification */}
-            <div className="wcn-section">
+            <div className="ds-form-section">
               <div className="section-header-with-action">
-                <h3 className="section-title">
+                <h4>
                   <Package size={20} />
                   {t('verifyMaterials', 'Verify Collected Materials')} ({items.length})
                   {hasQuantityChanges && (
@@ -640,7 +640,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                       {t('qualityModified', 'Grade Modified')}
                     </span>
                   )}
-                </h3>
+                </h4>
                 {!processing && (
                   <button
                     type="button"
@@ -664,7 +664,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                 <div className="add-material-form">
                   <h4>Add New Material</h4>
                   <div className="add-material-grid">
-                    <div className="form-group">
+                    <div className="ds-form-group">
                       <label>Material *</label>
                       <select
                         value={newMaterial.materialId}
@@ -680,7 +680,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                           ))}
                       </select>
                     </div>
-                    <div className="form-group">
+                    <div className="ds-form-group">
                       <label>Quantity *</label>
                       <input
                         type="number"
@@ -691,7 +691,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                         step="0.001"
                       />
                     </div>
-                    <div className="form-group">
+                    <div className="ds-form-group">
                       <label>Rate (OMR) *</label>
                       <input
                         type="number"
@@ -702,7 +702,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
                         step="0.001"
                       />
                     </div>
-                    <div className="form-group form-actions-inline">
+                    <div className="ds-form-group form-actions-inline">
                       <button
                         type="button"
                         className="btn btn-primary btn-sm"
@@ -833,11 +833,11 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
 
             {/* Composite Material Preview */}
             {compositePreview.length > 0 && (
-              <div className="wcn-section composite-preview">
-                <h3 className="section-title">
+              <div className="ds-form-section composite-preview">
+                <h4>
                   <AlertTriangle size={20} />
                   Composite Material Auto-Split Preview
-                </h3>
+                </h4>
                 <div className="alert alert-info">
                   <AlertCircle size={18} />
                   <span>
@@ -870,11 +870,11 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
             )}
 
             {/* What Happens Next */}
-            <div className="wcn-section what-happens">
-              <h3 className="section-title">
+            <div className="ds-form-section what-happens">
+              <h4>
                 <CheckCircle size={20} />
                 What Happens When You Finalize
-              </h3>
+              </h4>
               <ol className="steps-list">
                 <li>
                   <strong>WCN Number Generated:</strong> A unique WCN number will be created (e.g., WCN-2025-0001)
@@ -911,7 +911,7 @@ const WCNFinalizationModal = ({ collectionOrder, isOpen, onClose, onSuccess }) =
             </div>
 
             {/* Action Buttons */}
-            <div className="modal-actions">
+            <div className="ds-modal-actions">
               <button
                 type="button"
                 className="btn btn-secondary"

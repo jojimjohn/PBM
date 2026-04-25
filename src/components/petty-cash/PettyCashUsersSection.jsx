@@ -31,6 +31,7 @@ import {
   Ban,
   PlayCircle,
   UserCircle,
+  CreditCard,
 } from 'lucide-react';
 import DataTable from '../ui/DataTable';
 import Modal from '../ui/Modal';
@@ -820,9 +821,24 @@ const PettyCashUsersSection = ({
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title={t('addPettyCashUser', 'Add Petty Cash User')}
+        description={t('addPCUserDesc', 'Set up portal access for a driver, cleaner or delivery staff member')}
         size="md"
+        footer={
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
+              {t('cancel', 'Cancel')}
+            </button>
+            <button type="submit" form="pc-create-form" className="btn btn-primary" disabled={submitting || availableCards.length === 0}>
+              {submitting ? (
+                <><Loader2 size={16} className="animate-spin" />{t('creating', 'Creating...')}</>
+              ) : (
+                <><Plus size={16} />{t('createUser', 'Create User')}</>
+              )}
+            </button>
+          </div>
+        }
       >
-        <form onSubmit={handleCreateUser} className="pc-user-form">
+        <form id="pc-create-form" onSubmit={handleCreateUser}>
           {formError && (
             <div className="form-error">
               <AlertCircle size={16} />
@@ -830,200 +846,126 @@ const PettyCashUsersSection = ({
             </div>
           )}
 
-          <div className="form-group">
-            <label>{t('selectTopUpCard', 'Top-Up Card')} *</label>
-            <select
-              name="cardId"
-              value={formData.cardId}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">{t('selectCardPlaceholder', '-- Select a card --')}</option>
-              {availableCards.map((card) => (
-                <option key={card.id} value={card.id}>
-                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
-                </option>
-              ))}
-            </select>
-            {availableCards.length === 0 && (
-              <span className="form-hint warning">
-                {t('noAvailableCards', 'No available top-up cards. Create a new card first or ensure existing cards are not already assigned.')}
-              </span>
-            )}
-            <span className="form-hint">
-              {t('topUpCardHint', 'Primary card for general (non-fuel) expenses')}
-            </span>
-          </div>
-
-          <div className="form-group">
-            <label>{t('selectPetrolCard', 'Petrol Card')} ({t('optional', 'Optional')})</label>
-            <select
-              name="petrolCardId"
-              value={formData.petrolCardId}
-              onChange={handleInputChange}
-            >
-              <option value="">{t('noPetrolCard', '-- None --')}</option>
-              {getAvailablePetrolCards().map((card) => (
-                <option key={card.id} value={card.id}>
-                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
-                </option>
-              ))}
-            </select>
-            <span className="form-hint">
-              {t('petrolCardHint', 'Dedicated card for fuel expenses. Auto-selected when expense category is Fuel.')}
-            </span>
-          </div>
-
-          <div className="form-group">
-            <label className="flex items-center gap-2">
-              <UserCircle size={16} className="text-slate-400" />
-              {t('linkSystemUser', 'Link to System User')}
-            </label>
-            <select
-              name="userId"
-              value={formData.userId}
-              onChange={handleInputChange}
-            >
-              <option value="">{t('noSystemUserLink', '-- None (standalone PC user) --')}</option>
-              {getAvailableSystemUsers().map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName} ({user.email}) - {user.role}
-                </option>
-              ))}
-            </select>
-            <span className="form-hint">
-              {t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}
-            </span>
-          </div>
-
-          <div className="form-group">
-            <label>Link to Employee (auto-fills name, phone, department)</label>
-            <select
-              name="employee_record_id"
-              value={formData.employee_record_id || ''}
-              onChange={(e) => {
-                const empId = e.target.value ? parseInt(e.target.value) : null
-                const updatedForm = { ...formData, employee_record_id: empId }
-                if (empId && window._employeeList) {
-                  const emp = window._employeeList.find(em => em.id === empId)
-                  if (emp) {
-                    updatedForm.name = emp.full_name
-                    updatedForm.phone = emp.phone || formData.phone
-                    updatedForm.department = emp.department || formData.department
-                  }
-                }
-                setFormData(updatedForm)
-              }}
-            >
-              <option value="">Select employee...</option>
-              {(window._employeeList || []).map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.employee_code}){emp.employee_type ? ` — ${emp.employee_type}` : ''}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>{t('fullName', 'Full Name')} *</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder={t('enterFullName', 'Enter full name')}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>{t('phone', 'Phone')}</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder={t('enterPhone', 'Enter phone number')}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('department', 'Department')}</label>
-              <input
-                type="text"
-                name="department"
-                value={formData.department}
-                onChange={handleInputChange}
-                placeholder={t('enterDepartment', 'e.g., Driver, Cleaner')}
-              />
+          <div className="form-section">
+            <div className="form-section-title"><CreditCard size={20} /> {t('cardAssignment', 'Card Assignment')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('selectTopUpCard', 'Top-Up Card')} *</label>
+                <select name="cardId" value={formData.cardId} onChange={handleInputChange} required>
+                  <option value="">{t('selectCardPlaceholder', '-- Select a card --')}</option>
+                  {availableCards.map((card) => (
+                    <option key={card.id} value={card.id}>
+                      {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                    </option>
+                  ))}
+                </select>
+                {availableCards.length === 0 && (
+                  <span className="form-hint warning">
+                    {t('noAvailableCards', 'No available top-up cards. Create a new card first or ensure existing cards are not already assigned.')}
+                  </span>
+                )}
+                <span className="form-hint">{t('topUpCardHint', 'Primary card for general (non-fuel) expenses')}</span>
+              </div>
+              <div className="form-group md:col-span-2">
+                <label>
+                  {t('selectPetrolCard', 'Petrol Card')}
+                  <span className="text-slate-400 font-normal text-xs ml-1">({t('optional', 'Optional')})</span>
+                </label>
+                <select name="petrolCardId" value={formData.petrolCardId} onChange={handleInputChange}>
+                  <option value="">{t('noPetrolCard', '-- None --')}</option>
+                  {getAvailablePetrolCards().map((card) => (
+                    <option key={card.id} value={card.id}>
+                      {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                    </option>
+                  ))}
+                </select>
+                <span className="form-hint">{t('petrolCardHint', 'Dedicated card for fuel expenses. Auto-selected when expense category is Fuel.')}</span>
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>{t('employeeId', 'Employee ID')}</label>
-            <input
-              type="text"
-              name="employeeId"
-              value={formData.employeeId}
-              onChange={handleInputChange}
-              placeholder={t('optionalReference', 'Optional reference number')}
-            />
+          <div className="form-section">
+            <div className="form-section-title"><Link size={20} /> {t('accountLinks', 'Account Links')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('linkSystemUser', 'Link to System User')}</label>
+                <select name="userId" value={formData.userId} onChange={handleInputChange}>
+                  <option value="">{t('noSystemUserLink', '-- None (standalone PC user) --')}</option>
+                  {getAvailableSystemUsers().map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName} ({user.email}) - {user.role}
+                    </option>
+                  ))}
+                </select>
+                <span className="form-hint">{t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}</span>
+              </div>
+              <div className="form-group md:col-span-2">
+                <label>
+                  {t('linkEmployee', 'Link to Employee')}
+                  <span className="text-slate-400 font-normal text-xs ml-1">({t('autoFills', 'auto-fills name, phone, department')})</span>
+                </label>
+                <select
+                  name="employee_record_id"
+                  value={formData.employee_record_id || ''}
+                  onChange={(e) => {
+                    const empId = e.target.value ? parseInt(e.target.value) : null
+                    const updatedForm = { ...formData, employee_record_id: empId }
+                    if (empId && window._employeeList) {
+                      const emp = window._employeeList.find(em => em.id === empId)
+                      if (emp) {
+                        updatedForm.name = emp.full_name
+                        updatedForm.phone = emp.phone || formData.phone
+                        updatedForm.department = emp.department || formData.department
+                      }
+                    }
+                    setFormData(updatedForm)
+                  }}
+                >
+                  <option value="">{t('selectEmployee', '-- Select employee --')}</option>
+                  {(window._employeeList || []).map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.full_name} ({emp.employee_code}){emp.employee_type ? ` — ${emp.employee_type}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>{t('pin', 'PIN')} *</label>
-              <input
-                type="password"
-                name="pin"
-                value={formData.pin}
-                onChange={handleInputChange}
-                placeholder="4-6 digits"
-                maxLength={6}
-                pattern="\d{4,6}"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('confirmPin', 'Confirm PIN')} *</label>
-              <input
-                type="password"
-                name="confirmPin"
-                value={formData.confirmPin}
-                onChange={handleInputChange}
-                placeholder="Re-enter PIN"
-                maxLength={6}
-                pattern="\d{4,6}"
-                required
-              />
+          <div className="form-section">
+            <div className="form-section-title"><UserCircle size={20} /> {t('personalInformation', 'Personal Information')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('fullName', 'Full Name')} *</label>
+                <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder={t('enterFullName', 'Enter full name')} required />
+              </div>
+              <div className="form-group">
+                <label>{t('phone', 'Phone')}</label>
+                <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder={t('enterPhone', 'Enter phone number')} />
+              </div>
+              <div className="form-group">
+                <label>{t('department', 'Department')}</label>
+                <input type="text" name="department" value={formData.department} onChange={handleInputChange} placeholder={t('enterDepartment', 'e.g., Driver, Cleaner')} />
+              </div>
+              <div className="form-group">
+                <label>{t('employeeId', 'Employee ID')}</label>
+                <input type="text" name="employeeId" value={formData.employeeId} onChange={handleInputChange} placeholder={t('optionalReference', 'Optional reference number')} />
+              </div>
             </div>
           </div>
 
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowCreateModal(false)}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={submitting || availableCards.length === 0}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {t('creating', 'Creating...')}
-                </>
-              ) : (
-                <>
-                  <Plus size={16} />
-                  {t('createUser', 'Create User')}
-                </>
-              )}
-            </button>
+          <div className="form-section">
+            <div className="form-section-title"><Key size={20} /> {t('security', 'Security')}</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>{t('pin', 'PIN')} *</label>
+                <input type="password" name="pin" value={formData.pin} onChange={handleInputChange} placeholder="4-6 digits" maxLength={6} pattern="\d{4,6}" required />
+              </div>
+              <div className="form-group">
+                <label>{t('confirmPin', 'Confirm PIN')} *</label>
+                <input type="password" name="confirmPin" value={formData.confirmPin} onChange={handleInputChange} placeholder="Re-enter PIN" maxLength={6} pattern="\d{4,6}" required />
+              </div>
+            </div>
           </div>
         </form>
       </Modal>
@@ -1033,9 +975,24 @@ const PettyCashUsersSection = ({
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         title={t('editPettyCashUser', 'Edit Petty Cash User')}
+        description={selectedUser?.name}
         size="md"
+        footer={
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
+              {t('cancel', 'Cancel')}
+            </button>
+            <button type="submit" form="pc-edit-form" className="btn btn-primary" disabled={submitting}>
+              {submitting ? (
+                <><Loader2 size={16} className="animate-spin" />{t('saving', 'Saving...')}</>
+              ) : (
+                t('saveChanges', 'Save Changes')
+              )}
+            </button>
+          </div>
+        }
       >
-        <form onSubmit={handleEditUser} className="pc-user-form">
+        <form id="pc-edit-form" onSubmit={handleEditUser}>
           {formError && (
             <div className="form-error">
               <AlertCircle size={16} />
@@ -1043,151 +1000,85 @@ const PettyCashUsersSection = ({
             </div>
           )}
 
-          {/* Top-Up Card Assignment */}
-          <div className="form-group">
-            <label>{t('topUpCard', 'Top-Up Card')}</label>
-            <select
-              name="cardId"
-              value={formData.cardId}
-              onChange={handleInputChange}
-            >
-              <option value="">{t('noCardAssigned', '-- No card assigned --')}</option>
-              {/* Show available cards for this user (includes their current card) */}
-              {getAvailableCards(selectedUser?.id).map((card) => (
-                <option key={card.id} value={card.id}>
-                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
-                </option>
-              ))}
-              {/* If user has a card that's not in available cards, show it separately */}
-              {selectedUser?.card_id && !getAvailableCards(selectedUser?.id).find(c => c.id === selectedUser.card_id) && (
-                <option value={selectedUser.card_id}>
-                  {selectedUser.cardNumber || `Card #${selectedUser.card_id}`} (current)
-                </option>
-              )}
-            </select>
-            <span className="form-hint">
-              {t('topUpCardHint', 'Primary card for general (non-fuel) expenses')}
-            </span>
-          </div>
-
-          {/* Petrol Card Assignment */}
-          <div className="form-group">
-            <label>{t('petrolCard', 'Petrol Card')}</label>
-            <select
-              name="petrolCardId"
-              value={formData.petrolCardId}
-              onChange={handleInputChange}
-            >
-              <option value="">{t('noPetrolCard', '-- None --')}</option>
-              {/* Show available petrol cards for this user (includes their current card) */}
-              {getAvailablePetrolCards(selectedUser?.id).map((card) => (
-                <option key={card.id} value={card.id}>
-                  {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
-                </option>
-              ))}
-              {/* If user has a petrol card that's not in available list, show it separately */}
-              {selectedUser?.petrol_card_id && !getAvailablePetrolCards(selectedUser?.id).find(c => c.id === selectedUser.petrol_card_id) && (
-                <option value={selectedUser.petrol_card_id}>
-                  {selectedUser.petrolCardNumber || `Card #${selectedUser.petrol_card_id}`} (current)
-                </option>
-              )}
-            </select>
-            <span className="form-hint">
-              {t('petrolCardHint', 'Dedicated card for fuel expenses. Auto-selected when expense category is Fuel.')}
-            </span>
-          </div>
-
-          {/* System User Link */}
-          <div className="form-group">
-            <label className="flex items-center gap-2">
-              <UserCircle size={16} className="text-slate-400" />
-              {t('linkSystemUser', 'Link to System User')}
-            </label>
-            <select
-              name="userId"
-              value={formData.userId}
-              onChange={handleInputChange}
-            >
-              <option value="">{t('noSystemUserLink', '-- None (standalone PC user) --')}</option>
-              {/* Show available system users + current linked user */}
-              {getAvailableSystemUsers(selectedUser?.id).map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName} ({user.email}) - {user.role}
-                </option>
-              ))}
-              {/* If user has a linked system user that's not in available list, show it */}
-              {selectedUser?.user_id && !getAvailableSystemUsers(selectedUser?.id).find(u => u.id === selectedUser.user_id) && (
-                <option value={selectedUser.user_id}>
-                  {selectedUser.linkedUserFirstName} {selectedUser.linkedUserLastName} ({selectedUser.linkedUserEmail}) - current
-                </option>
-              )}
-            </select>
-            <span className="form-hint">
-              {t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}
-            </span>
-          </div>
-
-          <div className="form-group">
-            <label>{t('fullName', 'Full Name')} *</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>{t('phone', 'Phone')}</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>{t('department', 'Department')}</label>
-              <input
-                type="text"
-                name="department"
-                value={formData.department}
-                onChange={handleInputChange}
-              />
+          <div className="form-section">
+            <div className="form-section-title"><CreditCard size={20} /> {t('cardAssignment', 'Card Assignment')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('topUpCard', 'Top-Up Card')}</label>
+                <select name="cardId" value={formData.cardId} onChange={handleInputChange}>
+                  <option value="">{t('noCardAssigned', '-- No card assigned --')}</option>
+                  {getAvailableCards(selectedUser?.id).map((card) => (
+                    <option key={card.id} value={card.id}>
+                      {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                    </option>
+                  ))}
+                  {selectedUser?.card_id && !getAvailableCards(selectedUser?.id).find(c => c.id === selectedUser.card_id) && (
+                    <option value={selectedUser.card_id}>{selectedUser.cardNumber || `Card #${selectedUser.card_id}`} (current)</option>
+                  )}
+                </select>
+                <span className="form-hint">{t('topUpCardHint', 'Primary card for general (non-fuel) expenses')}</span>
+              </div>
+              <div className="form-group md:col-span-2">
+                <label>{t('petrolCard', 'Petrol Card')}</label>
+                <select name="petrolCardId" value={formData.petrolCardId} onChange={handleInputChange}>
+                  <option value="">{t('noPetrolCard', '-- None --')}</option>
+                  {getAvailablePetrolCards(selectedUser?.id).map((card) => (
+                    <option key={card.id} value={card.id}>
+                      {formatCardOption(card)} - {formatCurrency(card.currentBalance)}
+                    </option>
+                  ))}
+                  {selectedUser?.petrol_card_id && !getAvailablePetrolCards(selectedUser?.id).find(c => c.id === selectedUser.petrol_card_id) && (
+                    <option value={selectedUser.petrol_card_id}>{selectedUser.petrolCardNumber || `Card #${selectedUser.petrol_card_id}`} (current)</option>
+                  )}
+                </select>
+                <span className="form-hint">{t('petrolCardHint', 'Dedicated card for fuel expenses. Auto-selected when expense category is Fuel.')}</span>
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>{t('employeeId', 'Employee ID')}</label>
-            <input
-              type="text"
-              name="employeeId"
-              value={formData.employeeId}
-              onChange={handleInputChange}
-            />
+          <div className="form-section">
+            <div className="form-section-title"><Link size={20} /> {t('accountLinks', 'Account Links')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('linkSystemUser', 'Link to System User')}</label>
+                <select name="userId" value={formData.userId} onChange={handleInputChange}>
+                  <option value="">{t('noSystemUserLink', '-- None (standalone PC user) --')}</option>
+                  {getAvailableSystemUsers(selectedUser?.id).map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName} ({user.email}) - {user.role}
+                    </option>
+                  ))}
+                  {selectedUser?.user_id && !getAvailableSystemUsers(selectedUser?.id).find(u => u.id === selectedUser.user_id) && (
+                    <option value={selectedUser.user_id}>
+                      {selectedUser.linkedUserFirstName} {selectedUser.linkedUserLastName} ({selectedUser.linkedUserEmail}) - current
+                    </option>
+                  )}
+                </select>
+                <span className="form-hint">{t('systemUserLinkHint', 'Link to a system user to enable project-based expense tracking')}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowEditModal(false)}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {t('saving', 'Saving...')}
-                </>
-              ) : (
-                t('saveChanges', 'Save Changes')
-              )}
-            </button>
+          <div className="form-section">
+            <div className="form-section-title"><UserCircle size={20} /> {t('personalInformation', 'Personal Information')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('fullName', 'Full Name')} *</label>
+                <input type="text" name="name" value={formData.name} onChange={handleInputChange} required />
+              </div>
+              <div className="form-group">
+                <label>{t('phone', 'Phone')}</label>
+                <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>{t('department', 'Department')}</label>
+                <input type="text" name="department" value={formData.department} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label>{t('employeeId', 'Employee ID')}</label>
+                <input type="text" name="employeeId" value={formData.employeeId} onChange={handleInputChange} />
+              </div>
+            </div>
           </div>
         </form>
       </Modal>
@@ -1197,67 +1088,42 @@ const PettyCashUsersSection = ({
         isOpen={showResetPinModal}
         onClose={() => setShowResetPinModal(false)}
         title={t('resetPin', 'Reset PIN')}
+        description={selectedUser?.name}
         size="sm"
+        footer={
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowResetPinModal(false)}>
+              {t('cancel', 'Cancel')}
+            </button>
+            <button type="submit" form="pc-reset-pin-form" className="btn btn-primary" disabled={submitting}>
+              {submitting ? (
+                <><Loader2 size={16} className="animate-spin" />{t('resetting', 'Resetting...')}</>
+              ) : (
+                <><Key size={16} />{t('resetPin', 'Reset PIN')}</>
+              )}
+            </button>
+          </div>
+        }
       >
-        <form onSubmit={handleResetPin} className="pc-user-form">
+        <form id="pc-reset-pin-form" onSubmit={handleResetPin}>
           {formError && (
             <div className="form-error">
               <AlertCircle size={16} />
               {formError}
             </div>
           )}
-
-          <p className="form-description">
-            {t('resetPinDescription', 'Enter a new 4-6 digit PIN for')} <strong>{selectedUser?.name}</strong>
-          </p>
-
-          <div className="form-group">
-            <label>{t('newPin', 'New PIN')} *</label>
-            <input
-              type="password"
-              value={newPin}
-              onChange={(e) => setNewPin(e.target.value)}
-              placeholder="4-6 digits"
-              maxLength={6}
-              pattern="\d{4,6}"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>{t('confirmNewPin', 'Confirm New PIN')} *</label>
-            <input
-              type="password"
-              value={confirmNewPin}
-              onChange={(e) => setConfirmNewPin(e.target.value)}
-              placeholder="Re-enter PIN"
-              maxLength={6}
-              pattern="\d{4,6}"
-              required
-            />
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowResetPinModal(false)}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {t('resetting', 'Resetting...')}
-                </>
-              ) : (
-                <>
-                  <Key size={16} />
-                  {t('resetPin', 'Reset PIN')}
-                </>
-              )}
-            </button>
+          <div className="form-section">
+            <div className="form-section-title"><Key size={20} /> {t('newPin', 'New PIN')}</div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>{t('newPin', 'New PIN')} *</label>
+                <input type="password" value={newPin} onChange={(e) => setNewPin(e.target.value)} placeholder="4-6 digits" maxLength={6} pattern="\d{4,6}" required />
+              </div>
+              <div className="form-group">
+                <label>{t('confirmNewPin', 'Confirm New PIN')} *</label>
+                <input type="password" value={confirmNewPin} onChange={(e) => setConfirmNewPin(e.target.value)} placeholder="Re-enter PIN" maxLength={6} pattern="\d{4,6}" required />
+              </div>
+            </div>
           </div>
         </form>
       </Modal>
@@ -1578,9 +1444,24 @@ const PettyCashUsersSection = ({
         isOpen={showDeactivateModal}
         onClose={() => setShowDeactivateModal(false)}
         title={t('deactivateUser', 'Deactivate User')}
+        description={selectedUser?.name}
         size="sm"
+        footer={
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowDeactivateModal(false)}>
+              {t('cancel', 'Cancel')}
+            </button>
+            <button type="submit" form="pc-deactivate-form" className="btn btn-warning" disabled={submitting || deactivationReason.trim().length < 5}>
+              {submitting ? (
+                <><Loader2 size={16} className="animate-spin" />{t('deactivating', 'Deactivating...')}</>
+              ) : (
+                <><Ban size={16} />{t('deactivate', 'Deactivate')}</>
+              )}
+            </button>
+          </div>
+        }
       >
-        <form onSubmit={handleDeactivateUser} className="pc-user-form">
+        <form id="pc-deactivate-form" onSubmit={handleDeactivateUser}>
           {formError && (
             <div className="form-error">
               <AlertCircle size={16} />
@@ -1588,68 +1469,29 @@ const PettyCashUsersSection = ({
             </div>
           )}
 
-          <div style={{
-            padding: '1rem',
-            background: '#fff3cd',
-            border: '1px solid #ffc107',
-            borderRadius: '8px',
-            marginBottom: '1rem'
-          }}>
-            <p style={{ margin: 0, color: '#856404' }}>
+          <div className="flex items-start gap-3 p-4 mb-4 bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+            <p className="m-0">
               <strong>{t('warning', 'Warning')}:</strong>{' '}
-              {t(
-                'deactivateUserWarning',
-                `Deactivating ${selectedUser?.name} will prevent them from accessing the petty cash portal.`
-              )}
+              {t('deactivateUserWarning', `Deactivating ${selectedUser?.name} will prevent them from accessing the petty cash portal.`)}
             </p>
           </div>
 
-          <div className="form-group">
-            <label>{t('deactivationReason', 'Reason for Deactivation')} *</label>
-            <textarea
-              value={deactivationReason}
-              onChange={(e) => setDeactivationReason(e.target.value)}
-              placeholder={t('enterDeactivationReason', 'Enter the reason for deactivation...')}
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                resize: 'vertical'
-              }}
-              required
-            />
-            <span style={{ fontSize: '0.75rem', color: '#666' }}>
-              {t('minChars', 'Minimum 5 characters')}
-            </span>
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setShowDeactivateModal(false)}
-            >
-              {t('cancel', 'Cancel')}
-            </button>
-            <button
-              type="submit"
-              className="btn btn-warning"
-              disabled={submitting || deactivationReason.trim().length < 5}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {t('deactivating', 'Deactivating...')}
-                </>
-              ) : (
-                <>
-                  <Ban size={16} />
-                  {t('deactivate', 'Deactivate')}
-                </>
-              )}
-            </button>
+          <div className="form-section">
+            <div className="form-section-title"><Ban size={20} /> {t('deactivationReason', 'Reason for Deactivation')}</div>
+            <div className="form-grid">
+              <div className="form-group md:col-span-2">
+                <label>{t('deactivationReason', 'Reason for Deactivation')} *</label>
+                <textarea
+                  value={deactivationReason}
+                  onChange={(e) => setDeactivationReason(e.target.value)}
+                  placeholder={t('enterDeactivationReason', 'Enter the reason for deactivation...')}
+                  rows={3}
+                  required
+                />
+                <span className="form-hint">{t('minChars', 'Minimum 5 characters')}</span>
+              </div>
+            </div>
           </div>
         </form>
       </Modal>
