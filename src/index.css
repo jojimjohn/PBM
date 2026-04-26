@@ -921,11 +921,11 @@
   }
 
   .autocomplete-control {
-    @apply flex items-center justify-between w-full px-4 py-3;
+    @apply flex items-center justify-between w-full px-4 py-2.5;
     @apply bg-white border border-slate-300 cursor-pointer;
     @apply transition-all duration-150;
     border-radius: 0px;
-    min-height: 46px;
+    min-height: 40px;
   }
 
   .autocomplete-control:focus,
@@ -942,7 +942,7 @@
   }
 
   .autocomplete-input-small { min-height: 36px; @apply py-2; }
-  .autocomplete-input-medium { min-height: 46px; @apply py-3; }
+  .autocomplete-input-medium { min-height: 40px; @apply py-2.5; }
   .autocomplete-input-large { min-height: 52px; @apply py-3.5; }
 
   .autocomplete-value-container {
@@ -1065,7 +1065,7 @@
   }
 
   .date-input-small { min-height: 36px; }
-  .date-input-medium { min-height: 46px; }
+  .date-input-medium { min-height: 40px; }
   .date-input-large { min-height: 52px; }
 
   .date-input-icon-left {

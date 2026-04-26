@@ -443,6 +443,7 @@ const PurchaseOrderForm = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, reference_number: e.target.value }))}
                 placeholder="Optional — your internal or supplier reference"
                 maxLength={100}
+                className="mb-0"
               />
             </div>
 
@@ -623,6 +624,7 @@ const PurchaseOrderForm = ({
                       searchable
                       required={!isDraft}
                       size="small"
+                      className="mb-0"
                     />
                   </div>
 

@@ -79,7 +79,7 @@ const Input = React.forwardRef(({
   const getContainerStateClasses = () => {
     if (hasError) return 'border-red-500 focus-within:ring-red-500/20 focus-within:border-red-500'
     if (success) return 'border-green-500 focus-within:ring-green-500/20 focus-within:border-green-500'
-    return 'border-slate-200 hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-blue-500/20'
+    return 'border-slate-300 hover:border-slate-400 focus-within:border-blue-500 focus-within:ring-blue-500/20'
   }
 
   return (
