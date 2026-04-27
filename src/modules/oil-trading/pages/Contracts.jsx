@@ -335,10 +335,41 @@ const Contracts = () => {
         return
       }
       
-      // Ensure title is auto-generated if empty
+      // Ensure title is auto-generated if empty, and clean locations to match Joi schema
+      const cleanedLocations = (editFormData.locations || []).map(location => ({
+        id: location.id,
+        locationName: location.locationName,
+        locationCode: location.locationCode,
+        materials: (location.materials || []).map(material => {
+          const m = {
+            materialId: material.materialId,
+            rateType: material.rateType,
+            contractRate: material.contractRate || 0,
+            discountPercentage: material.discountPercentage || 0,
+            minimumPrice: material.minimumPrice || 0,
+            paymentDirection: material.paymentDirection || 'we_receive',
+            unit: material.unit || '',
+            minimumQuantity: material.minimumQuantity || 0,
+            description: material.description || ''
+          }
+          if (material.maximumQuantity && material.maximumQuantity > 0) {
+            m.maximumQuantity = material.maximumQuantity
+          }
+          return m
+        })
+      }))
       const updateData = {
-        ...editFormData,
-        title: editFormData.title || `Contract ${editFormData.contractNumber}`
+        contractNumber: editFormData.contractNumber,
+        supplierId: editFormData.supplierId,
+        title: editFormData.title || `Contract ${editFormData.contractNumber}`,
+        startDate: editFormData.startDate,
+        endDate: editFormData.endDate,
+        status: editFormData.status,
+        terms: editFormData.terms,
+        notes: editFormData.notes,
+        totalValue: editFormData.totalValue,
+        currency: editFormData.currency,
+        locations: cleanedLocations
       }
       
       const response = await contractService.update(selectedContract.id, updateData)
@@ -1576,7 +1607,7 @@ const ContractFormModal = ({
       currency: 'OMR',
       unit: '',
       minimumQuantity: 0,
-      maximumQuantity: null,
+      maximumQuantity: 0,
       description: '',
       isActive: true
     }
