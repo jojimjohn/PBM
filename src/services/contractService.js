@@ -115,6 +115,14 @@ class ContractService {
         body: JSON.stringify(contractData),
       });
 
+      if (!data.success) {
+        return {
+          success: false,
+          error: data.error || 'Failed to update contract',
+          details: data.details
+        };
+      }
+
       return {
         success: true,
         data: data.data,

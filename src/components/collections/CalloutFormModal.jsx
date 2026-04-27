@@ -10,7 +10,7 @@ import Modal from '../ui/Modal';
 import DateInput from '../ui/DateInput';
 import MaterialSelector from '../ui/MaterialSelector';
 
-const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
+const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit, presetData }) => {
   const { t } = useLocalization();
   const { toAPIDateFormat, getInputDate } = useSystemSettings();
   const [formData, setFormData] = useState({
@@ -71,10 +71,10 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
       // For editing, fetch full callout details including items
       loadCalloutForEditing(callout.id);
     } else if (isOpen) {
-      // Reset form for new callout
+      // Reset form for new callout, optionally pre-filled from a contract
       setFormData({
-        contractId: '',
-        supplierId: '',
+        contractId: presetData?.contractId || '',
+        supplierId: presetData?.supplierId || '',
         locationId: '',
         requestedPickupDate: '',
         priority: 'normal',
@@ -82,7 +82,7 @@ const CalloutFormModal = ({ callout, isOpen, onClose, onSubmit }) => {
         contactPhone: '',
         materials: []
       });
-      setSelectedMaterials([]); // Reset material selection
+      setSelectedMaterials([]);
       setSpecialInstructions('');
     }
   }, [callout, isOpen]);

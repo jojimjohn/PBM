@@ -13,11 +13,12 @@ import DateInput from '../../../components/ui/DateInput'
 import FileUpload from '../../../components/ui/FileUpload'
 import FileViewer from '../../../components/ui/FileViewer'
 import contractService from '../../../services/contractService'
+import CalloutFormModal from '../../../components/collections/CalloutFormModal'
 import supplierService from '../../../services/supplierService'
 import materialService from '../../../services/materialService'
 import supplierLocationService from '../../../services/supplierLocationService'
 import uploadService from '../../../services/uploadService'
-import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, Banknote, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin, Trash2 } from 'lucide-react'
+import { Edit, Plus, Save, X, Eye, FileText, User, Calendar, Banknote, Settings, Check, AlertTriangle, Clock, Briefcase, Package, MapPin, Trash2, Truck } from 'lucide-react'
 import LoadingSpinner from '../../../components/LoadingSpinner'
 const Contracts = () => {
   const { selectedCompany, user } = useAuth()
@@ -44,6 +45,8 @@ const Contracts = () => {
   const [createFormData, setCreateFormData] = useState({})
   const [showViewModal, setShowViewModal] = useState(false)
   const [viewContractData, setViewContractData] = useState(null)
+  const [showCalloutModal, setShowCalloutModal] = useState(false)
+  const [calloutPreset, setCalloutPreset] = useState(null)
   
   // Soft delete state management for edit mode
   const [pendingDeletions, setPendingDeletions] = useState({
@@ -348,8 +351,9 @@ const Contracts = () => {
         clearPendingDeletions()
         alert(t('contractUpdated', 'Contract updated successfully!'))
       } else {
-        console.error('Error updating contract:', response.error)
-        alert(t('errorUpdating', 'Error updating contract'))
+        console.error('Error updating contract:', response.error, response.details)
+        const detail = response.details?.map(d => d.message).join('\n') || response.error || ''
+        alert(t('errorUpdating', 'Error updating contract') + (detail ? `\n\n${detail}` : ''))
       }
     } catch (error) {
       console.error('Error updating contract:', error)
@@ -408,7 +412,7 @@ const Contracts = () => {
           title: contract.title || '',
           startDate: contract.startDate ? contract.startDate.split('T')[0] : '',
           endDate: contract.endDate ? contract.endDate.split('T')[0] : '', 
-          status: contract.status || 'active',
+          status: contract.storedStatus || contract.status || 'active',
           terms: contract.terms || '',
           locations: Object.values(locationsMap).map(location => ({
             id: String(location.id),
@@ -689,6 +693,19 @@ const Contracts = () => {
             </button>
           </PermissionGate>
           
+          <PermissionGate permission={PERMISSIONS.CREATE_COLLECTIONS}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => {
+                setCalloutPreset({ contractId: row.id, supplierId: row.supplierId })
+                setShowCalloutModal(true)
+              }}
+              title={t('createCallout', 'Create Callout')}
+            >
+              <Truck size={14} />
+            </button>
+          </PermissionGate>
+
           <PermissionGate permission={PERMISSIONS.MANAGE_CONTRACTS}>
             <button
               className="btn btn-danger btn-sm"
@@ -871,7 +888,7 @@ const Contracts = () => {
               title: viewContractData.title || '',
               startDate: viewContractData.startDate ? viewContractData.startDate.split('T')[0] : '',
               endDate: viewContractData.endDate ? viewContractData.endDate.split('T')[0] : '', 
-              status: viewContractData.status || 'active',
+              status: viewContractData.storedStatus || viewContractData.status || 'active',
               totalValue: viewContractData.totalValue || 0,
               currency: viewContractData.currency || 'OMR',
               terms: viewContractData.terms || '',
@@ -903,6 +920,21 @@ const Contracts = () => {
           formatCurrency={formatCurrency}
           getContractStatusInfo={getContractStatusInfo}
           t={t}
+        />
+      )}
+
+      {showCalloutModal && (
+        <CalloutFormModal
+          isOpen={showCalloutModal}
+          onClose={() => {
+            setShowCalloutModal(false)
+            setCalloutPreset(null)
+          }}
+          onSubmit={() => {
+            setShowCalloutModal(false)
+            setCalloutPreset(null)
+          }}
+          presetData={calloutPreset}
         />
       )}
     </div>
@@ -1537,14 +1569,14 @@ const ContractFormModal = ({
       materialName: '',
       materialType: '',
       rateType: 'fixed_rate',
-      contractRate: '',
+      contractRate: 0,
       discountPercentage: 0,
       minimumPrice: 0,
       paymentDirection: 'we_receive',
       currency: 'OMR',
       unit: '',
-      minimumQuantity: '',
-      maximumQuantity: '',
+      minimumQuantity: 0,
+      maximumQuantity: null,
       description: '',
       isActive: true
     }
