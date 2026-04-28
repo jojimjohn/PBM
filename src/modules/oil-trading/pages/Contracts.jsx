@@ -337,7 +337,7 @@ const Contracts = () => {
       
       // Ensure title is auto-generated if empty, and clean locations to match Joi schema
       const cleanedLocations = (editFormData.locations || []).map(location => ({
-        id: location.id,
+        id: location.id !== undefined && location.id !== null ? String(location.id) : undefined,
         locationName: location.locationName,
         locationCode: location.locationCode,
         materials: (location.materials || []).map(material => {
