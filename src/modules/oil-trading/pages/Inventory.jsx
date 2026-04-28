@@ -439,7 +439,7 @@ const Inventory = () => {
           selectable={false}
           emptyMessage={t('noMaterialsFound')}
           className="inventory-table"
-          initialPageSize={20}
+          initialPageSize={10}
           initialSearchTerm={urlSearchTerm}
         />
       )}
