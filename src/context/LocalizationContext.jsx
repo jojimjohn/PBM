@@ -780,6 +780,7 @@ const translations = {
     // Transaction history and deactivation
     transactionHistory: 'Transaction History',
     noTransactionsFound: 'No transactions found',
+    noTransactionsDescription: 'Try adjusting your date range or filters. Transactions include purchases, sales, adjustments, and wastages.',
     loadingTransactions: 'Loading transactions...',
     deactivationInfo: 'Deactivation Information',
     deactivationReason: 'Reason for Deactivation',
@@ -3036,6 +3037,7 @@ const translations = {
     // Transaction history and deactivation
     transactionHistory: 'سجل المعاملات',
     noTransactionsFound: 'لم يتم العثور على معاملات',
+    noTransactionsDescription: 'حاول تعديل نطاق التاريخ أو المرشحات. تشمل المعاملات المشتريات والمبيعات والتسويات والهدر.',
     loadingTransactions: 'جاري تحميل المعاملات...',
     deactivationInfo: 'معلومات إلغاء التفعيل',
     deactivationReason: 'سبب إلغاء التفعيل',
