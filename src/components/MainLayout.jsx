@@ -101,8 +101,7 @@ const MainLayout = () => {
     } finally {
       setNotificationsLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, selectedCompany, projectsInitialized])
+  }, [user, selectedCompany, projectsInitialized, getProjectQueryParam])
 
   // Load notifications on mount and when company changes
   useEffect(() => {

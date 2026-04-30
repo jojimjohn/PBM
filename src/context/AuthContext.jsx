@@ -96,24 +96,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Wait for authService to complete its async initialization
-        // (handles legacy token migration and session validation via cookies)
-        const maxWaitTime = 5000; // 5 seconds max
-        const checkInterval = 100; // Check every 100ms
-        let waited = 0;
-
-        while (!authService.isInitialized && waited < maxWaitTime) {
-          await new Promise(resolve => setTimeout(resolve, checkInterval));
-          waited += checkInterval;
-        }
-
-        if (!authService.isInitialized) {
-          console.warn('Auth service initialization timed out');
-        }
-
-        // Sync state from authService
+        // Await the stored init promise — no polling needed
+        await authService.initPromise;
         await syncAuthState();
-
       } catch (error) {
         console.error('Auth initialization error:', error);
         setUser(null);

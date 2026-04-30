@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { RefreshCw } from 'lucide-react'
 import { useLocalization } from '../../../context/LocalizationContext'
 import { usePermissions } from '../../../hooks/usePermissions'
@@ -35,6 +36,7 @@ import { getTableColumns } from './customersTableConfig'
  */
 
 const OilTradingCustomers = () => {
+  const navigate = useNavigate()
   const { t } = useLocalization()
   const { hasPermission } = usePermissions()
 
@@ -177,7 +179,7 @@ const OilTradingCustomers = () => {
   const handleCreateOrder = (customer) => {
     // Store customer for cross-module integration
     sessionStorage.setItem('selectedCustomerForOrder', JSON.stringify(customer))
-    window.location.href = '/sales'
+    navigate('/sales')
   }
 
   const handleViewContract = (customer) => {

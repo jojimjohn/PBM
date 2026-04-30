@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useLocalization } from '../../../context/LocalizationContext'
 import DataTable from '../../../components/ui/DataTable'
@@ -18,6 +19,7 @@ import { CheckCircle, Package, AlertTriangle, Truck, Eye, Edit, Plus, FileText, 
 // CSS migrated to Tailwind - design-system.css provides base classes
 
 const Purchase = () => {
+  const navigate = useNavigate()
   const { selectedCompany } = useAuth()
   const { t } = useLocalization()
   const [loading, setLoading] = useState(true)
@@ -254,7 +256,7 @@ const Purchase = () => {
         )
       case 'collections':
         return (
-          <button className="btn btn-primary" onClick={() => window.location.href = '/collections'}>
+          <button className="btn btn-primary" onClick={() => navigate('/collections')}>
             <Plus size={18} />
             {t('newCollectionOrder')}
           </button>
@@ -268,7 +270,7 @@ const Purchase = () => {
         )
       case 'vendors':
         return (
-          <button className="btn btn-outline" onClick={() => window.location.href = '/suppliers'}>
+          <button className="btn btn-outline" onClick={() => navigate('/suppliers')}>
             <MapPin size={18} />
             {t('goToSuppliers')} →
           </button>

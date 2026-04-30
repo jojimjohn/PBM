@@ -18,8 +18,8 @@ class AuthService {
     this.user = null;
     this.isInitialized = false;
 
-    // Initialize auth state
-    this.initialize();
+    // Initialize auth state — store the promise so AuthContext can await it directly
+    this.initPromise = this.initialize();
   }
 
   /**
