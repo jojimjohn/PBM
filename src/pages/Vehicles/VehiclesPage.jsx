@@ -135,7 +135,7 @@ const VehiclesPage = () => {
           onClick={() => setActiveTab('vehicle-types')}
         >
           <Tag size={16} />
-          Vehicle Types
+          {t('vehicleTypesTab', 'Vehicle Types')}
         </button>
       </div>
 
@@ -145,7 +145,7 @@ const VehiclesPage = () => {
           <DataTable
             data={vehicles} columns={columns}
             title={t('vehicles', 'Vehicles')}
-            subtitle={`Manage company fleet — ${vehicles.length} vehicles`}
+            subtitle={`${t('manageCompanyFleet', 'Manage company fleet')} — ${vehicles.length} vehicles`}
             headerActions={
               <div className="flex items-center gap-2">
                 <button className="btn btn-outline" onClick={handleRefresh} disabled={isRefreshing} title="Refresh">
@@ -153,7 +153,7 @@ const VehiclesPage = () => {
                 </button>
                 {canManage && (
                   <button className="btn btn-primary" onClick={() => { setSelectedVehicle(null); setShowAddModal(true) }}>
-                    <Plus size={16} /> Add Vehicle
+                    <Plus size={16} /> {t('addVehicle', 'Add Vehicle')}
                   </button>
                 )}
               </div>

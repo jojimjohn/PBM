@@ -92,7 +92,7 @@ const ExpenseSheetsPage = () => {
         <DataTable
           data={sheets} columns={columns}
           title={t('expenseSheets', 'Expense Sheets')}
-          subtitle={`Daily vehicle expense tracking — ${sheets.length} sheets`}
+          subtitle={`${t('dailyVehicleExpenseTracking', 'Daily vehicle expense tracking')} — ${sheets.length} sheets`}
           headerActions={
             <div className="flex items-center gap-2">
               <button className="btn btn-outline" onClick={handleRefresh} disabled={isRefreshing}>
@@ -100,14 +100,14 @@ const ExpenseSheetsPage = () => {
               </button>
               {canManage && (
                 <button className="btn btn-primary" onClick={() => navigate('/expense-sheets/new')}>
-                  <Plus size={16} /> New Sheet
+                  <Plus size={16} /> {t('newSheet', 'New Sheet')}
                 </button>
               )}
             </div>
           }
           loading={loading} searchable sortable paginated filterable
           onRowClick={row => navigate(`/expense-sheets/${row.id}`)}
-          emptyMessage="No expense sheets found" initialPageSize={15} stickyHeader
+          emptyMessage={t('noExpenseSheetsFound', 'No expense sheets found')} initialPageSize={15} stickyHeader
         />
       </div>
     </div>

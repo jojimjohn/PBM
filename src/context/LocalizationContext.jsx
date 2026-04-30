@@ -1511,14 +1511,25 @@ const translations = {
     inventoryManagementTitle: 'Inventory Management',
     supplierManagementTitle: 'Supplier Management',
     materialInventoryManagementTitle: 'Material Inventory Management',
-    
+    stockOverviewTab: 'Stock Overview',
+    materialMasterTab: 'Material Master',
+    materialsCatalog: 'Materials Catalog',
+    manageMaterialDefinitions: 'Manage material definitions and pricing',
+    addMaterial: 'Add Material',
+    vehicleTypesTab: 'Vehicle Types',
+    manageCompanyFleet: 'Manage company fleet',
+    addVehicle: 'Add Vehicle',
+    dailyVehicleExpenseTracking: 'Daily vehicle expense tracking',
+    newSheet: 'New Sheet',
+    noExpenseSheetsFound: 'No expense sheets found',
+
     // Subtitles and Descriptions
     manageFuelCustomersSubtitle: 'Manage fuel customers and delivery contracts',
     manageFuelContractsSubtitle: 'Manage fuel supply contracts and agreements',
     manageVendorOrdersSubtitle: 'Manage vendor orders and procurement for',
     trackStockLevelsSubtitle: 'Track stock levels, movements, and material status',
     trackScrapMaterialsSubtitle: 'Track scrap materials, storage, and processing status',
-    
+
     // Button Labels
     addCustomerBtn: 'Add Customer',
     newContractBtn: 'New Contract',
@@ -3708,7 +3719,18 @@ const translations = {
     purchaseOrdersTitle: 'أوامر الشراء', 
     inventoryManagementTitle: 'إدارة المخزون',
     supplierManagementTitle: 'إدارة الموردين',
-    
+    stockOverviewTab: 'نظرة عامة على المخزون',
+    materialMasterTab: 'قائمة المواد',
+    materialsCatalog: 'كتالوج المواد',
+    manageMaterialDefinitions: 'إدارة تعريفات المواد والأسعار',
+    addMaterial: 'إضافة مادة',
+    vehicleTypesTab: 'أنواع المركبات',
+    manageCompanyFleet: 'إدارة أسطول الشركة',
+    addVehicle: 'إضافة مركبة',
+    dailyVehicleExpenseTracking: 'تتبع مصاريف المركبات اليومية',
+    newSheet: 'ورقة جديدة',
+    noExpenseSheetsFound: 'لم يتم العثور على أوراق مصاريف',
+
     // Subtitles and Descriptions
     manageFuelCustomersSubtitle: 'إدارة عملاء الوقود وعقود التسليم',
     manageFuelContractsSubtitle: 'إدارة عقود توريد الوقود والاتفاقيات',

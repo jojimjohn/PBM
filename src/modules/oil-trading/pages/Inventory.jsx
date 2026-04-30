@@ -384,7 +384,7 @@ const Inventory = () => {
           onClick={() => setActiveTab('stock')}
         >
           <Package size={16} />
-          Stock Overview
+          {t('stockOverviewTab', 'Stock Overview')}
         </button>
         <button
           className={`tab-btn ${activeTab === 'movements' ? 'active' : ''}`}
@@ -405,7 +405,7 @@ const Inventory = () => {
           onClick={() => setActiveTab('master')}
         >
           <Droplets size={16} />
-          Material Master
+          {t('materialMasterTab', 'Material Master')}
         </button>
       </div>
 
@@ -464,12 +464,12 @@ const Inventory = () => {
             materialCompositions
           })}
           columns={materialMasterColumns}
-          title="Materials Catalog"
-          subtitle="Manage material definitions and pricing"
+          title={t('materialsCatalog', 'Materials Catalog')}
+          subtitle={t('manageMaterialDefinitions', 'Manage material definitions and pricing')}
           headerActions={
             <button className="btn btn-primary" onClick={handleAddMaterial}>
               <Plus size={16} />
-              Add Material
+              {t('addMaterial', 'Add Material')}
             </button>
           }
           loading={loading}

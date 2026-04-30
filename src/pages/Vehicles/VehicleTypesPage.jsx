@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { usePermissions } from '../../hooks/usePermissions'
+import { useLocalization } from '../../context/LocalizationContext'
 import vehicleTypeService from '../../services/vehicleTypeService'
 import Modal from '../../components/ui/Modal'
 import showToast from '../../components/ui/Toast'
@@ -7,6 +8,7 @@ import { Plus, Edit, Trash2, Save, RefreshCw } from 'lucide-react'
 
 const VehicleTypesPage = () => {
   const { hasPermission } = usePermissions()
+  const { t } = useLocalization()
   const canManage = hasPermission('MANAGE_VEHICLES')
 
   const [types, setTypes] = useState([])
@@ -51,7 +53,7 @@ const VehicleTypesPage = () => {
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">Vehicle Types</h2>
+            <h2 className="text-lg font-bold text-slate-800">{t('vehicleTypesTab', 'Vehicle Types')}</h2>
             <p className="text-xs text-slate-500">Manage vehicle classification lookup table</p>
           </div>
           <div className="flex items-center gap-2">
