@@ -512,7 +512,12 @@ class AuthService {
           });
 
           const retryData = await retryResponse.json();
-          // Session extension handled server-side on non-passive endpoints
+          if (!retryResponse.ok) {
+            const err = new Error(retryData.error || retryData.message || `Request failed with status ${retryResponse.status}`);
+            err.status = retryResponse.status;
+            err.code = retryData.code;
+            throw err;
+          }
           return retryData;
         } catch (refreshError) {
           // Refresh failed, redirect to login
@@ -523,7 +528,12 @@ class AuthService {
       }
 
       const responseData = await response.json();
-      // Session extension handled server-side on non-passive endpoints
+      if (!response.ok) {
+        const err = new Error(responseData.error || responseData.message || `Request failed with status ${response.status}`);
+        err.status = response.status;
+        err.code = responseData.code;
+        throw err;
+      }
       return responseData;
     } catch (error) {
       console.error('API request error:', error);
